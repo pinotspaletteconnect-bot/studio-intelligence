@@ -2,11 +2,11 @@
 
 ---
 
-# Current Status
+# Project Status
 
 ## Phase 1 — Foundation
 
-Status: ✅ COMPLETE
+**Status:** ✅ COMPLETE
 
 ### Infrastructure
 
@@ -17,85 +17,100 @@ Status: ✅ COMPLETE
 
 ### Data Warehouse
 
-- [x] Multi-tenant database
+- [x] Multi-tenant architecture
 - [x] Studio configuration
-- [x] Active integration discovery
-- [x] Historical warehouse design
+- [x] Active Integration discovery
+- [x] Historical warehouse
 - [x] UPSERT architecture
 
-### Google Analytics
+### Google Analytics 4
 
 - [x] OAuth authentication
 - [x] Google Analytics Data API
 - [x] Dynamic Property IDs
 - [x] Multi-studio support
-- [x] Daily ETL pipeline
-- [x] Historical imports
-- [x] Warehouse loading
+- [x] Production ETL
+- [x] Historical warehouse loading
+- [x] Daily metrics
 
-Foundation is complete.
+**Phase 1 Complete**
 
 ---
 
-# Phase 2 — Marketing Data
+# Phase 2 — Marketing Intelligence
 
-Status: 🚧 Next
-
-## Google Ads
-
-- [ ] OAuth
-- [ ] Dynamic account discovery
-- [ ] Campaign metrics
-- [ ] Search metrics
-- [ ] Display metrics
-- [ ] Conversion metrics
-- [ ] Warehouse
-
-## Meta Ads
-
-- [ ] Authentication
-- [ ] Campaign metrics
-- [ ] Conversion metrics
-- [ ] Warehouse
+**Status:** 🚧 NEXT
 
 ## Eulerity
 
-- [ ] API integration
-- [ ] Marketing metrics
-- [ ] Warehouse
+- [ ] Authentication
+- [ ] Report automation
+- [ ] Daily ETL
+- [ ] Warehouse loading
 
-## SOCi
+### Marketing Metrics
 
-- [ ] Local marketing metrics
-- [ ] Review metrics
-- [ ] Warehouse
+- [ ] Google Search
+- [ ] Google Display
+- [ ] Google Video
+- [ ] Generic Meta
+- [ ] Spend
+- [ ] Clicks
+- [ ] Impressions
+- [ ] CPC
+- [ ] CTR
+- [ ] Conversions
 
 ---
 
-# Phase 3 — Operational Data
+## SOCi
 
-## Reservation System
+- [ ] Authentication
+- [ ] Daily ETL
+- [ ] Warehouse loading
+
+### Marketing Metrics
+
+- [ ] Local Facebook
+- [ ] Local Instagram
+- [ ] Studio-specific Meta campaigns
+- [ ] Community marketing
+
+---
+
+## Unified Marketing
+
+- [ ] Marketing reporting views
+- [ ] Paid marketing dashboards
+- [ ] Cross-platform campaign reporting
+
+---
+
+# Phase 3 — Operations Intelligence
+
+## PTS Integration
 
 - [ ] Reservations
 - [ ] Attendance
-- [ ] Lead time
-- [ ] Private events
-- [ ] Mobile events
-
-## POS
-
+- [ ] Revenue
+- [ ] Class sales
 - [ ] Retail sales
 - [ ] Bar sales
 - [ ] Food sales
 - [ ] Candle sales
-- [ ] Product mix
+- [ ] Gift cards
+- [ ] Private parties
+- [ ] Mobile events
+- [ ] Customer data
 
-## Financial
+---
 
-- [ ] Royalties
-- [ ] Accounting
-- [ ] Payroll
-- [ ] Banking
+## Operations Reporting
+
+- [ ] Studio KPIs
+- [ ] Revenue reporting
+- [ ] Capacity utilization
+- [ ] Product reporting
 
 ---
 
@@ -106,38 +121,49 @@ Status: 🚧 Next
 - [ ] Executive Dashboard
 - [ ] Studio Dashboard
 - [ ] Marketing Dashboard
-- [ ] Financial Dashboard
 - [ ] Operations Dashboard
+- [ ] Financial Dashboard
+
+---
 
 ## Reporting
 
-- [ ] Daily KPI reporting
+- [ ] Daily KPIs
 - [ ] Weekly summaries
-- [ ] Monthly executive reports
+- [ ] Monthly executive reporting
 - [ ] Benchmark reporting
+- [ ] Historical trending
 
 ---
 
 # Phase 5 — Artificial Intelligence
 
-## Daily Intelligence
+## Executive Intelligence
 
-- [ ] Executive briefing
+- [ ] Daily executive briefing
+- [ ] Business health score
 - [ ] Marketing summary
-- [ ] Studio health score
+- [ ] Operations summary
+
+---
 
 ## Forecasting
 
-- [ ] Revenue forecast
-- [ ] Attendance forecast
-- [ ] Staffing forecast
+- [ ] Revenue forecasting
+- [ ] Reservation forecasting
+- [ ] Staffing forecasting
+- [ ] Marketing forecasting
+
+---
 
 ## Recommendations
 
-- [ ] Marketing recommendations
+- [ ] Marketing optimization
+- [ ] Staffing recommendations
 - [ ] Pricing recommendations
 - [ ] Inventory recommendations
-- [ ] Staffing recommendations
+
+---
 
 ## Alerts
 
@@ -153,35 +179,54 @@ Status: 🚧 Next
 ## Multi-Tenant
 
 - [ ] Company onboarding
+- [ ] Studio onboarding
 - [ ] Self-service configuration
 - [ ] User management
 - [ ] Permissions
 
-## API
+---
+
+## APIs
 
 - [ ] Public API
+- [ ] Internal API
 - [ ] Webhooks
-- [ ] Integrations
+
+---
 
 ## SaaS
 
-- [ ] Billing
 - [ ] Customer onboarding
+- [ ] Billing
 - [ ] White-label support
 
 ---
 
 # Guiding Principles
 
-Every new integration should:
+Every new integration must:
 
 - Support unlimited companies.
 - Support unlimited studios.
 - Be configuration-driven.
-- Use the standard ETL architecture.
+- Follow the standard ETL architecture.
 - Normalize data before loading.
 - Write to the warehouse using UPSERT.
+- Preserve historical data.
 - Be reusable without workflow redesign.
+
+---
+
+# Success Criteria
+
+Studio Intelligence is considered complete when:
+
+- All operational systems automatically populate the warehouse.
+- Manual reporting has been eliminated.
+- Every dashboard updates automatically.
+- AI produces meaningful daily business insights.
+- New companies can be onboarded through configuration alone.
+- New integrations can be added without redesign.
 
 ---
 
@@ -189,4 +234,4 @@ Every new integration should:
 
 Studio Intelligence will become the operating system for experiential businesses.
 
-The platform should automatically collect data, analyze trends, explain business performance, forecast future outcomes, and provide AI-driven recommendations that help owners make better decisions every day.
+Rather than simply collecting data, the platform will automatically measure business performance, identify trends, explain results, forecast future outcomes, and recommend actions that improve marketing, operations, and profitability.
