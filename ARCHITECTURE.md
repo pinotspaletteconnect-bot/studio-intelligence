@@ -1,38 +1,41 @@
-# Architecture
-
-## Vision
-
-Studio Intelligence is a multi-tenant business intelligence platform designed to aggregate operational, marketing, financial, and customer data for multiple businesses into a centralized warehouse.
+# Studio Intelligence Architecture
 
 ---
 
-# Core Architecture
+# Overview
+
+Studio Intelligence is a multi-tenant business intelligence platform that consolidates marketing, operational, financial, and customer data into a centralized warehouse.
+
+The platform is designed to support unlimited companies, unlimited studios, and unlimited integrations through a configuration-driven architecture.
+
+The warehouse becomes the single source of truth for dashboards, APIs, reporting, and AI.
+
+---
+
+# Platform Architecture
 
 ```
-          External Systems
-──────────────────────────────────────
+                External Systems
+────────────────────────────────────────────
 
 Google Analytics 4
-Google Ads
-Meta Ads
 Eulerity
-Reservation System
-POS
-Accounting
+SOCi
+PTS (Pinot Technical System)
 Future Integrations
 
-          │
-          ▼
+            │
+            ▼
 
-        n8n ETL
+          n8n ETL
 
-          │
-          ▼
+            │
+            ▼
 
-      Supabase Warehouse
+    Supabase Warehouse
 
-          │
-          ▼
+            │
+            ▼
 
  Executive Dashboards
  Studio Dashboards
@@ -43,42 +46,179 @@ Future Integrations
 
 ---
 
-# Standard ETL Pattern
+# Business Domains
 
-Every integration must follow the same pattern.
+Studio Intelligence organizes data by business domain rather than software vendor.
+
+## Website Analytics
+
+Primary System
+
+Google Analytics 4
+
+Purpose
+
+- Website traffic
+- Users
+- Sessions
+- Attribution
+- Landing pages
+- Engagement
+- Conversions
+
+GA4 is the authoritative source for website behavior.
+
+---
+
+## Paid Marketing
+
+Primary System
+
+Eulerity
+
+Channels
+
+- Google Search
+- Google Display
+- Google Video (YouTube)
+- Meta Social
+
+Metrics
+
+- Spend
+- Clicks
+- Impressions
+- CPC
+- CTR
+- Campaign Performance
+
+Eulerity is the authoritative source for paid advertising performance.
+
+All Eulerity traffic is attributed within GA4 using Eulerity source/medium values.
+
+---
+
+## Local Marketing
+
+Primary System
+
+SOCi
+
+Purpose
+
+- Studio-specific Meta campaigns
+- Local Facebook marketing
+- Local Instagram marketing
+- Community engagement
+
+Future
+
+- Reviews
+- Reputation management
+- Local listings
+
+SOCi is the authoritative source for localized social marketing.
+
+---
+
+## Operations & Revenue
+
+Primary System
+
+PTS (Pinot Technical System)
+
+Purpose
+
+- Reservations
+- Attendance
+- Revenue
+- Class sales
+- Retail sales
+- Bar sales
+- Candle sales
+- Private parties
+- Mobile events
+- Gift cards
+- Customer records
+
+PTS is the authoritative source for studio operations and revenue.
+
+---
+
+# Standard ETL Architecture
+
+Every integration follows the same architecture.
 
 ```
 Configuration
       │
       ▼
+
 Get Active Integrations
+
       │
       ▼
+
 Loop Through Studios
+
       │
       ▼
+
 API Request
+
       │
       ▼
+
 Normalize Response
+
       │
       ▼
+
 Warehouse UPSERT
+
       │
       ▼
-Reporting / AI
+
+Dashboards
+APIs
+AI
 ```
 
-This architecture allows every integration to be configuration-driven without hardcoded studio IDs, API keys, or Property IDs.
+This pattern ensures every integration behaves consistently regardless of data source.
 
 ---
 
-# Multi-Tenant Data Model
+# Warehouse Design
+
+Warehouse tables are organized by source system.
+
+Examples
+
+- ga4_daily_metrics
+- eulerity_daily_metrics
+- soci_daily_metrics
+- pts_daily_metrics
+
+Business-facing dashboards should consume reporting views rather than raw source tables.
+
+Examples
+
+- marketing_daily_summary
+- operations_daily_summary
+- executive_daily_summary
+- studio_daily_summary
+
+---
+
+# Multi-Tenant Model
 
 Company
-    └── Studio
-            └── Integration
-                    └── Daily Metrics
+
+└── Studio
+
+&nbsp;&nbsp;&nbsp;&nbsp;└── Integration
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── Daily Metrics
 
 Every warehouse record should identify:
 
@@ -87,72 +227,47 @@ Every warehouse record should identify:
 - Integration
 - Date
 
-This allows the platform to support unlimited companies and studios.
-
----
-
-# Warehouse Design
-
-The warehouse is organized into subject-area tables.
-
-Examples
-
-ga4_daily_metrics
-
-google_ads_daily_metrics
-
-meta_daily_metrics
-
-eulerity_daily_metrics
-
-reservation_daily_metrics
-
-sales_daily_metrics
-
-Each table owns one business domain.
+No workflow should require hardcoded IDs or studio-specific logic.
 
 ---
 
 # Design Principles
 
-• Configuration over hardcoding
+Studio Intelligence follows these core principles.
 
-• Small ETL pipelines with one responsibility
-
-• Normalize before loading
-
-• UPSERT instead of duplicate inserts
-
-• HTTP APIs preferred over limited n8n nodes when flexibility or reliability is improved
-
-• Every workflow should be reusable across unlimited studios
+- Configuration over hardcoding
+- Warehouse-first architecture
+- Normalize before loading
+- One responsibility per workflow
+- UPSERT instead of duplicate inserts
+- Historical data is preserved
+- Every workflow must support unlimited studios
+- Every integration should be reusable
+- Prefer direct APIs over limited connector nodes when flexibility or reliability is improved
 
 ---
 
-# Current State
+# Current Integrations
 
-Completed
+## Completed
 
-✓ Multi-tenant configuration database
+✅ Google Analytics 4
 
-✓ Active integration discovery
+Production ETL complete.
 
-✓ Dynamic Google Analytics Data API integration
+---
 
-✓ Production GA4 ETL
+## Planned
 
-✓ Historical warehouse
+- Eulerity
+- SOCi
+- PTS
+- Future financial integrations
 
-Next
+---
 
-Google Ads ETL
+# Long-Term Vision
 
-Meta ETL
+Studio Intelligence should become the operating system for multi-location experiential businesses.
 
-Eulerity ETL
-
-Reservation System ETL
-
-Executive Dashboards
-
-AI Insights
+Rather than simply reporting historical numbers, the platform should automatically collect operational data, measure business performance, identify trends, forecast future results, and provide AI-driven recommendations that help owners make better decisions every day.
