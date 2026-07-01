@@ -1,0 +1,295 @@
+# Studio Intelligence Data Dictionary
+
+---
+
+# Purpose
+
+This document defines every metric, dimension, and warehouse table used by Studio Intelligence.
+
+Each metric should exist only once within the warehouse and have one authoritative source system.
+
+This document serves as the reference for:
+
+- ETL development
+- Dashboard development
+- API development
+- AI prompts
+- Reporting
+- Data governance
+
+---
+
+# Source Systems
+
+| System | Purpose |
+|---------|---------|
+| Google Analytics 4 | Website analytics and attribution |
+| Eulerity | Paid marketing performance |
+| SOCi | Local marketing and social campaigns |
+| PTS | Reservations, operations, and revenue |
+| Supabase | Historical warehouse |
+
+---
+
+# Warehouse Tables
+
+## ga4_daily_metrics
+
+Daily website analytics.
+
+Primary Key
+
+```
+studio_id
+date
+```
+
+Source
+
+Google Analytics 4
+
+---
+
+## eulerity_daily_metrics
+
+Daily paid marketing metrics.
+
+Primary Key
+
+```
+studio_id
+date
+```
+
+Source
+
+Eulerity
+
+---
+
+## soci_daily_metrics
+
+Daily local marketing metrics.
+
+Primary Key
+
+```
+studio_id
+date
+```
+
+Source
+
+SOCi
+
+---
+
+## pts_daily_metrics
+
+Daily operational and revenue metrics.
+
+Primary Key
+
+```
+studio_id
+date
+```
+
+Source
+
+PTS
+
+---
+
+# Common Dimensions
+
+| Column | Description |
+|---------|-------------|
+| company_id | Company identifier |
+| studio_id | Studio identifier |
+| studio_code | Short studio code |
+| studio_name | Studio name |
+| integration_type | Source system |
+| date | Business date |
+| timezone | Studio timezone |
+
+---
+
+# Google Analytics Metrics
+
+| Metric | Description | Type |
+|---------|-------------|------|
+| total_users | Total users | Integer |
+| new_users | New visitors | Integer |
+| sessions | Website sessions | Integer |
+| page_views | Total page views | Integer |
+| engaged_sessions | Engaged sessions | Integer |
+| engagement_rate | Percentage of engaged sessions | Decimal |
+| average_session_duration | Average session duration (seconds) | Decimal |
+| key_events | Key events completed | Decimal |
+| session_key_event_rate | Percent of sessions with key events | Decimal |
+| total_revenue | Revenue reported by GA4 | Currency |
+
+Source of Truth
+
+Google Analytics 4
+
+---
+
+# Eulerity Metrics
+
+| Metric | Description | Type |
+|---------|-------------|------|
+| spend | Advertising spend | Currency |
+| impressions | Impressions | Integer |
+| clicks | Clicks | Integer |
+| ctr | Click-through rate | Decimal |
+| cpc | Cost per click | Currency |
+| conversions | Conversions | Decimal |
+| search_clicks | Google Search clicks | Integer |
+| display_clicks | Display clicks | Integer |
+| video_clicks | Video clicks | Integer |
+| social_clicks | Meta clicks | Integer |
+
+Source of Truth
+
+Eulerity
+
+---
+
+# SOCi Metrics
+
+| Metric | Description | Type |
+|---------|-------------|------|
+| impressions | Social impressions | Integer |
+| clicks | Social clicks | Integer |
+| spend | Advertising spend | Currency |
+| engagements | Social engagement | Integer |
+| reach | Audience reached | Integer |
+
+Source of Truth
+
+SOCi
+
+---
+
+# PTS Metrics
+
+## Reservations
+
+| Metric | Description |
+|---------|-------------|
+| reservations | Total reservations |
+| attendance | Total attendees |
+| no_shows | No-shows |
+| cancellations | Cancellations |
+
+---
+
+## Revenue
+
+| Metric | Description |
+|---------|-------------|
+| revenue | Gross revenue |
+| class_sales | Class revenue |
+| retail_sales | Retail revenue |
+| food_sales | Food revenue |
+| bar_sales | Beverage revenue |
+| candle_sales | Candle revenue |
+| gift_card_sales | Gift card revenue |
+
+---
+
+## Operations
+
+| Metric | Description |
+|---------|-------------|
+| private_parties | Private parties |
+| mobile_events | Mobile events |
+| average_party_size | Average party size |
+| average_ticket | Average ticket value |
+
+Source of Truth
+
+PTS
+
+---
+
+# Metric Naming Standards
+
+Use lowercase.
+
+Use underscores.
+
+Examples
+
+```
+total_users
+
+new_users
+
+average_session_duration
+
+private_parties
+
+gift_card_sales
+```
+
+Never use spaces.
+
+Never abbreviate unless industry standard.
+
+---
+
+# Warehouse Standards
+
+Every warehouse table should contain:
+
+- studio_id
+- studio_code
+- studio_name
+- date
+- integration_type
+
+Every ETL should:
+
+- Normalize data
+- UPSERT records
+- Preserve history
+
+---
+
+# Data Ownership
+
+| Business Capability | Source System |
+|---------------------|---------------|
+| Website Behavior | GA4 |
+| Attribution | GA4 |
+| Advertising Spend | Eulerity |
+| Paid Marketing | Eulerity |
+| Local Marketing | SOCi |
+| Reservations | PTS |
+| Revenue | PTS |
+| Operations | PTS |
+
+---
+
+# Future Tables
+
+- executive_daily_summary
+- marketing_daily_summary
+- operations_daily_summary
+- financial_daily_summary
+- customer_daily_summary
+
+These reporting tables will combine data from multiple source systems for dashboards and AI.
+
+---
+
+# Version History
+
+Version 1.0
+
+Created after completion of the Google Analytics production ETL.
+
+This document should evolve as additional integrations and warehouse tables are added.
