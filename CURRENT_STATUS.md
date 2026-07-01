@@ -13,24 +13,26 @@
 - Mapped every studio to its GA4 Property ID.
 - Verified the project is configuration-driven instead of hard-coded.
 - Built Workflow 02 (`Get Active Integrations`) as a reusable sub-workflow.
-- Verified Workflow 03 successfully calls Workflow 02 and receives all four active studio configurations.
-- Added Loop Over Items to process one studio at a time.
-- Configured the GA4 Report node to use {{$json.external_id}} instead of a hardcoded Property ID.
-- Successfully executed the GA4 node using the dynamic property from Supabase.
+- Built Workflow 03 as a production GA4 ETL pipeline using the Google Analytics Data API via HTTP.
+- Replaced the GA4 node with direct API calls to support dynamic metrics and property IDs.
+- Implemented dynamic studio looping from Supabase.
+- Normalized GA4 API responses into warehouse-ready records.
+- Implemented UPSERT logic into `ga4_daily_metrics` using `(studio_id, date)`.
+- Added daily metrics including users, sessions, page views, engagement, key events, and revenue.
 
 ## Current Architecture
 - Workflow 01: GA4 proof of concept.
 - Workflow 02: Configuration service that returns active GA4 integrations from Supabase.
-- Workflow 03: Dynamic production GA4 importer.
+- Workflow 03: Dynamic production GA4 importer (HTTP API -> Normalize -> Supabase).
 - Supabase is the single source of truth for studio configuration.
-- One GA4 node now supports unlimited studios.
+- One workflow now supports unlimited studios without hard-coded property IDs.
 
 ## Current Focus
-Persist the GA4 results into Supabase as the first production ETL pipeline.
+Design the common warehouse schema and begin Workflow 04 (Google Ads).
 
 ## Next Milestone
-1. Store raw daily GA4 metrics in Supabase.
-2. Verify imports for all four studios.
+1. Build Google Ads daily ETL.
+2. Reuse the same loop/API/normalize/upsert architecture.
 3. Schedule automated daily imports.
 4. Build reporting and dashboards.
-5. Add additional integrations (Google Ads, Meta, reservation system, etc.).
+5. Add additional integrations (Meta, reservation system, Eulerity, etc.).
