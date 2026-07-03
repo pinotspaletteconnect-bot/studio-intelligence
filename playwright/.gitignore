@@ -1,0 +1,9 @@
+node_modules/
+downloads/
+auth/
+.env
+*.csv
+*.png
+*.jpg
+*.jpeg
+*.webp

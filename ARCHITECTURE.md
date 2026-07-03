@@ -2,9 +2,9 @@
 
 ---
 
-# Overview
+# Vision
 
-Studio Intelligence is a multi-tenant business intelligence platform that consolidates marketing, operational, financial, and customer data into a centralized analytics warehouse.
+Studio Intelligence is a multi-tenant business intelligence platform that consolidates marketing, operational, financial, customer, and AI-derived data into a centralized analytics warehouse.
 
 The platform is designed to support:
 
@@ -12,80 +12,92 @@ The platform is designed to support:
 - Unlimited brands
 - Unlimited studios
 - Unlimited integrations
-- Unlimited data sources
+- Unlimited external systems
 
 through a configuration-driven architecture.
 
-The warehouse serves as the single source of truth for dashboards, APIs, reporting, forecasting, automation, and AI-driven insights.
+The warehouse becomes the single source of truth for reporting, forecasting, dashboards, APIs, automation, and AI-powered decision support.
+
+The long-term objective is to build the operating system for multi-location experiential businesses.
 
 ---
 
-# Platform Architecture
+# Core Architecture
 
 ```
-                External Systems
-────────────────────────────────────────────
+                    External Systems
+──────────────────────────────────────────────────────────────
 
 Google Analytics 4
 Eulerity
 SOCi
 PTS (Pinot Technical System)
 Google Business Profile
+Weather
+Holiday Calendar
+Accounting
+Payroll
+Inventory
 Future Integrations
 
-            │
-            ▼
+                           │
+                           ▼
 
-        n8n ETL Platform
+                    n8n ETL Platform
 
-            │
-            ▼
+                           │
+                           ▼
 
-    Supabase Data Warehouse
+                 Supabase Data Warehouse
 
-            │
-            ▼
+                           │
 
- Executive Dashboards
- Studio Dashboards
- APIs
- AI Insights
- Forecasting
- Automation
+        ┌──────────────────┼──────────────────┐
+
+        ▼                  ▼                  ▼
+
+   Reporting Views     Executive APIs     AI Models
+
+        │                  │                  │
+
+        └──────────────────┼──────────────────┘
+
+                           ▼
+
+                     Dashboards
+                     Forecasting
+                     Recommendations
+                     Automation
 ```
 
 ---
 
 # Enterprise Hierarchy
 
-Studio Intelligence is built around a scalable enterprise hierarchy.
+Every record belongs to the following hierarchy.
 
 ```
 Organization
 
     │
 
-    ▼
-
 Brand
 
     │
-
-    ▼
 
 Studio
 
     │
 
-    ▼
-
-Studio Integration
+Integration
 
     │
 
-    ▼
+Business Domain
 
-Fact Tables
+    │
+
+Fact Record
 ```
 
 Example
@@ -104,230 +116,456 @@ Duff's Easel Empire
         Short North
 ```
 
-This hierarchy allows the platform to support multiple organizations and brands without future schema changes.
+No workflow should ever require studio-specific logic.
+
+Everything should be configuration driven.
 
 ---
 
-# Business Domains
+# Warehouse Architecture
 
-Studio Intelligence organizes data by **business domain** rather than software vendor.
+Studio Intelligence separates the warehouse into three layers.
 
-## Website Analytics
+```
+                Source Systems
 
-Primary System
+                      │
 
-Google Analytics 4
+                      ▼
+
+              Source Fact Tables
+
+                      │
+
+                      ▼
+
+             Reporting Views
+
+                      │
+
+                      ▼
+
+      Dashboards
+      APIs
+      AI
+      Forecasting
+      Automation
+```
+
+## Layer 1 — Source Fact Tables
 
 Purpose
 
-- Website traffic
-- Users
-- Sessions
-- Attribution
-- Landing pages
-- Engagement
-- Conversions
-- Revenue attribution
+Store exactly what the external source system reports.
 
-Warehouse Table
+No calculations.
 
-- ga4_daily_metrics
+No business logic.
 
-GA4 is the authoritative source for website behavior.
+No cross-system joins.
+
+Every source owns its own fact tables.
 
 ---
 
-## Advertising
-
-Primary Systems
-
-- Eulerity
-- SOCi
-- Future Advertising Platforms
+## Layer 2 — Reporting Views
 
 Purpose
 
-- Google Search
-- Google Display
-- Google Video
-- Meta Advertising
-- Remarketing
+Business logic lives here.
 
-Metrics
-
-- Spend
-- Clicks
-- Impressions
-- CPC
-- CTR
-- CPM
-- Campaign Performance
-
-Warehouse Table
-
-- advertising_daily_channel_metrics
-
-Advertising data is organized by:
-
-- Provider
-- Platform
-- Channel
+Reporting views combine multiple source systems into business-friendly datasets.
 
 Examples
 
-| Provider | Platform | Channel |
-|-----------|----------|----------|
-| Eulerity | Google | Search |
-| Eulerity | Google | Remarketing |
-| Eulerity | Meta | Meta |
-| SOCi | Meta | Meta |
+marketing_daily_summary
 
-This allows multiple advertising systems to contribute to the same reporting model.
+studio_daily_summary
+
+operations_daily_summary
+
+executive_daily_summary
+
+financial_daily_summary
+
+forecast_summary
 
 ---
 
-## Local Marketing
+## Layer 3 — AI & Automation
 
-Primary System
+Purpose
+
+Consume reporting views.
+
+Never consume raw fact tables directly unless specifically required.
+
+AI should answer business questions rather than reconstruct source data.
+
+---
+
+# Configuration Tables
+
+These tables define the platform.
+
+organizations
+
+brands
+
+studios
+
+studio_integrations
+
+integration_runs
+
+No workflow should contain hardcoded IDs.
+
+All integrations originate from studio_integrations.
+
+---
+
+# Source Fact Tables
+
+Every external system owns its own source tables.
+
+---
+
+## Google Analytics 4
+
+Table
+
+ga4_daily_metrics
+
+Grain
+
+One row
+
+Studio
+
+Date
+
+Authoritative for
+
+Website traffic
+
+Users
+
+Sessions
+
+Engagement
+
+Website conversions
+
+Revenue attribution
+
+---
+
+## Eulerity
+
+### eulerity_daily_metrics
+
+Grain
+
+Studio
+
+Date
+
+Contains
+
+Impressions
+
+Clicks
+
+CTR
+
+CPC
+
+CPM
+
+Channel metrics
+
+---
+
+### eulerity_daily_spend
+
+Grain
+
+Studio
+
+Campaign
+
+Date
+
+Contains
+
+Spend
+
+Campaign
+
+Activation Date
+
+User
+
+---
+
+### eulerity_budget_snapshots
+
+Grain
+
+Studio
+
+Snapshot Date
+
+Contains
+
+Dashboard Screenshot
+
+AI Extracted Budget Allocation
+
+Historical Budget Distribution
+
+---
+
+## SOCi
+
+Planned
+
+soci_campaign_daily
+
+reviews_daily
+
+social_posts_daily
+
+google_business_profile_daily
+
+---
+
+## Pinot Technical System (PTS)
+
+Planned
+
+reservations_daily
+
+sales_daily
+
+customers_daily
+
+private_parties_daily
+
+inventory_daily
+
+gift_cards_daily
+
+---
+
+## Weather
+
+Planned
+
+weather_daily
+
+---
+
+## Calendar
+
+Planned
+
+holiday_calendar
+
+school_calendar
+
+event_calendar
+
+---
+
+# Reporting Views
+
+Business reporting should never consume source tables directly.
+
+Instead, reporting views combine multiple fact tables.
+
+Examples
+
+marketing_daily_summary
+
+Combines
+
+GA4
+
+Eulerity
 
 SOCi
 
-Purpose
+Produces
 
-- Studio-specific Meta campaigns
-- Local Facebook marketing
-- Local Instagram marketing
-- Community engagement
-- Reviews
-- Reputation Management
-- Local Listings
+Marketing Spend
 
-Future warehouse tables
+Website Sessions
 
-- reviews_daily
-- social_posts_daily
-- google_business_profile_daily
+ROAS
 
-SOCi is the authoritative source for localized marketing.
+Cost Per Session
+
+Cost Per User
+
+CTR
+
+Conversions
 
 ---
 
-## Operations & Revenue
+studio_daily_summary
 
-Primary System
+Combines
 
-PTS (Pinot Technical System)
+GA4
 
-Purpose
+Eulerity
 
-- Reservations
-- Attendance
-- Revenue
-- Class sales
-- Retail sales
-- Bar sales
-- Candle sales
-- Private parties
-- Mobile events
-- Gift cards
-- Customer records
+PTS
 
-Future warehouse tables
+Weather
 
-- reservations_daily
-- revenue_daily
-- customer_daily
+Holiday Calendar
 
-PTS is the authoritative source for studio operations and revenue.
+Produces
 
----
+Revenue
 
-# Warehouse Design
+Attendance
 
-Studio Intelligence follows a dimensional warehouse architecture.
+Marketing Spend
 
-Configuration Tables
+Website Traffic
 
-- organizations
-- brands
-- studios
-- studio_integrations
-- integration_runs
+Conversion Rate
 
-Fact Tables
+Average Ticket
 
-- ga4_daily_metrics
-- advertising_daily_channel_metrics
-- Future operational tables
-- Future financial tables
+Lead Time
 
-Business-facing dashboards should consume reporting views rather than raw source tables.
+Weather
 
-Examples
-
-- marketing_daily_summary
-- operations_daily_summary
-- executive_daily_summary
-- studio_daily_summary
+Holiday Flags
 
 ---
 
-# Standard ETL Architecture
+executive_daily_summary
 
-Every integration follows the same architecture.
+Combines
+
+Every business domain
+
+Produces
+
+Executive KPIs
+
+Growth
+
+Forecasts
+
+Alerts
+
+Benchmarking
+
+---
+
+# Standard Integration Pattern
+
+Every integration follows the exact same workflow.
 
 ```
-Studio Integrations
+studio_integrations
 
-      │
-      ▼
+        │
 
 Read Active Integrations
 
-      │
-      ▼
+        │
 
-Loop Through Studios
+Filter Integration Type
 
-      │
-      ▼
+        │
 
-API Request
+Loop Each Studio
 
-      │
-      ▼
+        │
 
-Normalize Response
+Retrieve Data
 
-      │
-      ▼
+(API
+CSV
+Browser
+Screenshot)
 
-Warehouse UPSERT
+        │
 
-      │
-      ▼
+Normalize
 
-Integration Runs
+        │
 
-      │
-      ▼
+UPSERT
 
-Dashboards
-APIs
-AI
+        │
+
+integration_runs
+
+        │
+
+Reporting Views
 ```
 
-This pattern ensures every integration behaves consistently regardless of data source.
+Every workflow should be reusable.
+
+No workflow should contain studio-specific logic.
+
+---
+
+# AI Vision Pipeline
+
+Not every business system exposes an API.
+
+Some expose only dashboards.
+
+Architecture
+
+```
+Screenshot
+
+      │
+
+Vision Model
+
+      │
+
+Structured Data
+
+      │
+
+Warehouse
+```
+
+Examples
+
+Eulerity Budget Distribution
+
+POS Dashboards
+
+Financial Reports
+
+Scheduling Dashboards
+
+Competitive Analysis
 
 ---
 
 # Integration Registry
 
-Every external system is represented by one record in **studio_integrations**.
+Every external connection is represented by one record.
 
-Each record represents one studio connected to one external system.
+studio_integrations
 
-Examples
+Example
 
 | Studio | Integration | External ID |
 |---------|-------------|-------------|
@@ -336,108 +574,144 @@ Examples
 | Louisville | SOCi | Future |
 | Louisville | PTS | Future |
 
-No workflow should require hardcoded IDs.
+No workflow should contain hardcoded identifiers.
 
 ---
 
-# ETL Auditing
+# Integration Auditing
 
-Every workflow records execution information in:
+Every ETL execution is recorded.
 
-- integration_runs
+integration_runs
 
-Typical information recorded
+Typical fields
 
-- Integration
-- Studio
-- Start Time
-- Completion Time
-- Status
-- Records Processed
-- Duration
-- Error Message
+Studio
 
-Fact tables may reference the integration run that created each record.
+Integration
+
+Workflow
+
+Started
+
+Completed
+
+Duration
+
+Status
+
+Records Imported
+
+Errors
+
+Every imported record should be traceable to its ETL execution.
 
 ---
 
-# Multi-Tenant Model
+# System of Record
 
-Organization
+Every business metric has exactly one authoritative source.
 
-└── Brand
-
-&nbsp;&nbsp;&nbsp;&nbsp;└── Studio
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── Integration
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── Business Domain
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── Daily Metrics
-
-Every warehouse record should ultimately resolve to:
-
-- Organization
-- Brand
-- Studio
-- Integration
-- Business Domain
-- Date
-
-No workflow should require hardcoded IDs or studio-specific logic.
+| Business Data | System of Record |
+|-------------------------------|----------------|
+| Website Analytics | GA4 |
+| Advertising Performance | Eulerity |
+| Local Marketing | SOCi |
+| Reservations | PTS |
+| Revenue | PTS |
+| Customers | PTS |
+| Reviews | SOCi |
+| Weather | Weather API |
+| Holidays | Internal Calendar |
 
 ---
 
 # Design Principles
 
-Studio Intelligence follows these core principles.
+Configuration over hardcoding
 
-- Configuration over hardcoding
-- Warehouse-first architecture
-- Business-domain modeling instead of vendor modeling
-- Normalize before loading
-- Preserve raw source data when practical
-- One responsibility per workflow
-- UPSERT instead of duplicate inserts
-- Historical data is preserved
-- Every workflow must support unlimited studios
-- Every integration should be reusable
-- Every ETL execution should be auditable
-- Prefer direct APIs over limited connector nodes whenever possible
+Warehouse-first architecture
+
+Source-specific fact tables
+
+Reporting views contain business logic
+
+Normalize before loading
+
+Preserve source fidelity
+
+UPSERT instead of duplicate inserts
+
+Historical data is preserved
+
+Unlimited studios
+
+Unlimited integrations
+
+Unlimited brands
+
+Unlimited organizations
+
+Every ETL execution is auditable
+
+One responsibility per workflow
+
+APIs preferred over browser automation
+
+Browser automation only when APIs are unavailable
+
+AI may be used as a structured data ingestion layer
 
 ---
 
-# Current Integrations
+# Platform Maturity
 
-## Completed
+Infrastructure
 
-✅ Google Analytics 4
+★★★★★
 
-Production ETL complete.
+GA4
 
----
+★★★★★
 
-## In Development
+Eulerity
 
-🚧 Eulerity
+★★☆☆☆
 
-Advertising ETL using internal APIs.
+SOCi
 
----
+☆☆☆☆☆
 
-## Planned
+PTS
 
-- SOCi
-- PTS
-- Google Business Profile
-- Weather
-- Financial integrations
-- AI Recommendation Engine
+☆☆☆☆☆
+
+Reporting Views
+
+★☆☆☆☆
+
+Executive Dashboard
+
+☆☆☆☆☆
+
+Forecasting
+
+☆☆☆☆☆
+
+AI Insights
+
+★☆☆☆☆
+
+Automation
+
+★★☆☆☆
 
 ---
 
 # Long-Term Vision
 
-Studio Intelligence should become the operating system for multi-location experiential businesses.
+Studio Intelligence is designed to become the operating system for multi-location experiential businesses.
 
-Rather than simply reporting historical numbers, the platform should automatically collect operational, financial, and marketing data from every business system, unify it into a centralized warehouse, identify trends, forecast future performance, automate reporting, and provide AI-driven recommendations that help owners make better decisions every day.
+Rather than simply reporting historical numbers, the platform continuously collects operational, financial, marketing, customer, and AI-derived data from every business system, stores each source in its own authoritative fact tables, transforms those facts into unified business reporting views, and enables dashboards, forecasting, automation, anomaly detection, and AI-driven recommendations that help owners make better decisions every day.
+
+The architecture is intentionally designed so that new data sources can be added without changing existing workflows, dashboards, or AI models. Source systems remain independent, reporting logic remains centralized, and business intelligence continues to grow as the platform evolves.
