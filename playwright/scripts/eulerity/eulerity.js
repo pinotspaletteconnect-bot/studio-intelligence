@@ -4,6 +4,10 @@ const path = require("path");
 const fs = require("fs");
 const { chromium } = require("playwright");
 
+// =====================================================
+// Configuration
+// =====================================================
+
 const DOWNLOAD_FOLDER = path.join(
     __dirname,
     "..",
@@ -15,43 +19,153 @@ if (!fs.existsSync(DOWNLOAD_FOLDER)) {
     fs.mkdirSync(DOWNLOAD_FOLDER, { recursive: true });
 }
 
-async function switchStudio(page, studioName) {
+const STUDIOS = [
+    {
+        code: "STM",
+        name: "Pinot's Palette - Louisville"
+    },
+    {
+        code: "GIL",
+        name: "Pinot's - Gilbert Primary"
+    },
+    {
+        code: "JEF",
+        name: "Pinot's Palette Jeffersonville"
+    },
+    {
+        code: "SN",
+        name: "Pinot's Palette Short North - Primary Campaign"
+    }
+];
 
-    console.log(`Switching to ${studioName}...`);
+// =====================================================
+// Browser Login
+// =====================================================
 
-    await page.locator(".css-1g6gooi").first().click();
+async function login() {
+
+    console.log("Launching browser...");
+
+    const browser = await chromium.launch({
+        headless: false,
+        slowMo: 250
+    });
+
+    const context = await browser.newContext({
+        acceptDownloads: true
+    });
+
+    const page = await context.newPage();
+
+    console.log("Opening Eulerity...");
+
+    await page.goto("https://eulerity.ai");
+
+    const popupPromise = page.waitForEvent("popup");
+
+    await page.getByRole("link", {
+        name: "Sign In"
+    }).click();
+
+    const loginPage = await popupPromise;
+
+    await loginPage.waitForLoadState();
+
+    console.log("Logging in...");
+
+    await loginPage
+        .getByRole("button", {
+            name: "Sign in with email"
+        })
+        .click();
+
+    await loginPage
+        .getByRole("textbox")
+        .fill(process.env.EULERITY_EMAIL);
+
+    await loginPage
+        .getByRole("button", {
+            name: "Next"
+        })
+        .click();
+
+    await loginPage
+        .locator('input[name="password"]')
+        .fill(process.env.EULERITY_PASSWORD);
+
+    await loginPage
+        .getByRole("button", {
+            name: "Sign In"
+        })
+        .click();
+
+    console.log("Waiting for dashboard...");
+
+    await loginPage.waitForLoadState();
+
+    await loginPage.waitForTimeout(5000);
+
+    console.log("✅ Logged into Eulerity");
+
+    return {
+        browser,
+        page: loginPage
+    };
+
+}
+// =====================================================
+// Studio Switching
+// =====================================================
+
+async function switchStudio(page, studio) {
+
+    console.log(`\nSwitching to ${studio.code}...`);
+
+    await page.locator(".css-8mmkcg").first().click();
+
+    switch (studio.code) {
+    case "GIL":
+        await page.getByText("Pinot's - Gilbert Primary").click();
+        break;
+    case "JEF":
+        await page.getByText("Pinot's Palette Jeffersonville").nth(1).click();
+        break;
+    case "SN":
+        await page.getByText("Pinot's Palette Short North - Primary Campaign").click();
+        break;
+    case "STM":
+        await page.getByText("Pinot's Palette - Louisville").click();
+        break;
+}
+
+    await page.waitForTimeout(3000);
+
+    // Return to the report landing page
+    await page.getByText("Ads Displayed").click();
+
+    await page.waitForTimeout(1000);
+
+    await page.getByText("BY CHANNEL").click();
 
     await page.waitForTimeout(2000);
 
-    const texts = await page.locator("body *:visible").evaluateAll(elements =>
-        elements
-            .map(e => e.textContent?.trim())
-            .filter(t => t && t.length > 0)
-    );
-
-    console.log(texts);
-
-    await page.pause();
+    console.log(`✅ ${studio.code} selected`);
 
 }
+// =====================================================
+// Metrics Download
+// =====================================================
 
-async function downloadMetrics(page, studioCode) {
+async function downloadMetrics(page, studio) {
 
-    console.log("===== ENTERED downloadMetrics() =====");
+    console.log(`Downloading Metrics for ${studio.code}...`);
 
-    console.log("Waiting for page...");
-    await page.waitForTimeout(3000);
-
-    console.log("Clicking BY CHANNEL...");
     await page.getByText("BY CHANNEL").click();
 
     await page.waitForTimeout(1500);
 
-    console.log("Waiting for download...");
-
     const downloadPromise = page.waitForEvent("download");
 
-    console.log("Clicking Download CSV...");
     await page.getByRole("link", {
         name: "Download CSV"
     }).click();
@@ -60,108 +174,148 @@ async function downloadMetrics(page, studioCode) {
 
     const filename = path.join(
         DOWNLOAD_FOLDER,
-        `${studioCode}_metrics.csv`
+        `${studio.code}_metrics.csv`
     );
-
-    console.log(`Saving to ${filename}`);
 
     await download.saveAs(filename);
 
-    console.log("✅ Metrics downloaded.");
+    console.log(`✅ ${studio.code} metrics downloaded`);
 
     return filename;
 
 }
 
-async function runEulerity(studioName, studioCode) {
+// =====================================================
+// Spend Download
+// =====================================================
+
+async function downloadSpend(page, studio) {
+
+    console.log(`Downloading Spend for ${studio.code}...`);
+
+    await page.getByText("Advertising Budget").click();
+
+    await page.waitForTimeout(1500);
+
+    const downloadPromise = page.waitForEvent("download");
+
+    await page.getByRole("link", {
+        name: "Download CSV"
+    }).click();
+
+    const download = await downloadPromise;
+
+    const filename = path.join(
+        DOWNLOAD_FOLDER,
+        `${studio.code}_spend.csv`
+    );
+
+    await download.saveAs(filename);
+
+    console.log(`✅ ${studio.code} spend downloaded`);
+
+    return filename;
+
+}
+
+// =====================================================
+// Budget Distribution
+// =====================================================
+
+async function getBudgetDistribution(page, studio) {
+
+    console.log(`Reading budget distribution for ${studio.code}...`);
+
+    await page.getByText("Budget Distribution").click();
+
+    await page.waitForTimeout(1500);
+
+    const text = await page.locator("body").innerText();
+
+    function extract(label) {
+
+        const regex = new RegExp("(\\d+)\\%\\s+" + label, "i");
+
+        const match = text.match(regex);
+
+        return match ? Number(match[1]) : 0;
+
+    }
+
+    const budget = {
+
+        search: extract("Search"),
+        social: extract("Social"),
+        video: extract("Video"),
+        display: extract("Displays"),
+        other: 0
+
+    };
+
+    console.log(budget);
+
+    return budget;
+
+}
+// =====================================================
+// Main
+// =====================================================
+
+async function runEulerity() {
 
     let browser;
 
     try {
 
-        console.log("Launching browser...");
+        const session = await login();
 
-        browser = await chromium.launch({
-            headless: false,
-            slowMo: 250
-        });
+        browser = session.browser;
 
-        const context = await browser.newContext({
-            acceptDownloads: true
-        });
+        const page = session.page;
 
-        const page = await context.newPage();
+        const results = [];
 
-        console.log("Opening Eulerity...");
+        let firstStudio = true;
 
-        await page.goto("https://eulerity.ai");
+for (const studio of STUDIOS) {
 
-        const popupPromise = page.waitForEvent("popup");
+    console.log("");
+    console.log("==================================");
+    console.log(`Processing ${studio.code}`);
+    console.log("==================================");
 
-        await page.getByRole("link", {
-            name: "Sign In"
-        }).click();
+    if (!firstStudio) {
+        await switchStudio(page, studio);
+    }
 
-        const loginPage = await popupPromise;
+    firstStudio = false;
 
-        await loginPage.waitForLoadState();
+    const metricsFile = await downloadMetrics(page, studio);
 
-        console.log("Logging in...");
+    const spendFile = await downloadSpend(page, studio);
 
-        await loginPage
-            .getByRole("button", {
-                name: "Sign in with email"
-            })
-            .click();
+    const budget = await getBudgetDistribution(page, studio);
 
-        await loginPage
-            .getByRole("textbox")
-            .fill(process.env.EULERITY_EMAIL);
+    results.push({
+        studioCode: studio.code,
+        studioName: studio.name,
+        metricsFile,
+        spendFile,
+        budget
+    });
 
-        await loginPage
-            .getByRole("button", {
-                name: "Next"
-            })
-            .click();
-
-        await loginPage
-            .locator('input[name="password"]')
-            .fill(process.env.EULERITY_PASSWORD);
-
-        await loginPage
-            .getByRole("button", {
-                name: "Sign In"
-            })
-            .click();
-
-        console.log("Waiting after login...");
-        await loginPage.waitForTimeout(5000);
-
-        console.log("✅ Logged in.");
-
-        console.log("Skipping studio switch...");
-
-        console.log("===== BEFORE downloadMetrics =====");
-
-        const metricsFile = await downloadMetrics(
-            loginPage,
-            studioCode
-        );
-
-        console.log("===== AFTER downloadMetrics =====");
+}
 
         console.log("");
         console.log("==================================");
-        console.log("DOWNLOAD COMPLETE");
-        console.log(metricsFile);
+        console.log("Eulerity Complete");
         console.log("==================================");
 
-        console.log("Waiting 10 seconds before closing...");
-        await loginPage.waitForTimeout(10000);
+        console.log(results);
 
         await browser.close();
 
-        return metricsFile;
+        return results;
 
     } catch (err) {
 
@@ -181,31 +335,36 @@ async function runEulerity(studioName, studioCode) {
 
 }
 
+// =====================================================
+// Exports
+// =====================================================
+
 module.exports = {
     runEulerity
 };
 
+// =====================================================
+// Standalone Test Runner
+// =====================================================
+
 if (require.main === module) {
 
-    const studioName = process.argv[2];
-    const studioCode = process.argv[3];
+    runEulerity()
+        .then(results => {
 
-    if (!studioName || !studioCode) {
+            console.log("");
+            console.log("Returned Results");
+            console.log("================");
 
-        console.error("");
-        console.error("Usage:");
-        console.error('node scripts/eulerity/eulerity.js "Business Name" STUDIOCODE');
-        process.exit(1);
+            console.dir(results, { depth: null });
 
-    }
-
-    runEulerity(studioName, studioCode)
-        .then(file => {
-            console.log(`Finished: ${file}`);
         })
         .catch(err => {
+
             console.error(err);
+
             process.exit(1);
+
         });
 
 }
