@@ -183,6 +183,26 @@ weather_daily
 
 ## Next Coding Task
 
+One correction to the "Next Coding Task"
+
+Earlier I wrote:
+
+Complete Spend CSV parser
+
+I think we should be a little more specific.
+
+The next file should be:
+
+playwright/services/eulerityParser.js
+
+And the objective should be:
+
+✅ Metrics parser (already complete)
+Build Spend parser
+Build Budget parser (which converts the budget object returned by Playwright into the normalized format expected by the ETL)
+Test all three parsers independently.
+Then wire them into the route.
+
 Current Milestone
 
 Eulerity ETL
