@@ -44,22 +44,31 @@ const STUDIOS = [
 
 async function login() {
 
-    console.log("Launching browser...");
+     console.log("Launching browser...");
 
     const browser = await chromium.launch({
-        headless: false,
-        slowMo: 250
+        headless: true
     });
+
+    console.log("✅ Browser launched");
 
     const context = await browser.newContext({
         acceptDownloads: true
     });
 
+    console.log("✅ Browser context created");
+
     const page = await context.newPage();
+
+    console.log("✅ New page created");
 
     console.log("Opening Eulerity...");
 
-    await page.goto("https://eulerity.ai");
+    await page.goto("https://eulerity.ai", {
+    waitUntil: "networkidle"
+});
+
+    console.log("✅ Eulerity loaded");
 
     const popupPromise = page.waitForEvent("popup");
 
@@ -69,9 +78,16 @@ async function login() {
 
     const loginPage = await popupPromise;
 
+    console.log("✅ Login popup opened");
+
     await loginPage.waitForLoadState();
 
+    console.log("✅ Login page loaded");
+
     console.log("Logging in...");
+
+    console.log("Email configured:", !!process.env.EULERITY_EMAIL);
+console.log("Password configured:", !!process.env.EULERITY_PASSWORD);
 
     await loginPage
         .getByRole("button", {
