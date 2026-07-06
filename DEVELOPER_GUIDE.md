@@ -51,7 +51,11 @@ Responsibilities
 - Navigation
 - Browser interactions
 - Download reports
-- Return downloaded files
+- RReturn browser-acquired data (downloaded files and page-derived values)
+Outputs
+
+• Downloaded CSV reports
+• Values extracted directly from web pages
 
 Never
 
@@ -162,15 +166,23 @@ Login
 
 ↓
 
-Switch Studio
+Process Every Configured Studio
+
+    ↓
+
+    Download Metrics CSV
+
+    ↓
+
+    Download Spend CSV
+
+    ↓
+
+    Read Budget Distribution
 
 ↓
 
-Download Report
-
-↓
-
-Return Downloaded File
+Return Browser Results
 
 ↓
 
@@ -187,6 +199,14 @@ UPSERT warehouse.
 Never
 
 Know database schema.
+
+##Outputs
+
+Outputs
+
+• Metrics CSV
+• Spend CSV
+• Budget Distribution JSON
 
 ---
 
@@ -430,6 +450,20 @@ Eulerity Spend
 One row per Studio + Day + Campaign
 
 ---
+
+Eulerity Browser Automation
+
+Per Studio
+
+Outputs
+
+1. Metrics CSV
+2. Spend CSV
+3. Budget Allocation Data
+
+These outputs are returned to n8n.
+
+Playwright does not normalize or warehouse the data.
 
 # Development Rules
 

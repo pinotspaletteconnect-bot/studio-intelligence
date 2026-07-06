@@ -82,74 +82,50 @@ Reporting Views
 
 ---
 
-# Eulerity
+## Eulerity
 
-Status
+Status: Browser Automation COMPLETE
 
-IN PROGRESS
+### Completed
 
-Completed
+- ✅ Login automation
+- ✅ Single login for all studios
+- ✅ Multi-studio processing
+- ✅ Studio switching
+- ✅ Metrics CSV download
+- ✅ Spend CSV download
+- ✅ Budget Distribution extraction
+- ✅ Metrics parser completed
+- ✅ Browser automation returns structured results for every studio
 
-✅ Login automation
+Current Browser Output
 
-✅ Session persistence
+Per studio:
 
-✅ Saved report URLs
+- Metrics CSV
+- Spend CSV
+- Budget Distribution JSON
 
-✅ Metrics report download
+Returned as:
 
-✅ CSV reader
+- Studio Code
+- Studio Name
+- Metrics File Path
+- Spend File Path
+- Budget Distribution Object
 
-✅ Metrics table created
+### Remaining
 
-✅ Spend table created
-
-✅ Budget allocation table created
-
-Metrics CSV structure confirmed.
-
-Current parser:
-
-playwright/services/eulerityParser.js
-
----
-
-# Remaining Eulerity Work
-
-Metrics
-
-☐ Complete parseMetrics()
-
-☐ Connect parser into Playwright route
-
-☐ Return parsed objects to n8n
-
-☐ n8n normalization
-
-☐ UPSERT eulerity_daily_metrics
-
-Spend
-
-☐ Download report
-
-☐ Parse report
-
-☐ UPSERT eulerity_daily_spend
-
-Budget
-
-☐ Download report
-
-☐ Parse report
-
-☐ UPSERT eulerity_daily_budget_allocation
-
-Cleanup
-
-☐ Delete downloaded CSVs after successful import
-
-☐ Write integration_runs records
-
+- Build Spend CSV parser
+- Build Budget parser
+- Connect Playwright to `/routes/eulerity.js`
+- Return structured JSON from API
+- Build n8n Eulerity workflow
+- UPSERT Metrics
+- UPSERT Spend
+- UPSERT Budget Allocation
+- Record `integration_runs`
+- Delete temporary CSV files
 ---
 
 # Current Repository
@@ -205,22 +181,27 @@ weather_daily
 
 # Next Coding Task
 
-Continue the Metrics Import.
+## Next Coding Task
 
-Next file to modify
+Current Milestone
+
+Eulerity ETL
+
+Objective
+
+Convert the downloaded browser artifacts into normalized data for n8n.
+
+Files
 
 playwright/services/eulerityParser.js
 
-After parser is complete
+Tasks
 
-1. Connect parser into routes/eulerity.js
-
-2. Verify parsed output
-
-3. Connect n8n workflow
-
-4. UPSERT metrics
-
+1. Complete Spend CSV parser
+2. Complete Budget parser
+3. Return structured objects
+4. Connect parser to routes/eulerity.js
+5. Begin n8n UPSERT workflow
 ---
 
 # Current Architecture Reminder
@@ -262,3 +243,20 @@ DEVELOPER_GUIDE.md
 NEXT_SESSION.md
 
 Continue implementing the Eulerity Metrics import.
+
+# Known Working Components
+
+Playwright
+- Login works
+- Session persistence works
+- Saved report download works
+
+GA4
+- Import works
+- UPSERT works
+
+Supabase
+- Warehouse schema complete
+
+n8n
+- Studio iteration works
