@@ -1,399 +1,354 @@
-# AI_REFRESHER.md
+Studio Intelligence AI Refresher
+Version 2.0
+
 Last Updated: July 6, 2026
 
----
+This document is intended to quickly bring any AI assistant up to speed before working on Studio Intelligence.
 
-# Purpose
+Read this document before making recommendations.
 
-This document is the first document the AI should read at the beginning of every coding session.
+Then read:
 
-It is not intended to replace the Architecture or Developer Guide.
+ARCHITECTURE.md
+DEVELOPER_GUIDE.md
+CURRENT_STATUS.md
 
-Its purpose is to quickly restore project context, document engineering decisions, and identify exactly where development should resume.
+If recommendations conflict with these documents, follow the documentation.
 
----
+Project Overview
 
-# Current Status
+Studio Intelligence is a warehouse-first business intelligence platform for multi-location experiential businesses.
 
-Current Version
+The objective is to automatically collect, normalize, warehouse, analyze, and report operational business data.
 
-v0.3.0
+Browser automation is only one component of the overall platform.
 
-Current Sprint
-
-Eulerity ETL
-
-Current Focus
-
-n8n ETL
-
-Last Completed
-
-✅ Eulerity Playwright Layer Complete
-
----
-
-# System Architecture
-
-Playwright
-
-↓
-
-Browser Data
-
-↓
-
+Current Technology Stack
+Orchestration
 n8n
-
-↓
-
-Warehouse
-
-↓
-
-Reporting Views
-
-↓
-
-AI
 
 Responsibilities
 
+Scheduling
+Workflow orchestration
+ETL
+Retry logic
+Auditing
+Calling APIs
+Calling Playwright
+Browser Automation
+
+Location
+
+studio-intelligence/playwright
+
+Technology
+
+Node.js
+Express
 Playwright
-- Browser automation
-- Login
-- Navigation
-- Download reports
-- Return structured browser data
 
-n8n
-- Acquire configuration
-- Execute integrations
-- Normalize
-- UPSERT
-- Auditing
+Hosted on
 
-Supabase
-- Configuration
-- Warehouse
-- Reporting Views
+Railway
 
-AI
-- Reporting Views only
-- Never consume raw fact tables
+Responsibilities
 
----
+Login
+Session management
+Navigation
+Browser automation
+Download reports
+Return structured browser data
 
-# Current Integrations
+Never
 
-| Integration | Status | Workflow |
-|------------|--------|----------|
-| GA4 | ✅ Production | 03 |
-| Eulerity | 🟡 ETL | 04 |
-| SOCi | ⏳ Planned | 05 |
-| PTS | ⏳ Planned | 06 |
-| Weather | ⏳ Planned | 07 |
+Normalize data
+Write database records
+Perform ETL
+Warehouse
 
----
+Technology
 
-# Workflow Catalog
+Supabase (PostgreSQL)
 
-## Workflow 02
+Responsibilities
 
-Name
+Configuration
+Warehouse
+Reporting Views
+AI data source
+Source Control
 
-Get Active Integrations
+GitHub Repository
 
-Purpose
+studio-intelligence
 
-Returns every active Studio + Integration.
+Primary working directory
 
-Database Tables
-
-- studios
-- studio_integrations
-
-Returns
-
-- studio_id
-- integration_id
-- studio_code
-- studio_name
-- city
-- state
-- country
-- timezone
-- integration_type
-- integration_name
-- external_id
-- configuration
-
-SQL
-
-```sql
-SELECT
-    s.id AS studio_id,
-    si.id AS integration_id,
-
-    s.studio_code,
-    s.studio_name,
-    s.city,
-    s.state,
-    s.country,
-    s.timezone,
-
-    si.integration_type,
-    si.integration_name,
-    si.external_id,
-    si.configuration
-
-FROM studios s
-
-INNER JOIN studio_integrations si
-    ON s.id = si.studio_id
-
-WHERE
-    s.active = TRUE
-    AND si.is_active = TRUE
-
-ORDER BY
-    s.id,
-    si.integration_type;
-```
-
-This workflow is the configuration source for every import workflow.
-
----
-
-## Workflow 03
-
-Name
-
-GA4 Dynamic Import
-
-Purpose
-
-Imports GA4 metrics into the warehouse.
-
-Flow
-
-Manual Trigger
-
-↓
-
-Workflow 02
-
-↓
-
-Filter (integration_type = ga4)
-
-↓
-
-Loop Studios
-
-↓
-
-GA4 API
-
-↓
-
-Normalize
-
-↓
-
-UPSERT ga4_daily_metrics
-
-Node Responsibilities
-
-Filter
-
-Only GA4 integrations.
-
-HTTP Request
-
-Calls the Google Analytics Data API.
-
-Code Node
-
-Transforms the API response into warehouse rows.
-
-PostgreSQL
-
-UPSERT into ga4_daily_metrics.
-
----
-
-## Workflow 04
-
-Name
-
-Eulerity Dynamic Import
-
-Status
-
-In Development
-
-Purpose
-
-Import Eulerity metrics, spend and budget allocation.
-
-Important Design Decision
-
-Playwright processes ALL active studios in a single browser session.
-
-Workflow 04 should call:
-
-POST /eulerity/download
-
-exactly once.
-
-Do NOT execute Playwright once per studio.
-
-The returned JSON should then be split into warehouse rows.
-
-Planned Flow
-
-Manual Trigger
-
-↓
-
-POST /eulerity/download
-
-↓
-
-Metrics
-
-↓
-
-Spend
-
-↓
-
-Budget
-
-↓
-
-UPSERT
-
-↓
-
-integration_runs
-
----
-
-## Workflow 05
-
-Reserved
-
-SOCi Import
-
----
-
-## Workflow 06
-
-Reserved
-
-PTS Import
-
----
-
-## Workflow 07
-
-Reserved
-
-Weather Import
-
----
-
-# Repository
+playwright/
+Current Repository Structure
+studio-intelligence/
 
 playwright/
 
-    routes/
-        eulerity.js
+    Dockerfile
 
-    scripts/
-        eulerity/
-            eulerity.js
-
-    services/
-        eulerityParser.js
+    package.json
 
     server.js
 
----
+    routes/
 
-# Current Warehouse
+        eulerity.js
 
-Configuration
+    scripts/
 
-- organizations
-- brands
-- studios
-- studio_integrations
-- integration_runs
+        eulerity/
+
+            eulerity.js
+
+    services/
+
+        eulerityParser.js
+
+        supabase.js
+
+    downloads/
+
+    auth/
+
+    utils/
+
+docs/
+
+    ARCHITECTURE.md
+
+    DEVELOPER_GUIDE.md
+
+    ROADMAP.md
+
+    CURRENT_STATUS.md
+
+    CHANGELOG.md
+Current Production Environment
+Railway
+
+Hosts
+
+Playwright Express service
+
+Deployment
+
+Docker
+
+Base Image
+
+Microsoft Playwright
+
+Express Endpoints
+
+GET /
+
+GET /eulerity
+
+POST /eulerity/download
+
+Status
+
+Production Ready
+
+n8n
+
+Responsible for
+
+Calling
+
+POST /eulerity/download
+
+Receiving JSON
+
+Performing ETL
+
+Writing to Supabase
+
+Current Working Integration
+Eulerity
+
+Status
+
+Browser Automation Complete
+
+Features
+
+✔ Login
+
+✔ Session Persistence
+
+✔ Multi-Studio Processing
+
+✔ Metrics Download
+
+✔ Spend Download
+
+✔ Budget Distribution
+
+✔ CSV Parsing
+
+✔ Structured JSON Response
+
+Studios
+
+STM
+GIL
+JEF
+SN
+Current Warehouse
+
+Configuration Tables
+
+organizations
+brands
+studios
+studio_integrations
+integration_runs
 
 Fact Tables
 
-- ga4_daily_metrics
-- eulerity_daily_metrics
-- eulerity_daily_spend
-- eulerity_daily_budget_allocation
-- weather_daily
+ga4_daily_metrics
+eulerity_daily_metrics
+eulerity_daily_spend
+eulerity_daily_budget_allocation
+weather_daily
 
----
+Reporting Views
 
-# Engineering Decisions
+(planned)
 
-These decisions have already been made.
+marketing_daily_summary
+operations_daily_summary
+executive_daily_summary
+studio_daily_summary
+Architecture Rules
 
-Do not redesign them.
+Playwright
 
-- Playwright owns browser automation only.
-- n8n owns ETL.
-- Supabase owns storage.
-- Reporting Views own reporting.
-- AI consumes reporting views only.
-- Workflow 02 is the configuration loader.
-- One workflow per integration.
-- Playwright returns structured JSON.
-- UPSERT operations occur in n8n.
-- Browser automation never writes to the warehouse.
-- Browser automation never knows the database schema.
+Owns browser automation only.
 
----
+n8n
 
-# Current Sprint
+Owns ETL.
 
-Remaining Tasks
+Supabase
 
-☐ Build Workflow 04
+Owns storage and configuration.
 
-☐ Normalize Eulerity response
+Reporting Views
 
-☐ UPSERT Metrics
+Own business reporting.
 
-☐ UPSERT Spend
+Never move responsibilities between components.
 
-☐ UPSERT Budget Allocation
+Current Development Stage
 
-☐ Record integration_runs
+Infrastructure
 
-☐ Delete temporary download files
+✅ Complete
 
----
+Playwright
 
-# Resume Here
+✅ Complete
 
-At the start of the next coding session:
+Railway
 
-1. Read:
-   - ARCHITECTURE.md
-   - DEVELOPER_GUIDE.md
-   - AI_REFRESHER.md
+✅ Complete
 
-2. Continue building Workflow 04 (Eulerity Dynamic Import).
+Docker
 
-3. Do not modify the Playwright layer unless a bug is discovered.
+✅ Complete
 
-Playwright is considered feature complete.
+Express API
+
+✅ Complete
+
+Eulerity Browser Automation
+
+✅ Complete
+
+Current Focus
+
+Eulerity Warehouse Import
+
+Next Immediate Objectives
+Build Eulerity import workflow in n8n.
+Normalize returned JSON.
+UPSERT Metrics.
+UPSERT Spend.
+UPSERT Budget Allocation.
+Record Integration Audit.
+Remove temporary debugging.
+Planned Integrations
+
+Priority
+
+Eulerity ETL
+Weather
+GA4 Enhancements
+SOCi
+Google Business Profile
+POS
+Labor
+Inventory
+Planned Architecture Refactor
+
+Do not implement until Eulerity ETL is stable.
+
+Current
+
+Business credentials are stored in Railway Variables.
+
+Future
+
+Move business configuration into Supabase.
+
+Examples
+
+Eulerity credentials
+GA4 configuration
+SOCi credentials
+API keys
+External IDs
+Scheduling rules
+
+Leave Railway Variables for infrastructure secrets only.
+
+Benefits
+
+Single source of truth
+Easier credential rotation
+Multi-studio support
+Future multi-tenant architecture
+Current Session Starting Point
+
+Assume the following is already working:
+
+GitHub repository configured.
+Railway deployment configured.
+Docker deployment configured.
+Express API online.
+Playwright executing in Railway.
+n8n successfully calling Railway.
+Eulerity automation returning structured JSON.
+
+Do not spend time redesigning infrastructure that is already complete.
+
+AI Working Rules
+
+Before suggesting a change, ask:
+
+Does this already exist?
+Does it violate the documented architecture?
+Can the existing component own this responsibility?
+Is there already a reusable solution?
+
+Prefer extending existing systems over creating new ones.

@@ -1,127 +1,184 @@
-# Studio Intelligence Developer Guide
-Version 1.0
+Studio Intelligence Developer Guide
+Version 1.1
+
+Last Updated: July 6, 2026
 
 This document is the operational guide for anyone (human or AI) developing Studio Intelligence.
 
 Before making architectural recommendations, read this document.
 
 If proposed changes conflict with this document, STOP.
+
 The architecture has already been decided.
 
----
+Project Goal
 
-# Project Goal
+Studio Intelligence is a warehouse-first business intelligence platform for multi-location experiential businesses.
 
-Studio Intelligence is a warehouse-first business intelligence platform
-for multi-location experiential businesses.
+The goal is not simply to automate websites.
 
-The purpose is NOT simply to automate websites.
+The goal is to continuously:
 
-The purpose is to continuously collect, normalize, warehouse, analyze,
-and expose operational business data for reporting, dashboards,
-forecasting, automation, and AI.
+Collect
+Normalize
+Warehouse
+Analyze
+Report
+Forecast
+Automate
+Enable AI
 
----
+using operational business data.
 
-# Design Philosophy
+Core Design Philosophy
 
-Everything should be built so another integration can be added without
-rewriting existing code.
+Studio Intelligence follows several core principles.
 
-Configuration always wins over hardcoding.
+Configuration over Code
 
-Reusable systems always win over one-off solutions.
+Business configuration should never be hardcoded.
 
-Simple systems win over clever systems.
+Studios, brands, integrations, credentials, IDs, schedules, and feature flags should all be configurable.
 
----
+Warehouse First
 
-# Ownership
+Every integration feeds the warehouse.
+
+Dashboards never query raw source data.
+
+AI never consumes raw source data.
+
+Everything flows through reporting views.
+
+Single Responsibility
 
 Every component owns exactly one responsibility.
 
-## Playwright
+If a responsibility already belongs somewhere else, do not duplicate it.
 
-Owns browser automation only.
+Reusable over One-Off
+
+Every integration should plug into the existing architecture.
+
+Adding a new integration should require configuration—not redesign.
+
+Overall Architecture
+Browser / APIs
+
+        │
+
+        ▼
+
+Playwright or API Client
+
+        │
+
+        ▼
+
+n8n ETL
+
+        │
+
+        ▼
+
+Supabase Warehouse
+
+        │
+
+        ▼
+
+SQL Reporting Views
+
+        │
+
+        ▼
+
+Dashboards • AI • Automation
+Component Ownership
+Playwright
+Owns
+
+Browser automation only.
 
 Responsibilities
 
-- Login
-- Session management
-- Navigation
-- Browser interactions
-- Download reports
-- RReturn browser-acquired data (downloaded files and page-derived values)
+Login
+Session management
+Browser interaction
+Navigation
+Report downloads
+Extract browser-visible values
+Return structured browser data
+
 Outputs
 
-• Downloaded CSV reports
-• Values extracted directly from web pages
+Downloaded CSV files
+Browser-derived values
+Structured JSON
 
 Never
 
-- Writes to Supabase
-- Makes business decisions
-- Performs ETL
-- Knows warehouse schema
-
----
-
-## n8n
+Normalize data
+Write to Supabase
+Perform ETL
+Know warehouse schema
+Make business decisions
+n8n
 
 Owns ETL.
 
 Responsibilities
 
-- Scheduling
-- Studio iteration
-- Calling Playwright
-- Calling APIs
-- File handling
-- Data normalization
-- UPSERT operations
-- Retry logic
-- Auditing
+Scheduling
+Workflow orchestration
+Calling Playwright
+Calling APIs
+Parsing files
+Data normalization
+UPSERT logic
+Retry logic
+Error handling
+Auditing
+Temporary file cleanup
 
 Never
 
-- Browser automation
+Browser automation
+Supabase
 
----
-
-## Supabase
-
-Owns data storage.
+Owns storage.
 
 Responsibilities
 
-- Configuration
-- Warehouse
-- Reporting views
-- Security
-- AI source
+Configuration
+Warehouse
+Reporting views
+Security
+AI data source
 
 Never
 
-- Browser automation
-- Scheduling
-
----
-
-## Reporting Views
+Browser automation
+Scheduling
+ETL
+Reporting Views
 
 Own cross-domain reporting.
 
-Never query source tables directly from dashboards.
+Responsibilities
 
-Dashboards should consume reporting views.
+Join warehouse tables
+Business metrics
+Executive reporting
+AI-ready datasets
 
-AI should consume reporting views.
+Dashboards consume reporting views.
 
----
+AI consumes reporting views.
 
-# Repository
+Never query raw fact tables directly.
 
-```
+Repository Structure
 studio-intelligence/
 
 playwright/
@@ -130,7 +187,7 @@ playwright/
         Browser sessions
 
     downloads/
-        Temporary downloads only
+        Temporary downloads
 
     routes/
         Express API endpoints
@@ -139,9 +196,10 @@ playwright/
         Browser automation
 
     services/
-        Shared helper services
+        Shared parsing logic
 
     utils/
+        Generic helpers
 
     server.js
 
@@ -152,11 +210,7 @@ docs/
     ROADMAP.md
     CHANGELOG.md
     CURRENT_STATUS.md
-```
-
----
-
-# Browser Automation Rules
+Browser Automation Rules
 
 Playwright performs browser automation only.
 
@@ -168,17 +222,17 @@ Login
 
 Process Every Configured Studio
 
-    ↓
+↓
 
-    Download Metrics CSV
+Download Metrics CSV
 
-    ↓
+↓
 
-    Download Spend CSV
+Download Spend CSV
 
-    ↓
+↓
 
-    Read Budget Distribution
+Read Budget Distribution
 
 ↓
 
@@ -188,35 +242,24 @@ Return Browser Results
 
 Exit
 
-Never
-
-Normalize data.
-
-Never
-
-UPSERT warehouse.
-
-Never
-
-Know database schema.
-
-##Outputs
-
 Outputs
 
-• Metrics CSV
-• Spend CSV
-• Budget Distribution JSON
+Metrics CSV
+Spend CSV
+Budget Allocation JSON
 
----
+Never
 
-# ETL Rules
+Normalize data
+UPSERT warehouse
+Know warehouse schema
+ETL Rules
 
 n8n owns ETL.
 
 Flow
 
-Receive File
+Receive Browser Results
 
 ↓
 
@@ -233,76 +276,74 @@ Audit
 ↓
 
 Delete Temporary Files
-
----
-
-# Warehouse Rules
+Warehouse Rules
 
 Warehouse-first architecture.
 
-Never duplicate facts.
+Rules
 
-Every source receives its own fact table.
+Preserve history
+Never duplicate facts
+UPSERT instead of INSERT
+One fact table per source
+Reporting uses SQL Views
+Configuration Rules
 
-Fact tables preserve history.
+Nothing business-specific is hardcoded.
 
-UPSERT instead of INSERT.
+Configuration belongs in Supabase.
 
----
-
-# Configuration Rules
-
-Nothing is hardcoded.
-
-Studios
+Includes
 
 Organizations
-
 Brands
-
+Studios
 Integrations
-
 Credentials
-
-Properties
-
 External IDs
+Feature Flags
+Scheduling Rules
 
-All configuration belongs inside Supabase.
+Infrastructure secrets may remain in Railway.
 
----
+Examples
 
-# Current Warehouse
+Database URL
+Supabase Service Key
+Railway deployment settings
 
+Future Refactor
+
+Application credentials (Eulerity, GA4, SOCi, etc.) will move from Railway Variables into centralized configuration stored in Supabase (or another secrets provider).
+
+Goal
+
+Single source of truth
+Easier password rotation
+Multi-tenant support
+Simplified deployments
+Current Warehouse
 Configuration
-
-- organizations
-- brands
-- studios
-- studio_integrations
-- integration_runs
-
+organizations
+brands
+studios
+studio_integrations
+integration_runs
 Fact Tables
+ga4_daily_metrics
+eulerity_daily_metrics
+eulerity_daily_spend
+eulerity_daily_budget_allocation
+weather_daily
+Reporting Views
 
-- ga4_daily_metrics
-- eulerity_daily_metrics
-- eulerity_daily_spend
-- eulerity_daily_budget_allocation
-- weather_daily
+Planned
 
-Reporting
-
-Future SQL Views
-
-- marketing_daily_summary
-- operations_daily_summary
-- executive_daily_summary
-- studio_daily_summary
-
----
-
-# Current Integrations
-
+marketing_daily_summary
+operations_daily_summary
+executive_daily_summary
+studio_daily_summary
+Current Integrations
 GA4
 
 Status
@@ -317,121 +358,68 @@ Playwright
 
 Not Required
 
----
-
 Eulerity
-
-Playwright
-
-Login
-✔
-
-Session Persistence
-✔
-
-Metrics Download
-✔
-
-Spend Download
-In Progress
-
-Budget Download
-In Progress
-
+Browser Automation
+Login ✔
+Session Persistence ✔
+Metrics Download ✔
+Spend Download ✔
+Budget Collection ✔
+Structured JSON Response ✔
 Warehouse
-
-Schemas Complete
-
-Metrics Import
-In Progress
-
-Spend Import
-Planned
-
-Budget Import
-Planned
-
----
-
+Schema ✔
+Metrics Import ☐
+Spend Import ☐
+Budget Import ☐
+Integration Auditing ☐
 Weather
 
 Warehouse Complete
 
 Import Pending
 
----
-
 PTS
 
 Planned
-
----
 
 SOCi
 
 Planned
 
----
-
 Google Business Profile
 
 Planned
 
----
-
-# Coding Rules
-
-Every file has one responsibility.
-
-Routes
-
-Receive requests.
-
-Nothing more.
-
-Scripts
-
-Browser automation only.
-
-Services
-
-Reusable logic.
-
-Utilities
-
-Generic helper functions.
-
-Never place business logic in routes.
-
----
-
-# Current Sprint
-
+Current Sprint
 Objective
 
-Finish Eulerity ETL.
+Complete Eulerity warehouse integration.
 
 Tasks
 
-☐ Metrics parser
+☑ Railway Deployment
 
-☐ Metrics import
+☑ Docker Deployment
 
-☐ Spend download
+☑ Browser Automation
 
-☐ Spend import
+☑ Metrics Download
 
-☐ Budget download
+☑ Spend Download
 
-☐ Budget import
+☑ Budget Collection
 
-☐ Integration auditing
+☑ JSON Response
 
----
+☑ n8n Integration
 
-# Current Database
+☐ Supabase UPSERT
 
-One row per Studio + Day
+☐ Integration Auditing
+
+☐ Historical Backfill
+
+Current Database Design
 
 GA4
 
@@ -449,31 +437,15 @@ Eulerity Spend
 
 One row per Studio + Day + Campaign
 
----
+Development Rules
 
-Eulerity Browser Automation
+When making recommendations:
 
-Per Studio
+First ask:
 
-Outputs
+Does this already exist?
 
-1. Metrics CSV
-2. Spend CSV
-3. Budget Allocation Data
-
-These outputs are returned to n8n.
-
-Playwright does not normalize or warehouse the data.
-
-# Development Rules
-
-When making recommendations
-
-First ask
-
-"Does this already exist?"
-
-If yes
+If yes:
 
 Follow the existing architecture.
 
@@ -483,24 +455,34 @@ Avoid introducing duplicate systems.
 
 Reuse existing configuration whenever possible.
 
-When uncertain
+When uncertain:
 
 Read
 
 ARCHITECTURE.md
-
 DEVELOPER_GUIDE.md
-
 CURRENT_STATUS.md
 
 before making recommendations.
 
----
+Architecture Decisions
 
-# End Goal
+These decisions are considered settled.
 
-Studio Intelligence should eventually support any business with multiple
-locations by adding configuration rather than writing new software.
+Warehouse-first architecture
+Configuration over hardcoding
+One responsibility per component
+Playwright returns browser data only
+n8n owns ETL
+Supabase owns configuration and storage
+Reporting uses SQL Views
+Dashboards never query raw fact tables
+AI consumes reporting views instead of raw data
 
-Every new integration should plug into the existing architecture rather
-than changing it.
+Do not move responsibilities between components simply because it appears easier.
+
+End Goal
+
+Studio Intelligence should support any multi-location business by adding configuration rather than writing new software.
+
+Every new integration should plug into the existing architecture without changing the platform.
