@@ -34,3 +34,15 @@
 3. Schedule automated daily imports.
 4. Build reporting dashboards.
 5. Expand to Meta Ads, Eulerity, reservation system, and additional data sources.
+
+v0.3.0 – Eulerity Playwright Complete
+
+Multi-studio browser automation complete
+Metrics download complete
+Spend download complete
+Budget extraction complete
+Metrics parser complete
+Spend parser complete
+Budget parser complete
+Express API returns normalized JSON
+Ready for n8n ETL
