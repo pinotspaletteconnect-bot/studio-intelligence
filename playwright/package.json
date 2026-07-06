@@ -4,9 +4,10 @@
   "description": "Studio Intelligence Playwright Service",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
-  },
+  "start": "node server.js",
+  "dev": "node server.js",
+  "postinstall": "npx playwright install chromium"
+},
   "keywords": [],
   "author": "",
   "license": "ISC",
