@@ -70,17 +70,25 @@ async function login() {
 
     console.log("✅ Eulerity loaded");
 
-    const popupPromise = page.waitForEvent("popup");
+    console.log("Waiting for popup...");
 
-    await page.getByRole("link", {
-        name: "Sign In"
-    }).click();
+const popupPromise = page.waitForEvent("popup");
 
-    const loginPage = await popupPromise;
+console.log("Clicking Sign In...");
 
-    console.log("✅ Login popup opened");
+await page.getByRole("link", {
+    name: "Sign In"
+}).click();
 
-    await loginPage.waitForLoadState();
+console.log("Waiting for popup to appear...");
+
+const loginPage = await popupPromise;
+
+console.log("✅ Popup opened");
+
+await loginPage.waitForLoadState();
+
+console.log("✅ Popup finished loading");
 
     console.log("✅ Login page loaded");
 

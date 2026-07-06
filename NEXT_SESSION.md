@@ -1,137 +1,103 @@
 # Studio Intelligence - Next Session
-Last Updated: July 4, 2026
+
+Last Updated: July 6, 2026
+
+---
+
+# Current Milestone
+
+## ✅ Playwright Layer Complete
+
+The entire Playwright acquisition layer for the Eulerity integration is complete and considered feature complete.
+
+Completed:
+
+* ✅ Login automation
+* ✅ Session management
+* ✅ Multi-studio processing
+* ✅ Studio switching
+* ✅ Metrics CSV download
+* ✅ Spend CSV download
+* ✅ Budget Distribution extraction
+* ✅ Metrics parser
+* ✅ Spend parser
+* ✅ Budget parser
+* ✅ Express API endpoint
+* ✅ Structured JSON response
+* ✅ End-to-end testing successful
+
+Playwright now returns fully parsed browser data and should not require additional development unless the Eulerity website changes.
 
 ---
 
 # Current Sprint
 
-Objective
+## Objective
 
-Complete the Eulerity ETL pipeline from Playwright through n8n into Supabase.
+Complete the Eulerity ETL pipeline using n8n.
 
-Current Progress: ~70%
+Current Progress: ~85%
 
 ---
 
-# Infrastructure
-
-Completed
-
-- ✅ GitHub Repository
-- ✅ Railway Deployment
-- ✅ n8n Production Instance
-- ✅ Supabase Production Database
-- ✅ PostgreSQL
-- ✅ Redis
+# Completed Infrastructure
 
 Infrastructure is considered complete.
 
+* ✅ GitHub Repository
+* ✅ Railway Deployment
+* ✅ n8n Production Instance
+* ✅ Supabase Production Database
+* ✅ PostgreSQL
+* ✅ Redis
+
 ---
 
-# Warehouse
-
-Configuration Tables
-
-✅ organizations
-
-✅ brands
-
-✅ studios
-
-✅ studio_integrations
-
-✅ integration_runs
-
-Fact Tables
-
-✅ ga4_daily_metrics
-
-✅ eulerity_daily_metrics
-
-✅ eulerity_daily_spend
-
-✅ eulerity_daily_budget_allocation
-
-✅ weather_daily
+# Warehouse Status
 
 Warehouse schema is considered stable.
 
----
+Configuration Tables
 
-# GA4
+* organizations
+* brands
+* studios
+* studio_integrations
+* integration_runs
 
-Status
+Fact Tables
 
-COMPLETE
+* ga4_daily_metrics
+* eulerity_daily_metrics
+* eulerity_daily_spend
+* eulerity_daily_budget_allocation
+* weather_daily
 
-Features
-
-✅ OAuth
-
-✅ Multi-studio
-
-✅ Dynamic property lookup
-
-✅ Daily import
-
-✅ UPSERT
-
-Future work
-
-Reporting Views
+No schema changes are planned during this sprint.
 
 ---
 
-## Eulerity
+# Current Browser Output
 
-Status: Browser Automation COMPLETE
+Each studio returns:
 
-### Completed
+* Parsed Metrics
+* Parsed Spend
+* Parsed Budget Allocation
 
-- ✅ Login automation
-- ✅ Single login for all studios
-- ✅ Multi-studio processing
-- ✅ Studio switching
-- ✅ Metrics CSV download
-- ✅ Spend CSV download
-- ✅ Budget Distribution extraction
-- ✅ Metrics parser completed
-- ✅ Browser automation returns structured results for every studio
+Returned as structured JSON through:
 
-Current Browser Output
+POST /eulerity/download
 
-Per studio:
+The API has been tested successfully and is ready for ETL.
 
-- Metrics CSV
-- Spend CSV
-- Budget Distribution JSON
-
-Returned as:
-
-- Studio Code
-- Studio Name
-- Metrics File Path
-- Spend File Path
-- Budget Distribution Object
-
-### Remaining
-
-- Build Spend CSV parser
-- Build Budget parser
-- Connect Playwright to `/routes/eulerity.js`
-- Return structured JSON from API
-- Build n8n Eulerity workflow
-- UPSERT Metrics
-- UPSERT Spend
-- UPSERT Budget Allocation
-- Record `integration_runs`
-- Delete temporary CSV files
 ---
 
 # Current Repository
 
 playwright/
 
+```
 auth/
 
 downloads/
@@ -148,80 +114,31 @@ services/
     supabase.js
 
 server.js
+```
 
 ---
 
-# Current Database
+# Current Sprint Tasks
 
-Configuration
+## Phase 1 – n8n ETL
 
-organizations
-
-brands
-
-studios
-
-studio_integrations
-
-integration_runs
-
-Fact Tables
-
-ga4_daily_metrics
-
-eulerity_daily_metrics
-
-eulerity_daily_spend
-
-eulerity_daily_budget_allocation
-
-weather_daily
+* ☐ Build Eulerity n8n workflow
+* ☐ Receive parsed JSON from Playwright
+* ☐ Lookup Studio IDs from configuration tables
+* ☐ UPSERT Metrics
+* ☐ UPSERT Spend
+* ☐ UPSERT Budget Allocation
+* ☐ Record integration_runs
+* ☐ Delete temporary download files
 
 ---
 
-# Next Coding Task
+## Phase 2 – Reporting
 
-## Next Coding Task
+* ☐ Build reporting SQL views
+* ☐ Validate reporting against warehouse
+* ☐ Prepare AI reporting layer
 
-One correction to the "Next Coding Task"
-
-Earlier I wrote:
-
-Complete Spend CSV parser
-
-I think we should be a little more specific.
-
-The next file should be:
-
-playwright/services/eulerityParser.js
-
-And the objective should be:
-
-✅ Metrics parser (already complete)
-Build Spend parser
-Build Budget parser (which converts the budget object returned by Playwright into the normalized format expected by the ETL)
-Test all three parsers independently.
-Then wire them into the route.
-
-Current Milestone
-
-Eulerity ETL
-
-Objective
-
-Convert the downloaded browser artifacts into normalized data for n8n.
-
-Files
-
-playwright/services/eulerityParser.js
-
-Tasks
-
-1. Complete Spend CSV parser
-2. Complete Budget parser
-3. Return structured objects
-4. Connect parser to routes/eulerity.js
-5. Begin n8n UPSERT workflow
 ---
 
 # Current Architecture Reminder
@@ -230,19 +147,41 @@ Playwright
 
 Browser automation only.
 
+Responsibilities
+
+* Login
+* Navigation
+* Browser interaction
+* Download reports
+* Return browser data
+
+Never
+
+* Normalize data
+* UPSERT database
+* Know warehouse schema
+
 n8n
 
-Normalization, ETL, UPSERT, auditing.
+Owns ETL.
+
+Responsibilities
+
+* Receive browser output
+* Normalize
+* UPSERT
+* Auditing
+* Cleanup
 
 Supabase
 
-Warehouse only.
+Owns storage.
 
-AI
+Reporting Views
 
-Consumes reporting views only.
+Own reporting.
 
-Never bypass this architecture.
+AI consumes reporting views only.
 
 ---
 
@@ -256,27 +195,10 @@ None
 
 Read:
 
-ARCHITECTURE.md
+* ARCHITECTURE.md
+* DEVELOPER_GUIDE.md
+* NEXT_SESSION.md
 
-DEVELOPER_GUIDE.md
+Then begin building the Eulerity n8n ETL workflow.
 
-NEXT_SESSION.md
-
-Continue implementing the Eulerity Metrics import.
-
-# Known Working Components
-
-Playwright
-- Login works
-- Session persistence works
-- Saved report download works
-
-GA4
-- Import works
-- UPSERT works
-
-Supabase
-- Warehouse schema complete
-
-n8n
-- Studio iteration works
+Do not modify the Playwright layer unless a bug is discovered.
