@@ -235,3 +235,18 @@ Studio Intelligence is considered complete when:
 Studio Intelligence will become the operating system for experiential businesses.
 
 Rather than simply collecting data, the platform will automatically measure business performance, identify trends, explain results, forecast future outcomes, and recommend actions that improve marketing, operations, and profitability.
+
+## Phase 5 – Business Automation
+
+### AI Accounting & QuickBooks Integration
+Status: Planned
+
+- AI receipt classification
+- Line-item expense categorization
+- Smart split transactions
+- Multi-studio allocations
+- Marketing spend allocations
+- Payroll allocations
+- Learning engine for coding improvements
+- QuickBooks synchronization
+- Review queue with confidence scoring

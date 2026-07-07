@@ -311,3 +311,10 @@ Studio Intelligence should evolve into the operating system for experiential bus
 Rather than simply reporting historical numbers, the platform should explain why results occurred, predict future performance, recommend actions, and automate operational decisions using AI.
 
 The architecture should continue to scale without redesign as additional companies, studios, integrations, and AI capabilities are added.
+Future Modules
+
+- Accounting Intelligence
+    - QuickBooks Automation
+    - Expense Intelligence
+    - Receipt OCR
+    - AI Categorization
