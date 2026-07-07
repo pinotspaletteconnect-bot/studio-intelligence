@@ -46,3 +46,31 @@ Spend parser complete
 Budget parser complete
 Express API returns normalized JSON
 Ready for n8n ETL
+
+Output one complete daily record
+
+Then the existing Studio Lookup and Upsert remain unchanged.
+
+CHANGELOG.md
+2026-07-06
+Added
+Railway-hosted Playwright integration
+Eulerity Metrics import
+Eulerity Spend import
+Budget Allocation extraction
+Studio lookup in n8n
+Successful UPSERT into Supabase
+Expanded Eulerity warehouse schema
+Changed
+
+Architectural decision:
+
+Old:
+
+advertising_daily_channel_metrics
+
+New:
+
+eulerity_daily_metrics
+
+Each provider maintains its own normalized warehouse table.
