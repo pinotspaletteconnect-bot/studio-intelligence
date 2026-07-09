@@ -63,18 +63,12 @@
 
 ---
 
-## SOCi
+Marketing Intelligence
 
-- [ ] Authentication
-- [ ] Daily ETL
-- [ ] Warehouse loading
-
-### Marketing Metrics
-
-- [ ] Local Facebook
-- [ ] Local Instagram
-- [ ] Studio-specific Meta campaigns
-- [ ] Community marketing
+- Meta Business Manager (Organic Social)
+- Eulerity (Paid Advertising)
+- Google Analytics 4 (Website Attribution)
+- SOCi (Publishing metadata only, if needed)
 
 ---
 

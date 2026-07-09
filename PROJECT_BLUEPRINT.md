@@ -1,55 +1,139 @@
-# Studio Intelligence Project Blueprint
-
----
-
-# Vision
+Studio Intelligence Project Blueprint
+Vision
 
 Studio Intelligence is a multi-tenant Business Intelligence and AI platform designed to consolidate every aspect of business operations into a single source of truth.
 
-The platform will aggregate marketing, reservations, sales, operations, financial, and customer data from multiple systems into a centralized warehouse where it can be analyzed, visualized, and interpreted by AI.
+Rather than replacing existing business systems, Studio Intelligence treats each platform as the authoritative source for the data it owns. Marketing, reservations, sales, operations, financial, and customer data are continuously collected into a centralized data warehouse where historical trends, cross-platform relationships, and AI-driven insights can be generated.
+
+The platform is designed around historical time-series data, allowing every metric to be analyzed not only as its current value, but also as how it changes over time.
 
 While the first implementation is being built for Pinot's Palette, the architecture is designed to support any multi-location business without redesign.
 
----
-
-# Mission
+Mission
 
 Eliminate manual reporting.
 
-Provide owners and operators with a complete understanding of what is happening, why it is happening, what is likely to happen next, and what actions should be taken.
+Create a single source of truth that connects data across every business system.
 
-Studio Intelligence should become the operating system for running a business.
+Provide owners and operators with a complete understanding of:
 
----
+-What is happening.
+-Why it is happening.
+-What is likely to happen next.
+-What actions should be taken.
 
-# Project Goals
+Studio Intelligence should become the operating system for running a business, transforming raw operational data into actionable intelligence.
 
-## Operational Goals
+Core Architecture Principles
+Source Ownership
 
-- Replace manual reporting with automated ETL pipelines.
-- Centralize all business data.
-- Maintain complete historical records.
-- Support unlimited companies and studios.
-- Minimize maintenance through configuration-driven architecture.
+Each external platform remains the system of record for the information it owns.
 
-## Business Goals
+Examples include:
 
-- Increase revenue.
-- Improve marketing ROI.
-- Reduce operating costs.
-- Improve labor planning.
-- Improve customer retention.
-- Improve decision making.
+-Google Analytics 4 — Website traffic, attribution, and conversions.
+-Eulerity — Paid advertising performance and spend.
+-Meta Business Manager — Organic social media performance.
+-POS/Reservations — Revenue, customers, and bookings.
+-Accounting Software — Financial reporting.
+-Other future integrations as appropriate.
 
-## AI Goals
+Studio Intelligence does not replace these systems. It unifies them.
 
-- Daily executive summaries.
-- Trend detection.
-- Forecasting.
-- Marketing recommendations.
-- Operational recommendations.
-- Automated anomaly detection.
-- Conversational reporting.
+Historical First
+
+Whenever practical, data is collected as historical snapshots instead of only current values.
+
+Examples include:
+
+-Daily advertising metrics.
+-Daily social media metrics.
+-Daily revenue.
+-Daily reservation activity.
+-Daily customer growth.
+
+Maintaining historical records enables trend analysis, forecasting, anomaly detection, seasonality analysis, and long-term AI learning.
+
+Marketing Intelligence
+
+Marketing data is organized into distinct domains rather than treating every marketing platform as a single source.
+
+Organic Social
+
+Measures how content performs naturally.
+
+Examples:
+
+-Reach
+-Impressions
+-Engagement
+-Shares
+-Saves
+-Comments
+-Followers
+-Video performance
+
+Primary source: Meta Business Manager (and future platform-specific APIs).
+
+Paid Advertising
+
+Measures advertising efficiency and return on investment.
+
+Examples:
+
+-Spend
+-Clicks
+-CPC
+-CPM
+-CTR
+-Conversions
+-ROAS
+
+Primary source: Eulerity (with future expansion where appropriate).
+
+Creative Intelligence
+
+Creative assets are treated as reusable business objects that may appear across multiple channels.
+
+A single creative may be used in:
+
+-Organic Facebook
+-Organic Instagram
+-Organic TikTok
+-Paid Meta campaigns
+-Email marketing
+-Website promotions
+-Other future channels
+
+Studio Intelligence will analyze creative performance across all distribution channels and correlate that performance with business outcomes such as reservations, revenue, customer acquisition, and engagement.
+
+Project Goals
+Operational Goals
+-Replace manual reporting with automated ETL pipelines.
+-Centralize all business data.
+-Maintain complete historical records.
+-Support unlimited companies and locations.
+-Minimize maintenance through configuration-driven architecture.
+-Build reusable, modular data pipelines.
+Business Goals
+-Increase revenue.
+-Improve marketing ROI.
+-Improve labor planning.
+-Improve customer retention.
+-Reduce operating costs.
+-Improve decision making.
+-Connect marketing performance directly to business outcomes.
+AI Goals
+-Daily executive summaries.
+-Trend detection.
+-Forecasting.
+-Marketing recommendations.
+-Operational recommendations.
+-Automated anomaly detection.
+-Conversational reporting.
+-Creative performance analysis.
+-Cross-platform attribution.
+-Predictive business insights.
 
 ---
 
@@ -244,7 +328,7 @@ Marketing ETLs
 - Google Ads
 - Meta
 - Eulerity
-- SOCi
+- Meta Business
 
 ---
 
@@ -311,6 +395,16 @@ Studio Intelligence should evolve into the operating system for experiential bus
 Rather than simply reporting historical numbers, the platform should explain why results occurred, predict future performance, recommend actions, and automate operational decisions using AI.
 
 The architecture should continue to scale without redesign as additional companies, studios, integrations, and AI capabilities are added.
+
+Source	               System of Record
+GA4	Website            behavior & conversions
+Eulerity	           Paid advertising metrics
+Meta Business Manager  Organic social performance
+SOCi	               Publishing workflow
+PTS	                   Revenue & reservations
+
+That principle will keep us from accidentally duplicating metrics later.
+
 Future Modules
 
 - Accounting Intelligence

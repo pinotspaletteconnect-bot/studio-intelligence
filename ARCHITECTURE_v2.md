@@ -118,7 +118,7 @@ Schemas
 In Progress: - Playwright Automation - Eulerity Metrics Import -
 Eulerity Spend Import - Budget Allocation Import
 
-Planned: - SOCi - PTS - Google Business Profile - Weather - Financial
+Planned: - Meta Business - PTS - Google Business Profile - Weather - Financial
 Integrations - Executive Dashboard - AI Recommendation Engine
 
 ## Architecture Decisions
@@ -133,7 +133,5 @@ Integrations - Executive Dashboard - AI Recommendation Engine
 
 ## Long-Term Vision
 
-Studio Intelligence becomes the operating system for multi-location
-experiential businesses by continuously acquiring, normalizing, and
-analyzing data from every business system to power dashboards,
-forecasting, automation, and AI recommendations.
+Studio Intelligence becomes the operating system for multi-location experiential businesses by continuously acquiring, normalizing, and analyzing data from every business system to power dashboards, forecasting, automation, and AI recommendations.
+
