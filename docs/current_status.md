@@ -1,8 +1,8 @@
 # Studio Intelligence Current Status
 
-**Version 3.0**
+**Version 3.1**
 
-**Last Updated:** July 9, 2026
+**Last Updated:** July 14, 2026
 
 ---
 
@@ -12,36 +12,36 @@ This document describes the current implementation status of Studio Intelligence
 
 Unlike the Project Blueprint or Architecture documents, this file changes frequently.
 
-It represents the current development state of the platform, the active sprint, completed milestones, immediate priorities, and known technical debt.
+It represents the current development state of the platform, completed milestones, active development, immediate priorities, known technical debt, and upcoming milestones.
 
-AI assistants and developers should review this document before beginning work.
+All developers and AI assistants should review this document before beginning work.
 
 ---
 
 # Overall Project Status
 
-Studio Intelligence has successfully completed its foundational platform architecture.
+Studio Intelligence has successfully completed its foundational platform architecture and validated the standard integration pattern.
 
 The platform has transitioned from infrastructure development into business intelligence development.
 
-Core infrastructure, orchestration, warehouse architecture, and the first production integration have all been validated.
+Core infrastructure, orchestration, warehouse architecture, and production integrations have validated the overall platform design.
 
-Future development is focused on expanding business intelligence domains rather than building core infrastructure.
+Current development is focused on expanding Marketing Intelligence through additional integrations and business reporting.
 
 ---
 
 # Platform Status
 
-| Component            | Status         |
-| -------------------- | -------------- |
-| GitHub Repository    | ✅ Complete     |
-| Docker Deployment    | ✅ Complete     |
-| Railway Deployment   | ✅ Complete     |
-| Express API          | ✅ Complete     |
-| Playwright Framework | ✅ Complete     |
-| n8n Orchestration    | ✅ Complete     |
-| Supabase Warehouse   | ✅ Complete     |
-| Documentation v3.0   | 🚧 In Progress |
+| Component | Status |
+|------------|--------|
+| GitHub Repository | ✅ Complete |
+| Docker Deployment | ✅ Complete |
+| Railway Deployment | ✅ Complete |
+| Express API | ✅ Complete |
+| Playwright Framework | ✅ Complete |
+| n8n Orchestration | ✅ Complete |
+| Supabase Warehouse | ✅ Complete |
+| Documentation v3.1 | 🚧 In Progress |
 
 ---
 
@@ -57,17 +57,48 @@ Status
 
 Capabilities
 
-* Authentication
-* Session management
-* Browser automation
-* Report downloads
-* Structured JSON responses
+- Authentication
+- Session management
+- Browser automation
+- Report downloads
+- Structured JSON responses
+
+Current Integrations
+
+- Eulerity
+
+---
+
+### REST / Graph APIs
+
+Status
+
+✅ Production
+
+Current Integrations
+
+- Google Analytics Data API
+
+In Development
+
+- Meta Graph API
+
+Planned
+
+- Weather API
+- Google Business Profile
+- QuickBooks
+- Reservations
+- CRM
+- POS
 
 ---
 
 ## ETL Layer
 
-### n8n
+Technology
+
+n8n
 
 Status
 
@@ -75,23 +106,28 @@ Status
 
 Capabilities
 
-* Workflow orchestration
-* Data normalization
-* Warehouse UPSERTs
-* Multi-studio processing
-* Calculated metrics
+- Workflow orchestration
+- Scheduling
+- Data validation
+- Data normalization
+- Warehouse UPSERT
+- Multi-studio processing
+- Derived calculations
 
-Future improvements
+Future Improvements
 
-* Enhanced integration auditing
-* Historical backfill workflows
-* Monitoring and alerting
+- Historical backfill
+- Integration auditing
+- Monitoring
+- Alerting
 
 ---
 
 ## Warehouse
 
-### Supabase
+Technology
+
+Supabase PostgreSQL
 
 Status
 
@@ -99,32 +135,36 @@ Status
 
 Capabilities
 
-* Configuration tables
-* Historical fact tables
-* Daily warehouse ingestion
-* Multi-studio support
+- Configuration tables
+- Historical fact tables
+- Daily warehouse ingestion
+- Multi-studio support
+- Historical preservation
 
-Future improvements
+Future Improvements
 
-* Expanded dimensions
-* Reporting views
-* Additional business domains
+- Reporting views
+- Expanded dimensions
+- Additional business domains
 
 ---
 
 # Integration Status
 
-| Integration             | Status       |
-| ----------------------- | ------------ |
-| GA4                     | ✅ Production |
-| Eulerity                | ✅ Production |
-| Weather                 | ✅ Production |
-| Meta Business           | 🚧 Next      |
-| Google Business Profile | Planned      |
-| SOCi                    | Planned      |
-| POS                     | Planned      |
-| Labor                   | Planned      |
-| Inventory               | Planned      |
+| Integration | Status |
+|--------------------------|----------------|
+| Google Analytics 4 | ✅ Production |
+| Eulerity | ✅ Production |
+| Weather | Planned |
+| Meta Ads | 🚧 Active Development |
+| Meta Social | Planned |
+| Google Business Profile | Planned |
+| SOCi | Planned |
+| Reservations | Planned |
+| POS | Planned |
+| Labor | Planned |
+| Inventory | Planned |
+| QuickBooks | Planned |
 
 ---
 
@@ -138,13 +178,13 @@ Status
 
 Completed
 
-* GitHub repository
-* Docker
-* Railway deployment
-* Express API
-* Playwright framework
-* n8n connectivity
-* Supabase connectivity
+- GitHub repository
+- Docker
+- Railway deployment
+- Express API
+- Playwright framework
+- n8n connectivity
+- Supabase connectivity
 
 ---
 
@@ -156,16 +196,16 @@ Status
 
 Completed
 
-* Warehouse architecture
-* Configuration tables
-* Integration tables
-* Daily warehouse pattern
-* Studio lookup
-* Multi-location support
+- Warehouse architecture
+- Configuration tables
+- Integration tables
+- Daily warehouse pattern
+- Studio lookup
+- Multi-location support
 
 ---
 
-## Milestone 3 — Eulerity Integration
+## Milestone 3 — Google Analytics Integration
 
 Status
 
@@ -173,24 +213,78 @@ Status
 
 Completed
 
-* Browser automation
-* Authentication
-* Session persistence
-* Studio switching
-* Metrics collection
-* Spend collection
-* Budget allocation
-* Structured JSON
-* n8n ETL
-* Warehouse UPSERT
-* Spend allocation calculations
-* Multi-studio processing
+- OAuth authentication
+- Multi-property support
+- Multi-studio processing
+- Historical warehouse ingestion
+- Automated ETL
+- Warehouse UPSERT
 
-Remaining enhancements
+---
 
-* Historical backfill
-* Expanded campaign reporting
-* Integration monitoring
+## Milestone 4 — Eulerity Integration
+
+Status
+
+✅ Production
+
+Completed
+
+- Browser automation
+- Authentication
+- Session persistence
+- Studio switching
+- Metrics collection
+- Spend collection
+- Budget allocation
+- Structured JSON responses
+- n8n ETL
+- Warehouse UPSERT
+- Spend allocation calculations
+- Multi-studio processing
+
+Remaining Enhancements
+
+- Historical backfill
+- Expanded campaign reporting
+- Integration monitoring
+
+---
+
+## Milestone 5 — Meta Ads Foundation
+
+Status
+
+🚧 Active Development
+
+Completed
+
+- Studio Intelligence Meta Developer App created
+- Marketing API configured
+- Business association completed
+- User authentication verified
+- User access token generated
+- Graph API connectivity validated
+- Multi-studio ad account discovery completed
+
+Discovered Ad Accounts
+
+- St. Matthews
+- Jeffersonville
+- Short North
+- Gilbert
+
+Current Status
+
+Authentication and connectivity have been successfully validated.
+
+Remaining Work
+
+- Collection service
+- Daily Insights endpoint
+- ETL workflow
+- Warehouse schema
+- Reporting views
 
 ---
 
@@ -198,80 +292,80 @@ Remaining enhancements
 
 ## Objective
 
-Build the Marketing Intelligence domain beyond paid advertising.
+Complete the Meta Ads Collection Layer.
 
-Primary goals
+Primary Goals
 
-* Complete Documentation v3.0
-* Design Marketing reporting views
-* Build Meta Business integration
-* Begin Creative Intelligence foundation
+- Complete Documentation v3.1
+- Build Meta collection service
+- Build Express route
+- Collect Daily Insights
+- Prepare n8n ETL
+- Design Marketing reporting views
 
 ---
 
 # Immediate Priorities
 
-## 1. Documentation Refresh
+## 1. Meta Ads Collection
 
-Finalize Version 3.0 documentation.
+Current Status
 
-Status
+Authentication complete.
 
-🚧 In Progress
+Remaining
+
+- services/meta.js
+- routes/meta.js
+- Daily Insights endpoint
+- Structured JSON responses
 
 ---
 
 ## 2. Marketing Reporting Views
 
-Develop standardized reporting views for:
+Develop standardized reporting views.
 
-* Daily marketing summary
-* Weekly marketing summary
-* Monthly marketing summary
-* Executive marketing summary
+Planned
 
-Status
-
-Next
+- marketing_daily_summary
+- marketing_weekly_summary
+- marketing_monthly_summary
+- executive_marketing_summary
 
 ---
 
-## 3. Meta Business Integration
+## 3. Creative Intelligence
 
-Build the Organic Social integration using the Meta Graph API.
+Begin warehouse design.
 
-Planned features
+Planned Entities
 
-* Page insights
-* Posts
-* Reels
-* Stories
-* Followers
-* Engagement
-* Reach
-* Creative performance
-
-Status
-
-Next
+- Creative Assets
+- Campaigns
+- Paintings
+- Images
+- Videos
+- Promotional Themes
 
 ---
 
-## 4. Creative Intelligence
+## 4. Weather Integration
 
-Begin designing reusable creative assets.
+Build Weather API integration.
 
-Planned entities
+Planned
 
-* Creative assets
-* Campaigns
-* Tags
-* Categories
-* Performance
+- Historical weather collection
+- Daily ETL
+- Warehouse ingestion
+- Reporting support
 
-Status
+---
 
-Planning
+## 5. Google Business Profile
+
+Begin after Meta Ads collection.
 
 ---
 
@@ -281,8 +375,8 @@ Planning
 
 Hosts
 
-* Express API
-* Playwright automation
+- Express API
+- Playwright automation
 
 ---
 
@@ -290,11 +384,11 @@ Hosts
 
 Responsibilities
 
-* Scheduling
-* ETL
-* Warehouse ingestion
-* Retry logic
-* Monitoring
+- Scheduling
+- ETL
+- Warehouse ingestion
+- Retry logic
+- Monitoring
 
 ---
 
@@ -302,25 +396,26 @@ Responsibilities
 
 Responsibilities
 
-* Configuration
-* Historical storage
-* Reporting
-* AI source data
+- Configuration
+- Historical storage
+- Reporting
+- AI source data
 
 ---
 
 # Technical Debt
 
-Current technical debt is minimal.
+Current technical debt remains low.
 
-Remaining work includes
+Remaining work
 
-* Historical backfill support
-* Integration auditing enhancements
-* Reporting view expansion
-* Warehouse dimension growth
+- Historical backfill
+- Integration auditing
+- Marketing reporting views
+- Warehouse dimensions
+- Meta collection service
 
-No major architectural refactoring is currently required.
+No architectural refactoring is currently planned.
 
 ---
 
@@ -330,11 +425,8 @@ No major architectural refactoring is currently required.
 studio-intelligence/
 
 docs/
-
 playwright/
-
 n8n/
-
 supabase/
 ```
 
@@ -344,7 +436,7 @@ Repository organization is considered stable.
 
 # Recent Architectural Decisions
 
-The following decisions are considered complete.
+The following decisions are considered permanent.
 
 ✅ Warehouse-first architecture
 
@@ -352,7 +444,7 @@ The following decisions are considered complete.
 
 ✅ Single responsibility
 
-✅ One integration pattern
+✅ Standard integration lifecycle
 
 ✅ Reporting views as the business layer
 
@@ -362,7 +454,7 @@ The following decisions are considered complete.
 
 ✅ Multi-location support
 
-These decisions should not be revisited unless a significant architectural requirement changes.
+These architectural decisions should not be revisited unless a significant platform requirement changes.
 
 ---
 
@@ -370,38 +462,51 @@ These decisions should not be revisited unless a significant architectural requi
 
 ## Marketing Intelligence
 
-* Marketing reporting views
-* Meta Business integration
-* Creative Intelligence
-* Google Business Profile
+Remaining
+
+- Meta Ads Collection
+- Marketing Reporting Views
+- Creative Intelligence
+- Weather Integration
+- Google Business Profile
 
 ---
 
 ## Operations Intelligence
 
-* Reservations
-* Labor
-* Inventory
-* POS
+- Reservations
+- Labor
+- Inventory
+- POS
 
 ---
 
 ## Financial Intelligence
 
-* Revenue
-* Expenses
-* Payroll
-* Forecasting
+- Revenue
+- Expenses
+- Payroll
+- Forecasting
+- QuickBooks Integration
+
+---
+
+## Customer Intelligence
+
+- CRM
+- Customer Lifetime Value
+- Segmentation
+- Attribution
 
 ---
 
 ## Executive Intelligence
 
-* KPI dashboards
-* AI summaries
-* Predictive forecasting
-* Recommendations
-* Automated decision support
+- KPI Dashboards
+- AI Summaries
+- Predictive Forecasting
+- Executive Recommendations
+- Automated Decision Support
 
 ---
 
@@ -409,9 +514,29 @@ These decisions should not be revisited unless a significant architectural requi
 
 The next major milestone will be achieved when:
 
-* Meta Business data is flowing into the warehouse.
-* Marketing reporting views combine GA4, Eulerity, Weather, and Meta Business.
-* Creative Intelligence begins tracking reusable marketing assets.
-* Executive dashboards can report across both paid and organic marketing channels.
+- Meta Ads data is flowing into the warehouse.
+- Marketing reporting views combine GA4, Eulerity, Weather, and Meta Ads.
+- Creative Intelligence begins tracking reusable creative assets.
+- Executive dashboards provide unified marketing intelligence.
 
-At that point, Studio Intelligence will move beyond data collection into unified marketing intelligence, laying the foundation for advanced AI insights and cross-domain business analysis.
+At that point Studio Intelligence will have completed Marketing Intelligence Version 1.0 and will be positioned to begin Operations Intelligence.
+
+---
+
+# Next Development Session
+
+Objective
+
+Complete the Meta Ads Collection Layer.
+
+Deliverables
+
+- services/meta.js
+- routes/meta.js
+- Daily Insights endpoint
+- Structured JSON responses
+- Ready for n8n ETL
+
+Expected Outcome
+
+Meta Ads becomes the third production marketing integration and fully validates the standard API-based integration pattern for Studio Intelligence.

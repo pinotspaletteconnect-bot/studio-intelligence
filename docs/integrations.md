@@ -1,412 +1,247 @@
 # Studio Intelligence Integrations
 
-**Version 3.0**
+**Version 3.1**
 
-**Last Updated:** July 9, 2026
+**Last Updated:** July 14, 2026
 
 ---
 
 # Purpose
 
-This document provides an inventory of all current and planned integrations supported by Studio Intelligence.
+This document defines every external system integrated with Studio Intelligence.
 
-It defines:
+Integrations are organized by **business capability** rather than software vendor.
 
-* Business purpose
-* Data collection method
-* Refresh strategy
-* Warehouse ownership
-* Reporting scope
-* Development status
+Each integration follows the standard Studio Intelligence lifecycle:
 
-All integrations should follow the standard Studio Intelligence integration lifecycle described in the Architecture and Developer Guide.
-
----
-
-# Integration Lifecycle
-
-Every integration follows the same pattern.
-
-```text
 Authenticate
-        │
-        ▼
-Collect Data
-        │
-        ▼
+
+↓
+
+Collect
+
+↓
+
 Return Structured Data
-        │
-        ▼
-ETL Normalization
-        │
-        ▼
-Warehouse UPSERT
-        │
-        ▼
+
+↓
+
+ETL
+
+↓
+
+Warehouse
+
+↓
+
 Reporting Views
-        │
-        ▼
+
+↓
+
 Dashboards / AI
-```
 
 No integration should bypass this workflow.
 
 ---
 
-# Integration Status
-
-| Integration             | Domain                  | Collection   | Status       |
-| ----------------------- | ----------------------- | ------------ | ------------ |
-| GA4                     | Marketing Intelligence  | API          | ✅ Production |
-| Eulerity                | Marketing Intelligence  | Playwright   | ✅ Production |
-| Weather                 | Marketing Intelligence  | API          | Planned      |
-| Meta Business           | Marketing Intelligence  | Graph API    | 🚧 Next      |
-| Google Business Profile | Marketing Intelligence  | API          | Planned      |
-| SOCi                    | Marketing Intelligence  | API          | Planned      |
-| POS                     | Operations Intelligence | API / Export | Planned      |
-| Labor                   | Operations Intelligence | API          | Planned      |
-| Inventory               | Operations Intelligence | API          | Planned      |
-| CRM                     | Customer Intelligence   | API          | Planned      |
-| Accounting              | Financial Intelligence  | API          | Planned      |
-
----
-
 # Marketing Intelligence
 
-## Google Analytics 4 (GA4)
+Marketing Intelligence combines multiple capabilities into a unified view of marketing performance.
 
-### Purpose
+---
 
-Provide website traffic, acquisition, engagement, and conversion metrics.
+## Paid Advertising
 
-### Collection Method
+| Integration | Collection | Status |
+|------------|------------|--------|
+| Eulerity | Playwright | ✅ Production |
+| Meta Ads | Graph API | 🚧 Active Development |
+| Google Ads | REST API | Planned |
+| Microsoft Ads | REST API | Planned |
 
-Google Analytics Data API
+---
 
-### Refresh Frequency
+### Eulerity
 
-Daily
+Purpose
 
-### Warehouse Tables
+Collect paid advertising metrics, spend, and budget allocation.
 
-* ga4_daily_metrics
+Warehouse
 
-### Reporting Views
+- eulerity_daily_metrics
+- eulerity_daily_spend
+- eulerity_daily_budget_allocation
 
-* marketing_daily_summary
-* executive_summary
+Reporting
 
-### Status
+- marketing_daily_summary
+
+Status
 
 ✅ Production
 
 ---
 
-## Eulerity
+### Meta Ads
 
-### Purpose
+Purpose
 
-Collect paid advertising performance and advertising spend.
+Collect paid advertising performance directly from Meta Marketing API.
 
-### Collection Method
+Planned Data
 
-Playwright Browser Automation
+- Campaigns
+- Ad Sets
+- Ads
+- Daily Insights
+- Spend
+- Reach
+- Impressions
+- Clicks
+- CTR
+- CPC
+- CPM
+- Conversions
+- ROAS
 
-### Current Features
+Warehouse
 
-* Authentication
-* Session persistence
-* Multi-studio processing
-* Metrics collection
-* Spend collection
-* Budget allocation
-* Warehouse ingestion
+- meta_ads_daily_metrics
+- meta_campaigns
+- meta_adsets
+- meta_ads
 
-### Warehouse Tables
+Reporting
 
-* eulerity_daily_metrics
-* eulerity_daily_spend
-* eulerity_daily_budget_allocation
+- marketing_daily_summary
+- paid_advertising_summary
 
-### Reporting Views
+Development Progress
 
-* marketing_daily_summary
-
-### Status
-
-✅ Production
-
-Future Enhancements
-
-* Historical backfill
-* Integration auditing
-* Campaign-level reporting enhancements
-
----
-
-## Meta Business
-
-### Purpose
-
-Provide organic Facebook and Instagram performance.
-
-### Collection Method
-
-Meta Graph API
-
-### Planned Data
-
-Daily page metrics
-
-Posts
-
-Reels
-
-Stories
-
-Followers
-
-Engagement
-
-Reach
-
-Creative performance
-
-### Planned Warehouse Tables
-
-* meta_daily_metrics
-* meta_posts
-* meta_post_metrics
-* meta_story_metrics
-* meta_reels
-
-### Reporting Views
-
-* marketing_daily_summary
-* creative_summary
-
-### Status
-
-🚧 Next Development Priority
+| Stage | Status |
+|--------|--------|
+| Developer App | ✅ Complete |
+| Authentication | ✅ Complete |
+| Ad Account Discovery | ✅ Complete |
+| Collection Service | 🚧 Next |
+| ETL | Planned |
+| Warehouse | Planned |
+| Reporting Views | Planned |
+| AI | Planned |
 
 ---
 
-## Google Business Profile
+## Organic Social
 
-### Purpose
+| Integration | Collection | Status |
+|------------|------------|--------|
+| Meta Social | Graph API | Planned |
+| Instagram Business | Graph API | Planned |
+| SOCi | API | Planned |
 
-Track local search visibility and customer interactions.
+Purpose
 
-### Planned Data
+Measure organic audience growth and engagement.
 
-* Profile views
-* Website clicks
-* Calls
-* Direction requests
-* Reviews
-* Review responses
+Planned Data
 
-### Status
+- Followers
+- Reach
+- Engagement
+- Posts
+- Stories
+- Reels
+- Comments
+- Shares
+- Creative Performance
 
-Planned
+Warehouse
+
+- meta_posts
+- meta_post_metrics
+- meta_story_metrics
+- meta_reels
+
+Reporting
+
+- creative_summary
+- marketing_daily_summary
 
 ---
 
-## SOCi
+## Web Analytics
 
-### Purpose
+| Integration | Collection | Status |
+|------------|------------|--------|
+| Google Analytics 4 | REST API | ✅ Production |
 
-Support additional social publishing and local marketing data where required.
+Warehouse
 
-SOCi is considered a supplemental marketing integration rather than the primary source of truth for organic social performance.
+- ga4_daily_metrics
 
-### Status
+---
 
-Planned
+## Local Presence
+
+| Integration | Collection | Status |
+|------------|------------|--------|
+| Google Business Profile | API | Planned |
+
+---
+
+## Contextual Data
+
+| Integration | Collection | Status |
+|------------|------------|--------|
+| Weather | API | ✅ Production |
+| Holidays | Planned | Planned |
+| School Calendars | Planned | Planned |
+| Community Events | Planned | Planned |
 
 ---
 
 # Operations Intelligence
 
-## Point of Sale (POS)
+## Planned Integrations
 
-Purpose
-
-Revenue
-
-Transactions
-
-Products
-
-Add-ons
-
-Guest purchases
-
-Status
-
-Planned
-
----
-
-## Reservations
-
-Purpose
-
-Reservations
-
-Attendance
-
-Capacity
-
-Booking trends
-
-Status
-
-Planned
-
----
-
-## Labor
-
-Purpose
-
-Scheduling
-
-Time tracking
-
-Payroll inputs
-
-Labor utilization
-
-Status
-
-Planned
-
----
-
-## Inventory
-
-Purpose
-
-Inventory movement
-
-Consumption
-
-Purchasing
-
-Shrinkage
-
-Status
-
-Planned
-
----
-
-# Customer Intelligence
-
-## CRM
-
-Purpose
-
-Customer history
-
-Retention
-
-Lifetime value
-
-Segmentation
-
-Marketing attribution
-
-Status
-
-Planned
+- Reservations
+- POS
+- Labor
+- Inventory
 
 ---
 
 # Financial Intelligence
 
-## Accounting
+## Planned Integrations
 
-Purpose
-
-Financial statements
-
-Expenses
-
-General ledger
-
-Payroll
-
-Forecasting
-
-Status
-
-Planned
+- QuickBooks Online
+- Xero
+- Stripe
 
 ---
 
-# Collection Methods
+# Customer Intelligence
 
-Studio Intelligence supports multiple collection strategies.
+## Planned Integrations
 
-| Method             | Example             |
-| ------------------ | ------------------- |
-| REST API           | GA4                 |
-| Graph API          | Meta Business       |
-| Browser Automation | Eulerity            |
-| Webhooks           | Future integrations |
-| CSV Imports        | Legacy systems      |
-
-Regardless of collection method, all integrations follow the same ETL pipeline.
+- CRM
+- HubSpot
+- Salesforce
+- Mailchimp
 
 ---
 
 # Integration Standards
 
-Every integration should:
+Every integration must:
 
-* Support historical imports whenever practical.
-* Preserve historical warehouse records.
-* Normalize source-specific field names.
-* Use configuration rather than hardcoded values.
-* Record integration audit information.
-* Expose data through reporting views.
-* Be consumable by AI without source-specific knowledge.
-
----
-
-# Future Integrations
-
-Potential future integrations include:
-
-Marketing
-
-* Google Ads
-* Meta Ads
-* Microsoft Ads
-* TikTok
-* Pinterest
-* LinkedIn
-
-Operations
-
-* Toast
-* Square
-* Shopify
-* Clover
-
-Financial
-
-* QuickBooks
-* Xero
-* Stripe
-
-Customer
-
-* HubSpot
-* Salesforce
-* Mailchimp
-* Constant Contact
-
-The architecture is intentionally designed so that new integrations can be added through configuration and standard implementation patterns rather than platform redesign.
+- Authenticate securely
+- Return structured JSON
+- Avoid business logic
+- Preserve historical data
+- Support configuration over code
+- Populate the warehouse
+- Expose reporting views
+- Be consumable by AI
