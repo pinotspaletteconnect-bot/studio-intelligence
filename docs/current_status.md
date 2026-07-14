@@ -540,3 +540,322 @@ Deliverables
 Expected Outcome
 
 Meta Ads becomes the third production marketing integration and fully validates the standard API-based integration pattern for Studio Intelligence.
+
+
+July 14, 2026 Development Session
+Session Objective
+
+Begin development of the Meta Business integration for Studio Intelligence and validate the standard API-based integration pattern that will replace browser automation where possible.
+
+Major Accomplishments
+1. Meta Developer Platform Successfully Configured
+
+Completed:
+
+Created the Studio Intelligence Meta Developer App.
+Added the Marketing API product.
+Configured required application settings.
+Verified user authentication.
+Generated a long-lived access token.
+Verified required permissions.
+
+Confirmed permissions include:
+
+ads_read
+ads_management
+business_management
+2. Business Manager Access
+
+Verified access to the Pinot's Palette National Business Portfolio.
+
+Confirmed that the application can access advertising assets associated with the authenticated user.
+
+Discovered that ad accounts must be explicitly associated with the authenticated user.
+
+Created the Jeffersonville advertising account and confirmed visibility after creation.
+
+3. Ad Account Discovery
+
+Successfully implemented account discovery through the Graph API.
+
+Verified discovery of the following ad accounts:
+
+Jeff Duff
+St. Matthews
+Jeffersonville
+Short North
+Gilbert
+
+This validated the ability to dynamically discover available advertising accounts rather than hardcoding account IDs.
+
+4. Meta Authentication Service
+
+Created the authentication layer.
+
+Files created:
+
+playwright/services/meta/auth.js
+
+Capabilities:
+
+Access token loading
+Graph API requests
+Ad account discovery
+Shared request helper
+
+Authentication was fully validated.
+
+5. Meta Ads Collection Service
+
+Created:
+
+playwright/services/meta/ads.js
+
+Capabilities:
+
+Download Meta Ads Insights
+Campaign metrics
+Ad Set metrics
+Ad metrics
+
+Returned metrics include:
+
+Campaign Name
+Campaign ID
+Ad Set Name
+Ad Set ID
+Ad Name
+Ad ID
+Impressions
+Reach
+Clicks
+Spend
+CPC
+CPM
+CTR
+Date Start
+Date Stop
+6. Multi-Account Collection
+
+Successfully expanded the service from a single ad account to dynamic multi-account collection.
+
+Current collection process:
+
+Discover Accounts
+
+↓
+
+Loop Accounts
+
+↓
+
+Download Insights
+
+↓
+
+Return Structured JSON
+
+This mirrors the Studio Intelligence collection architecture used by Eulerity.
+
+7. Local Testing
+
+Created:
+
+playwright/test-meta-auth.js
+
+Successfully verified:
+
+Token loading
+Authentication
+Account discovery
+
+Created:
+
+playwright/test-meta-ads.js
+
+Successfully verified:
+
+Multi-account collection
+Structured JSON output
+Repeatable execution
+
+The local Meta Ads collection layer is considered functionally complete.
+
+API Validation
+
+Successfully validated:
+
+GET /me/adaccounts
+
+Successfully validated:
+
+/{adAccountId}/insights
+
+Current query returns:
+
+Campaign
+
+↓
+
+Ad Set
+
+↓
+
+Ad
+
+with:
+
+Impressions
+Reach
+Clicks
+Spend
+CPC
+CPM
+CTR
+Important Architectural Discovery
+
+During Express integration a significant architectural issue was discovered.
+
+Studio Intelligence currently consists of two separate Node.js projects.
+
+Current structure:
+
+studio-intelligence/
+
+package.json
+
+playwright/
+
+package.json
+node_modules
+
+The Playwright project began as a standalone application and has since evolved into a service within Studio Intelligence.
+
+This dual-project structure is now causing unnecessary complexity.
+
+Examples:
+
+Duplicate package.json
+Duplicate dependency trees
+Duplicate node_modules
+Confusing environment variable loading
+Confusing Express startup behavior
+
+No functional Meta issues were discovered.
+
+The remaining issues appear to stem from project organization rather than the Meta implementation itself.
+
+Architectural Decision
+
+Before continuing with additional Meta development, Studio Intelligence should be consolidated into a single Node.js application.
+
+Target structure:
+
+studio-intelligence/
+
+package.json
+
+server.js
+
+.env
+
+playwright/
+
+services/
+routes/
+scripts/
+
+docs/
+
+n8n/
+
+supabase/
+
+Goals:
+
+One package.json
+One node_modules
+One Express server
+One .env
+One Docker deployment
+
+This refactor should simplify all future integrations.
+
+Meta Integration Status
+Completed
+Developer App
+Marketing API
+Authentication
+Long-lived token
+Graph API helper
+Account discovery
+Multi-account support
+Daily Insights retrieval
+Local collection service
+Local testing
+Partially Complete
+
+Created:
+
+routes/meta.js
+
+Created:
+
+server.js
+
+However, Express routing behavior should be revalidated after the Node project consolidation.
+
+This is believed to be an architectural issue rather than a Meta API issue.
+
+Remaining Meta Work
+
+After architecture consolidation:
+
+Validate Express routes
+Deploy to Railway
+Build n8n workflow
+Create Supabase warehouse tables
+Build UPSERT workflow
+Create reporting views
+Historical imports
+Current Assessment
+
+Meta API Development
+
+Approximately 35–40% complete.
+
+Collection Layer
+
+Approximately 95% complete.
+
+Warehouse Integration
+
+Not started.
+
+Reporting Layer
+
+Not started.
+
+Automation
+
+Not started.
+
+Highest Priority Next Session
+
+Do not continue building Meta on top of the dual Node.js project structure.
+
+Instead:
+
+Consolidate Studio Intelligence into a single Node.js project.
+Verify Eulerity still functions.
+Verify Meta still functions.
+Resume Meta warehouse integration.
+Notes for Future AI Sessions
+
+The Meta API itself is working correctly.
+
+Authentication, account discovery, and multi-account data collection have all been successfully validated locally.
+
+The primary blocker is project architecture, not Meta development.
+
+The next engineering task should be consolidating the repository into a single Node.js application before continuing with additional integrations.
