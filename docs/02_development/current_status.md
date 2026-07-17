@@ -3,7 +3,24 @@
 **Version 3.2**
 
 **Last Updated:** July 17, 2026
+## July 17, 2026
 
+### Deployment Architecture Validated
+
+Successfully restored the Railway deployment after the Node.js consolidation experiment.
+
+Key findings:
+
+- Railway deploys from the `playwright/` directory.
+- The Railway Root Directory is `playwright`.
+- Docker build context is `playwright`.
+- The deployed Playwright service maintains its own `package.json` and `package-lock.json`.
+- The repository root may contain its own package manifest for development, but the deployed service must retain its own package manifest.
+- The Playwright package starts with:
+  - `node server.js`
+  - NOT `node playwright/server.js`
+
+This deployment architecture is now considered stable and should not be changed without a specific migration plan.
 ---
 
 # Purpose

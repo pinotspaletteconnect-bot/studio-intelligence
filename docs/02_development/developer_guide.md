@@ -4,6 +4,8 @@
 
 **Last Updated:** July 9, 2026
 
+Deployment Rule: The Railway deployment has been validated in production. Changes to the deployment root, Dockerfile location, or Playwright package structure require a documented migration plan and should not be made as part of routine feature development.
+
 ---
 
 # Purpose
@@ -76,6 +78,17 @@ Responsibilities must never overlap.
 | AI               | Analysis and recommendations |
 
 ---
+## Working on the Playwright Collector
+
+Do not remove playwright/package.json.
+Do not remove playwright/package-lock.json.
+When adding dependencies used by the collector, install/update them in the Playwright application and regenerate its lockfile.
+Railway builds only the playwright directory.
+
+This saves future developers (or future AI assistants) from making the same mistake.
+
+---
+
 
 ## Reusable Patterns
 

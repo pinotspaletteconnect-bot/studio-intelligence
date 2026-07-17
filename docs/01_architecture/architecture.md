@@ -27,6 +27,33 @@ Studio Intelligence is responsible for collecting, normalizing, warehousing, ana
 Every component in the platform owns a single responsibility.
 
 ---
+# Deployment Architecture
+
+Repository Layout
+
+studio-intelligence/
+├── docs/
+├── package.json        (repository/development)
+└── playwright/
+    ├── Dockerfile
+    ├── package.json    (Railway deployment)
+    ├── package-lock.json
+    ├── server.js
+    ├── routes/
+    ├── services/
+
+Railway Configuration
+
+Root Directory: playwright
+
+Dockerfile: Dockerfile
+
+Application Root Inside Container: /app
+
+Server Entry Point:
+server.js
+
+---
 
 # High-Level Architecture
 

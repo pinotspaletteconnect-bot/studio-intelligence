@@ -4,6 +4,8 @@
 
 **Last Updated:** July 9, 2026
 
+The Playwright collector is the production data collection service and is deployed independently from the repository root.
+
 ---
 
 # Purpose
