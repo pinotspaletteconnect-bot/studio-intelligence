@@ -1,8 +1,8 @@
 # Studio Intelligence Current Status
 
-**Version 3.1**
+**Version 3.2**
 
-**Last Updated:** July 14, 2026
+**Last Updated:** July 17, 2026
 
 ---
 
@@ -18,17 +18,33 @@ All developers and AI assistants should review this document before beginning wo
 
 ---
 
-# Overall Project Status
+## Overall Project Status
 
-Studio Intelligence has successfully completed its foundational platform architecture and validated the standard integration pattern.
+Studio Intelligence has successfully completed its foundational platform architecture and established a standardized integration pattern for both browser automation and API-based data collection.
 
-The platform has transitioned from infrastructure development into business intelligence development.
+The platform now includes three operational marketing integrations:
 
-Core infrastructure, orchestration, warehouse architecture, and production integrations have validated the overall platform design.
+- Google Analytics 4
+- Eulerity
+- Meta Ads (Collection Layer Complete)
 
-Current development is focused on expanding Marketing Intelligence through additional integrations and business reporting.
+All integrations follow the same collection architecture:
 
----
+Collection Layer
+↓
+n8n ETL
+↓
+Supabase Warehouse
+↓
+Reporting Views
+↓
+AI Intelligence
+
+Core infrastructure, orchestration, and warehouse architecture have been validated.
+
+Current development has shifted from infrastructure to business intelligence, with the immediate focus on automating Meta Ads warehouse ingestion and building unified marketing reporting views.
+
+The platform architecture is considered stable, allowing future development to focus on expanding business domains rather than redesigning core infrastructure.
 
 # Platform Status
 
@@ -251,80 +267,69 @@ Remaining Enhancements
 
 ---
 
-## Milestone 5 — Meta Ads Foundation
+## Milestone 5 — Meta Ads Collection Layer
 
 Status
 
-🚧 Active Development
+✅ Collection Layer Complete
 
 Completed
 
-- Studio Intelligence Meta Developer App created
+- Studio Intelligence Meta Developer App
 - Marketing API configured
 - Business association completed
 - User authentication verified
-- User access token generated
-- Graph API connectivity validated
-- Multi-studio ad account discovery completed
+- Long-lived access token validated
+- Graph API helper created
+- Dynamic multi-account discovery
+- Authentication service
+- Shared Graph request helper
+- Express routes
+- Daily Insights endpoint
+- Multi-account collection service
+- Campaign, Ad Set, and Ad level metrics
+- Structured JSON responses
+- Local end-to-end validation
 
-Discovered Ad Accounts
+Current Capabilities
 
-- St. Matthews
-- Jeffersonville
-- Short North
-- Gilbert
-
-Current Status
-
-Authentication and connectivity have been successfully validated.
+- Automatically discovers available ad accounts
+- Downloads yesterday's advertising metrics
+- Returns normalized JSON for ETL
+- Supports multiple studios without hardcoded account IDs
 
 Remaining Work
 
-- Collection service
-- Daily Insights endpoint
-- ETL workflow
-- Warehouse schema
-- Reporting views
-
----
-
-# Current Sprint
-
-## Objective
-
-Complete the Meta Ads Collection Layer.
-
-Primary Goals
-
-- Complete Documentation v3.1
-- Build Meta collection service
-- Build Express route
-- Collect Daily Insights
-- Prepare n8n ETL
-- Design Marketing reporting views
-
----
+- Deploy to Railway
+- Build n8n ETL workflow
+- Create warehouse tables
+- Build UPSERT process
+- Marketing reporting views
+- Historical imports
 
 # Immediate Priorities
 
-## 1. Meta Ads Collection
+## 1. Meta Ads Warehouse Integration
 
 Current Status
 
-Authentication complete.
+✅ Collection Layer Complete
 
 Remaining
 
-- services/meta.js
-- routes/meta.js
-- Daily Insights endpoint
-- Structured JSON responses
+- Deploy collection service to Railway
+- Build n8n workflow
+- Create warehouse tables
+- Build UPSERT process
+- Validate scheduled daily imports
 
 ---
 
 ## 2. Marketing Reporting Views
 
-Develop standardized reporting views.
+Current Status
+
+Ready to begin after Meta warehouse ingestion.
 
 Planned
 
@@ -333,11 +338,20 @@ Planned
 - marketing_monthly_summary
 - executive_marketing_summary
 
+The reporting layer will combine:
+
+- Google Analytics 4
+- Eulerity
+- Meta Ads
+- Weather
+
 ---
 
 ## 3. Creative Intelligence
 
-Begin warehouse design.
+Current Status
+
+Warehouse design pending.
 
 Planned Entities
 
@@ -347,12 +361,15 @@ Planned Entities
 - Images
 - Videos
 - Promotional Themes
+- Instructors
 
 ---
 
 ## 4. Weather Integration
 
-Build Weather API integration.
+Current Status
+
+Pending.
 
 Planned
 
@@ -365,9 +382,11 @@ Planned
 
 ## 5. Google Business Profile
 
-Begin after Meta Ads collection.
+Current Status
 
----
+Planned.
+
+Will begin after Meta warehouse integration is complete.
 
 # Current Production Environment
 
@@ -407,17 +426,27 @@ Responsibilities
 
 Current technical debt remains low.
 
-Remaining work
+## Recently Resolved
 
-- Historical backfill
+- Consolidated Studio Intelligence into a single Node.js project
+- Eliminated duplicate package.json files
+- Eliminated duplicate dependency trees
+- Simplified dependency management
+- Standardized Express application startup
+- Simplified environment variable loading
+
+## Remaining
+
+- Historical data backfill
 - Integration auditing
+- Automated monitoring and alerting
 - Marketing reporting views
-- Warehouse dimensions
-- Meta collection service
+- Expanded warehouse dimensions
+- Historical Meta Ads imports
 
 No architectural refactoring is currently planned.
 
----
+The platform architecture is considered stable and future development will focus on expanding business intelligence capabilities rather than infrastructure changes.
 
 # Current Repository Structure
 
@@ -425,14 +454,39 @@ No architectural refactoring is currently planned.
 studio-intelligence/
 
 docs/
+│
+├── ARCHITECTURE.md
+├── CURRENT_STATUS.md
+├── DEVELOPER_GUIDE.md
+├── PROJECT_BLUEPRINT.md
+├── README.md
+└── ...
+
 playwright/
+│
+├── routes/
+├── services/
+│   ├── eulerity/
+│   ├── ga4/
+│   └── meta/
+├── scripts/
+├── server.js
+└── .env
+
 n8n/
+
 supabase/
+│
+├── schema/
+├── views/
+└── migrations/
+
+package.json
 ```
 
 Repository organization is considered stable.
 
----
+The platform now uses a single Node.js application with centralized dependency management while maintaining clear separation between collection services, orchestration, warehouse components, and documentation.
 
 # Recent Architectural Decisions
 
@@ -525,337 +579,220 @@ At that point Studio Intelligence will have completed Marketing Intelligence Ver
 
 # Next Development Session
 
-Objective
+## Objective
 
-Complete the Meta Ads Collection Layer.
+Complete the Meta Ads warehouse integration and transition the collection layer into automated production processing.
 
-Deliverables
+## Deliverables
 
-- services/meta.js
-- routes/meta.js
-- Daily Insights endpoint
-- Structured JSON responses
-- Ready for n8n ETL
+- Deploy the Meta collection service to Railway
+- Create the Meta Ads warehouse schema
+- Build the n8n ETL workflow
+- Implement UPSERT processing
+- Validate scheduled daily imports
+- Begin Marketing reporting views
 
-Expected Outcome
+## Expected Outcome
 
-Meta Ads becomes the third production marketing integration and fully validates the standard API-based integration pattern for Studio Intelligence.
+Meta Ads becomes the third production marketing integration with automated warehouse ingestion.
 
+Marketing Intelligence Version 1.0 will then include:
 
-July 14, 2026 Development Session
-Session Objective
+- Google Analytics 4
+- Eulerity
+- Meta Ads
 
-Begin development of the Meta Business integration for Studio Intelligence and validate the standard API-based integration pattern that will replace browser automation where possible.
+with all three integrations automatically collecting, transforming, and storing daily marketing data.
 
-Major Accomplishments
-1. Meta Developer Platform Successfully Configured
+---
+
+# July 17, 2026 Development Session
+
+## Session Objective
+
+Complete the Meta Ads Collection Layer and validate the standard API-based integration architecture for Studio Intelligence.
+
+---
+
+## Major Accomplishments
+
+### 1. Node.js Architecture Consolidation
+
+Successfully consolidated Studio Intelligence into a single Node.js application.
 
 Completed:
 
-Created the Studio Intelligence Meta Developer App.
-Added the Marketing API product.
-Configured required application settings.
-Verified user authentication.
-Generated a long-lived access token.
-Verified required permissions.
+- Eliminated duplicate package.json files
+- Eliminated duplicate dependency trees
+- Standardized dependency management
+- Simplified application startup
+- Simplified environment variable loading
 
-Confirmed permissions include:
+The repository architecture is now significantly cleaner and easier to maintain.
 
-ads_read
-ads_management
-business_management
-2. Business Manager Access
+---
 
-Verified access to the Pinot's Palette National Business Portfolio.
-
-Confirmed that the application can access advertising assets associated with the authenticated user.
-
-Discovered that ad accounts must be explicitly associated with the authenticated user.
-
-Created the Jeffersonville advertising account and confirmed visibility after creation.
-
-3. Ad Account Discovery
-
-Successfully implemented account discovery through the Graph API.
-
-Verified discovery of the following ad accounts:
-
-Jeff Duff
-St. Matthews
-Jeffersonville
-Short North
-Gilbert
-
-This validated the ability to dynamically discover available advertising accounts rather than hardcoding account IDs.
-
-4. Meta Authentication Service
-
-Created the authentication layer.
-
-Files created:
-
-playwright/services/meta/auth.js
-
-Capabilities:
-
-Access token loading
-Graph API requests
-Ad account discovery
-Shared request helper
-
-Authentication was fully validated.
-
-5. Meta Ads Collection Service
-
-Created:
-
-playwright/services/meta/ads.js
-
-Capabilities:
-
-Download Meta Ads Insights
-Campaign metrics
-Ad Set metrics
-Ad metrics
-
-Returned metrics include:
-
-Campaign Name
-Campaign ID
-Ad Set Name
-Ad Set ID
-Ad Name
-Ad ID
-Impressions
-Reach
-Clicks
-Spend
-CPC
-CPM
-CTR
-Date Start
-Date Stop
-6. Multi-Account Collection
-
-Successfully expanded the service from a single ad account to dynamic multi-account collection.
-
-Current collection process:
-
-Discover Accounts
-
-↓
-
-Loop Accounts
-
-↓
-
-Download Insights
-
-↓
-
-Return Structured JSON
-
-This mirrors the Studio Intelligence collection architecture used by Eulerity.
-
-7. Local Testing
-
-Created:
-
-playwright/test-meta-auth.js
-
-Successfully verified:
-
-Token loading
-Authentication
-Account discovery
-
-Created:
-
-playwright/test-meta-ads.js
-
-Successfully verified:
-
-Multi-account collection
-Structured JSON output
-Repeatable execution
-
-The local Meta Ads collection layer is considered functionally complete.
-
-API Validation
+### 2. Meta Authentication
 
 Successfully validated:
 
-GET /me/adaccounts
+- Long-lived access token
+- Graph API connectivity
+- Authentication helper
+- Shared Graph request service
+
+Authentication is considered production-ready.
+
+---
+
+### 3. Dynamic Ad Account Discovery
+
+Successfully implemented automatic discovery of available advertising accounts.
+
+Validated discovery of:
+
+- Jeff Duff
+- St. Matthews
+- Jeffersonville
+- Short North
+- Gilbert
+
+No hardcoded account IDs are required.
+
+---
+
+### 4. Meta Ads Collection Service
+
+Completed:
+
+- Multi-account collection
+- Daily Insights retrieval
+- Campaign metrics
+- Ad Set metrics
+- Ad metrics
+
+Collected metrics include:
+
+- Campaign Name
+- Campaign ID
+- Ad Set Name
+- Ad Set ID
+- Ad Name
+- Ad ID
+- Impressions
+- Reach
+- Clicks
+- Spend
+- CPC
+- CPM
+- CTR
+- Date Start
+- Date Stop
+
+---
+
+### 5. Express API Validation
 
 Successfully validated:
 
-/{adAccountId}/insights
+POST /meta/download
 
-Current query returns:
+Returns structured JSON for every discovered advertising account.
 
-Campaign
+The collection layer now mirrors the architecture established by the Eulerity integration.
 
-↓
+---
 
-Ad Set
+### 6. Collection Layer Complete
 
-↓
+The Meta Ads collection service is now capable of:
 
-Ad
+- Discovering all available ad accounts
+- Downloading Daily Insights
+- Returning normalized structured JSON
+- Supporting multiple studios
+- Providing a consistent collection interface for ETL
 
-with:
+The collection layer is considered functionally complete.
 
-Impressions
-Reach
-Clicks
-Spend
-CPC
-CPM
-CTR
-Important Architectural Discovery
+---
 
-During Express integration a significant architectural issue was discovered.
+## Current Assessment
 
-Studio Intelligence currently consists of two separate Node.js projects.
+### Meta Collection Layer
 
-Current structure:
+✅ Complete
 
-studio-intelligence/
+### Warehouse Integration
 
-package.json
+🚧 Ready to Begin
 
-playwright/
+### Reporting Layer
 
-package.json
-node_modules
+Not Started
 
-The Playwright project began as a standalone application and has since evolved into a service within Studio Intelligence.
+### Marketing Intelligence
 
-This dual-project structure is now causing unnecessary complexity.
+Advancing toward Version 1.0
 
-Examples:
+---
 
-Duplicate package.json
-Duplicate dependency trees
-Duplicate node_modules
-Confusing environment variable loading
-Confusing Express startup behavior
+## Highest Priority Next Session
 
-No functional Meta issues were discovered.
+1. Deploy Meta collection service to Railway
+2. Create warehouse tables
+3. Build n8n ETL workflow
+4. Implement UPSERT processing
+5. Validate automated daily ingestion
 
-The remaining issues appear to stem from project organization rather than the Meta implementation itself.
+---
 
-Architectural Decision
+## Notes for Future AI Sessions
 
-Before continuing with additional Meta development, Studio Intelligence should be consolidated into a single Node.js application.
+The Meta Ads Collection Layer is complete and has been successfully validated locally.
 
-Target structure:
+The Node.js architecture has been consolidated into a single application, eliminating the previous project structure issues.
 
-studio-intelligence/
+Future development should focus on warehouse integration, reporting views, and expanding business intelligence rather than additional collection-layer work.
 
-package.json
+Meta Ads is now ready to become the third production marketing integration within Studio Intelligence.
 
-server.js
+# Current Sprint
 
-.env
+## Objective
 
-playwright/
+Complete Meta Ads warehouse integration and transition the collection layer into automated production ingestion.
 
-services/
-routes/
-scripts/
+Primary Goals
 
-docs/
+- Deploy Meta collection service to Railway
+- Build n8n ETL workflow
+- Create Meta warehouse tables
+- Build UPSERT process
+- Validate automated daily collection
+- Begin Marketing reporting views
 
-n8n/
+Current Sprint Progress
 
-supabase/
+### ✅ Completed
 
-Goals:
+- Consolidated Studio Intelligence into a single Node.js application
+- Eliminated duplicate package.json files
+- Eliminated duplicate dependency trees
+- Validated Express routing after consolidation
+- Completed Meta authentication service
+- Completed Graph API helper
+- Completed dynamic ad account discovery
+- Completed multi-account Meta Ads collection
+- Completed Daily Insights collection
+- Validated structured JSON output
+- Verified collection across all available advertising accounts
 
-One package.json
-One node_modules
-One Express server
-One .env
-One Docker deployment
+### 🚧 Remaining
 
-This refactor should simplify all future integrations.
-
-Meta Integration Status
-Completed
-Developer App
-Marketing API
-Authentication
-Long-lived token
-Graph API helper
-Account discovery
-Multi-account support
-Daily Insights retrieval
-Local collection service
-Local testing
-Partially Complete
-
-Created:
-
-routes/meta.js
-
-Created:
-
-server.js
-
-However, Express routing behavior should be revalidated after the Node project consolidation.
-
-This is believed to be an architectural issue rather than a Meta API issue.
-
-Remaining Meta Work
-
-After architecture consolidation:
-
-Validate Express routes
-Deploy to Railway
-Build n8n workflow
-Create Supabase warehouse tables
-Build UPSERT workflow
-Create reporting views
-Historical imports
-Current Assessment
-
-Meta API Development
-
-Approximately 35–40% complete.
-
-Collection Layer
-
-Approximately 95% complete.
-
-Warehouse Integration
-
-Not started.
-
-Reporting Layer
-
-Not started.
-
-Automation
-
-Not started.
-
-Highest Priority Next Session
-
-Do not continue building Meta on top of the dual Node.js project structure.
-
-Instead:
-
-Consolidate Studio Intelligence into a single Node.js project.
-Verify Eulerity still functions.
-Verify Meta still functions.
-Resume Meta warehouse integration.
-Notes for Future AI Sessions
-
-The Meta API itself is working correctly.
-
-Authentication, account discovery, and multi-account data collection have all been successfully validated locally.
-
-The primary blocker is project architecture, not Meta development.
-
-The next engineering task should be consolidating the repository into a single Node.js application before continuing with additional integrations.
+- Railway deployment
+- n8n workflow
+- Warehouse schema
+- UPSERT workflow
+- Marketing reporting views
+- Historical imports
