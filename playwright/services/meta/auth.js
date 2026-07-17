@@ -8,6 +8,9 @@ const BASE_URL = `https://graph.facebook.com/${GRAPH_VERSION}`;
  */
 function getAccessToken() {
 
+    console.log("AUTH sees META_ACCESS_TOKEN:", !!process.env.META_ACCESS_TOKEN);
+    console.log("AUTH env keys:", Object.keys(process.env).filter(k => k.includes("META")));
+
     const token = process.env.META_ACCESS_TOKEN;
 
     if (!token) {
@@ -16,7 +19,6 @@ function getAccessToken() {
 
     return token;
 }
-
 /**
  * Generic helper for all Graph API requests.
  */

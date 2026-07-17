@@ -30,14 +30,17 @@ router.post("/download", async (req, res) => {
 
     } catch (error) {
 
-        console.error(error);
+    console.error(error.response?.data || error);
 
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
+    res.status(500).json({
+        success: false,
+        message: error.response?.data?.error?.message || error.message,
+        code: error.response?.data?.error?.code,
+        type: error.response?.data?.error?.type,
+        fbtrace_id: error.response?.data?.error?.fbtrace_id
+    });
 
-    }
+}
 
 });
 
