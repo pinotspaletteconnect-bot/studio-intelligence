@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "description": "Studio Intelligence",
   "type": "commonjs",
-  "main": "playwright/server.js",
-  "scripts": {
-    "start": "node playwright/server.js",
-    "dev": "node playwright/server.js"
-  },
+"main": "server.js",
+"scripts": {
+  "start": "node server.js",
+  "dev": "node server.js"
+}
   "dependencies": {
     "axios": "^1.18.1",
     "csv-parser": "^3.2.1",
