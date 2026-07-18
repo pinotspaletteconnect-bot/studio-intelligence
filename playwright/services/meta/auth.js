@@ -28,15 +28,17 @@ class MetaAuthService {
      */
     getAccessToken() {
 
-        const token = process.env.META_ACCESS_TOKEN;
+    const token = process.env.META_ACCESS_TOKEN;
 
-        if (!token) {
-            throw new Error("META_ACCESS_TOKEN not found.");
-        }
+    console.log("META token prefix:", token?.substring(0, 20));
+    console.log("META token suffix:", token?.slice(-10));
 
-        return token;
-
+    if (!token) {
+        throw new Error("META_ACCESS_TOKEN not found.");
     }
+
+    return token;
+}
 
     /**
      * Saves the latest access token.
@@ -149,15 +151,26 @@ class MetaAuthService {
     }
 
     /**
-     * Generic Graph API helper
-     */
-    async graphRequest(endpoint, params = {}) {
+ * Generic Graph API helper
+ */
+async graphRequest(endpoint, params = {}) {
+
+    const token = this.getAccessToken();
+
+    console.log("==================================");
+    console.log("Meta Endpoint:", endpoint);
+    console.log("Token Length:", token.length);
+    console.log("Token Start :", token.substring(0, 20));
+    console.log("Token End   :", token.slice(-20));
+    console.log("==================================");
+
+    try {
 
         const response = await axios.get(
             `${this.baseUrl}${endpoint}`,
             {
                 params: {
-                    access_token: this.getAccessToken(),
+                    access_token: token,
                     ...params
                 }
             }
@@ -165,7 +178,19 @@ class MetaAuthService {
 
         return response.data;
 
+    } catch (error) {
+
+        console.error("Graph API Error:");
+
+        if (error.response?.data) {
+            console.error(JSON.stringify(error.response.data, null, 2));
+        } else {
+            console.error(error.message);
+        }
+
+        throw error;
     }
+}
     /**
      * Returns every Business Manager
      * available to this user.
