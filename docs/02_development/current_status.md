@@ -1,212 +1,268 @@
-# Studio Intelligence Current Status
+Studio Intelligence Current Status
 
-**Version 3.3**
+Version 3.4
 
-**Last Updated:** July 17, 2026
-## July 17, 2026
-
-### Deployment Architecture Validated
-
-Successfully restored the Railway deployment after the Node.js consolidation experiment.
-
-Key findings:
-
-- Railway deploys from the `playwright/` directory.
-- The Railway Root Directory is `playwright`.
-- Docker build context is `playwright`.
-- The deployed Playwright service maintains its own `package.json` and `package-lock.json`.
-- The repository root may contain its own package manifest for development, but the deployed service must retain its own package manifest.
-- The Playwright package starts with:
-  - `node server.js`
-  - NOT `node playwright/server.js`
-
-This deployment architecture is now considered stable and should not be changed without a specific migration plan.
----
+Last Updated: July 18, 2026
 
 Overall Project Status
 
-Studio Intelligence has completed another major milestone with the successful implementation of the Meta Business Ads integration.
+Studio Intelligence has successfully completed the foundational Meta Business authentication architecture.
 
-The platform now has three production marketing data sources flowing into the centralized warehouse using a standardized ETL architecture:
+The platform now contains a production-ready Meta authentication service capable of securely authenticating with Meta, discovering business assets, and providing a reusable Graph API interface for all future Meta integrations.
 
-Google Analytics 4
-Eulerity
-Meta Business Ads
+This represents a major architectural milestone.
 
-All three integrations follow the same collection → orchestration → warehouse pattern and provide historical marketing data for reporting and AI analysis.
+Rather than implementing authentication inside individual collectors, Meta now follows the same service-oriented architecture used throughout Studio Intelligence.
 
-The foundational warehouse architecture is now considered stable.
+The project is now transitioning from authentication and connectivity into Meta data collection.
 
 Completed This Session
-Meta Business Ads Integration
-Railway Collector
+Meta Authentication Service
 
-Completed deployment of the Meta Business collector into the production Express application.
+Completely redesigned the Meta integration architecture.
 
-New endpoints:
+Authentication is now centralized inside:
 
-/meta/health
-/meta/download
+playwright/services/meta/auth.js
 
-The collector now:
+The authentication service now manages:
 
-Authenticates with the Meta Marketing API
-Retrieves configured ad accounts
-Downloads daily ad insights
-Returns normalized JSON for ETL processing
-Studio Mapping
+OAuth Authentication
+Authorization Code Exchange
+Long-Lived User Token Exchange
+Token Persistence
+Graph API Communication
+Business Discovery
+Ad Account Discovery
+Facebook Page Discovery
 
-Completed configuration-driven studio mapping using the studio_integrations table.
+All Meta authentication responsibilities now exist in a single service.
 
-Each Meta account is dynamically matched to its corresponding studio using the configured external account ID.
+OAuth Authentication
 
-This removes any hardcoded account mappings from the ETL process.
+Successfully implemented the complete Meta OAuth flow.
 
-n8n ETL Workflow
+Flow:
 
-Completed the first production Meta Ads ETL workflow.
+Studio Intelligence
+        ↓
+Meta OAuth Login
+        ↓
+User Authorization
+        ↓
+Authorization Code
+        ↓
+User Access Token
+        ↓
+Long-Lived User Token
+        ↓
+Token Storage
 
-Workflow:
+Authentication now completes automatically through the application.
 
-Manual Trigger
-      ↓
-Download Meta Ads
-      ↓
-Extract Meta Accounts
-      ↓
-Load Studio Mappings
-      ↓
-Map Accounts to Studios
-      ↓
-Filter Active Accounts
-      ↓
-Expand Ad Insights
-      ↓
-Prepare Warehouse Records
-      ↓
-Upsert Meta Ads Daily
+Manual token generation is no longer required.
 
-The workflow now:
+Long-Lived Access Tokens
 
-downloads all configured accounts
-filters unmapped accounts
-filters accounts with no daily activity
-expands ad-level insights
-prepares warehouse records
-performs UPSERT operations into Supabase
-Warehouse
+Successfully implemented automatic generation of long-lived Meta User Access Tokens.
 
-Successfully completed loading into:
+Current implementation:
 
-meta_ads_daily
+Authorization Code Exchange
+Long-Lived Token Exchange
+Automatic token persistence
+Approximately 60-day token lifetime
 
-Current imported metrics include:
+Current token storage is performed inside the local .env file.
 
-Spend
-Impressions
-Reach
-Clicks
-CTR
-CPC
-CPM
+This storage mechanism is temporary.
 
-Campaign metadata:
+Future versions will migrate token storage into the studio_integrations table.
 
-Campaign
-Ad Set
-Ad
-Account
+Graph API Framework
 
-Warehouse records include:
+Created a reusable Graph API abstraction layer.
 
-organization_id
-brand_id
-studio_id
-integration_date
-raw_data
+Current helper methods include:
 
-UPSERT logic is functioning correctly.
+graphRequest()
+
+getAccessToken()
+
+getAppCredentials()
+
+saveAccessToken()
+
+completeOAuth()
+
+Future Meta services will communicate exclusively through this interface.
+
+Business Discovery
+
+Successfully implemented automatic Business Manager discovery.
+
+Current endpoint:
+
+GET /meta/businesses
+
+Studio Intelligence can now enumerate every Business Manager accessible to the authenticated user.
+
+Ad Account Discovery
+
+Successfully implemented automatic Meta Ad Account discovery.
+
+Current endpoint:
+
+GET /meta/accounts
+
+Current discovered production accounts include:
+
+St Matthews
+Jeffersonville
+Short North
+Gilbert
+
+Account metadata currently retrieved:
+
+Account ID
+Account Name
+Currency
+Time Zone
+Account Status
+
+No hardcoded account IDs are required.
+
+Facebook Page Discovery
+
+Successfully implemented Facebook Page discovery.
+
+Current endpoint:
+
+GET /meta/pages
+
+Studio Intelligence can now retrieve:
+
+Facebook Page ID
+Page Name
+Page Access Token
+
+These Page Access Tokens will support future Facebook and Instagram integrations.
+
+Express Route Refactoring
+
+Meta routing has been significantly simplified.
+
+Current routes include:
+
+GET /meta/health
+GET /meta/config
+GET /meta/auth
+GET /meta/callback
+
+GET /meta/businesses
+GET /meta/accounts
+GET /meta/pages
+
+POST /meta/download
+
+Authentication logic has been removed from the routing layer.
+
+Routes now delegate authentication responsibilities directly to the Meta Authentication Service.
+
+Current Meta Architecture
+Express Routes
+        ↓
+Meta Authentication Service
+        ↓
+Meta Graph API
+        ↓
+Business Discovery
+        ↓
+Account Discovery
+        ↓
+Page Discovery
+
+This architecture is now considered the standard implementation pattern for all future Meta functionality.
 
 Current Production Integrations
 Integration	Status
-GA4	✅ Production
+Google Analytics 4	✅ Production
 Eulerity	✅ Production
-Meta Business Ads	✅ Production
-Weather	🚧 Planned Reporting Integration
+Meta Authentication	✅ Production
+Meta Business Discovery	✅ Production
+Weather	🚧 Planned
 Google Business Profile	Planned
 Reservation System	Planned
 QuickBooks	Planned
-Current Warehouse Tables
+Current Warehouse
 
-Production marketing tables now include:
-
-ga4_daily_metrics
-eulerity_daily_metrics
-eulerity_daily_spend
-eulerity_daily_budget_allocation
-meta_ads_daily
-
-Core platform tables:
+Existing warehouse tables remain:
 
 organizations
 brands
 studios
 studio_integrations
 integration_runs
+
+ga4_daily_metrics
+
+eulerity_daily_metrics
+eulerity_daily_spend
+eulerity_daily_budget_allocation
+
+meta_ads_daily
+
+No warehouse schema changes were required during this authentication sprint.
+
 Immediate Priorities
-Marketing Reporting Layer
+Meta Marketing Data Collection
 
-Build reporting views that combine:
+Build reusable Meta services for:
 
-GA4
-Eulerity
-Meta Ads
+Campaigns
 
-into unified daily marketing summaries.
+Ad Sets
 
-Examples:
+Ads
 
-vw_marketing_daily
-vw_markly_weekly
-vw_marketing_monthly
-vw_campaign_performance
-Marketing Intelligence
+Insights
 
-Begin calculating:
+Creatives
 
-ROAS
-Cost per Session
-Cost per User
-Cost per Click
-Marketing Efficiency
-Studio Performance Rankings
-Dashboard Development
+All services will utilize the shared Meta Authentication Service.
 
-With the primary marketing warehouse complete, begin building the first dashboard pages.
+Marketing Warehouse Expansion
 
-Initial dashboard focus:
+Expand Meta imports to include:
 
-Executive Summary
-Marketing Performance
-Campaign Performance
-Studio Comparison
-Technical Debt
-
-Minor improvements remain for the Meta integration:
-
-Import additional Meta metrics
+Campaign hierarchy
+Campaign metadata
+Daily Insights
+Reach
 Frequency
 Landing Page Views
 Link Clicks
 Video Metrics
 Results
 Cost Per Result
-Add integration audit logging
-Improve ETL monitoring
-Build incremental synchronization validation
+Conversion metrics
+Reporting Layer
 
-These are enhancements rather than blockers.
+Continue construction of unified marketing reporting views combining:
 
+GA4
+Eulerity
+Meta
+
+Planned reporting views:
+
+vw_marketing_daily
+
+vw_marketing_weekly
+
+vw_marketing_monthly
+
+vw_campaign_performance
 Major Milestones Completed
 Platform
 GitHub Repository
@@ -215,22 +271,23 @@ Express API
 Playwright Automation
 Supabase Warehouse
 n8n ETL Platform
-Marketing Data
-Google Analytics 4
-Eulerity
-Meta Business Ads
-Warehouse
-
-Configuration-driven architecture completed.
-
-Historical warehouse architecture validated.
-
-Standardized ETL pattern established for future integrations.
-
+Marketing
+Google Analytics 4 Integration
+Eulerity Integration
+Meta Authentication
+Meta Business Discovery
+Meta Ad Account Discovery
+Facebook Page Discovery
+Architecture
+Service-oriented Meta Authentication
+Centralized Graph API communication
+Configuration-driven integrations
+Standardized ETL architecture
+Reusable Meta service foundation
 Next Development Sprint
 
-The project now shifts from building integrations to building intelligence.
+The Meta authentication foundation is now complete.
 
-The next phase focuses on transforming collected data into business insights through reporting views, dashboards, and AI-powered analysis.
+The next sprint focuses on building reusable Meta data collectors for campaigns, ads, ad sets, creatives, and daily insights using the new authentication framework.
 
-Marketing reporting will serve as the foundation for future operational, financial, customer, and executive intelligence.
+These services will complete the Meta marketing integration and enable Studio Intelligence to begin importing comprehensive advertising performance data into the centralized warehouse.
