@@ -1,75 +1,280 @@
 const axios = require("axios");
+const fs = require("fs");
+const path = require("path");
 
-const GRAPH_VERSION = "v25.0";
-const BASE_URL = `https://graph.facebook.com/${GRAPH_VERSION}`;
+class MetaAuthService {
 
-/**
- * Returns the Meta access token stored in .env
- */
-function getAccessToken() {
+    constructor() {
 
-    console.log("AUTH sees META_ACCESS_TOKEN:", !!process.env.META_ACCESS_TOKEN);
-    console.log("AUTH env keys:", Object.keys(process.env).filter(k => k.includes("META")));
+        this.graphVersion = "v25.0";
+        this.baseUrl = `https://graph.facebook.com/${this.graphVersion}`;
 
-    const token = process.env.META_ACCESS_TOKEN;
-
-    if (!token) {
-        throw new Error("META_ACCESS_TOKEN not found in environment variables.");
     }
 
-    return token;
-}
-/**
- * Generic helper for all Graph API requests.
- */
-async function graphRequest(endpoint, params = {}) {
+    /**
+     * Returns Meta App credentials
+     */
+    getAppCredentials() {
 
-    const response = await axios.get(`${BASE_URL}${endpoint}`, {
-        params: {
-            access_token: getAccessToken(),
-            ...params
+        return {
+            appId: process.env.META_APP_ID,
+            appSecret: process.env.META_APP_SECRET
+        };
+
+    }
+
+    /**
+     * Returns the current stored access token
+     */
+    getAccessToken() {
+
+        const token = process.env.META_ACCESS_TOKEN;
+
+        if (!token) {
+            throw new Error("META_ACCESS_TOKEN not found.");
         }
-    });
 
-    return response.data;
+        return token;
+
+    }
+
+    /**
+     * Saves the latest access token.
+     *
+     * TEMP:
+     * Writes to .env.
+     *
+     * FUTURE:
+     * Save to Supabase studio_integrations table.
+     */
+    saveAccessToken(token) {
+
+        const envPath = path.join(__dirname, "../../.env");
+
+        let env = fs.readFileSync(envPath, "utf8");
+
+        if (env.match(/^META_ACCESS_TOKEN=.*$/m)) {
+
+            env = env.replace(
+                /^META_ACCESS_TOKEN=.*$/m,
+                `META_ACCESS_TOKEN=${token}`
+            );
+
+        } else {
+
+            env += `\nMETA_ACCESS_TOKEN=${token}\n`;
+
+        }
+
+        fs.writeFileSync(envPath, env);
+
+        //
+        // Update running process immediately
+        //
+
+        process.env.META_ACCESS_TOKEN = token;
+
+        console.log("✅ Meta access token updated.");
+
+    }
+
+    /**
+     * Completes OAuth authorization.
+     *
+     * Authorization Code
+     *      ↓
+     * User Token
+     *      ↓
+     * Long-lived Token
+     *      ↓
+     * Save Token
+     */
+    async completeOAuth(code) {
+
+        if (!code) {
+            throw new Error("Missing authorization code.");
+        }
+
+        const { appId, appSecret } = this.getAppCredentials();
+
+        const redirectUri =
+            "http://localhost:3000/meta/callback";
+
+        //
+        // Exchange authorization code
+        //
+
+        const response = await axios.get(
+            `${this.baseUrl}/oauth/access_token`,
+            {
+                params: {
+                    client_id: appId,
+                    client_secret: appSecret,
+                    redirect_uri: redirectUri,
+                    code
+                }
+            }
+        );
+
+        //
+        // Exchange for long-lived token
+        //
+
+        const longLived = await axios.get(
+            `${this.baseUrl}/oauth/access_token`,
+            {
+                params: {
+                    grant_type: "fb_exchange_token",
+                    client_id: appId,
+                    client_secret: appSecret,
+                    fb_exchange_token: response.data.access_token
+                }
+            }
+        );
+
+        //
+        // Save token
+        //
+
+        this.saveAccessToken(
+            longLived.data.access_token
+        );
+
+        return {
+            accessToken: longLived.data.access_token,
+            expiresIn: longLived.data.expires_in,
+            tokenType: longLived.data.token_type
+        };
+
+    }
+
+    /**
+     * Generic Graph API helper
+     */
+    async graphRequest(endpoint, params = {}) {
+
+        const response = await axios.get(
+            `${this.baseUrl}${endpoint}`,
+            {
+                params: {
+                    access_token: this.getAccessToken(),
+                    ...params
+                }
+            }
+        );
+
+        return response.data;
+
+    }
+    /**
+     * Returns every Business Manager
+     * available to this user.
+     */
+    async getBusinesses() {
+
+        const result = await this.graphRequest(
+            "/me/businesses",
+            {
+                fields: "id,name"
+            }
+        );
+
+        return result.data.map(business => ({
+            id: business.id,
+            name: business.name
+        }));
+
+    }
+
+    /**
+     * Returns every Ad Account
+     * available to this user.
+     */
+    async getAdAccounts() {
+
+        const result = await this.graphRequest(
+            "/me/adaccounts",
+            {
+                fields:
+                    "id,name,account_status,currency,timezone_name"
+            }
+        );
+
+        return result.data.map(account => ({
+
+            id: account.id,
+            name: account.name,
+            accountStatus: account.account_status,
+            currency: account.currency,
+            timezone: account.timezone_name
+
+        }));
+
+    }
+
+    /**
+     * Returns every Facebook Page
+     * managed by this user.
+     */
+    async getPages() {
+
+        const result = await this.graphRequest(
+            "/me/accounts",
+            {
+                fields: "id,name,access_token"
+            }
+        );
+
+        return result.data.map(page => ({
+
+            id: page.id,
+            name: page.name,
+            accessToken: page.access_token
+
+        }));
+
+    }
+
+    /**
+     * Returns a single Ad Account.
+     */
+    async getAdAccount(accountId) {
+
+        return this.graphRequest(
+            `/${accountId}`,
+            {
+                fields:
+                    "id,name,account_status,currency,timezone_name"
+            }
+        );
+
+    }
+
+    /**
+     * Tests whether the current
+     * access token is valid.
+     */
+    async validateToken() {
+
+        try {
+
+            await this.graphRequest(
+                "/me",
+                {
+                    fields: "id,name"
+                }
+            );
+
+            return true;
+
+        } catch (error) {
+
+            return false;
+
+        }
+
+    }
 
 }
 
-/**
- * Returns every ad account available to this token.
- */
-async function getAdAccounts() {
-
-    const result = await graphRequest("/me/adaccounts", {
-        fields: "id,name,account_status,currency,timezone_name"
-    });
-
-    return result.data.map(account => ({
-        id: account.id,
-        name: account.name,
-        accountStatus: account.account_status,
-        currency: account.currency,
-        timezone: account.timezone_name
-    }));
-
-}
-
-/**
- * Returns every Facebook Page this user manages.
- */
-async function getPages() {
-
-    const result = await graphRequest("/me/accounts", {
-        fields: "id,name,access_token"
-    });
-
-    return result.data;
-
-}
-
-module.exports = {
-    getAccessToken,
-    graphRequest,
-    getAdAccounts,
-    getPages
-};
+module.exports = new MetaAuthService();
