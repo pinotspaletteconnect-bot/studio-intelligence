@@ -147,20 +147,31 @@ class MetaAuthService {
 
     }
 
-    /**
- * Generic Graph API helper
+   /**
+ * Generic Graph API helper using the stored user access token.
  */
 async graphRequest(endpoint, params = {}) {
 
-    const token = this.getAccessToken();
+    return this.graphRequestWithToken(
+        endpoint,
+        this.getAccessToken(),
+        params
+    );
 
-        try {
+}
+
+/**
+ * Generic Graph API helper using a supplied access token.
+ */
+async graphRequestWithToken(endpoint, accessToken, params = {}) {
+
+    try {
 
         const response = await axios.get(
             `${this.baseUrl}${endpoint}`,
             {
                 params: {
-                    access_token: token,
+                    access_token: accessToken,
                     ...params
                 }
             }
@@ -179,7 +190,9 @@ async graphRequest(endpoint, params = {}) {
         }
 
         throw error;
+
     }
+
 }
     /**
      * Returns every Business Manager

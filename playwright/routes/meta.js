@@ -4,6 +4,7 @@ const express = require("express");
 const router = express.Router();
 
 const ads = require("../services/meta/ads");
+const pageInsights = require("../services/meta/pageInsights");
 const auth = require("../services/meta/auth");
 /**
  * Health Check
@@ -64,12 +65,13 @@ router.get("/auth", (req, res) => {
     const redirectUri = "http://localhost:3000/meta/callback";
 
     const scopes = [
-        "ads_read",
-        "ads_management",
-        "business_management",
-        "pages_show_list",
-        "pages_read_engagement"
-    ].join(",");
+    "ads_read",
+    "ads_management",
+    "business_management",
+    "pages_show_list",
+    "pages_read_engagement",
+    "read_insights"
+].join(",");
 
     const url =
         `https://www.facebook.com/v25.0/dialog/oauth` +
@@ -196,5 +198,55 @@ router.get("/pages", async (req, res) => {
     }
 
 });
+/**
+ * Meta Page Insights Health
+ */
+router.get("/page-insights/health", async (req, res) => {
 
+    try {
+
+        const result = await pageInsights.health();
+
+        res.json({
+            success: true,
+            ...result
+        });
+
+    } catch (error) {
+
+        res.status(500).json({
+            success: false,
+            message: error.response?.data?.error?.message || error.message
+        });
+
+    }
+
+});
+
+/**
+ * Download Meta Page Insights
+ */
+router.post("/page-insights/download", async (req, res) => {
+
+    try {
+
+        const result = await pageInsights.download();
+
+        res.json({
+            success: true,
+            ...result
+        });
+
+    } catch (error) {
+
+        console.error(error.response?.data || error);
+
+        res.status(500).json({
+            success: false,
+            message: error.response?.data?.error?.message || error.message
+        });
+
+    }
+
+});
 module.exports = router;
