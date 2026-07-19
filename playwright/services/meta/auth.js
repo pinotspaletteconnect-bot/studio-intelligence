@@ -32,6 +32,11 @@ class MetaAuthService {
 
     console.log("META token prefix:", token?.substring(0, 20));
     console.log("META token suffix:", token?.slice(-10));
+console.log("Length:", token.length);
+console.log("Bytes :", Buffer.byteLength(token, "utf8"));
+console.log("First :", token.substring(0,20));
+console.log("Last  :", token.slice(-20));
+console.log("Last char code:", token.charCodeAt(token.length - 1));
 
     if (!token) {
         throw new Error("META_ACCESS_TOKEN not found.");
