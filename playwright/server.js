@@ -2,9 +2,6 @@ const path = require("path");
 
 require("dotenv").config();
 
-console.log("dotenv path:", path.join(__dirname, ".env"));
-console.log("META token loaded:", !!process.env.META_ACCESS_TOKEN);
-
 const express = require("express");
 
 const eulerityRoutes = require("./routes/eulerity");

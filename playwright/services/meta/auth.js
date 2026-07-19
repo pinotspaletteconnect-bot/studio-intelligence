@@ -26,21 +26,13 @@ class MetaAuthService {
     /**
      * Returns the current stored access token
      */
-    getAccessToken() {
+  getAccessToken() {
 
     const token = process.env.META_ACCESS_TOKEN;
 
     if (!token) {
         throw new Error("META_ACCESS_TOKEN not found.");
     }
-
-    console.log("META token prefix:", token.substring(0, 20));
-    console.log("META token suffix:", token.slice(-10));
-    console.log("Length:", token.length);
-    console.log("Bytes :", Buffer.byteLength(token, "utf8"));
-    console.log("First :", token.substring(0,20));
-    console.log("Last  :", token.slice(-20));
-    console.log("Last char code:", token.charCodeAt(token.length - 1));
 
     return token;
 }
@@ -162,14 +154,7 @@ async graphRequest(endpoint, params = {}) {
 
     const token = this.getAccessToken();
 
-    console.log("==================================");
-    console.log("Meta Endpoint:", endpoint);
-    console.log("Token Length:", token.length);
-    console.log("Token Start :", token.substring(0, 20));
-    console.log("Token End   :", token.slice(-20));
-    console.log("==================================");
-
-    try {
+        try {
 
         const response = await axios.get(
             `${this.baseUrl}${endpoint}`,
