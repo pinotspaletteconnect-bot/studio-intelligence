@@ -1,6 +1,6 @@
 "use client"
 
-import { MetricCard } from "@/components/executive/metric-card"
+import { MetricCard } from "@/components/studio/shared/metric-card"
 
 const executiveMetrics = [
   {
