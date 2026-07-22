@@ -21,7 +21,11 @@ export function StudioSelect() {
   return (
     <Select
       value={selectedStudio}
-      onValueChange={setSelectedStudio}
+      onValueChange={(value) => {
+  if (value) {
+    setSelectedStudio(value)
+  }
+}}
       disabled={loading}
     >
       <SelectTrigger className="w-56">

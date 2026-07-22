@@ -1,8 +1,8 @@
 # Studio Intelligence Architecture
 
-**Version 3.0**
+**Version 4.0**
 
-**Last Updated:** July 9, 2026
+**Last Updated:** July 22, 2026
 
 ---
 
@@ -461,3 +461,152 @@ The following principles are considered permanent.
 * Integrations plug into the existing platform rather than modifying it
 
 These principles should guide every future architectural decision.
+
+Frontend Application Architecture
+Next.js Pages
+        ↓
+Shared Application Context
+        ↓
+Dashboard Components
+        ↓
+Next.js API Routes
+        ↓
+Service Layer
+        ↓
+Supabase Reporting Views
+Responsibilities
+Pages
+
+Responsible only for layout and composition.
+
+Pages should:
+
+Assemble dashboard components
+Define page layout
+Pass minimal configuration
+
+Pages should not:
+
+Query Supabase
+Perform calculations
+Contain business logic
+Shared Application Context
+
+Provides shared dashboard state across the application.
+
+Current shared state includes:
+
+Selected Studio
+Date Range
+Comparison Period
+Studio List
+Loading State
+
+Future additions may include:
+
+Organization
+Brand
+User Preferences
+Permissions
+
+The context serves as the single source of truth for dashboard filters.
+
+Dashboard Components
+
+Dashboard components are responsible only for presentation.
+
+Examples include:
+
+Dashboard Toolbar
+KPI Cards
+Charts
+Tables
+Filters
+
+Components should consume APIs rather than communicating directly with Supabase.
+
+API Routes
+
+Every dashboard data request should pass through a Next.js API route.
+
+Responsibilities:
+
+Receive dashboard requests
+Validate parameters
+Call service layer
+Return JSON
+
+API routes should not contain business calculations.
+
+Service Layer
+
+The service layer owns all database interaction.
+
+Responsibilities:
+
+Query reporting views
+Aggregate metrics
+Build dashboard models
+Return strongly typed data
+
+Services isolate React from the warehouse.
+
+I would also update the High-Level Architecture
+
+Instead of:
+
+Warehouse
+↓
+Reporting Views
+↓
+Consumers
+
+I'd make it:
+
+Warehouse
+        ↓
+Reporting Views
+        ↓
+Next.js API Layer
+        ↓
+Service Layer
+        ↓
+Dashboard UI
+        ↓
+Automation / AI
+
+This reflects the actual runtime flow much more accurately.
+
+Add a New Architectural Rule
+
+I'd add something like:
+
+Presentation Layer Rules
+React components never query Supabase directly.
+All database access flows through the service layer.
+API routes provide the public contract between the frontend and backend.
+Shared dashboard state belongs in the application context.
+Business calculations belong in SQL reporting views or services, never UI components.
+
+Those rules capture the design decisions we've been making as we've built the dashboard.
+
+I also think we should formally introduce a new layer
+
+Your architecture currently has:
+
+Collection
+ETL
+Warehouse
+Reporting
+AI
+
+I think it now looks like this:
+
+Collection Layer (Playwright, APIs)
+ETL Layer (n8n)
+Warehouse Layer (Supabase)
+Business Intelligence Layer (SQL Views + Services)
+Presentation Layer (Next.js Dashboard)
+Intelligence Layer (AI, Automation, Reports)
+
+That separation is important because your dashboard isn't just "consuming" data anymore—it's a structured application with its own architecture and conventions.

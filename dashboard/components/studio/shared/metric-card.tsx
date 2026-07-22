@@ -19,9 +19,10 @@ import {
 type MetricCardProps = {
   title: string
   value: string
-  change: string
-  trend: "up" | "down"
-  subtitle: string
+
+  change?: string
+  trend?: "up" | "down"
+  subtitle?: string
 }
 
 export function MetricCard({
@@ -32,9 +33,9 @@ export function MetricCard({
   subtitle,
 }: MetricCardProps) {
   const TrendingIcon =
-    trend === "up"
-      ? TrendingUpIcon
-      : TrendingDownIcon
+    trend === "down"
+      ? TrendingDownIcon
+      : TrendingUpIcon
 
   return (
     <Card className="@container/card">
@@ -45,20 +46,24 @@ export function MetricCard({
           {value}
         </CardTitle>
 
-        <CardAction>
-          <Badge variant="outline">
-            <TrendingIcon className="mr-1 size-4" />
-            {change}
-          </Badge>
-        </CardAction>
+        {change && (
+          <CardAction>
+            <Badge variant="outline">
+              <TrendingIcon className="mr-1 size-4" />
+              {change}
+            </Badge>
+          </CardAction>
+        )}
       </CardHeader>
 
-      <CardFooter className="flex-col items-start gap-1.5 text-sm">
-        <div className="flex items-center gap-2 font-medium">
-          {subtitle}
-          <TrendingIcon className="size-4" />
-        </div>
-      </CardFooter>
+      {subtitle && (
+        <CardFooter className="flex-col items-start gap-1.5 text-sm">
+          <div className="flex items-center gap-2 font-medium">
+            {subtitle}
+            {trend && <TrendingIcon className="size-4" />}
+          </div>
+        </CardFooter>
+      )}
     </Card>
   )
 }
