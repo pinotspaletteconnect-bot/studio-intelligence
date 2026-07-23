@@ -1,531 +1,115 @@
-# Studio Intelligence Schema
-**Version 3.0**
+# Studio Intelligence Warehouse Schema
 
-**Last Updated:** July 9, 2026
+**Version:** 4.1  
+**Last updated:** July 23, 2026
 
----
+## Purpose
 
-# Purpose
+This document inventories warehouse objects confirmed by current project documentation. The live Supabase schema is authoritative. Do not infer a table exists merely because it appears in a roadmap or archived document.
 
-This document defines the logical warehouse schema for Studio Intelligence.
+## Status Labels
 
-Unlike DATA_MODEL.md, which explains the conceptual organization of the warehouse, this document catalogs the actual database tables, their purpose, ownership, and relationships.
+- **Current:** documented as part of the active warehouse.
+- **Planned:** design intent; not safe for implementation dependencies.
+- **Needs verification:** conflicting documentation exists; inspect Supabase and workflows before use.
 
-This document should be updated whenever a new table is added or removed.
+## Configuration Tables
 
----
+| Object | Purpose | Status |
+| --- | --- | --- |
+| `organizations` | Top-level tenant/business organization | Current |
+| `brands` | Brand within an organization | Current |
+| `studios` | Individual location | Current |
+| `studio_integrations` | Configuration and external-account mapping per studio | Current |
+| `integration_runs` | Integration execution/audit records | Current |
 
-# Schema Organization
+Expected hierarchy:
 
-The warehouse is organized into the following categories:
+```text
+organizations 1→many brands 1→many studios
+studios 1→many studio_integrations
+```
 
-- Configuration
-- Dimensions
-- Facts
-- Reporting Views
+Confirm exact columns, constraints, and foreign-key behavior in Supabase before migrations or code changes.
 
----
+## Marketing Fact Tables
 
-# Configuration Tables
+| Object | Expected grain/purpose | Status |
+| --- | --- | --- |
+| `ga4_daily_metrics` | GA4 metrics by studio/date and documented analytics dimensions | Current |
+| `eulerity_daily_metrics` | Eulerity performance metrics at the documented daily grain | Current |
+| `eulerity_daily_spend` | Eulerity spend by studio/date and applicable campaign dimensions | Current |
+| `eulerity_daily_budget_allocation` | Daily allocated budget by studio/date | Current |
+| `meta_ads_daily` | Meta campaign insights by account/campaign/date with studio mapping | Current |
+| `meta_page_insights_daily` | Facebook Page insights by page/date/period with studio mapping | Current |
+| `weather_daily` | Historical/contextual weather by location/date | Needs verification |
 
-These tables define the structure of the business.
+Current Meta Ads metrics documented by the project include spend, impressions, reach, clicks, CTR, CPC, CPM, campaign ID/name, and date. Current Meta Page insight ingestion includes Page media views and period dimensions. Validate the actual column names before writing queries.
 
----
+## Reporting Views
 
-## organizations
+Unified marketing and executive reporting views are active development priorities. Candidate names documented elsewhere include:
 
-**Purpose**
+- `vw_marketing_daily`
+- `vw_marketing_weekly`
+- `vw_marketing_monthly`
+- `vw_campaign_performance`
 
-Top-level business organization.
+These names are **planned until verified in Supabase**. Do not claim they are implemented based on this document.
 
-**Primary Key**
+## Planned Domains
 
-id
+The following are logical plans, not confirmed tables:
 
-**Relationships**
+### Marketing and Creative
 
-1 → Many brands
+Campaign/ad dimensions, organic social facts, Google Business Profile, reviews, creative assets, creative performance, and marketing attribution.
 
----
+### Operations
 
-## brands
+Reservations, classes/events, attendance, capacity, staffing, labor, schedules, inventory, products, and studio hours.
 
-**Purpose**
+### Financial
 
-Brand owned by an organization.
+Sales, payments, expenses, payroll, budgets, forecasts, and profitability.
 
-**Primary Key**
+### Customer
 
-id
+Customers, visits, retention, lifetime value, loyalty, segmentation, communication engagement, and attribution.
 
-**Foreign Keys**
+## Required Documentation Per Object
 
-organization_id
+Before production use, every table/view should document:
 
----
+- Purpose and owner
+- Row grain
+- Primary key or natural key
+- Organization/brand/studio relationship
+- External source identifiers
+- Source and normalized timestamps/timezone
+- Required fields and null behavior
+- UPSERT/duplicate behavior
+- Backfill and retention policy
+- Relevant indexes and constraints
+- Upstream workflow and downstream consumers
 
-## studios
+## Naming Guidance
 
-**Purpose**
+- Fact tables describe source/domain and grain.
+- Reporting views use stable business terms and follow the live prefix convention.
+- Internal IDs and external IDs must be distinguishable.
+- Avoid renaming production objects solely for stylistic consistency.
 
-Individual business locations.
+## Change Procedure
 
-**Primary Key**
+Schema changes require explicit approval and a migration plan. For every change:
 
-id
+1. Inspect the live Supabase definition.
+2. Identify producers and consumers.
+3. Plan forward migration and rollback/recovery.
+4. Preserve historical data.
+5. Update n8n workflows and service queries atomically where possible.
+6. Verify idempotency and tenant isolation.
+7. Update this file, `data_model.md`, `current_status.md`, and the changelog.
 
-**Foreign Keys**
-
-brand_id
-
-organization_id
-
----
-
-## studio_integrations
-
-**Purpose**
-
-Defines which integrations are enabled for each studio.
-
-**Primary Key**
-
-id
-
-**Foreign Keys**
-
-studio_id
-
----
-
-## integration_runs
-
-**Purpose**
-
-Audit trail of integration executions.
-
-**Primary Key**
-
-id
-
-**Foreign Keys**
-
-studio_id
-
-integration_id (future)
-
----
-
-# Dimension Tables
-
-Dimension tables describe business entities.
-
----
-
-## dim_campaigns
-
-Status
-
-Planned
-
----
-
-## dim_creative_assets
-
-Status
-
-Planned
-
----
-
-## dim_products
-
-Status
-
-Planned
-
----
-
-## dim_customers
-
-Status
-
-Planned
-
----
-
-## dim_staff
-
-Status
-
-Planned
-
----
-
-# Fact Tables
-
-Fact tables contain measurable business events.
-
----
-
-## Marketing Intelligence
-
-### ga4_daily_metrics
-
-**Grain**
-
-One row per Studio + Day
-
-**Purpose**
-
-Daily website analytics.
-
-Status
-
-Production
-
----
-
-### eulerity_daily_metrics
-
-**Grain**
-
-One row per Studio + Day
-
-**Purpose**
-
-Daily advertising performance.
-
-Status
-
-Production
-
----
-
-### eulerity_daily_spend
-
-**Grain**
-
-One row per Studio + Day + Campaign
-
-**Purpose**
-
-Advertising spend.
-
-Status
-
-Production
-
----
-
-### eulerity_daily_budget_allocation
-
-**Grain**
-
-One row per Studio + Day
-
-**Purpose**
-
-Budget allocation percentages.
-
-Status
-
-Production
-
----
-
-### weather_daily
-
-**Grain**
-
-One row per Studio + Day
-
-**Purpose**
-
-Historical weather conditions.
-
-Status
-
-Schema Complete
-
-Integration Pending
-
----
-
-### meta_daily_metrics
-
-Status
-
-Planned
-
----
-
-### meta_posts
-
-Status
-
-Planned
-
----
-
-### meta_post_metrics
-
-Status
-
-Planned
-
----
-
-### meta_story_metrics
-
-Status
-
-Planned
-
----
-
-### meta_reels
-
-Status
-
-Planned
-
----
-
-# Operations Intelligence
-
-## reservations
-
-Status
-
-Planned
-
----
-
-## labor_daily
-
-Status
-
-Planned
-
----
-
-## inventory_daily
-
-Status
-
-Planned
-
----
-
-## sales_daily
-
-Status
-
-Planned
-
----
-
-# Financial Intelligence
-
-## revenue_daily
-
-Status
-
-Planned
-
----
-
-## payroll_daily
-
-Status
-
-Planned
-
----
-
-## expenses_daily
-
-Status
-
-Planned
-
----
-
-# Customer Intelligence
-
-## customer_visits
-
-Status
-
-Planned
-
----
-
-## customer_lifetime_value
-
-Status
-
-Planned
-
----
-
-## marketing_attribution
-
-Status
-
-Planned
-
----
-
-# Reporting Views
-
-Reporting Views should be the primary interface used by dashboards and AI.
-
----
-
-## marketing_daily_summary
-
-Status
-
-Planned
-
----
-
-## marketing_weekly_summary
-
-Status
-
-Planned
-
----
-
-## operations_daily_summary
-
-Status
-
-Planned
-
----
-
-## executive_summary
-
-Status
-
-Planned
-
----
-
-## customer_summary
-
-Status
-
-Planned
-
----
-
-# Naming Standards
-
-Configuration
-
-Plural nouns
-
-Example
-
-organizations
-
----
-
-Dimensions
-
-Prefix
-
-dim_
-
-Example
-
-dim_customers
-
----
-
-Facts
-
-source_grain_subject
-
-Examples
-
-ga4_daily_metrics
-
-meta_post_metrics
-
-eulerity_daily_spend
-
----
-
-Reporting Views
-
-Business-oriented names.
-
-Examples
-
-marketing_daily_summary
-
-executive_summary
-
-studio_summary
-
----
-
-# Grain Standards
-
-Every fact table should clearly define its grain.
-
-Examples
-
-GA4
-
-Studio + Day
-
-Eulerity Metrics
-
-Studio + Day
-
-Eulerity Spend
-
-Studio + Day + Campaign
-
-Meta Posts
-
-Studio + Post
-
-Reservations
-
-Studio + Reservation
-
-Sales
-
-Studio + Transaction
-
----
-
-# Status Legend
-
-| Status | Meaning |
-|---------|---------|
-| Planned | Designed but not started |
-| In Development | Currently being built |
-| Production | Fully operational |
-| Deprecated | Scheduled for removal |
-
----
-
-# Current Warehouse Summary
-
-| Category | Count |
-|----------|------:|
-| Configuration Tables | 5 |
-| Dimension Tables | 0 |
-| Fact Tables | 5 Production |
-| Reporting Views | 0 |
-
-This document should always reflect the current warehouse implementation.
+Never include connection strings, keys, tokens, or credential values in this document.
