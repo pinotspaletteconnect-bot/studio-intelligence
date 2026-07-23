@@ -1,247 +1,145 @@
 # Studio Intelligence Integrations
 
-**Version 3.1**
+**Version:** 4.1  
+**Last updated:** July 23, 2026
 
-**Last Updated:** July 14, 2026
+## Purpose
 
----
+This document catalogs external systems and their verified implementation state. Integrations are organized by business capability, not by vendor. The live code, deployed workflows, and warehouse schema take precedence over stale status labels.
 
-# Purpose
+## Standard Lifecycle
 
-This document defines every external system integrated with Studio Intelligence.
-
-Integrations are organized by **business capability** rather than software vendor.
-
-Each integration follows the standard Studio Intelligence lifecycle:
-
+```text
 Authenticate
+  → collect source data
+  → return a structured contract
+  → validate and transform in n8n
+  → map studios through configuration
+  → load Supabase idempotently
+  → expose reporting views/services
+  → consume in dashboards, automation, or AI
+```
 
-↓
+No integration should bypass this lifecycle without an explicit architectural decision.
 
-Collect
+## Status Definitions
 
-↓
+- **Production:** deployed and validated through warehouse loading.
+- **Active development:** implementation exists but the end-to-end path is incomplete.
+- **Planned:** design intent only; do not depend on it.
+- **Needs verification:** documentation or code suggests implementation, but current production evidence is insufficient.
 
-Return Structured Data
+## Marketing Intelligence
 
-↓
+### Google Analytics 4
 
-ETL
-
-↓
-
-Warehouse
-
-↓
-
-Reporting Views
-
-↓
-
-Dashboards / AI
-
-No integration should bypass this workflow.
-
----
-
-# Marketing Intelligence
-
-Marketing Intelligence combines multiple capabilities into a unified view of marketing performance.
-
----
-
-## Paid Advertising
-
-| Integration | Collection | Status |
-|------------|------------|--------|
-| Eulerity | Playwright | ✅ Production |
-| Meta Ads | Graph API | 🚧 Active Development |
-| Google Ads | REST API | Planned |
-| Microsoft Ads | REST API | Planned |
-
----
+- **Capability:** web traffic and audience analytics
+- **Collection:** API/n8n
+- **Warehouse:** `ga4_daily_metrics`
+- **Status:** Production
 
 ### Eulerity
 
-Purpose
+- **Capability:** paid advertising metrics, spend, and budget allocation
+- **Collection:** Playwright automation through the Express collector
+- **ETL:** n8n
+- **Warehouse:**
+  - `eulerity_daily_metrics`
+  - `eulerity_daily_spend`
+  - `eulerity_daily_budget_allocation`
+- **Status:** Production
 
-Collect paid advertising metrics, spend, and budget allocation.
+### Meta Business Ads
 
-Warehouse
+- **Capability:** campaign-level advertising performance
+- **Collection:** Meta Graph API through shared Meta services and Express routes
+- **ETL:** n8n
+- **Warehouse:** `meta_ads_daily`
+- **Current metrics:** campaign/date, spend, impressions, reach, clicks, CTR, CPC, and CPM
+- **Configuration:** ad account mapping through `studio_integrations`
+- **Status:** Production
 
-- eulerity_daily_metrics
-- eulerity_daily_spend
-- eulerity_daily_budget_allocation
+### Meta Page Insights
 
-Reporting
+- **Capability:** Facebook Page discovery and organic Page insight metrics
+- **Collection:** Meta Graph API through shared Meta services and Express routes
+- **ETL:** n8n
+- **Warehouse:** `meta_page_insights_daily`
+- **Current verified metric:** Page media views, with day/week/rolling-period dimensions
+- **Configuration:** Page mapping and friendly names through `studio_integrations` using the Meta Page integration type
+- **Status:** Production
 
-- marketing_daily_summary
+Meta Ads and Meta Page Insights share authentication, token validation, business discovery, account discovery, and Page discovery code under `playwright/services/meta/`.
 
-Status
+### Organic Social and Creative Intelligence
 
-✅ Production
+Planned scope includes Instagram Business, posts, Reels, Stories, engagement, followers, reusable creative assets, and cross-platform creative performance. Current Meta Page Insights should not be described as a complete organic-social or creative-intelligence implementation.
 
----
+- **Status:** Planned beyond current Page Insights
 
-### Meta Ads
+### Google Ads and Microsoft Ads
 
-Purpose
+- **Status:** Planned
 
-Collect paid advertising performance directly from Meta Marketing API.
+### Google Business Profile / Local Presence
 
-Planned Data
+Planned scope includes profile insights, reviews, search visibility, and customer actions.
 
-- Campaigns
-- Ad Sets
-- Ads
-- Daily Insights
-- Spend
-- Reach
-- Impressions
-- Clicks
-- CTR
-- CPC
-- CPM
-- Conversions
-- ROAS
+- **Status:** Planned
 
-Warehouse
+### Contextual Data
 
-- meta_ads_daily_metrics
-- meta_campaigns
-- meta_adsets
-- meta_ads
+| Integration | Status | Notes |
+| --- | --- | --- |
+| Weather | Needs verification | Some documents describe it as ready or production while current status marks it planned. Verify workflow and warehouse evidence before promoting the status. |
+| Holidays | Planned | Context for demand and forecasting |
+| School calendars | Planned | Local demand context |
+| Community events | Planned | Local demand context |
 
-Reporting
+## Operations Intelligence
 
-- marketing_daily_summary
-- paid_advertising_summary
+Planned sources include reservations, POS, scheduling, labor, staffing, inventory, and studio operations. No operations integration should be marked production until the full collection-to-warehouse path is validated.
 
-Development Progress
+## Financial Intelligence
 
-| Stage | Status |
-|--------|--------|
-| Developer App | ✅ Complete |
-| Authentication | ✅ Complete |
-| Ad Account Discovery | ✅ Complete |
-| Collection Service | 🚧 Next |
-| ETL | Planned |
-| Warehouse | Planned |
-| Reporting Views | Planned |
-| AI | Planned |
+Planned sources include QuickBooks Online, Xero, Stripe or payment systems, payroll, budgets, expenses, and forecasting.
 
----
+## Customer Intelligence
 
-## Organic Social
+Planned sources include reservation/customer systems, CRM, loyalty, email engagement, and marketing attribution.
 
-| Integration | Collection | Status |
-|------------|------------|--------|
-| Meta Social | Graph API | Planned |
-| Instagram Business | Graph API | Planned |
-| SOCi | API | Planned |
-
-Purpose
-
-Measure organic audience growth and engagement.
-
-Planned Data
-
-- Followers
-- Reach
-- Engagement
-- Posts
-- Stories
-- Reels
-- Comments
-- Shares
-- Creative Performance
-
-Warehouse
-
-- meta_posts
-- meta_post_metrics
-- meta_story_metrics
-- meta_reels
-
-Reporting
-
-- creative_summary
-- marketing_daily_summary
-
----
-
-## Web Analytics
-
-| Integration | Collection | Status |
-|------------|------------|--------|
-| Google Analytics 4 | REST API | ✅ Production |
-
-Warehouse
-
-- ga4_daily_metrics
-
----
-
-## Local Presence
-
-| Integration | Collection | Status |
-|------------|------------|--------|
-| Google Business Profile | API | Planned |
-
----
-
-## Contextual Data
-
-| Integration | Collection | Status |
-|------------|------------|--------|
-| Weather | API | ✅ Production |
-| Holidays | Planned | Planned |
-| School Calendars | Planned | Planned |
-| Community Events | Planned | Planned |
-
----
-
-# Operations Intelligence
-
-## Planned Integrations
-
-- Reservations
-- POS
-- Labor
-- Inventory
-
----
-
-# Financial Intelligence
-
-## Planned Integrations
-
-- QuickBooks Online
-- Xero
-- Stripe
-
----
-
-# Customer Intelligence
-
-## Planned Integrations
-
-- CRM
-- HubSpot
-- Salesforce
-- Mailchimp
-
----
-
-# Integration Standards
+## Integration Standards
 
 Every integration must:
 
-- Authenticate securely
-- Return structured JSON
-- Avoid business logic
-- Preserve historical data
-- Support configuration over code
-- Populate the warehouse
-- Expose reporting views
-- Be consumable by AI
+- Authenticate securely without committing secrets.
+- Use direct APIs when reliable APIs exist; use Playwright when browser automation is necessary.
+- Return a stable, structured source contract.
+- Keep business normalization and warehouse writes in n8n/ETL.
+- Map organizations, studios, and external accounts through configuration rather than code.
+- Preserve historical data and use idempotent loading.
+- Record observable failures and integration runs.
+- Document table grain, natural keys, scheduling, and retry behavior.
+- Provide a reporting or consumer contract before dashboard use.
+- Update this catalog, `current_status.md`, schema documentation, and the changelog when status changes.
+
+## Credential Boundaries
+
+- Railway environment variables are the production configuration source for the collector.
+- Supabase keys, Meta tokens, Eulerity credentials, session state, and n8n credentials must never be stored in Git or documentation.
+- Documentation may name required environment-variable keys, but must never include their values.
+
+## Adding an Integration
+
+Before implementation, document:
+
+1. Business question and owner
+2. Authentication method
+3. Collection mechanism and endpoint contract
+4. Expected source grain
+5. n8n transformation and error strategy
+6. Configuration mapping
+7. Warehouse table, keys, and retention
+8. Reporting view or service contract
+9. Verification plan
+10. Operational owner and status evidence
