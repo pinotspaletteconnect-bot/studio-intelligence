@@ -1,612 +1,213 @@
 # Studio Intelligence Architecture
 
-**Version 4.0**
+**Version:** 4.1  
+**Last updated:** July 23, 2026
 
-**Last Updated:** July 22, 2026
+## Purpose
 
----
+This document defines the technical architecture and responsibility boundaries of Studio Intelligence. If routine implementation choices conflict with these boundaries, this document takes precedence unless an explicit architectural decision supersedes it.
 
-# Purpose
+## Architectural Model
 
-This document defines the technical architecture of Studio Intelligence.
+Studio Intelligence is a warehouse-first, configuration-driven platform.
 
-It describes how data flows through the platform, how responsibilities are divided, and the architectural principles that guide implementation.
+```text
+External Systems
+  → Collection Layer (APIs, Playwright, webhooks, files)
+  → ETL Layer (n8n)
+  → Warehouse Layer (Supabase PostgreSQL)
+  → Business Intelligence Layer (SQL views and services)
+  → Presentation Layer (Next.js dashboard and API routes)
+  → Intelligence/Action Layer (reports, automation, AI)
+```
 
-If implementation decisions conflict with this document, the architecture should take precedence.
+Each layer owns one responsibility. Data may flow through the layers, but responsibilities must not leak between them.
 
----
+## Repository and Deployment Shape
 
-# Architectural Philosophy
-
-Studio Intelligence follows a warehouse-first architecture.
-
-External systems are responsible for generating business data.
-
-Studio Intelligence is responsible for collecting, normalizing, warehousing, analyzing, and presenting that data.
-
-Every component in the platform owns a single responsibility.
-
----
-# Deployment Architecture
-
-Repository Layout
-
+```text
 studio-intelligence/
+├── AGENTS.md
+├── project_blueprint.md
+├── roadmap.md
 ├── docs/
-├── package.json        (repository/development)
-└── playwright/
+├── dashboard/          # Next.js business intelligence application
+└── playwright/         # Railway-deployed collection service
     ├── Dockerfile
-    ├── package.json    (Railway deployment)
+    ├── package.json
     ├── package-lock.json
     ├── server.js
     ├── routes/
     ├── services/
-
-Railway Configuration
-
-Root Directory: playwright
-
-Dockerfile: Dockerfile
-
-Application Root Inside Container: /app
-
-Server Entry Point:
-server.js
-
----
-
-# High-Level Architecture
-
-```text
-┌────────────────────────────┐
-│    External Systems         │
-│                            │
-│ GA4                        │
-│ Meta Business              │
-│ Eulerity                   │
-│ Google Business Profile    │
-│ Weather                    │
-│ POS Systems                │
-│ Labor Systems              │
-│ Inventory Systems          │
-└─────────────┬──────────────┘
-              │
-              ▼
-┌────────────────────────────┐
-│    Collection Layer         │
-│                            │
-│ API Clients                │
-│ Playwright Automation      │
-└─────────────┬──────────────┘
-              │
-              ▼
-┌────────────────────────────┐
-│       ETL Layer             │
-│                            │
-│ n8n Workflows              │
-│ Validation                 │
-│ Normalization              │
-│ Transformation             │
-│ Auditing                   │
-└─────────────┬──────────────┘
-              │
-              ▼
-┌────────────────────────────┐
-│   Supabase Warehouse        │
-│                            │
-│ Configuration Tables       │
-│ Fact Tables               │
-│ Dimension Tables          │
-│ Historical Data           │
-└─────────────┬──────────────┘
-              │
-              ▼
-┌────────────────────────────┐
-│   SQL Reporting Views       │
-│                            │
-│ Marketing                 │
-│ Operations                │
-│ Financial                 │
-│ Executive                 │
-└─────────────┬──────────────┘
-              │
-              ▼
-┌────────────────────────────┐
-│   Consumers                 │
-│                            │
-│ Dashboards                │
-│ Reports                   │
-│ Automation                │
-│ Artificial Intelligence   │
-└────────────────────────────┘
+    └── scripts/
 ```
 
----
+Railway deploys `playwright/` as an independent Node.js/Express service:
 
-# Component Responsibilities
+- Root directory: `playwright`
+- Dockerfile: `playwright/Dockerfile`
+- Container application root: `/app`
+- Entry point: `node server.js`
+- Production configuration: Railway environment variables
 
-Every component owns exactly one responsibility.
+Changing this deployment shape requires a documented migration plan.
 
-No responsibility should exist in multiple places.
+## Collection Layer
 
----
+Technologies include direct APIs, Playwright browser automation, Express routes, webhooks, and controlled file imports.
 
-# Collection Layer
+Collection owns:
 
-Purpose:
+- Authentication and token/session handling
+- Source API communication
+- Browser navigation and report downloads
+- Source discovery
+- Structured extraction
+- A stable response contract
 
-Collect raw business data.
+Collection does not own:
 
-Technologies:
+- Warehouse writes
+- Business calculations
+- Cross-source normalization
+- Studio/account assignment rules that belong in configuration
+- Reporting logic
 
-* Playwright
-* API Clients
-* Webhooks
-* File Imports
+Use direct APIs when reliable APIs exist. Use Playwright when browser automation is required.
 
-Responsibilities:
+## ETL and Orchestration Layer
 
-* Authentication
-* Browser automation
-* API communication
-* Session management
-* Report downloads
-* Structured data extraction
+n8n owns:
 
-Collection does **not**:
+- Scheduling and orchestration
+- Input validation
+- Source-to-warehouse normalization
+- Calculations required for loading
+- Configuration lookups and studio mapping
+- Idempotent UPSERT behavior
+- Retry/error handling
+- Integration-run auditing
+- Temporary artifact cleanup
 
-* Normalize data
-* Perform calculations
-* Write database records
-* Understand warehouse schemas
-* Apply business logic
+Collectors should remain generic. Source-specific transformations belong at the ETL boundary, and reusable business metrics belong downstream in reporting views or services.
 
----
+## Warehouse Layer
 
-# ETL Layer
+Supabase PostgreSQL owns:
 
-Technology:
+- Organization, brand, studio, and integration configuration
+- Historical facts and dimensions
+- Data integrity and tenant relationships
+- Reporting views
+- Data exposed to dashboard services, automation, and AI
 
-* n8n
-
-Purpose:
-
-Transform collected data into warehouse-ready records.
-
-Responsibilities:
-
-* Scheduling
-* Workflow orchestration
-* File parsing
-* Data validation
-* Data normalization
-* Calculations
-* UPSERT logic
-* Error handling
-* Retry logic
-* Integration auditing
-* Temporary file cleanup
-
-The ETL layer is responsible for converting source-specific formats into standardized warehouse structures.
-
----
-
-# Warehouse Layer
-
-Technology:
-
-* Supabase PostgreSQL
-
-Purpose:
-
-Store all historical business information.
-
-Responsibilities:
-
-* Configuration
-* Historical storage
-* Warehouse schema
-* Data integrity
-* Security
-* AI source data
-
-The warehouse should preserve historical information whenever possible.
-
----
-
-# Reporting Layer
-
-Purpose:
-
-Convert warehouse data into business intelligence.
-
-Reporting views:
-
-* Join multiple sources
-* Calculate KPIs
-* Generate executive metrics
-* Standardize business reporting
-
-Consumers should query reporting views instead of raw fact tables whenever possible.
-
----
-
-# AI Layer
-
-Artificial intelligence should consume reporting views rather than raw warehouse tables.
-
-AI responsibilities include:
-
-* Trend analysis
-* Executive summaries
-* Forecasting
-* Recommendations
-* Business insights
-* Natural language interaction
-
-AI should never rely on source-specific data structures.
-
----
-
-# Intelligence Domains
-
-Studio Intelligence organizes information into business domains.
-
-## Marketing Intelligence
-
-Sources include:
-
-* GA4
-* Eulerity
-* Meta Business
-* Google Business Profile
-* SOCi
-* Weather
-
-Primary objectives:
-
-* Marketing performance
-* Attribution
-* Creative performance
-* Campaign analysis
-* ROI
-
----
-
-## Operations Intelligence
-
-Sources include:
-
-* Reservations
-* POS
-* Labor
-* Inventory
-* Scheduling
-
-Primary objectives:
-
-* Capacity
-* Utilization
-* Staffing
-* Operational efficiency
-
----
-
-## Financial Intelligence
-
-Sources include:
-
-* Revenue
-* Expenses
-* Payroll
-* Budgets
-
-Primary objectives:
-
-* Profitability
-* Forecasting
-* Financial performance
-
----
-
-## Customer Intelligence
-
-Sources include:
-
-* CRM
-* Reservations
-* Marketing
-* Loyalty
-
-Primary objectives:
-
-* Customer lifetime value
-* Retention
-* Segmentation
-* Behavior analysis
-
----
-
-## Executive Intelligence
-
-Consumes every domain.
-
-Primary objectives:
-
-* KPI reporting
-* Cross-domain insights
-* Benchmarking
-* Forecasting
-* Recommendations
-
----
-
-# Data Flow
-
-Every integration follows the same lifecycle.
+The organization hierarchy is:
 
 ```text
-Collect
-
-↓
-
-Validate
-
-↓
-
-Normalize
-
-↓
-
-Warehouse
-
-↓
-
-Reporting Views
-
-↓
-
-Dashboards
-
-↓
-
-Automation
-
-↓
-
-AI
+organization → brand → studio → business facts
 ```
 
-Every integration should fit this pipeline without redesign.
+Business-specific account IDs and mappings belong in configuration tables such as `studio_integrations`, not in application code.
 
----
+## Business Intelligence Layer
 
-# Integration Pattern
+SQL reporting views are the preferred home for reusable cross-source calculations and trusted metrics. Frontend services translate reporting data into typed application models.
 
-Each integration should follow the same architecture.
+This layer owns:
 
-1. Authenticate
-2. Collect source data
-3. Return structured data
-4. Normalize in ETL
-5. UPSERT warehouse
-6. Build reporting views
-7. Expose to AI
+- Cross-source joins
+- Metric definitions
+- Aggregations by date, studio, brand, and organization
+- Dashboard-ready models
+- AI-ready business context
 
-This pattern applies whether the integration uses Playwright, APIs, or webhooks.
+Consumers should not independently recreate the same KPI in multiple components or workflows.
 
----
+## Presentation Layer
 
-# Configuration Philosophy
+The dashboard is a Next.js 16 App Router application using React 19 and TypeScript.
 
-Business configuration belongs in the warehouse.
+```text
+Next.js page
+  → dashboard component
+  → shared application context
+  → Next.js API route
+  → service layer
+  → Supabase reporting view/table
+```
 
-Examples include:
+### Pages
 
-* Organizations
-* Brands
-* Studios
-* Integration settings
-* External IDs
-* Feature flags
-* Scheduling rules
+Pages own layout and composition. They do not query Supabase or contain durable business calculations.
 
-Infrastructure secrets may remain outside the warehouse when appropriate.
+### Shared Application Context
 
-The objective is to minimize hardcoded business logic.
+Shared state includes active studio and common dashboard filters. It is the single source of truth for cross-page selections such as date range and comparison period as those features are completed.
 
----
+### Components
 
-# Historical Data Strategy
+Components own presentation and interaction. Reusable filters, metric cards, charts, tables, and empty/loading/error states should be shared.
 
-Studio Intelligence is designed to preserve business history.
+### API Routes
 
-Historical information enables:
+API routes validate request parameters, call services, and return stable JSON contracts. They should remain thin.
 
-* Trend analysis
-* Forecasting
-* Benchmarking
-* AI learning
-* Executive reporting
+### Services
 
-Warehouse tables should preserve historical records whenever practical.
+Services own Supabase access and application-level aggregation. React components must not communicate directly with Supabase.
 
----
+## Intelligence and Action Layer
 
-# Scalability Goals
+Dashboards, reports, n8n automations, and AI consume business-ready data. AI should receive reporting views or documented service contracts, not raw source-specific payloads.
 
-The platform should support:
+AI and automation may:
 
-* Unlimited organizations
-* Unlimited brands
-* Unlimited studio locations
-* Unlimited integrations
-* Unlimited historical records
+- Explain performance
+- Detect anomalies and trends
+- Forecast outcomes
+- Recommend actions
+- Trigger approved workflows
 
-without requiring architectural redesign.
+Production actions require explicit authorization, observability, and safe failure behavior.
 
----
+## Standard Integration Pattern
 
-# Architectural Rules
+Every integration should implement the applicable stages:
 
-The following principles are considered permanent.
+1. Secure authentication
+2. Source discovery and collection
+3. Structured response contract
+4. n8n validation and normalization
+5. Configuration-driven entity mapping
+6. Historical, idempotent warehouse loading
+7. Reporting view or service contract
+8. Dashboard/automation/AI consumption
+9. Production validation and monitoring
+10. Documentation and changelog update
 
-* Warehouse-first architecture
-* Configuration over hardcoding
-* Single responsibility
-* Historical preservation
-* One integration pattern
-* Reporting views as the business layer
-* AI consumes reporting views
-* Integrations plug into the existing platform rather than modifying it
+## Current Production Data Sources
 
-These principles should guide every future architectural decision.
+- Google Analytics 4
+- Eulerity
+- Meta Business Ads
+- Meta Page Insights
 
-Frontend Application Architecture
-Next.js Pages
-        ↓
-Shared Application Context
-        ↓
-Dashboard Components
-        ↓
-Next.js API Routes
-        ↓
-Service Layer
-        ↓
-Supabase Reporting Views
-Responsibilities
-Pages
+Their exact status and warehouse destinations are maintained in `integrations.md` and `current_status.md`.
 
-Responsible only for layout and composition.
+## Permanent Architectural Rules
 
-Pages should:
+- Warehouse first
+- Configuration over hardcoding
+- Preserve history
+- One responsibility per layer
+- Reuse one integration lifecycle
+- Reporting views and services define trusted business metrics
+- UI components do not query Supabase directly
+- Source collectors do not write to the warehouse
+- AI consumes business-ready data
+- Secrets and session material never enter Git
+- New integrations extend the architecture rather than redesigning it
 
-Assemble dashboard components
-Define page layout
-Pass minimal configuration
+## Change Control
 
-Pages should not:
-
-Query Supabase
-Perform calculations
-Contain business logic
-Shared Application Context
-
-Provides shared dashboard state across the application.
-
-Current shared state includes:
-
-Selected Studio
-Date Range
-Comparison Period
-Studio List
-Loading State
-
-Future additions may include:
-
-Organization
-Brand
-User Preferences
-Permissions
-
-The context serves as the single source of truth for dashboard filters.
-
-Dashboard Components
-
-Dashboard components are responsible only for presentation.
-
-Examples include:
-
-Dashboard Toolbar
-KPI Cards
-Charts
-Tables
-Filters
-
-Components should consume APIs rather than communicating directly with Supabase.
-
-API Routes
-
-Every dashboard data request should pass through a Next.js API route.
-
-Responsibilities:
-
-Receive dashboard requests
-Validate parameters
-Call service layer
-Return JSON
-
-API routes should not contain business calculations.
-
-Service Layer
-
-The service layer owns all database interaction.
-
-Responsibilities:
-
-Query reporting views
-Aggregate metrics
-Build dashboard models
-Return strongly typed data
-
-Services isolate React from the warehouse.
-
-I would also update the High-Level Architecture
-
-Instead of:
-
-Warehouse
-↓
-Reporting Views
-↓
-Consumers
-
-I'd make it:
-
-Warehouse
-        ↓
-Reporting Views
-        ↓
-Next.js API Layer
-        ↓
-Service Layer
-        ↓
-Dashboard UI
-        ↓
-Automation / AI
-
-This reflects the actual runtime flow much more accurately.
-
-Add a New Architectural Rule
-
-I'd add something like:
-
-Presentation Layer Rules
-React components never query Supabase directly.
-All database access flows through the service layer.
-API routes provide the public contract between the frontend and backend.
-Shared dashboard state belongs in the application context.
-Business calculations belong in SQL reporting views or services, never UI components.
-
-Those rules capture the design decisions we've been making as we've built the dashboard.
-
-I also think we should formally introduce a new layer
-
-Your architecture currently has:
-
-Collection
-ETL
-Warehouse
-Reporting
-AI
-
-I think it now looks like this:
-
-Collection Layer (Playwright, APIs)
-ETL Layer (n8n)
-Warehouse Layer (Supabase)
-Business Intelligence Layer (SQL Views + Services)
-Presentation Layer (Next.js Dashboard)
-Intelligence Layer (AI, Automation, Reports)
-
-That separation is important because your dashboard isn't just "consuming" data anymore—it's a structured application with its own architecture and conventions.
+Update this document when a change alters layer responsibilities, deployment boundaries, the standard integration lifecycle, or the dashboard data-access pattern. Record significant accepted changes in `docs/02_development/decisions.md`.

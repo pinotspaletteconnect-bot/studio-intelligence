@@ -1,351 +1,133 @@
 # Studio Intelligence
 
-> **Studio Intelligence is a warehouse-first business intelligence platform designed to become the operating system for multi-location experiential businesses.**
+> A warehouse-first business intelligence platform for multi-location experiential businesses.
 
-Studio Intelligence centralizes operational, marketing, financial, and customer data into a unified data warehouse where it can be analyzed, visualized, automated, and interpreted by AI.
+Studio Intelligence centralizes marketing, operational, financial, and customer data so owners and operators can understand performance, compare locations, automate reporting, and build trustworthy AI-assisted decisions from one source of truth.
 
-Rather than treating each software platform as a separate reporting system, Studio Intelligence creates a **single source of truth** that powers dashboards, executive reporting, forecasting, and intelligent recommendations.
+## The Questions the Platform Must Answer
 
----
+1. What happened?
+2. Why did it happen?
+3. What is happening now?
+4. What is likely to happen next?
+5. What should the business do?
 
-# Vision
+## Core Principles
 
-Build the leading business intelligence platform for multi-location experiential businesses by unifying data from every operational system into one intelligent platform.
+- **Warehouse first:** integrations feed Supabase; dashboards and AI consume business-ready views.
+- **Configuration over code:** organizations, studios, accounts, external IDs, and integration mappings are configurable.
+- **Clear layer ownership:** collectors collect, n8n transforms, Supabase stores and reports, services model data, and the dashboard presents it.
+- **Historical preservation:** business history is a strategic asset.
+- **Reusable patterns:** new sources extend the standard lifecycle rather than introducing parallel systems.
+- **Trust before automation:** metric definitions and data quality come before AI recommendations or production actions.
 
-Studio Intelligence should answer not only **what happened**, but also:
-
-* Why did it happen?
-* What is likely to happen next?
-* What actions should be taken?
-* What opportunities are being missed?
-
----
-
-# Mission
-
-Eliminate manual reporting by automatically collecting, normalizing, warehousing, and analyzing business data from every major operational system.
-
-Studio Intelligence enables owners and operators to spend less time gathering information and more time making informed decisions.
-
----
-
-# Core Principles
-
-### Warehouse First
-
-All integrations feed a centralized warehouse.
-
-Dashboards, AI, reporting, and automation consume warehouse reporting views—not raw source systems.
-
----
-
-### Configuration Over Code
-
-Studios, organizations, credentials, external IDs, schedules, and integrations should be configurable rather than hardcoded.
-
-The platform should support new businesses primarily through configuration instead of software changes.
-
----
-
-### Single Responsibility
-
-Each component owns one responsibility.
-
-* **Collection Layer** gathers data.
-* **ETL Layer** transforms data.
-* **Warehouse** stores data.
-* **Reporting Views** generate business metrics.
-* **AI** consumes reporting views.
-
-Responsibilities should never overlap.
-
----
-
-### Reusable Architecture
-
-Every new integration should plug into the existing architecture without redesigning the platform.
-
-Patterns should be reusable across all future integrations.
-
----
-
-# Platform Architecture
+## Architecture
 
 ```text
-External Systems
-        │
-        ▼
-Collection Layer
-(API Clients / Playwright)
-        │
-        ▼
-ETL Layer (n8n)
-        │
-        ▼
-Supabase Data Warehouse
-        │
-        ▼
-SQL Reporting Views
-        │
-        ▼
-Dashboards • Automation • AI
+GA4 • Eulerity • Meta • future operational/financial/customer sources
+                             ↓
+                 APIs and Playwright collectors
+                             ↓
+                    Express service on Railway
+                             ↓
+                    n8n orchestration and ETL
+                             ↓
+                   Supabase PostgreSQL warehouse
+                             ↓
+                  SQL reporting views and services
+                             ↓
+              Next.js dashboards • reports • automation • AI
 ```
 
----
+## Current Stack
 
-# Intelligence Domains
+| Layer | Technology |
+| --- | --- |
+| Collection | Node.js, Express, Playwright, direct APIs |
+| Deployment | Railway, Docker |
+| Orchestration and ETL | n8n |
+| Warehouse and configuration | Supabase PostgreSQL |
+| Dashboard | Next.js 16, React 19, TypeScript, Tailwind CSS, shadcn/ui, Recharts |
+| Source control | GitHub |
 
-Studio Intelligence is organized into business intelligence domains rather than individual integrations.
+## Verified Production Integrations
 
-## Marketing Intelligence
+- Google Analytics 4
+- Eulerity
+- Meta Business Ads
+- Meta Page Insights
 
-* Paid Advertising
-* Organic Social
-* Web Analytics
-* Creative Intelligence
-* Local Presence
+See `docs/01_architecture/integrations.md` for exact responsibilities, warehouse destinations, and status definitions.
 
-## Operations Intelligence
+## Active Product Focus
 
-* Reservations
-* Staffing
-* Labor
-* Scheduling
-* Inventory
+The platform foundation is established. Current work centers on:
 
-## Financial Intelligence
+- Unified marketing reporting views
+- Marketing trends, date ranges, and comparisons
+- Executive dashboards and studio comparison
+- Consistent KPI definitions and validation
+- AI-ready reporting contracts
 
-* Revenue
-* Expenses
-* Payroll
-* Forecasting
+Financial, operations, customer, creative, and broader local-presence capabilities remain roadmap items unless `current_status.md` says otherwise.
 
-## Customer Intelligence
-
-* Customer Behavior
-* Retention
-* Lifetime Value
-* Loyalty
-
-## Executive Intelligence
-
-* KPIs
-* Benchmarking
-* Forecasting
-* Recommendations
-* AI Decision Support
-
----
-
-# Current Technology Stack
-
-## Orchestration
-
-* n8n
-
-Responsibilities:
-
-* Scheduling
-* Workflow orchestration
-* ETL
-* Retry logic
-* Auditing
-* API orchestration
-
----
-
-## Collection Layer
-
-### Playwright
-
-Technology
-
-* Node.js
-* Express
-* Playwright
-
-Hosted on Railway
-
-Responsibilities
-
-* Browser automation
-* Authentication
-* Session management
-* Navigation
-* Report downloads
-* Structured data extraction
-
-Playwright **does not** normalize data or write to the warehouse.
-
----
-
-## Warehouse
-
-Supabase (PostgreSQL)
-
-Responsibilities
-
-* Configuration
-* Data warehouse
-* Historical storage
-* Reporting views
-* AI data source
-
----
-
-## Source Control
-
-GitHub
-
-Repository
-
-```
-studio-intelligence
-```
-
----
-
-# Current Production Status
-
-## Platform
-
-* ✅ GitHub Repository
-* ✅ Railway Deployment
-* ✅ Docker Deployment
-* ✅ Express API
-* ✅ Remote Playwright Execution
-* ✅ n8n Integration
-* ✅ Supabase Warehouse
-
----
-
-## Production Integrations
-
-### GA4
-
-Status
-
-✅ Operational
-
----
-
-### Eulerity
-
-Status
-
-✅ Production Ready
-
-Capabilities
-
-* Login automation
-* Session persistence
-* Multi-studio processing
-* Metrics collection
-* Spend collection
-* Budget allocation
-* Warehouse ingestion
-* Daily normalization
-
----
-
-### Weather
-
-Status
-
-✅ Warehouse Ready
-
----
-
-# Current Development Focus
-
-The platform has transitioned from infrastructure development into business intelligence development.
-
-Current priorities include:
-
-* Marketing reporting views
-* Meta Business integration
-* Creative Intelligence foundation
-* Executive reporting
-* AI-ready datasets
-
----
-
-# Repository Structure
+## Repository Structure
 
 ```text
 studio-intelligence/
-
-docs/
-    README.md
-    PROJECT_BLUEPRINT.md
-    ARCHITECTURE.md
-    DATA_MODEL.md
-    DEVELOPER_GUIDE.md
-    CURRENT_STATUS.md
-    ROADMAP.md
-    INTEGRATIONS.md
-    AI_GUIDE.md
-    CHANGELOG.md
-
-playwright/
-    auth/
-    downloads/
-    routes/
-    scripts/
-    services/
-    utils/
-    server.js
+├── AGENTS.md
+├── project_blueprint.md
+├── roadmap.md
+├── docs/
+│   ├── 00_overview/
+│   ├── 01_architecture/
+│   ├── 02_development/
+│   ├── archive/
+│   └── ideas/
+├── dashboard/          # Next.js business intelligence application
+└── playwright/         # Railway-deployed collection service
 ```
 
----
+## Documentation Source of Truth
 
-# Documentation Guide
+| Document | Purpose |
+| --- | --- |
+| `AGENTS.md` | Persistent instructions and working rules for Codex/AI agents |
+| `project_blueprint.md` | Durable product vision and business principles |
+| `docs/01_architecture/architecture.md` | Authoritative system boundaries and data flow |
+| `docs/02_development/current_status.md` | Current implementation state and next priorities |
+| `roadmap.md` | Milestone sequence and future capabilities |
+| `docs/01_architecture/integrations.md` | Integration catalog and verified statuses |
+| `docs/01_architecture/data_model.md` | Logical warehouse model |
+| `docs/01_architecture/schema.md` | Warehouse table/view inventory |
+| `docs/02_development/developer_guide.md` | Development and verification standards |
+| `docs/02_development/decisions.md` | Accepted architectural decisions |
+| `docs/02_development/changelog.md` | Meaningful platform milestones |
 
-| Document             | Purpose                                          |
-| -------------------- | ------------------------------------------------ |
-| PROJECT_BLUEPRINT.md | Long-term vision and business objectives         |
-| ARCHITECTURE.md      | Overall system architecture                      |
-| DATA_MODEL.md        | Warehouse schema and relationships               |
-| DEVELOPER_GUIDE.md   | Development standards and architecture rules     |
-| CURRENT_STATUS.md    | Current sprint and implementation status         |
-| ROADMAP.md           | Planned milestones and future work               |
-| INTEGRATIONS.md      | Integration catalog and implementation details   |
-| AI_GUIDE.md          | Context for AI assistants working on the project |
-| CHANGELOG.md         | Project history and release notes                |
+Documents under `docs/archive/` are historical context only.
 
----
+## Working in the Repository
 
-# Design Philosophy
+### Dashboard
 
-Studio Intelligence is **not** a reporting application.
+```bash
+cd dashboard
+npm install
+npm run dev
+npm run lint
+npm run build
+```
 
-It is an operating system for multi-location experiential businesses.
+### Collector
 
-Integrations are simply data sources.
+```bash
+cd playwright
+npm install
+npm run dev
+```
 
-The warehouse is the single source of truth.
+Do not run production integrations, change credentials, or deploy without authorization. Never edit generated `.next/` files or commit `.env`, dependency, session, download, or build-output directories.
 
-Reporting views transform raw data into business intelligence.
+## Product Vision
 
-Automation acts on that intelligence.
-
-AI interprets the results and recommends actions.
-
-Every architectural decision should move the platform toward a unified, configuration-driven ecosystem capable of collecting, organizing, understanding, and acting upon business data.
-
----
-
-# Long-Term Vision
-
-Studio Intelligence will enable businesses to connect every operational system into a single intelligent platform capable of:
-
-* Collecting data automatically
-* Preserving complete historical records
-* Producing real-time executive dashboards
-* Detecting trends and anomalies
-* Forecasting future performance
-* Recommending business actions
-* Automating operational workflows
-* Powering AI-driven decision making
-
-The ultimate objective is to provide business owners with one place to understand what is happening across their organization, why it is happening, what is likely to happen next, and what actions should be taken.
+Studio Intelligence should become the operating system for multi-location experiential businesses: one place to understand performance, explain causes, forecast outcomes, recommend actions, and eventually automate approved workflows.

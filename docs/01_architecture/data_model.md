@@ -1,489 +1,136 @@
 # Studio Intelligence Data Model
 
-**Version 3.0**
+**Version:** 4.1  
+**Last updated:** July 23, 2026
 
-**Last Updated:** July 9, 2026
+## Purpose
 
----
+This document defines the logical warehouse model, data ownership, grain conventions, and growth direction. `schema.md` catalogs implemented tables and views; the live Supabase schema is authoritative.
 
-# Purpose
+## Warehouse Philosophy
 
-This document defines the logical data model for Studio Intelligence.
-
-It serves as the authoritative reference for:
-
-* Warehouse organization
-* Table ownership
-* Relationships
-* Naming conventions
-* Reporting strategy
-
-This document describes the logical model rather than implementation details.
-
----
-
-# Warehouse Philosophy
-
-Studio Intelligence is a warehouse-first platform.
-
-The warehouse is the single source of truth for all reporting, dashboards, automation, and AI.
-
-External systems are temporary sources of information.
-
-The warehouse is the permanent repository of business knowledge.
-
----
-
-# Warehouse Organization
-
-The warehouse is organized into five major areas.
+Supabase PostgreSQL is the permanent source of truth for configuration, historical facts, and reporting. External platforms are sources, not reporting databases.
 
 ```text
 Configuration
-
-↓
-
-Marketing Intelligence
-
-↓
-
-Operations Intelligence
-
-↓
-
-Financial Intelligence
-
-↓
-
-Customer Intelligence
-
-↓
-
-Reporting Views
+  → dimensions and source facts
+  → reporting views
+  → services and API contracts
+  → dashboards, automation, and AI
 ```
 
----
-
-# Configuration
-
-Configuration tables define the businesses, locations, and integrations supported by the platform.
-
-Current tables:
+## Core Business Hierarchy
 
 ```text
-organizations
-
-brands
-
-studios
-
-studio_integrations
-
-integration_runs
+organization → brand → studio → business facts
 ```
 
-Future additions:
+Every location-level fact should resolve to a studio. External IDs are mapped through configuration rather than embedded in application code.
 
-```text
-integration_credentials
+## Configuration Model
 
-feature_flags
+Current configuration entities:
 
-external_ids
+- `organizations`
+- `brands`
+- `studios`
+- `studio_integrations`
+- `integration_runs`
 
-schedules
+Expected future configuration may include credential references, feature flags, schedules, permissions, and notification rules. Secret values should remain in the appropriate secret manager/environment rather than ordinary warehouse tables or Git.
 
-user_permissions
+## Marketing Intelligence
 
-notification_rules
-```
+### Current source facts
 
-Configuration data should rarely change and should never contain transactional business metrics.
+- GA4: `ga4_daily_metrics`
+- Eulerity performance: `eulerity_daily_metrics`
+- Eulerity spend: `eulerity_daily_spend`
+- Eulerity budget allocation: `eulerity_daily_budget_allocation`
+- Meta advertising: `meta_ads_daily`
+- Meta Page insights: `meta_page_insights_daily`
 
----
+These sources should converge through business-oriented reporting views instead of forcing consumers to join source tables independently.
 
-# Marketing Intelligence
+### Planned marketing domains
 
-Marketing Intelligence stores data related to advertising, web analytics, social media, local presence, and creative performance.
+- Campaign/ad/ad-set dimensions
+- Organic posts, Reels, Stories, and engagement
+- Google Business Profile and review facts
+- Creative assets and cross-platform creative performance
+- Attribution and conversion models
+- Context such as weather, holidays, school calendars, and local events
 
-## Web Analytics
+Weather-related tables appear in older documentation, but production status requires verification.
 
-Current
+## Operations Intelligence
 
-```text
-ga4_daily_metrics
-```
+Planned facts and dimensions include reservations, classes/events, attendance, capacity, staffing, labor, schedules, inventory, products, and studio hours.
 
-Future
+## Financial Intelligence
 
-```text
-ga4_events
+Planned facts and dimensions include sales, payments, expenses, payroll, budgets, forecasts, and profitability.
 
-ga4_conversions
+## Customer Intelligence
 
-ga4_audience
-
-ga4_channels
-```
-
----
-
-## Paid Advertising
-
-Current
-
-```text
-eulerity_daily_metrics
-
-eulerity_daily_spend
-
-eulerity_daily_budget_allocation
-```
-
-Future
-
-```text
-google_ads_daily
-
-meta_ads_daily
-
-campaigns
-
-ad_groups
-
-keywords
-```
-
----
-
-## Organic Social
-
-Planned
-
-```text
-meta_daily_metrics
-
-meta_posts
-
-meta_post_metrics
-
-meta_reels
-
-meta_story_metrics
-
-meta_followers
-```
-
-Future
-
-```text
-google_business_posts
-
-soci_posts
-
-instagram_metrics
-```
-
----
-
-## Local Presence
-
-Current
-
-```text
-weather_daily
-```
-
-Future
-
-```text
-google_business_metrics
-
-reviews
-
-review_responses
-
-business_profile_insights
-```
-
----
+Planned facts and dimensions include customers, visits, segments, retention, lifetime value, loyalty, communication engagement, and attribution.
 
 ## Creative Intelligence
 
-Creative assets are stored independently from marketing platforms.
+Creative assets are business entities independent of an advertising platform. Planned entities include creative assets, campaigns, tags, themes, paintings/events, placements, and performance facts. A reusable asset should be measurable across channels.
 
-Future tables:
+## Reporting Views
 
-```text
-creative_assets
+Reporting views form the trusted business layer. Planned/current work includes:
 
-creative_campaigns
+- Daily, weekly, and monthly marketing views
+- Campaign performance
+- Studio comparison/rankings
+- Executive summaries
+- Operations, financial, and customer summaries as their facts become available
+- AI-specific context views only after underlying metrics are validated
 
-creative_tags
+Consumers should query reporting views or service-layer models whenever practical.
 
-creative_performance
+## Grain and Keys
 
-creative_categories
+Every fact table and view must document:
 
-creative_topics
-```
+- Business grain (for example, one row per studio/date/campaign)
+- Natural or source key
+- Tenant relationship
+- Source timezone and normalized reporting date
+- Idempotent UPSERT key
+- Backfill behavior
+- Retention/history policy
 
-Creative Intelligence allows the same image, video, campaign, or promotion to be evaluated across multiple marketing platforms.
+Do not combine incompatible grains in one fact table.
 
----
+## Naming Standards
 
-# Operations Intelligence
+- Configuration/dimensions: clear plural business nouns (`studios`, `creative_assets`).
+- Facts: source or domain plus grain (`ga4_daily_metrics`, `meta_ads_daily`).
+- Reporting views: business-oriented names, preferably with a `vw_` prefix if that is the adopted live convention.
+- IDs: distinguish internal warehouse IDs from external source IDs.
 
-Operations Intelligence captures how the business functions day to day.
+Follow the live schema’s existing convention consistently; do not rename production objects solely for style.
 
-Future tables:
+## Historical Strategy
 
-```text
-reservations
+Preserve history whenever practical. UPSERT only when the documented business key already exists. Corrections should be auditable, and backfills must not duplicate facts.
 
-reservation_items
+## Layer Ownership
 
-classes
+| Layer | Ownership |
+| --- | --- |
+| Collection | Retrieve source records and return structured contracts |
+| n8n ETL | Validate, map, normalize, retry, audit, and load |
+| Warehouse | Preserve facts, configuration, relationships, and integrity |
+| Reporting | Define reusable trusted business metrics |
+| Services/API | Expose typed application contracts |
+| Dashboard | Present and interact with business-ready data |
+| AI | Explain, forecast, and recommend from documented context |
 
-events
+## Updating This Model
 
-staffing
-
-labor
-
-time_clock
-
-inventory
-
-inventory_movements
-
-products
-
-studio_hours
-```
-
----
-
-# Financial Intelligence
-
-Financial Intelligence tracks revenue, expenses, profitability, and forecasting.
-
-Future tables:
-
-```text
-sales
-
-payments
-
-expenses
-
-general_ledger
-
-payroll
-
-budgets
-
-forecasts
-```
-
----
-
-# Customer Intelligence
-
-Customer Intelligence provides a unified understanding of customer behavior.
-
-Future tables:
-
-```text
-customers
-
-customer_visits
-
-customer_segments
-
-customer_lifetime_value
-
-loyalty
-
-email_engagement
-
-marketing_attribution
-```
-
----
-
-# Reporting Views
-
-Reporting views are the business layer of Studio Intelligence.
-
-Consumers—including dashboards, reports, automation, and AI—should query reporting views rather than raw fact tables whenever practical.
-
-Planned views:
-
-```text
-marketing_daily_summary
-
-marketing_weekly_summary
-
-marketing_monthly_summary
-
-operations_daily_summary
-
-financial_summary
-
-executive_summary
-
-studio_summary
-
-customer_summary
-```
-
-Future AI-specific views:
-
-```text
-ai_marketing_context
-
-ai_operations_context
-
-ai_financial_context
-
-ai_customer_context
-
-ai_executive_context
-```
-
----
-
-# Relationships
-
-The warehouse follows a relational design.
-
-Core hierarchy:
-
-```text
-Organization
-
-↓
-
-Brand
-
-↓
-
-Studio
-
-↓
-
-Business Facts
-```
-
-Every transactional table should relate back to a studio.
-
-Business intelligence is generated by combining multiple domains through reporting views.
-
----
-
-# Naming Standards
-
-Configuration tables
-
-Plural nouns
-
-Examples
-
-```text
-organizations
-
-studios
-
-brands
-```
-
-Fact tables
-
-Source + Grain
-
-Examples
-
-```text
-ga4_daily_metrics
-
-meta_post_metrics
-
-eulerity_daily_spend
-```
-
-Dimension tables
-
-Singular or descriptive plural where appropriate
-
-Examples
-
-```text
-customers
-
-products
-
-creative_assets
-```
-
-Reporting views
-
-Business-oriented names
-
-Examples
-
-```text
-marketing_daily_summary
-
-executive_summary
-
-studio_summary
-```
-
----
-
-# Historical Data
-
-Historical data should be preserved whenever possible.
-
-UPSERTs should update existing records only when the natural business key already exists.
-
-Historical information enables:
-
-* Trend analysis
-* Forecasting
-* Benchmarking
-* Executive reporting
-* AI recommendations
-
----
-
-# Data Ownership
-
-Every table has one owner.
-
-| Layer           | Responsibility                     |
-| --------------- | ---------------------------------- |
-| Collection      | Retrieve raw source data           |
-| ETL             | Normalize and transform            |
-| Warehouse       | Store historical records           |
-| Reporting Views | Business calculations              |
-| AI              | Interpretation and recommendations |
-
-Responsibilities should never overlap.
-
----
-
-# Future Growth
-
-The data model is designed to support:
-
-* Unlimited organizations
-* Unlimited brands
-* Unlimited locations
-* Unlimited integrations
-* Unlimited historical records
-
-New integrations should extend the existing model rather than introduce new architectural patterns.
-
-The warehouse should evolve by adding new domains and tables while maintaining consistent naming conventions and relationships.
+Update this document when a new domain or logical relationship is introduced. Update `schema.md` whenever a concrete table/view is added, removed, or changes grain.

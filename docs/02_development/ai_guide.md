@@ -1,353 +1,126 @@
 # Studio Intelligence AI Guide
 
-**Version 3.0**
+**Version:** 4.1  
+**Last updated:** July 23, 2026
 
-**Last Updated:** July 9, 2026
+## Purpose
 
----
+This guide explains how AI assistants should reason about Studio Intelligence. Repository-wide operating instructions live in the root `AGENTS.md`; read that file first.
 
-# Purpose
+## Required Context Order
 
-This document provides context for AI assistants contributing to Studio Intelligence.
+For substantial work, consult:
 
-It summarizes the platform, architecture, development philosophy, and current priorities so that future AI sessions can contribute effectively without redesigning completed work.
+1. `AGENTS.md`
+2. `project_blueprint.md`
+3. `docs/01_architecture/architecture.md`
+4. `docs/02_development/current_status.md`
+5. The domain-specific architecture or integration document
+6. Relevant code and recent commits
 
-AI assistants should read the following documents before making architectural recommendations:
+When documentation conflicts, prefer verified code/deployment behavior, then correct the stale document.
 
-1. README.md
-2. PROJECT_BLUEPRINT.md
-3. ARCHITECTURE.md
-4. DATA_MODEL.md
-5. DEVELOPER_GUIDE.md
-6. CURRENT_STATUS.md
+## Mental Model
 
-If recommendations conflict with these documents, follow the documentation.
+Studio Intelligence is a warehouse-first business intelligence platform—not a collection of unrelated integrations and not merely a dashboard.
 
----
-
-# What Studio Intelligence Is
-
-Studio Intelligence is a warehouse-first business intelligence platform designed to become the operating system for multi-location experiential businesses.
-
-The platform automatically collects, normalizes, warehouses, analyzes, and interprets operational business data from multiple external systems.
-
-The objective is not to automate websites.
-
-The objective is to create a single source of truth that powers reporting, automation, forecasting, and artificial intelligence.
-
----
-
-# Current Platform Status
-
-Studio Intelligence has completed its foundational architecture.
-
-The following platform components are operational:
-
-* GitHub repository
-* Docker deployment
-* Railway hosting
-* Express API
-* Playwright automation
-* n8n orchestration
-* Supabase warehouse
-* GA4 integration
-* Eulerity integration
-
-Development has shifted from infrastructure work to expanding business intelligence capabilities.
-
----
-
-# Platform Architecture
-
-Studio Intelligence follows a warehouse-first architecture.
-
-```text id="lrjq2m"
-External Systems
-
-↓
-
-Collection Layer
-
-↓
-
-ETL
-
-↓
-
-Warehouse
-
-↓
-
-Reporting Views
-
-↓
-
-Dashboards
-
-↓
-
-Automation
-
-↓
-
-Artificial Intelligence
+```text
+source
+  → API/Playwright collection
+  → Express contract
+  → n8n validation and ETL
+  → Supabase history and reporting views
+  → Next.js services/API routes
+  → dashboards, automation, and AI
 ```
 
-Every integration should follow this pattern.
+AI should reason in business domains—marketing, operations, financial, customer, and executive intelligence—while respecting the technical layer boundaries.
 
----
+## Verified Current State
 
-# Component Responsibilities
+Production marketing sources:
 
-## Collection Layer
+- Google Analytics 4
+- Eulerity
+- Meta Business Ads
+- Meta Page Insights
 
-Responsible for retrieving data from external systems.
+Platform components:
 
-Examples:
+- Railway-hosted Node.js/Express collector in `playwright/`
+- n8n orchestration and ETL
+- Supabase PostgreSQL configuration/warehouse/reporting
+- Next.js 16/React 19 dashboard in `dashboard/`
+- Shared dashboard context, API routes, service layer, and reusable dashboard components
 
-* Playwright
-* REST APIs
-* Graph APIs
-* Webhooks
+Use `current_status.md` for active priorities and the integration catalog for exact status. Do not promote planned features to production based on aspirational documents.
 
-Collection should:
+## Reasoning Rules
 
-* Authenticate
-* Collect data
-* Return structured responses
+### Respect layer ownership
 
-Collection should never:
+- Collectors authenticate and collect.
+- n8n validates, maps, transforms, retries, audits, and loads.
+- Supabase preserves history and exposes trusted business views.
+- Services own application data access and models.
+- API routes provide contracts.
+- React components present and interact.
+- AI interprets business-ready data.
 
-* Normalize data
-* Perform calculations
-* Write to the warehouse
+### Prefer configuration
 
----
+Do not hardcode studio IDs, account IDs, Page IDs, credentials, schedules, or organization-specific behavior. Use the configuration model, especially `studio_integrations`.
 
-## ETL Layer
+### Protect metric trust
 
-Technology
+Before recommending or implementing a KPI:
 
-* n8n
+1. Define its business meaning and grain.
+2. Identify authoritative source fields.
+3. Specify date, studio, and comparison behavior.
+4. Place reusable calculations in reporting views or services.
+5. Validate with known examples.
+6. Document the definition.
 
-Responsibilities
+### Be conservative about external systems
 
-* Validation
-* Normalization
-* Calculations
-* UPSERT logic
-* Error handling
-* Auditing
+Do not invent API availability, table names, environment variables, credentials, n8n workflow behavior, or production status. Inspect the implementation or request the missing evidence.
 
-Business logic belongs here.
+## Prohibited Suggestions and Actions
 
----
+Do not:
 
-## Warehouse
+- Put Supabase warehouse writes in Playwright collectors.
+- Put reusable business calculations in React components.
+- Let components query Supabase directly.
+- Commit credentials, tokens, cookies, sessions, `.env` files, downloads, generated output, or dependencies.
+- Edit `.next/` generated validators or route/type files.
+- Change Railway deployment roots or Docker boundaries as incidental work.
+- Trigger production workflows, rotate credentials, deploy, or send external messages without authorization.
+- Treat `docs/archive/` as current guidance.
 
-Technology
+## AI Feature Design
 
-* Supabase PostgreSQL
+AI features should consume documented reporting views or stable service contracts and include:
 
-Responsibilities
+- Traceable source metrics
+- Time period and comparison context
+- Studio/brand/organization scope
+- Clear separation of facts, inferences, forecasts, and recommendations
+- Confidence or data-quality caveats
+- Human approval before consequential actions
 
-* Historical storage
-* Configuration
-* Data integrity
-* Reporting source
-* AI source
+Good AI output explains what changed, why the evidence suggests it changed, what may happen next, and which action is recommended.
 
-The warehouse is the permanent source of truth.
+## Documentation Duty
 
----
+When implementation changes project state, update the relevant source of truth in the same branch:
 
-## Reporting Views
+- `current_status.md` for current implementation
+- `integrations.md` for integration state
+- `schema.md`/`data_model.md` for warehouse changes
+- `architecture.md`/`decisions.md` for boundary changes
+- `roadmap.md` for milestone sequencing
+- `changelog.md` for meaningful delivered milestones
 
-Reporting views transform warehouse data into business-ready datasets.
-
-Dashboards and AI should consume reporting views whenever practical.
-
----
-
-# Intelligence Domains
-
-Studio Intelligence is organized around business domains.
-
-Current domains:
-
-* Marketing Intelligence
-* Operations Intelligence
-* Financial Intelligence
-* Customer Intelligence
-* Executive Intelligence
-
-New integrations should strengthen one of these domains rather than create new architectural patterns.
-
----
-
-# Current Priorities
-
-Current development is focused on Marketing Intelligence.
-
-Immediate priorities:
-
-1. Marketing reporting views
-2. Meta Business integration
-3. Creative Intelligence
-4. Google Business Profile
-5. Weather integration
-
-Future priorities:
-
-* Operations Intelligence
-* Financial Intelligence
-* Customer Intelligence
-* Executive Intelligence
-
----
-
-# Integration Status
-
-| Integration             | Status       |
-| ----------------------- | ------------ |
-| GA4                     | ✅ Production |
-| Eulerity                | ✅ Production |
-| Weather                 | 🚧 Planned   |
-| Meta Business           | 🚧 Next      |
-| Google Business Profile | Planned      |
-| SOCi                    | Planned      |
-
----
-
-# Development Philosophy
-
-AI should recommend solutions that are:
-
-* Reusable
-* Configuration-driven
-* Warehouse-first
-* Scalable
-* Consistent with existing architecture
-
-Avoid recommending one-off implementations.
-
----
-
-# Decision Framework
-
-Before proposing any implementation, ask:
-
-1. Does this already exist?
-2. Can an existing component own this responsibility?
-3. Does it violate the documented architecture?
-4. Is it reusable?
-5. Is configuration preferable to code?
-6. Will this make future integrations easier?
-
-If the answer to any question is "No," reconsider the recommendation.
-
----
-
-# Things AI Should Never Suggest
-
-Do not recommend:
-
-* Browser automation performing ETL
-* Playwright writing directly to Supabase
-* Hardcoded business configuration
-* Duplicate warehouse logic
-* Reporting directly from source systems
-* AI consuming raw integration tables
-* Platform-specific architectural exceptions
-
-These violate the core architecture.
-
----
-
-# Current Collection Technologies
-
-| Technology  | Purpose                   |
-| ----------- | ------------------------- |
-| Playwright  | Browser automation        |
-| REST APIs   | Standard integrations     |
-| Graph APIs  | Social media integrations |
-| Webhooks    | Event-driven integrations |
-| CSV Imports | Legacy systems            |
-
-Regardless of collection method, all integrations follow the same ETL pipeline.
-
----
-
-# AI Design Philosophy
-
-AI should optimize for the long-term health of the platform rather than short-term implementation speed.
-
-Recommendations should:
-
-* Reduce future maintenance
-* Encourage reuse
-* Preserve clean architecture
-* Improve scalability
-* Minimize technical debt
-
-Architecture consistency is more valuable than implementation convenience.
-
----
-
-# Creative Intelligence
-
-Creative Intelligence is a first-class subsystem within Marketing Intelligence.
-
-Creative assets should exist independently of individual marketing platforms.
-
-Examples include:
-
-* Images
-* Videos
-* Reels
-* Captions
-* Paintings
-* Campaigns
-* Promotional Themes
-* Instructors
-
-Marketing platforms reference creative assets rather than owning them.
-
-This allows Studio Intelligence to evaluate creative performance across multiple channels.
-
----
-
-# Long-Term Vision
-
-Studio Intelligence is evolving beyond reporting.
-
-The platform will ultimately:
-
-* Collect business information.
-* Organize it into a single source of truth.
-* Explain business performance.
-* Predict future outcomes.
-* Recommend actions.
-* Automate routine business decisions.
-
-Every recommendation should move the platform toward becoming the operating system for multi-location experiential businesses.
-
----
-
-# Final Guidance
-
-When contributing to Studio Intelligence:
-
-Understand the vision before proposing solutions.
-
-Respect established architectural decisions.
-
-Prefer extending existing systems over creating new ones.
-
-Think in terms of business capabilities rather than individual integrations.
-
-Build features that make the next feature easier to implement.
-
-Studio Intelligence is a long-term platform.
-
-Every decision should make it more scalable, more maintainable, and more intelligent.
+Avoid adding new overlapping summary files. Improve the canonical document instead.
