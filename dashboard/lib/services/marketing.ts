@@ -1,23 +1,25 @@
 import { supabase } from "@/lib/supabase/server"
 
-type MarketingRow = {
+type Ga4Row = {
+  date: string
+  sessions: number | null
+  new_users: number | null
+  engaged_sessions: number | null
+  key_events: number | string | null
+}
+
+type MetaAdsRow = {
+  integration_date: string
+  spend: number | string | null
+  clicks: number | null
+  impressions: number | null
+}
+
+type EulerityRow = {
   report_date: string
-  sessions?: number | null
-  new_users?: number | null
-  total_users?: number | null
-  engaged_sessions?: number | null
-  engagement_rate?: number | string | null
-  key_events?: number | string | null
-  paid_spend?: number | string | null
-  paid_clicks?: number | null
-  paid_impressions?: number | null
-  meta_spend?: number | string | null
-  meta_ads_spend?: number | string | null
-  eulerity_spend?: number | string | null
-  meta_clicks?: number | null
-  eulerity_clicks?: number | null
-  meta_impressions?: number | null
-  eulerity_impressions?: number | null
+  spend_total: number | string | null
+  clicks_total: number | null
+  impressions_total: number | null
 }
 
 export type MarketingTrend = {
@@ -69,6 +71,19 @@ const numberValue = (value: unknown) => {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
+function addStudioFilter<T>(
+  query: T,
+  studioId?: string
+): T {
+  if (studioId && studioId !== "all") {
+    return (query as T & { eq: (column: string, value: string) => T }).eq(
+      "studio_id",
+      studioId
+    )
+  }
+  return query
+}
+
 export async function getMarketingDashboard(
   studioId?: string,
   startDate?: string,
@@ -79,43 +94,62 @@ export async function getMarketingDashboard(
   fallbackStart.setUTCDate(fallbackStart.getUTCDate() - 29)
   const periodStart = startDate ?? fallbackStart.toISOString().slice(0, 10)
 
-  let query = supabase
-    .from("marketing_daily_summary")
-    .select("*")
-    .gte("report_date", periodStart)
-    .lte("report_date", periodEnd)
+  const ga4Query = addStudioFilter(
+    supabase
+      .from("ga4_daily_metrics")
+      .select("date,sessions,new_users,engaged_sessions,key_events")
+      .gte("date", periodStart)
+      .lte("date", periodEnd),
+    studioId
+  )
+  const metaQuery = addStudioFilter(
+    supabase
+      .from("meta_ads_daily")
+      .select("integration_date,spend,clicks,impressions")
+      .gte("integration_date", periodStart)
+      .lte("integration_date", periodEnd),
+    studioId
+  )
+  const eulerityQuery = addStudioFilter(
+    supabase
+      .from("eulerity_daily_metrics")
+      .select("report_date,spend_total,clicks_total,impressions_total")
+      .gte("report_date", periodStart)
+      .lte("report_date", periodEnd),
+    studioId
+  )
+  const organicQuery = addStudioFilter(
+    supabase
+      .from("meta_page_insights_daily")
+      .select("insight_date,metric")
+      .gte("insight_date", periodStart)
+      .lte("insight_date", periodEnd),
+    studioId
+  )
 
-  if (studioId && studioId !== "all") {
-    query = query.eq("studio_id", studioId)
-  }
+  const [ga4Result, metaResult, eulerityResult, organicResult] =
+    await Promise.all([
+      ga4Query.order("date"),
+      metaQuery.order("integration_date"),
+      eulerityQuery.order("report_date"),
+      organicQuery.order("insight_date"),
+    ])
 
-  let organicQuery = supabase
-    .from("meta_page_insights_daily")
-    .select("insight_date,metric")
-    .gte("insight_date", periodStart)
-    .lte("insight_date", periodEnd)
+  const failure =
+    ga4Result.error ??
+    metaResult.error ??
+    eulerityResult.error ??
+    organicResult.error
+  if (failure) throw failure
 
-  if (studioId && studioId !== "all") {
-    organicQuery = organicQuery.eq("studio_id", studioId)
-  }
-
-  const [
-    { data, error },
-    { data: organicRows, error: organicError },
-  ] = await Promise.all([
-    query.order("report_date"),
-    organicQuery.order("insight_date"),
-  ])
-
-  if (error) throw error
-  if (organicError) throw organicError
-
-  const rows = (data ?? []) as MarketingRow[]
+  const ga4Rows = (ga4Result.data ?? []) as Ga4Row[]
+  const metaRows = (metaResult.data ?? []) as MetaAdsRow[]
+  const eulerityRows = (eulerityResult.data ?? []) as EulerityRow[]
   const grouped = new Map<string, MarketingTrend>()
 
-  for (const row of rows) {
-    const current = grouped.get(row.report_date) ?? {
-      date: row.report_date,
+  const day = (date: string) => {
+    const current = grouped.get(date) ?? {
+      date,
       sessions: 0,
       newUsers: 0,
       spend: 0,
@@ -125,16 +159,33 @@ export async function getMarketingDashboard(
       impressions: 0,
       keyEvents: 0,
     }
+    grouped.set(date, current)
+    return current
+  }
 
+  for (const row of ga4Rows) {
+    const current = day(row.date)
     current.sessions += numberValue(row.sessions)
     current.newUsers += numberValue(row.new_users)
-    current.spend += numberValue(row.paid_spend)
-    current.metaSpend += numberValue(row.meta_spend ?? row.meta_ads_spend)
-    current.euleritySpend += numberValue(row.eulerity_spend)
-    current.clicks += numberValue(row.paid_clicks)
-    current.impressions += numberValue(row.paid_impressions)
     current.keyEvents += numberValue(row.key_events)
-    grouped.set(row.report_date, current)
+  }
+
+  for (const row of metaRows) {
+    const current = day(row.integration_date)
+    const spend = numberValue(row.spend)
+    current.metaSpend += spend
+    current.spend += spend
+    current.clicks += numberValue(row.clicks)
+    current.impressions += numberValue(row.impressions)
+  }
+
+  for (const row of eulerityRows) {
+    const current = day(row.report_date)
+    const spend = numberValue(row.spend_total)
+    current.euleritySpend += spend
+    current.spend += spend
+    current.clicks += numberValue(row.clicks_total)
+    current.impressions += numberValue(row.impressions_total)
   }
 
   const trends = [...grouped.values()].sort((a, b) =>
@@ -163,25 +214,15 @@ export async function getMarketingDashboard(
     }
   )
 
-  const engagedSessions = rows.reduce(
+  const engagedSessions = ga4Rows.reduce(
     (sum, row) => sum + numberValue(row.engaged_sessions),
     0
   )
-  const weightedEngagement = totals.sessions
-    ? (engagedSessions / totals.sessions) * 100
-    : rows.length
-      ? rows.reduce(
-          (sum, row) => sum + numberValue(row.engagement_rate),
-          0
-        ) / rows.length
-      : 0
-  const knownChannelSpend = totals.metaSpend + totals.euleritySpend
-  const channelBase = knownChannelSpend || totals.spend
   const organicDates = new Set(
-    (organicRows ?? []).map((row) => String(row.insight_date))
+    (organicResult.data ?? []).map((row) => String(row.insight_date))
   )
   const organicMetrics = new Set(
-    (organicRows ?? []).map((row) => String(row.metric))
+    (organicResult.data ?? []).map((row) => String(row.metric))
   )
 
   return {
@@ -199,36 +240,38 @@ export async function getMarketingDashboard(
       newUsers: totals.newUsers,
       costPerSession: totals.sessions ? totals.spend / totals.sessions : 0,
       keyEvents: totals.keyEvents,
-      engagementRate: weightedEngagement,
+      engagementRate: totals.sessions
+        ? (engagedSessions / totals.sessions) * 100
+        : 0,
     },
     channels: [
       {
         key: "meta",
         name: "Meta Ads",
         spend: totals.metaSpend,
-        clicks: rows.reduce(
-          (sum, row) => sum + numberValue(row.meta_clicks),
+        clicks: metaRows.reduce(
+          (sum, row) => sum + numberValue(row.clicks),
           0
         ),
-        impressions: rows.reduce(
-          (sum, row) => sum + numberValue(row.meta_impressions),
+        impressions: metaRows.reduce(
+          (sum, row) => sum + numberValue(row.impressions),
           0
         ),
-        share: channelBase ? (totals.metaSpend / channelBase) * 100 : 0,
+        share: totals.spend ? (totals.metaSpend / totals.spend) * 100 : 0,
       },
       {
         key: "eulerity",
         name: "Eulerity",
         spend: totals.euleritySpend,
-        clicks: rows.reduce(
-          (sum, row) => sum + numberValue(row.eulerity_clicks),
+        clicks: eulerityRows.reduce(
+          (sum, row) => sum + numberValue(row.clicks_total),
           0
         ),
-        impressions: rows.reduce(
-          (sum, row) => sum + numberValue(row.eulerity_impressions),
+        impressions: eulerityRows.reduce(
+          (sum, row) => sum + numberValue(row.impressions_total),
           0
         ),
-        share: channelBase ? (totals.euleritySpend / channelBase) * 100 : 0,
+        share: totals.spend ? (totals.euleritySpend / totals.spend) * 100 : 0,
       },
     ],
     trends,

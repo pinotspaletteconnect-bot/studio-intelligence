@@ -97,7 +97,7 @@ Known incomplete surfaces:
 - Several domain pages are placeholders
 - Marketing source drill-down charts and tables are incomplete
 - Comparison-period behavior needs end-to-end completion
-- The current `marketing_daily_summary` view is driven by GA4 dates; a future reporting migration should use a complete source-date spine
+- The legacy `marketing_daily_summary` view is driven by GA4 dates. The Marketing Performance service now builds a complete source-date timeline from GA4, Meta Ads, Eulerity, and Meta Page Insights so source-only dates are retained; this should eventually move into a unified reporting view.
 - Executive, financial, operations, customer, and settings experiences are not production complete
 - AI insight cards are planned
 

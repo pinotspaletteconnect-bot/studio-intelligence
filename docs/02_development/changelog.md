@@ -20,6 +20,7 @@ This project follows a milestone-based changelog rather than tracking every indi
 
 - Marketing KPIs now use supported warehouse metrics and avoid presenting reservations, ROAS, or revenue attribution before their source integrations exist.
 - Marketing API input is validated and API failures return stable user-facing errors.
+- Marketing daily trends are assembled from each production source independently, preventing Eulerity-, Meta Ads-, or organic-only dates from being dropped by the GA4-driven legacy summary view.
 
 ---
 
