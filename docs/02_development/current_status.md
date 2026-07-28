@@ -110,6 +110,10 @@ Do not infer feature completeness from the presence of an empty route file.
 6. Prepare AI-ready reporting views and insight contracts after metrics are trusted.
 7. Begin financial, operations, and customer dashboards only when their source data is available.
 
+## Security Hardening Update
+
+The public Supabase warehouse schema is now treated as a restricted backend store rather than an openly accessible data plane. A new remediation script in [supabase/security_hardening.sql](supabase/security_hardening.sql) revokes broad table, sequence, function, and schema access from the anonymous and authenticated roles so future access must be granted explicitly and narrowly. This change is intended to reduce the exposure shown by the latest security inventory while preserving the existing server-side access pattern used by the dashboard and ETL services.
+
 ## Deployment Notes
 
 Railway deploys the collector from `playwright/`:
