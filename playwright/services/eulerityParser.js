@@ -6,13 +6,19 @@ function parseNumber(value) {
         return 0;
     }
 
-    return Number(
+    const parsed = Number(
         String(value)
             .replace(/,/g, "")
             .replace("%", "")
             .replace("$", "")
             .trim()
     );
+
+    if (!Number.isFinite(parsed)) {
+        throw new Error(`Invalid number: ${value}`);
+    }
+
+    return parsed;
 }
 
 function formatDate(value) {
@@ -127,7 +133,8 @@ async function parseSpend(filePath) {
 
         business_name: row["Business Name"],
 
-        user_email: row["User"],
+        // Match the warehouse column name used by eulerity_daily_spend.
+        user_name: row["User"],
 
         activation_date: formatDate(row["Activation Date"]),
 
