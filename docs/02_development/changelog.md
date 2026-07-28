@@ -6,6 +6,23 @@ This project follows a milestone-based changelog rather than tracking every indi
 
 ---
 
+# Unreleased
+
+## Added
+
+- Marketing Performance overview modeled on the approved dashboard direction.
+- Separate Meta Ads and Eulerity spend reporting.
+- GA4, Meta Ads, Meta Organic, and Eulerity drill-down routes.
+- Working 7-, 30-, and 90-day marketing filters.
+- Meta organic reporting-coverage indicator that is independent of paid-ad spend.
+
+## Changed
+
+- Marketing KPIs now use supported warehouse metrics and avoid presenting reservations, ROAS, or revenue attribution before their source integrations exist.
+- Marketing API input is validated and API failures return stable user-facing errors.
+
+---
+
 # Version 3.0
 
 **Release Date:** July 9, 2026

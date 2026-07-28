@@ -88,13 +88,16 @@ Implemented foundation:
 - Marketing summary API: `/api/marketing/summary`
 - Supabase access isolated behind frontend services
 - Reusable dashboard toolbar, studio selector, and metric cards
-- Marketing KPI page foundation
+- Marketing Performance overview with six trusted KPIs, separate Meta Ads and Eulerity spend trends, paid-platform share, supported-funnel stages, and Meta organic coverage
+- Working 7-, 30-, and 90-day marketing filters
+- Permanent drill-down routes for GA4, Meta Ads, Meta Organic, and Eulerity
 
 Known incomplete surfaces:
 
 - Several domain pages are placeholders
-- Marketing trend visualization is incomplete
-- Date-range and comparison behavior needs end-to-end completion
+- Marketing source drill-down charts and tables are incomplete
+- Comparison-period behavior needs end-to-end completion
+- The current `marketing_daily_summary` view is driven by GA4 dates; a future reporting migration should use a complete source-date spine
 - Executive, financial, operations, customer, and settings experiences are not production complete
 - AI insight cards are planned
 
@@ -103,7 +106,7 @@ Do not infer feature completeness from the presence of an empty route file.
 ## Current Development Priorities
 
 1. Complete unified marketing reporting views and confirm metric definitions.
-2. Finish marketing trend visualization, date filters, and comparison periods.
+2. Complete GA4, Meta Ads, Meta Organic, and Eulerity drill-down reporting.
 3. Build the executive dashboard on validated reporting views.
 4. Add studio comparison and ranking experiences.
 5. Establish repeatable dashboard verification and end-to-end testing.
