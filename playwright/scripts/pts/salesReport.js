@@ -171,17 +171,32 @@ async function downloadWorkbooks(page, folder, studio, reportDate) {
 
     for (const [index, label] of ["class-sales", "non-class-sales"].entries()) {
         const excelButton = excelButtons.nth(index);
+        const details = await excelButton.evaluate(button => {
+            const grid = button.closest(".k-grid");
 
-        if (!(await excelButton.isVisible())) {
-            await excelButton.evaluate(button => {
-                button.style.setProperty("display", "inline-block", "important");
-            });
+            return {
+                buttonClass: button.className,
+                buttonStyle: button.getAttribute("style"),
+                buttonText: button.textContent?.trim(),
+                gridClass: grid?.className,
+                gridId: grid?.id,
+                gridStyle: grid?.getAttribute("style"),
+                gridText: grid?.textContent?.trim().slice(0, 160)
+            };
+        });
+
+        let download;
+
+        try {
+            [download] = await Promise.all([
+                page.waitForEvent("download"),
+                excelButton.click({ force: true })
+            ]);
+        } catch (error) {
+            throw new Error(
+                `PTS ${label} export failed (${JSON.stringify(details)}): ${error.message}`
+            );
         }
-
-        const [download] = await Promise.all([
-            page.waitForEvent("download"),
-            excelButton.click()
-        ]);
         const filePath = path.join(
             folder,
             `${studio.code}_${reportDate}_${label}.xlsx`
