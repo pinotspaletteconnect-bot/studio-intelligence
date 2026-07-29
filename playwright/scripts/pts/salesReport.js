@@ -109,7 +109,12 @@ async function runReport(page, reportDate) {
         page.getByRole("button", { name: "Run", exact: true }).click()
     ]);
 
-    await page.getByText(`Data as of EOD ${date}`, { exact: true }).waitFor();
+    // The report heading's date formatting can vary (for example, padded
+    // month/day values), so use the report controls as the readiness signal.
+    // Navigation guarantees these are from the newly requested report.
+    await page.locator("table.SalesSummary").waitFor({ state: "visible" });
+    await page.locator(".k-grid-excel").nth(0).waitFor({ state: "visible" });
+    await page.locator(".k-grid-excel").nth(1).waitFor({ state: "visible" });
 }
 
 async function readSummary(page) {
