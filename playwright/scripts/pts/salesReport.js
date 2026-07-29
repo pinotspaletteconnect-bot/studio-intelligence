@@ -171,15 +171,13 @@ async function downloadWorkbooks(page, folder, studio, reportDate) {
 
     for (const [index, label] of ["class-sales", "non-class-sales"].entries()) {
         const excelButton = excelButtons.nth(index);
-
-        if (!(await excelButton.isVisible())) {
-            files.push(null);
-            continue;
-        }
-
-        const downloadPromise = page.waitForEvent("download");
-        await excelButton.click();
-        const download = await downloadPromise;
+        const isVisible = await excelButton.isVisible();
+        const [download] = await Promise.all([
+            page.waitForEvent("download"),
+            isVisible
+                ? excelButton.click()
+                : excelButton.evaluate(button => button.click())
+        ]);
         const filePath = path.join(
             folder,
             `${studio.code}_${reportDate}_${label}.xlsx`
@@ -226,8 +224,8 @@ async function runPtsSalesReport({ reportDate, studioCodes } = {}) {
                 locationName: studio.locationName,
                 reportDate: date,
                 summary,
-                classSales: classFile ? await parseClassSales(classFile) : [],
-                nonClassSales: nonClassFile ? await parseNonClassSales(nonClassFile) : []
+                classSales: await parseClassSales(classFile),
+                nonClassSales: await parseNonClassSales(nonClassFile)
             });
         }
 
