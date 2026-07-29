@@ -58,6 +58,7 @@ function requestedStudios(studioCodes) {
 function snakeCase(value) {
     return String(value ?? "")
         .trim()
+        .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
         .toLowerCase()
         .replace(/[%#]/g, "")
         .replace(/[^a-z0-9]+/g, "_")
@@ -97,21 +98,32 @@ function normalizeProductRows(rows) {
                 .createHash("sha256")
                 .update(JSON.stringify(minimizedRow))
                 .digest("hex"),
-            category: firstValue(minimizedRow, ["category", "product_category"]),
+            category: firstValue(minimizedRow, [
+                "category",
+                "product_category",
+                "item_category"
+            ]),
             subcategory: firstValue(minimizedRow, [
                 "subcategory",
                 "sub_category",
-                "sub_cat"
+                "sub_cat",
+                "item_subcategory"
             ]),
             item_name: firstValue(minimizedRow, [
                 "item_name",
                 "product",
                 "product_name",
                 "name",
-                "item"
+                "item",
+                "item_name_short"
             ]),
             quantity: numberValue(
-                firstValue(minimizedRow, ["quantity", "qty", "units"])
+                firstValue(minimizedRow, [
+                    "quantity",
+                    "qty",
+                    "units",
+                    "quantity_towards_total"
+                ])
             ),
             gross_sales: numberValue(
                 firstValue(minimizedRow, [
@@ -204,18 +216,24 @@ async function readProductGrid(page) {
             const kendoColumns = (kendoGrid?.columns ?? []).filter(
                 column => column.field
             );
-            const dataRows = Array.from(kendoGrid?.dataSource?.data?.() ?? []).map(
-                item => {
-                    const value = item?.toJSON ? item.toJSON() : { ...item };
+            const dataSource = kendoGrid?.dataSource;
+            const kendoItems =
+                [
+                    dataSource?.view?.(),
+                    dataSource?.data?.(),
+                    dataSource?._data,
+                    dataSource?._pristineData
+                ].find(items => items?.length > 0) ?? [];
+            const dataRows = Array.from(kendoItems).map(item => {
+                const value = item?.toJSON ? item.toJSON() : { ...item };
 
-                    return Object.fromEntries(
-                        kendoColumns.map(column => [
-                            column.field,
-                            value[column.field] ?? null
-                        ])
-                    );
-                }
-            );
+                return Object.fromEntries(
+                    kendoColumns.map(column => [
+                        column.field,
+                        value[column.field] ?? null
+                    ])
+                );
+            });
 
             return {
                 id: grid.id || null,
