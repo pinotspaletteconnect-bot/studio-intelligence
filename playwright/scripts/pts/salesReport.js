@@ -176,7 +176,16 @@ async function downloadWorkbooks(page, folder, studio, reportDate) {
             page.waitForEvent("download"),
             isVisible
                 ? excelButton.click()
-                : excelButton.evaluate(button => button.click())
+                : excelButton.evaluate(button => {
+                    const jquery = window.jQuery || window.$;
+                    const grid = jquery?.(button).closest(".k-grid").data("kendoGrid");
+
+                    if (!grid) {
+                        throw new Error("PTS Excel export is not attached to a Kendo Grid");
+                    }
+
+                    grid.saveAsExcel();
+                })
         ]);
         const filePath = path.join(
             folder,
