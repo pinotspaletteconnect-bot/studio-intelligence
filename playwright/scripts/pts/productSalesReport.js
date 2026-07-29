@@ -190,22 +190,43 @@ async function runReport(page, reportDate) {
 async function readProductGrid(page) {
     const grids = await page.locator(".k-grid").evaluateAll(elements =>
         elements.map(grid => {
-            const headers = Array.from(grid.querySelectorAll("thead th"))
+            const domHeaders = Array.from(grid.querySelectorAll("thead th"))
                 .map(header => header.textContent?.trim() ?? "")
                 .filter(Boolean);
-            const rows = Array.from(grid.querySelectorAll("tbody tr"))
+            const domRows = Array.from(grid.querySelectorAll("tbody tr"))
                 .map(row =>
                     Array.from(row.querySelectorAll("td")).map(
                         cell => cell.textContent?.trim() ?? ""
                     )
                 )
                 .filter(row => row.some(Boolean));
+            const kendoGrid = globalThis.jQuery?.(grid).data("kendoGrid");
+            const kendoColumns = (kendoGrid?.columns ?? []).filter(
+                column => column.field
+            );
+            const dataRows = Array.from(kendoGrid?.dataSource?.data?.() ?? []).map(
+                item => {
+                    const value = item?.toJSON ? item.toJSON() : { ...item };
+
+                    return Object.fromEntries(
+                        kendoColumns.map(column => [
+                            column.field,
+                            value[column.field] ?? null
+                        ])
+                    );
+                }
+            );
 
             return {
                 id: grid.id || null,
                 visible: Boolean(grid.offsetWidth || grid.offsetHeight),
-                headers,
-                rows
+                headers:
+                    kendoColumns.length > 0
+                        ? kendoColumns.map(column => column.title || column.field)
+                        : domHeaders,
+                fields: kendoColumns.map(column => column.field),
+                rows: domRows,
+                dataRows
             };
         })
     );
@@ -219,7 +240,7 @@ async function readProductGrid(page) {
                 (/(product|item|name)/.test(headerText) ? 3 : 0) +
                 (/(sales|gross|net|total)/.test(headerText) ? 2 : 0) +
                 (/(quantity|qty|units)/.test(headerText) ? 1 : 0) +
-                (grid.rows.length > 0 ? 1 : 0);
+                (grid.dataRows.length > 0 || grid.rows.length > 0 ? 1 : 0);
 
             return { ...grid, normalizedHeaders, score };
         })
@@ -233,25 +254,41 @@ async function readProductGrid(page) {
                     id: grid.id,
                     visible: grid.visible,
                     headers: grid.headers,
-                    rowCount: grid.rows.length,
+                    rowCount: Math.max(
+                        grid.dataRows.length,
+                        grid.rows.length
+                    ),
                     score: grid.score
                 }))
             )})`
         );
     }
 
-    const rawRows = selected.rows.map(values =>
-        Object.fromEntries(
-            selected.normalizedHeaders.map((header, index) => [
-                header || `column_${index + 1}`,
-                values[index] ?? null
-            ])
-        )
-    );
+    const rawRows =
+        selected.dataRows.length > 0
+            ? selected.dataRows.map(row =>
+                  Object.fromEntries(
+                      Object.entries(row).map(([key, value]) => [
+                          snakeCase(key),
+                          value
+                      ])
+                  )
+              )
+            : selected.rows.map(values =>
+                  Object.fromEntries(
+                      selected.normalizedHeaders.map((header, index) => [
+                          header || `column_${index + 1}`,
+                          values[index] ?? null
+                      ])
+                  )
+              );
 
     return {
         gridId: selected.id,
-        columns: selected.normalizedHeaders,
+        columns:
+            selected.fields.length > 0
+                ? selected.fields.map(snakeCase)
+                : selected.normalizedHeaders,
         rows: normalizeProductRows(rawRows)
     };
 }
