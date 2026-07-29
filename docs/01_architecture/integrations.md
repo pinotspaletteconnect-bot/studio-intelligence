@@ -155,8 +155,12 @@ Planned scope includes profile insights, reviews, search visibility, and custome
   collector because product and revenue reporting does not require them
 - **Status:** Active development. Location discovery, secure mappings, storage,
   Playwright route, Excel parsers, Railway deployment, and the authenticated
-  four-studio n8n collector run are validated. Supabase upserts, the production
-  schedule, and controlled historical backfills remain incomplete.
+  four-studio n8n collector run are validated. The July 28, 2026 daily summaries
+  were validated and idempotently upserted for all four studios; a same-date
+  rerun preserved the four existing row IDs. The workflow is prepared to upsert
+  class and non-class detail batches when the collector returns them, but the
+  validated date returned no detail rows. The production schedule and controlled
+  historical backfills remain incomplete.
 
 #### Scalable PTS onboarding
 

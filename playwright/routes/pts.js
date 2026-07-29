@@ -1,6 +1,9 @@
 const express = require("express");
 const crypto = require("crypto");
 
+const {
+    runPtsProductSalesReport
+} = require("../scripts/pts/productSalesReport");
 const { runPtsSalesReport } = require("../scripts/pts/salesReport");
 
 const router = express.Router();
@@ -57,6 +60,28 @@ router.post("/sales-report", requireCollectorAuth, async (req, res) => {
         });
     } catch (error) {
         console.error("PTS Sales Report failed:", error.message);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+router.post("/product-sales-report", requireCollectorAuth, async (req, res) => {
+    try {
+        const results = await runPtsProductSalesReport({
+            reportDate: req.body?.reportDate,
+            studioCodes: req.body?.studioCodes
+        });
+
+        res.json({
+            success: true,
+            reportDate: req.body.reportDate,
+            studioCount: results.length,
+            results
+        });
+    } catch (error) {
+        console.error("PTS Product Sales Report failed:", error.message);
         res.status(500).json({
             success: false,
             error: error.message
