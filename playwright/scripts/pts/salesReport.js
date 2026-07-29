@@ -113,8 +113,8 @@ async function runReport(page, reportDate) {
     // month/day values), so use the report controls as the readiness signal.
     // Navigation guarantees these are from the newly requested report.
     await page.locator("table.SalesSummary").waitFor({ state: "visible" });
-    await page.locator(".k-grid-excel").nth(0).waitFor({ state: "visible" });
-    await page.locator(".k-grid-excel").nth(1).waitFor({ state: "visible" });
+    await page.locator(".k-grid-excel").nth(0).waitFor({ state: "attached" });
+    await page.locator(".k-grid-excel").nth(1).waitFor({ state: "attached" });
 }
 
 async function readSummary(page) {
@@ -171,7 +171,7 @@ async function downloadWorkbooks(page, folder, studio, reportDate) {
 
     for (const [index, label] of ["class-sales", "non-class-sales"].entries()) {
         const downloadPromise = page.waitForEvent("download");
-        await excelButtons.nth(index).click();
+        await excelButtons.nth(index).click({ force: true });
         const download = await downloadPromise;
         const filePath = path.join(
             folder,
