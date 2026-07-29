@@ -1,7 +1,12 @@
 require("dotenv").config();
 
 const crypto = require("crypto");
+const fs = require("fs");
+const os = require("os");
+const path = require("path");
 const { chromium } = require("playwright");
+
+const { parseNonClassSales } = require("../../services/ptsParser");
 
 const PTS_URL = "https://admin.pinotspalette.com";
 const DEFAULT_STUDIOS = [
@@ -197,6 +202,27 @@ async function runReport(page, reportDate) {
     ]);
 
     await page.locator(".k-grid").nth(0).waitFor({ state: "attached" });
+    await page.locator(".k-grid-excel").nth(0).waitFor({ state: "attached" });
+}
+
+async function downloadProductWorkbook(page, folder, studio, reportDate) {
+    const excelButton = page.locator(".k-grid-excel").nth(0);
+
+    if (!(await excelButton.isVisible())) {
+        throw new Error("PTS Product Sales Report Excel export is not visible");
+    }
+
+    const [download] = await Promise.all([
+        page.waitForEvent("download"),
+        excelButton.click({ force: true })
+    ]);
+    const filePath = path.join(
+        folder,
+        `${studio.code}_${reportDate}_product-sales.xlsx`
+    );
+    await download.saveAs(filePath);
+
+    return filePath;
 }
 
 async function readProductGrid(page) {
@@ -314,11 +340,12 @@ async function readProductGrid(page) {
 async function runPtsProductSalesReport({ reportDate, studioCodes } = {}) {
     const date = validateDate(reportDate);
     const studios = requestedStudios(studioCodes);
+    const folder = fs.mkdtempSync(path.join(os.tmpdir(), "pts-products-"));
     let browser;
 
     try {
         browser = await chromium.launch({ headless: true });
-        const context = await browser.newContext();
+        const context = await browser.newContext({ acceptDownloads: true });
         const page = await context.newPage();
         await login(page);
         const results = [];
@@ -329,7 +356,13 @@ async function runPtsProductSalesReport({ reportDate, studioCodes } = {}) {
             });
             await selectStudio(page, studio);
             await runReport(page, date);
-            const report = await readProductGrid(page);
+            const productFile = await downloadProductWorkbook(
+                page,
+                folder,
+                studio,
+                date
+            );
+            const rows = await parseNonClassSales(productFile);
 
             results.push({
                 studioId: studio.studioId,
@@ -337,10 +370,27 @@ async function runPtsProductSalesReport({ reportDate, studioCodes } = {}) {
                 locationId: studio.locationId,
                 locationName: studio.locationName,
                 reportDate: date,
-                gridId: report.gridId,
-                columns: report.columns,
-                rowCount: report.rows.length,
-                rows: report.rows
+                gridId: "griddDetailsData",
+                columns: [
+                    "order_number",
+                    "sale_date",
+                    "order_date",
+                    "sale_or_order",
+                    "source",
+                    "payment_method",
+                    "item_type",
+                    "category",
+                    "subcategory",
+                    "item_name",
+                    "quantity",
+                    "gross_sales",
+                    "net_sales",
+                    "tax",
+                    "alcohol_tax",
+                    "nat_sales"
+                ],
+                rowCount: rows.length,
+                rows
             });
         }
 
@@ -349,6 +399,7 @@ async function runPtsProductSalesReport({ reportDate, studioCodes } = {}) {
         if (browser) {
             await browser.close();
         }
+        fs.rmSync(folder, { recursive: true, force: true });
     }
 }
 
