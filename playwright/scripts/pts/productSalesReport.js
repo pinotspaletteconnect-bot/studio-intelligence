@@ -210,7 +210,7 @@ async function downloadProductWorkbook(page, folder, studio, reportDate) {
 
     const [download] = await Promise.all([
         page.waitForEvent("download"),
-        excelButton.click({ force: true })
+        excelButton.dispatchEvent("click")
     ]);
     const filePath = path.join(
         folder,
