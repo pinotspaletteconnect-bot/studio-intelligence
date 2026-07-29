@@ -171,21 +171,16 @@ async function downloadWorkbooks(page, folder, studio, reportDate) {
 
     for (const [index, label] of ["class-sales", "non-class-sales"].entries()) {
         const excelButton = excelButtons.nth(index);
-        const isVisible = await excelButton.isVisible();
+
+        if (!(await excelButton.isVisible())) {
+            await excelButton.evaluate(button => {
+                button.style.setProperty("display", "inline-block", "important");
+            });
+        }
+
         const [download] = await Promise.all([
             page.waitForEvent("download"),
-            isVisible
-                ? excelButton.click()
-                : excelButton.evaluate(button => {
-                    const jquery = window.jQuery || window.$;
-                    const grid = jquery?.(button).closest(".k-grid").data("kendoGrid");
-
-                    if (!grid) {
-                        throw new Error("PTS Excel export is not attached to a Kendo Grid");
-                    }
-
-                    grid.saveAsExcel();
-                })
+            excelButton.click()
         ]);
         const filePath = path.join(
             folder,
