@@ -17,6 +17,10 @@ This project follows a milestone-based changelog rather than tracking every indi
 - Deployed and validated the authenticated PTS collector through n8n for all
   four configured studios, including resilient report readiness checks and
   explicit handling for hidden zero-row detail exports.
+- Added n8n validation, configuration-driven studio ownership lookup, and
+  idempotent Supabase upserts for PTS Daily Sales. Validated four July 28, 2026
+  summary rows and confirmed a same-date rerun reused the same row IDs; detail
+  upserts remain awaiting a report date that returns detail rows.
 - Documented scalable PTS onboarding through encrypted credential references,
   owner-controlled location mapping, shared credential-grouped collection, and
   resumable historical backfills.
