@@ -358,7 +358,9 @@ async function runPtsProductSalesReport({ reportDate, studioCodes } = {}) {
                 studio,
                 date
             );
-            const rows = await parseNonClassSales(productFile);
+            const rows = (await parseNonClassSales(productFile)).filter(
+                row => row.category && row.item_name
+            );
 
             results.push({
                 studioId: studio.studioId,
