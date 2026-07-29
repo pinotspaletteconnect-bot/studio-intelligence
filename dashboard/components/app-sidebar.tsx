@@ -15,7 +15,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboardIcon, ListIcon, ChartBarIcon, FolderIcon, UsersIcon, CameraIcon, FileTextIcon, Settings2Icon, CircleHelpIcon, SearchIcon, DatabaseIcon, FileChartColumnIcon, FileIcon, CommandIcon } from "lucide-react"
+import { LayoutDashboardIcon, ListIcon, ChartBarIcon, UsersIcon, CameraIcon, FileTextIcon, Settings2Icon, CircleHelpIcon, SearchIcon, DatabaseIcon, FileChartColumnIcon, CommandIcon } from "lucide-react"
 
 const data = {
   user: {
@@ -135,19 +135,29 @@ const data = {
   ],
   documents: [
   {
-    name: "Marketing Reports",
+    name: "Marketing Overview",
     url: "/marketing",
     icon: <ChartBarIcon />,
   },
   {
-    name: "Operations Reports",
-    url: "/operations",
-    icon: <ListIcon />,
+    name: "GA4 Analytics",
+    url: "/marketing/ga4",
+    icon: <FileChartColumnIcon />,
   },
   {
-    name: "Financial Reports",
-    url: "/financial",
-    icon: <DatabaseIcon />,
+    name: "Meta Ads",
+    url: "/marketing/meta",
+    icon: <FileChartColumnIcon />,
+  },
+  {
+    name: "Meta Organic",
+    url: "/marketing/meta-organic",
+    icon: <FileChartColumnIcon />,
+  },
+  {
+    name: "Eulerity",
+    url: "/marketing/eulerity",
+    icon: <FileChartColumnIcon />,
   },
 ],
 }

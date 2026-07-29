@@ -1,14 +1,39 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
+
 import { getMarketingDashboard } from "@/lib/services/marketing"
 
-export async function GET(request: NextRequest) {
-  const params = request.nextUrl.searchParams
+const querySchema = z.object({
+  studioId: z.string().max(100).optional(),
+  startDate: z.iso.date().optional(),
+  endDate: z.iso.date().optional(),
+})
 
-  const dashboard = await getMarketingDashboard(
-    params.get("studioId") ?? undefined,
-    params.get("startDate") ?? undefined,
-    params.get("endDate") ?? undefined
+export async function GET(request: NextRequest) {
+  const parsed = querySchema.safeParse(
+    Object.fromEntries(request.nextUrl.searchParams)
   )
 
-  return NextResponse.json(dashboard)
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "The studio or date range is invalid." },
+      { status: 400 }
+    )
+  }
+
+  try {
+    return NextResponse.json(
+      await getMarketingDashboard(
+        parsed.data.studioId,
+        parsed.data.startDate,
+        parsed.data.endDate
+      )
+    )
+  } catch (error) {
+    console.error("Marketing summary failed", error)
+    return NextResponse.json(
+      { error: "Marketing data is temporarily unavailable." },
+      { status: 500 }
+    )
+  }
 }

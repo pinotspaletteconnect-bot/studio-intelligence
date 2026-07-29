@@ -22,6 +22,7 @@ This document inventories warehouse objects confirmed by current project documen
 | `studios` | Individual location | Current |
 | `studio_integrations` | Configuration and external-account mapping per studio | Current |
 | `integration_runs` | Integration execution/audit records | Current |
+| `pts_integration_accounts` | PTS account metadata and encrypted-secret references; never credential values | Current |
 
 Expected hierarchy:
 
@@ -32,21 +33,51 @@ studios 1→many studio_integrations
 
 Confirm exact columns, constraints, and foreign-key behavior in Supabase before migrations or code changes.
 
+## PTS Sales Facts
+
+| Object | Grain/purpose | Status |
+| --- | --- | --- |
+| `pts_sales_daily_summary` | One PTS sales summary per studio/report date | Current |
+| `pts_class_sales_daily` | One class-sales export row per studio/report date/source row hash | Current |
+| `pts_non_class_sales_items` | One minimized non-class line item per studio/report date/source row hash | Current |
+
+PTS imports preserve source row hashes for idempotency. Non-class sale records
+retain business transaction and product information but exclude customer names.
+All PTS tables are service-role-only until authenticated tenant RLS policies and
+dashboard access are implemented.
+
 ## Marketing Fact Tables
 
 | Object | Expected grain/purpose | Status |
 | --- | --- | --- |
 | `ga4_daily_metrics` | GA4 metrics by studio/date and documented analytics dimensions | Current |
+| `marketing_attribution_daily` | GA4 metrics by studio/date/session source/session medium | Current |
 | `eulerity_daily_metrics` | Eulerity performance metrics at the documented daily grain | Current |
 | `eulerity_daily_spend` | Eulerity spend by studio/date and applicable campaign dimensions | Current |
 | `eulerity_daily_budget_allocation` | Daily allocated budget by studio/date | Current |
 | `meta_ads_daily` | Meta campaign insights by account/campaign/date with studio mapping | Current |
 | `meta_page_insights_daily` | Facebook Page insights by page/date/period with studio mapping | Current |
+| `mntn_daily_metrics` | MNTN delivery and modeled/last-touch attribution by studio, advertiser, and date | Current |
 | `weather_daily` | Historical/contextual weather by location/date | Needs verification |
 
 Current Meta Ads metrics documented by the project include spend, impressions, reach, clicks, CTR, CPC, CPM, campaign ID/name, and date. Current Meta Page insight ingestion includes Page media views and period dimensions. Validate the actual column names before writing queries.
 
 ## Reporting Views
+
+`ga4_source_medium_performance` is current and provides governed source/medium
+classification over `marketing_attribution_daily`. Studio 1 was validated
+against GA4 daily totals on July 28, 2026. The
+`marketing_reporting_sources` directory adds global, organization, brand, and
+studio-scoped dashboard classifications without removing raw attribution facts.
+It features paid, direct, Google Organic, social, and approved tourism traffic;
+groups incidental referrals; and keeps unknown traffic available for governance.
+
+`mntn_performance_daily` is current and provides MNTN delivery, modeled
+view-through attribution, last-touch attribution, CPM, cost per verified visit,
+and cost per conversion. Its natural fact key is
+`(studio_id, advertiser_id, report_date)`. Tenant ownership is assigned from
+the active `studio_integrations` MNTN advertiser mapping before every insert or
+advertiser change.
 
 Unified marketing and executive reporting views are active development priorities. Candidate names documented elsewhere include:
 
@@ -113,3 +144,17 @@ Schema changes require explicit approval and a migration plan. For every change:
 7. Update this file, `data_model.md`, `current_status.md`, and the changelog.
 
 Never include connection strings, keys, tokens, or credential values in this document.
+
+## Reciprocal Benchmarks
+
+`benchmark_participation_settings` stores organization-level consent and
+defaults every organization to opted out. `benchmark_participation_audit`
+records consent changes. Neither table is available to anonymous or ordinary
+authenticated clients; application service code must also enforce that only an
+organization owner or administrator can change participation.
+
+`get_paid_cpc_benchmark` is the first protected aggregate. It returns a median
+and mean only when the requesting studio's organization participates and the
+eligible cohort contains at least 10 studios across at least 3 organizations.
+It never returns another studio's value. Additional metrics should follow the
+same reciprocal-access and minimum-cohort rules.
