@@ -154,8 +154,9 @@ Planned scope includes profile insights, reviews, search visibility, and custome
 - **Privacy:** customer names in the Sales Report workbook are discarded by the
   collector because product and revenue reporting does not require them
 - **Status:** Active development. Location discovery, secure mappings, storage,
-  Playwright route, and Excel parsers are implemented. Railway deployment,
-  n8n loading, and production schedule still require validation.
+  Playwright route, Excel parsers, Railway deployment, and the authenticated
+  four-studio n8n collector run are validated. Supabase upserts, the production
+  schedule, and controlled historical backfills remain incomplete.
 
 #### Scalable PTS onboarding
 

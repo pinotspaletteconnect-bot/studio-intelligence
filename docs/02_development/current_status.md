@@ -104,9 +104,10 @@ Implemented foundation:
 
 Known incomplete surfaces:
 
-- PTS Sales Report collection and storage are implemented but still require
-  Railway deployment, n8n idempotent loading, daily scheduling, and a controlled
-  historical-backfill workflow before production promotion.
+- PTS Sales Report collection is deployed to Railway and the authenticated
+  four-studio n8n collector run is validated for July 28, 2026. Supabase
+  idempotent loading, daily scheduling, and a controlled historical-backfill
+  workflow remain incomplete.
 - Reciprocal benchmark storage and CPC display behavior are prepared, but the
   owner-facing participation control must remain unavailable until login and
   organization-role authorization are implemented.
