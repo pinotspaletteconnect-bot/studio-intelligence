@@ -14,6 +14,9 @@ This project follows a milestone-based changelog rather than tracking every indi
   four verified PTS location mappings, a multi-studio Playwright collector,
   separate class/non-class Excel parsers, data-minimized sales facts, and
   service-role-only Supabase storage.
+- Deployed and validated the authenticated PTS collector through n8n for all
+  four configured studios, including resilient report readiness checks and
+  explicit handling for hidden zero-row detail exports.
 - Documented scalable PTS onboarding through encrypted credential references,
   owner-controlled location mapping, shared credential-grouped collection, and
   resumable historical backfills.
