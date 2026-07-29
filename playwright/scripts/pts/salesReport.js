@@ -185,6 +185,11 @@ async function downloadWorkbooks(page, folder, studio, reportDate) {
             };
         });
 
+        if (!(await excelButton.isVisible())) {
+            files.push(null);
+            continue;
+        }
+
         let download;
 
         try {
@@ -243,8 +248,8 @@ async function runPtsSalesReport({ reportDate, studioCodes } = {}) {
                 locationName: studio.locationName,
                 reportDate: date,
                 summary,
-                classSales: await parseClassSales(classFile),
-                nonClassSales: await parseNonClassSales(nonClassFile)
+                classSales: classFile ? await parseClassSales(classFile) : [],
+                nonClassSales: nonClassFile ? await parseNonClassSales(nonClassFile) : []
             });
         }
 
