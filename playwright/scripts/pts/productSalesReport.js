@@ -208,10 +208,6 @@ async function runReport(page, reportDate) {
 async function downloadProductWorkbook(page, folder, studio, reportDate) {
     const excelButton = page.locator(".k-grid-excel").nth(0);
 
-    if (!(await excelButton.isVisible())) {
-        throw new Error("PTS Product Sales Report Excel export is not visible");
-    }
-
     const [download] = await Promise.all([
         page.waitForEvent("download"),
         excelButton.click({ force: true })
