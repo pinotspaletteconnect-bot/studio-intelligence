@@ -77,6 +77,10 @@ Prioritize restricted data, administrative access, authentication, public APIs, 
 Review:
 
 - Authentication, sessions, MFA, recovery, invitations, and email-change flows
+- Benchmark consent during onboarding and in Settings: only organization
+  owners/admins may opt in or withdraw, participation defaults off, and
+  opted-out organizations must neither contribute to nor receive collective
+  benchmark results
 - Authorization at route, service, object, reporting-view, and data-query layers
 - Studio isolation and prevention of identifier-based cross-studio access
 - Supabase Row Level Security, service-role usage, database grants, and storage policies

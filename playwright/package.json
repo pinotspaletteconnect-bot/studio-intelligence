@@ -13,6 +13,7 @@
     "csv-parser": "^3.2.1",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "playwright": "^1.61.1"
+    "playwright": "^1.61.1",
+    "read-excel-file": "^9.3.5"
   }
 }

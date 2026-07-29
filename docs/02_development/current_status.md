@@ -1,7 +1,7 @@
 # Studio Intelligence Current Status
 
 **Version:** 4.1  
-**Last updated:** July 23, 2026
+**Last updated:** July 28, 2026
 
 ## Purpose
 
@@ -56,6 +56,7 @@ Meta Ads and Page Insights share the authentication and Graph API foundation in 
 | QuickBooks or other financial systems | Planned |
 | Google Ads and Microsoft Ads | Planned |
 | Organic social content/creative ingestion beyond current Page Insights | Planned |
+| MNTN Connected TV | Active for Gilbert, Louisville/St. Matthews, and Short North; published n8n workflow refreshes the prior 35 days daily at 5:15 AM |
 
 ## Warehouse
 
@@ -70,11 +71,15 @@ Meta Ads and Page Insights share the authentication and Graph API foundation in 
 ### Current marketing facts
 
 - `ga4_daily_metrics`
+- `marketing_attribution_daily` (production source/medium facts; controlled 30-day validation completed for all four active GA4 studios July 28, 2026)
+- `ga4_source_medium_performance` (production classified source/medium reporting view)
+- `marketing_reporting_sources` (production directory for scalable global, organization, brand, and studio source presentation)
 - `eulerity_daily_metrics`
 - `eulerity_daily_spend`
 - `eulerity_daily_budget_allocation`
 - `meta_ads_daily`
 - `meta_page_insights_daily`
+- `mntn_daily_metrics` and `mntn_performance_daily` (MNTN modeled and last-touch Connected TV attribution; rolling 35-day refresh contract)
 
 The live Supabase schema is authoritative. Update `docs/01_architecture/schema.md` whenever tables or views change.
 
@@ -88,14 +93,26 @@ Implemented foundation:
 - Marketing summary API: `/api/marketing/summary`
 - Supabase access isolated behind frontend services
 - Reusable dashboard toolbar, studio selector, and metric cards
-- Marketing Performance overview with six trusted KPIs, separate Meta Ads and Eulerity spend trends, paid-platform share, supported-funnel stages, and Meta organic coverage
+- Marketing Performance overview with paid CPC, attribution-ready revenue/ROAS cards, separate Meta Ads and Eulerity spend trends, paid-platform share, supported-funnel stages, and Meta organic coverage
+- GA4 source/medium performance table with curated paid, direct, Google Organic,
+  social, and tourism reporting; Facebook Organic and Instagram Organic remain
+  separate, incidental referrals roll up, and raw attribution is preserved
 - Working 7-, 30-, and 90-day marketing filters
 - Permanent drill-down routes for GA4, Meta Ads, Meta Organic, and Eulerity
+- MNTN Connected TV dashboard card with delivery, modeled attribution,
+  last-touch attribution, CPM, cost per verified visit, and cost per conversion
 
 Known incomplete surfaces:
 
+- PTS Sales Report collection and storage are implemented but still require
+  Railway deployment, n8n idempotent loading, daily scheduling, and a controlled
+  historical-backfill workflow before production promotion.
+- Reciprocal benchmark storage and CPC display behavior are prepared, but the
+  owner-facing participation control must remain unavailable until login and
+  organization-role authorization are implemented.
 - Several domain pages are placeholders
 - Marketing source drill-down charts and tables are incomplete
+- GA4 source/medium mapping coverage requires ongoing curation; unmapped traffic remains explicitly labeled
 - Comparison-period behavior needs end-to-end completion
 - The legacy `marketing_daily_summary` view is driven by GA4 dates. The Marketing Performance service now builds a complete source-date timeline from GA4, Meta Ads, Eulerity, and Meta Page Insights so source-only dates are retained; this should eventually move into a unified reporting view.
 - Executive, financial, operations, customer, and settings experiences are not production complete
@@ -112,6 +129,22 @@ Do not infer feature completeness from the presence of an empty route file.
 5. Establish repeatable dashboard verification and end-to-end testing.
 6. Prepare AI-ready reporting views and insight contracts after metrics are trusted.
 7. Begin financial, operations, and customer dashboards only when their source data is available.
+
+## Sign-In and Onboarding Checkpoint
+
+When authentication and new-customer onboarding are implemented, circle back to
+the reciprocal benchmark feature before either workflow is considered complete:
+
+1. Add an organization-level benchmark participation choice to onboarding.
+2. Require an organization owner or administrator to make or change the choice.
+3. Default participation to off and present clear, versioned consent language.
+4. Connect the choice to `benchmark_participation_settings` through an
+   authenticated server route; never expose service-role credentials to the
+   browser.
+5. Allow withdrawal from Settings and preserve the consent audit history.
+6. Verify that opted-out organizations neither contribute to nor receive
+   collective benchmarks.
+7. Test the 10-studio/3-organization suppression rule and cross-tenant isolation.
 
 ## Deployment Notes
 

@@ -6,6 +6,7 @@ const express = require("express");
 
 const eulerityRoutes = require("./routes/eulerity");
 const metaRoutes = require("./routes/meta");
+const ptsRoutes = require("./routes/pts");
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.get("/", (req, res) => {
 
 app.use("/eulerity", eulerityRoutes);
 app.use("/meta", metaRoutes);
+app.use("/pts", ptsRoutes);
 
 app.listen(PORT, () => {
     console.log(`🚀 Browser Automation Service listening on port ${PORT}`);

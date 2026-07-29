@@ -8,6 +8,12 @@ import {
   ReactNode,
 } from "react"
 
+import {
+  type AppliedDateRange,
+  type DateRangePreset,
+  getCompletedDateRange,
+} from "@/lib/date-range"
+
 export interface Studio {
   id: number
   studio_code: string
@@ -23,8 +29,11 @@ interface AppContextType {
   selectedStudio: string
   setSelectedStudio: (value: string) => void
 
-  dateRange: string
-  setDateRange: (value: string) => void
+  dateRange: AppliedDateRange
+  setDateRangePreset: (
+    value: Exclude<DateRangePreset, "custom">
+  ) => void
+  setCustomDateRange: (startDate: string, endDate: string) => void
 
   comparison: string
   setComparison: (value: string) => void
@@ -42,7 +51,9 @@ export function AppProvider({
   const [loading, setLoading] = useState(true)
 
   const [selectedStudio, setSelectedStudio] = useState("all")
-  const [dateRange, setDateRange] = useState("30d")
+  const [dateRange, setDateRange] = useState<AppliedDateRange>(() =>
+    getCompletedDateRange("30d")
+  )
   const [comparison, setComparison] = useState("previous")
 
   useEffect(() => {
@@ -67,7 +78,10 @@ export function AppProvider({
         selectedStudio,
         setSelectedStudio,
         dateRange,
-        setDateRange,
+        setDateRangePreset: (preset) =>
+          setDateRange(getCompletedDateRange(preset)),
+        setCustomDateRange: (startDate, endDate) =>
+          setDateRange({ preset: "custom", startDate, endDate }),
         comparison,
         setComparison,
       }}
