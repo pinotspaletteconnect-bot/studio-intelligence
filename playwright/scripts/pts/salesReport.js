@@ -125,7 +125,7 @@ async function readSummary(page) {
                 .filter(Boolean)
         )
     );
-    const pageText = await page.locator("main").innerText();
+    const pageText = await page.locator("body").innerText();
 
     const numberFrom = value => {
         const matches = String(value ?? "").match(/-?\$?[\d,]+(?:\.\d+)?/g);
