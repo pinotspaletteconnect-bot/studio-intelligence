@@ -159,7 +159,7 @@ async function runReport(page, fromDate, toDate = fromDate) {
         .catch(() => null);
     await page.getByRole("button", { name: "Run", exact: true }).click();
     await navigation;
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(4000);
 
     // The report heading's date formatting can vary (for example, padded
     // month/day values), so use the report controls as the readiness signal.
@@ -192,25 +192,30 @@ async function downloadClassWorkbook(page, folder, studio, fromDate, toDate) {
 async function inspectClassReportControls(page) {
     return page.evaluate(() => {
         const classGrid = document.querySelector("#gridClassSummarySalesData");
-        const controls = Array.from(
-            document.querySelectorAll(
-                'input[type="radio"], input[type="checkbox"], select'
-            )
-        ).map(control => ({
-            tag: control.tagName.toLowerCase(),
-            type: control.getAttribute("type"),
-            id: control.id || null,
-            name: control.getAttribute("name"),
-            value: control.value,
-            checked:
-                "checked" in control
-                    ? Boolean(control.checked)
-                    : undefined
-        }));
+        const controls = Array.from(document.querySelectorAll("input, select"))
+            .filter(control => control.getAttribute("type") !== "password")
+            .map(control => ({
+                tag: control.tagName.toLowerCase(),
+                type: control.getAttribute("type"),
+                id: control.id || null,
+                name: control.getAttribute("name"),
+                value: control.value,
+                checked:
+                    "checked" in control
+                        ? Boolean(control.checked)
+                        : undefined
+            }));
+        const labels = Array.from(document.querySelectorAll("label"))
+            .map(label => ({
+                for: label.getAttribute("for"),
+                text: label.textContent?.trim() || null
+            }))
+            .filter(label => label.text);
 
         return {
             classGridText: classGrid?.textContent?.trim().slice(0, 500) ?? null,
-            controls
+            controls,
+            labels
         };
     });
 }
