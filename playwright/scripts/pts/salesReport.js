@@ -361,13 +361,13 @@ async function runPtsClassSalesReport({
         const results = [];
 
         for (const studio of studios) {
-            await page.goto(`${PTS_URL}/Reports/SalesReport`, {
-                waitUntil: "domcontentloaded"
-            });
-            await selectStudio(page, studio);
             const eventRows = new Map();
 
             for (const window of windows) {
+                await page.goto(`${PTS_URL}/Reports/SalesReport`, {
+                    waitUntil: "domcontentloaded"
+                });
+                await selectStudio(page, studio);
                 await runReport(page, window.fromDate, window.toDate);
                 const classFile = await downloadClassWorkbook(
                     page,
