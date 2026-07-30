@@ -213,6 +213,13 @@ async function inspectClassReportControls(page) {
             .filter(label => label.text);
 
         return {
+            pageUrl: window.location.href,
+            locationValue:
+                document.querySelector("#LocationSelect")?.value ?? null,
+            fromDateValue:
+                document.querySelector("#DateFilter_FromDate")?.value ?? null,
+            toDateValue:
+                document.querySelector("#DateFilter_ToDate")?.value ?? null,
             classGridText: classGrid?.textContent?.trim().slice(0, 500) ?? null,
             controls,
             labels
