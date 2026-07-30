@@ -189,9 +189,66 @@ async function downloadClassWorkbook(page, folder, studio, fromDate, toDate) {
     return filePath;
 }
 
+async function refreshClassGrid(page) {
+    const refreshResult = await page.evaluate(async () => {
+        const grid = globalThis.jQuery
+            ? globalThis
+                  .jQuery("#gridClassSummarySalesData")
+                  .data("kendoGrid")
+            : null;
+
+        if (!grid?.dataSource) {
+            return { initialized: false };
+        }
+
+        const outcome = await Promise.race([
+            Promise.resolve(grid.dataSource.read())
+                .then(() => ({
+                    initialized: true,
+                    error: null
+                }))
+                .catch(error => ({
+                    initialized: true,
+                    error:
+                        error?.status ??
+                        error?.errorThrown ??
+                        error?.message ??
+                        "request failed"
+                })),
+            new Promise(resolve =>
+                setTimeout(
+                    () =>
+                        resolve({
+                            initialized: true,
+                            error: "request timed out"
+                        }),
+                    15000
+                )
+            )
+        ]);
+
+        return outcome;
+    });
+
+    if (!refreshResult.initialized) {
+        throw new Error("PTS Class Sales grid was not initialized");
+    }
+
+    if (refreshResult.error) {
+        throw new Error(`PTS Class Sales grid ${refreshResult.error}`);
+    }
+}
+
 async function inspectClassReportControls(page) {
     return page.evaluate(() => {
         const classGrid = document.querySelector("#gridClassSummarySalesData");
+        const kendoGrid = globalThis.jQuery
+            ? globalThis
+                  .jQuery("#gridClassSummarySalesData")
+                  .data("kendoGrid")
+            : null;
+        const dataSource = kendoGrid?.dataSource;
+        const transportRead = dataSource?.transport?.options?.read;
         const controls = Array.from(document.querySelectorAll("input, select"))
             .filter(control => control.getAttribute("type") !== "password")
             .map(control => ({
@@ -220,6 +277,21 @@ async function inspectClassReportControls(page) {
                 document.querySelector("#DateFilter_FromDate")?.value ?? null,
             toDateValue:
                 document.querySelector("#DateFilter_ToDate")?.value ?? null,
+            classGridState: {
+                initialized: Boolean(kendoGrid),
+                total: dataSource?.total?.() ?? null,
+                viewCount: dataSource?.view?.()?.length ?? null,
+                requestInProgress:
+                    dataSource?._requestInProgress ?? null,
+                readUrl:
+                    typeof transportRead === "string"
+                        ? transportRead
+                        : transportRead?.url ?? null,
+                readMethod:
+                    typeof transportRead === "object"
+                        ? transportRead.type ?? null
+                        : null
+            },
             classGridText: classGrid?.textContent?.trim().slice(0, 500) ?? null,
             controls,
             labels
@@ -414,6 +486,7 @@ async function runPtsClassSalesReport({
                 });
                 await selectStudio(page, studio);
                 await runReport(page, window.fromDate, window.toDate);
+                await refreshClassGrid(page);
 
                 if (debug && diagnostics === null) {
                     diagnostics = await inspectClassReportControls(page);
