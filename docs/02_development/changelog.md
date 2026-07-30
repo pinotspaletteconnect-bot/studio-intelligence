@@ -25,6 +25,10 @@ This project follows a milestone-based changelog rather than tracking every indi
   July 28, 2026 four-studio validation loaded 47 customer-free product lines
   into `pts_non_class_sales_items`; a repeated run preserved all 47 row IDs.
   Category totals reconcile to the Daily Sales alcohol and other-product totals.
+- Added the first PTS-backed Operations dashboard with completed-day sales,
+  F&B dollars and sales share, revenue and F&B per seat, seats sold, class
+  sales, average daily sales, daily trends, and expandable F&B subcategory and
+  item-name reporting.
 - Documented scalable PTS onboarding through encrypted credential references,
   owner-controlled location mapping, shared credential-grouped collection, and
   resumable historical backfills.

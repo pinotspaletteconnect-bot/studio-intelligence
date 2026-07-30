@@ -108,6 +108,10 @@ Implemented foundation:
 - Permanent drill-down routes for GA4, Meta Ads, Meta Organic, and Eulerity
 - MNTN Connected TV dashboard card with delivery, modeled attribution,
   last-touch attribution, CPM, cost per verified visit, and cost per conversion
+- Operations Performance dashboard backed by PTS Daily Sales and Product Sales,
+  with completed-day sales, F&B sales/share, revenue per seat, F&B per seat,
+  seats sold, class sales, daily trends, and expandable F&B
+  subcategory/item detail
 
 Known incomplete surfaces:
 
@@ -127,7 +131,9 @@ Known incomplete surfaces:
 - GA4 source/medium mapping coverage requires ongoing curation; unmapped traffic remains explicitly labeled
 - Comparison-period behavior needs end-to-end completion
 - The legacy `marketing_daily_summary` view is driven by GA4 dates. The Marketing Performance service now builds a complete source-date timeline from GA4, Meta Ads, Eulerity, and Meta Page Insights so source-only dates are retained; this should eventually move into a unified reporting view.
-- Executive, financial, operations, customer, and settings experiences are not production complete
+- Executive, financial, customer, and settings experiences are not production
+  complete. Operations now has its first PTS-backed reporting surface, but
+  comparisons, class detail, and broader operational sources remain incomplete.
 - AI insight cards are planned
 
 Do not infer feature completeness from the presence of an empty route file.
