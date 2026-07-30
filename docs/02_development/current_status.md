@@ -88,7 +88,8 @@ The live Supabase schema is authoritative. Update `docs/01_architecture/schema.m
 - `pts_sales_daily_summary` — one summary row per studio and report date
 - `pts_non_class_sales_items` — one product line per studio, report date, and
   source row hash; customer names are excluded
-- `pts_class_sales_daily` — provisioned for future class-detail loads
+- `pts_class_sales_daily` — class-event collector and event-grain migration are
+  implemented for validation; production scheduling and backfill remain
 
 ## Dashboard State
 

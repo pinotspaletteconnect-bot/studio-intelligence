@@ -9,11 +9,38 @@ const { parseClassSales, parseNonClassSales } = require("../../services/ptsParse
 
 const PTS_URL = "https://admin.pinotspalette.com";
 const DEFAULT_STUDIOS = [
-    { studioId: 1, code: "STM", locationId: "19", locationName: "St. Matthews" },
-    { studioId: 2, code: "SN", locationId: "228", locationName: "Short North" },
-    { studioId: 3, code: "GIL", locationId: "198", locationName: "Gilbert" },
-    { studioId: 4, code: "JEF", locationId: "243", locationName: "Jeffersonville" }
+    {
+        studioId: 1,
+        code: "STM",
+        locationId: "19",
+        locationName: "St. Matthews",
+        timeZone: "America/New_York"
+    },
+    {
+        studioId: 2,
+        code: "SN",
+        locationId: "228",
+        locationName: "Short North",
+        timeZone: "America/New_York"
+    },
+    {
+        studioId: 3,
+        code: "GIL",
+        locationId: "198",
+        locationName: "Gilbert",
+        timeZone: "America/Phoenix"
+    },
+    {
+        studioId: 4,
+        code: "JEF",
+        locationId: "243",
+        locationName: "Jeffersonville",
+        timeZone: "America/New_York"
+    }
 ];
+const DEFAULT_TIME_ZONES = Object.fromEntries(
+    DEFAULT_STUDIOS.map(studio => [studio.code, studio.timeZone])
+);
 
 function configuredStudios() {
     if (!process.env.PTS_STUDIOS_JSON) {
@@ -96,12 +123,13 @@ async function selectStudio(page, studio) {
     }
 }
 
-async function runReport(page, reportDate) {
-    const date = displayDate(reportDate);
+async function runReport(page, fromDate, toDate = fromDate) {
+    const from = displayDate(fromDate);
+    const to = displayDate(toDate);
 
-    await page.locator("#DateFilter_FromDate").fill(date);
+    await page.locator("#DateFilter_FromDate").fill(from);
     await page.locator("#DateFilter_FromDate").press("Tab");
-    await page.locator("#DateFilter_ToDate").fill(date);
+    await page.locator("#DateFilter_ToDate").fill(to);
     await page.locator("#DateFilter_ToDate").press("Tab");
 
     await Promise.all([
@@ -115,6 +143,26 @@ async function runReport(page, reportDate) {
     await page.locator("table.SalesSummary").waitFor({ state: "visible" });
     await page.locator(".k-grid-excel").nth(0).waitFor({ state: "attached" });
     await page.locator(".k-grid-excel").nth(1).waitFor({ state: "attached" });
+}
+
+async function downloadClassWorkbook(page, folder, studio, fromDate, toDate) {
+    const excelButton = page.locator(".k-grid-excel").nth(0);
+
+    if (!(await excelButton.isVisible())) {
+        return null;
+    }
+
+    const [download] = await Promise.all([
+        page.waitForEvent("download"),
+        excelButton.click({ force: true })
+    ]);
+    const filePath = path.join(
+        folder,
+        `${studio.code}_${fromDate}_${toDate}_class-sales.xlsx`
+    );
+    await download.saveAs(filePath);
+
+    return filePath;
 }
 
 async function readSummary(page) {
@@ -248,7 +296,14 @@ async function runPtsSalesReport({ reportDate, studioCodes } = {}) {
                 locationName: studio.locationName,
                 reportDate: date,
                 summary,
-                classSales: classFile ? await parseClassSales(classFile) : [],
+                classSales: classFile
+                    ? await parseClassSales(classFile, {
+                        timeZone:
+                            studio.timeZone ??
+                            DEFAULT_TIME_ZONES[studio.code] ??
+                            "America/New_York"
+                    })
+                    : [],
                 nonClassSales: nonClassFile ? await parseNonClassSales(nonClassFile) : []
             });
         }
@@ -262,6 +317,77 @@ async function runPtsSalesReport({ reportDate, studioCodes } = {}) {
     }
 }
 
+async function runPtsClassSalesReport({
+    fromDate,
+    toDate,
+    studioCodes
+} = {}) {
+    const from = validateDate(fromDate);
+    const to = validateDate(toDate);
+
+    if (from > to) {
+        throw new Error("PTS fromDate must be on or before toDate");
+    }
+
+    const studios = requestedStudios(studioCodes);
+    const folder = fs.mkdtempSync(path.join(os.tmpdir(), "pts-classes-"));
+    let browser;
+
+    try {
+        browser = await chromium.launch({ headless: true });
+        const context = await browser.newContext({ acceptDownloads: true });
+        const page = await context.newPage();
+        await login(page);
+        const results = [];
+
+        for (const studio of studios) {
+            await page.goto(`${PTS_URL}/Reports/SalesReport`, {
+                waitUntil: "domcontentloaded"
+            });
+            await selectStudio(page, studio);
+            await runReport(page, from, to);
+            const classFile = await downloadClassWorkbook(
+                page,
+                folder,
+                studio,
+                from,
+                to
+            );
+            const rows = classFile
+                ? await parseClassSales(classFile, {
+                    timeZone:
+                        studio.timeZone ??
+                        DEFAULT_TIME_ZONES[studio.code] ??
+                        "America/New_York"
+                })
+                : [];
+
+            results.push({
+                studioId: studio.studioId,
+                studioCode: studio.code,
+                locationId: studio.locationId,
+                locationName: studio.locationName,
+                timeZone:
+                    studio.timeZone ??
+                    DEFAULT_TIME_ZONES[studio.code] ??
+                    "America/New_York",
+                fromDate: from,
+                toDate: to,
+                rowCount: rows.length,
+                rows
+            });
+        }
+
+        return results;
+    } finally {
+        if (browser) {
+            await browser.close();
+        }
+        fs.rmSync(folder, { recursive: true, force: true });
+    }
+}
+
 module.exports = {
+    runPtsClassSalesReport,
     runPtsSalesReport
 };

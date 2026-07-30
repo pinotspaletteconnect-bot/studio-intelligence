@@ -38,7 +38,7 @@ Confirm exact columns, constraints, and foreign-key behavior in Supabase before 
 | Object | Grain/purpose | Status |
 | --- | --- | --- |
 | `pts_sales_daily_summary` | One PTS sales summary per studio/report date | Current |
-| `pts_class_sales_daily` | One class-sales export row per studio/report date/source row hash | Current |
+| `pts_class_sales_daily` | One latest-observed PTS class event per studio/source event key | Current; event-grain migration pending production validation |
 | `pts_non_class_sales_items` | One minimized Product Sales line item per studio/report date/source row hash | Current and loading daily |
 
 PTS imports preserve source row hashes for idempotency. Product Sales records

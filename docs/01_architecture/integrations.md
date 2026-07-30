@@ -144,14 +144,18 @@ Planned scope includes profile insights, reviews, search visibility, and custome
   `admin.pinotspalette.com`; PTS does not provide an API
 - **Pilot credentials:** `PTS_USERNAME` and `PTS_PASSWORD` in protected Railway
   variables; credentials are never stored in Git or ordinary Supabase tables
-- **Collector authorization:** `POST /pts/sales-report` and
-  `POST /pts/product-sales-report` require a bearer token matching the protected
+- **Collector authorization:** `POST /pts/sales-report`,
+  `POST /pts/product-sales-report`, and `POST /pts/class-sales-report` require
+  a bearer token matching the protected
   `COLLECTOR_API_TOKEN` Railway variable; n8n stores the same value in an
   encrypted header-auth credential
 - **Configuration:** one `studio_integrations` row per authorized PTS location,
   with `integration_type = 'pts'` and the PTS location ID in `external_id`
 - **Warehouse:** `pts_sales_daily_summary`, `pts_class_sales_daily`, and
   `pts_non_class_sales_items`
+- **Class-event grain:** the Class Sales Summary export is collected over a
+  rolling event-date window. Rows use a stable event key and preserve the
+  source `Type` for later reporting groups.
 - **Privacy:** customer names in the Sales Report workbook are discarded by the
   collector because product and revenue reporting does not require them
 - **Status:** Active development. Daily Sales summaries and Product Sales item
