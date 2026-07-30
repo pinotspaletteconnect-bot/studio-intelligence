@@ -189,6 +189,32 @@ async function downloadClassWorkbook(page, folder, studio, fromDate, toDate) {
     return filePath;
 }
 
+async function inspectClassReportControls(page) {
+    return page.evaluate(() => {
+        const classGrid = document.querySelector("#gridClassSummarySalesData");
+        const controls = Array.from(
+            document.querySelectorAll(
+                'input[type="radio"], input[type="checkbox"], select'
+            )
+        ).map(control => ({
+            tag: control.tagName.toLowerCase(),
+            type: control.getAttribute("type"),
+            id: control.id || null,
+            name: control.getAttribute("name"),
+            value: control.value,
+            checked:
+                "checked" in control
+                    ? Boolean(control.checked)
+                    : undefined
+        }));
+
+        return {
+            classGridText: classGrid?.textContent?.trim().slice(0, 500) ?? null,
+            controls
+        };
+    });
+}
+
 async function readSummary(page) {
     const rows = await page.locator("table.SalesSummary tr").evaluateAll(elements =>
         elements.map(row =>
@@ -344,7 +370,8 @@ async function runPtsSalesReport({ reportDate, studioCodes } = {}) {
 async function runPtsClassSalesReport({
     fromDate,
     toDate,
-    studioCodes
+    studioCodes,
+    debug = false
 } = {}) {
     const from = validateDate(fromDate);
     const to = validateDate(toDate);
@@ -367,6 +394,7 @@ async function runPtsClassSalesReport({
 
         for (const studio of studios) {
             const eventRows = new Map();
+            let diagnostics = null;
 
             for (const window of windows) {
                 await page.goto(`${PTS_URL}/Reports/SalesReport`, {
@@ -374,6 +402,11 @@ async function runPtsClassSalesReport({
                 });
                 await selectStudio(page, studio);
                 await runReport(page, window.fromDate, window.toDate);
+
+                if (debug && diagnostics === null) {
+                    diagnostics = await inspectClassReportControls(page);
+                }
+
                 const classFile = await downloadClassWorkbook(
                     page,
                     folder,
@@ -410,7 +443,8 @@ async function runPtsClassSalesReport({
                 toDate: to,
                 windowCount: windows.length,
                 rowCount: rows.length,
-                rows
+                rows,
+                ...(debug ? { diagnostics } : {})
             });
         }
 
