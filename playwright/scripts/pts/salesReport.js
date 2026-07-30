@@ -151,10 +151,15 @@ async function runReport(page, fromDate, toDate = fromDate) {
     await page.locator("#DateFilter_ToDate").fill(to);
     await page.locator("#DateFilter_ToDate").press("Tab");
 
-    await Promise.all([
-        page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-        page.getByRole("button", { name: "Run", exact: true }).click()
-    ]);
+    const navigation = page
+        .waitForNavigation({
+            waitUntil: "domcontentloaded",
+            timeout: 10000
+        })
+        .catch(() => null);
+    await page.getByRole("button", { name: "Run", exact: true }).click();
+    await navigation;
+    await page.waitForTimeout(1000);
 
     // The report heading's date formatting can vary (for example, padded
     // month/day values), so use the report controls as the readiness signal.
