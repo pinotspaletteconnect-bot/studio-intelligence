@@ -190,9 +190,7 @@ async function downloadWorkbooks(page, folder, studio, reportDate) {
         try {
             [download] = await Promise.all([
                 page.waitForEvent("download"),
-                excelButton.isVisible()
-                    ? excelButton.click({ force: true })
-                    : excelButton.evaluate(button => button.click())
+                excelButton.evaluate(button => button.click())
             ]);
         } catch (error) {
             throw new Error(
