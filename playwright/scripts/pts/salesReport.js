@@ -5,7 +5,11 @@ const os = require("os");
 const path = require("path");
 const { chromium } = require("playwright");
 
-const { parseClassSales, parseNonClassSales } = require("../../services/ptsParser");
+const {
+    normalizeClassSalesRows,
+    parseClassSales,
+    parseNonClassSales
+} = require("../../services/ptsParser");
 
 const PTS_URL = "https://admin.pinotspalette.com";
 const DEFAULT_STUDIOS = [
@@ -103,6 +107,15 @@ function requestedStudios(studioCodes) {
     }
 
     return selected;
+}
+
+function snakeCase(value) {
+    return String(value ?? "")
+        .trim()
+        .toLowerCase()
+        .replace(/[%#]/g, "")
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_|_$/g, "");
 }
 
 async function login(page) {
@@ -237,6 +250,55 @@ async function refreshClassGrid(page) {
     if (refreshResult.error) {
         throw new Error(`PTS Class Sales grid ${refreshResult.error}`);
     }
+}
+
+async function readClassGrid(page, { timeZone }) {
+    const grid = page.locator("#gridClassSummarySalesData");
+    const result = await grid.evaluate(element => {
+        const kendoGrid = globalThis.jQuery
+            ? globalThis.jQuery(element).data("kendoGrid")
+            : null;
+        const headers = (kendoGrid?.columns ?? [])
+            .filter(column => !column.hidden)
+            .map(column => column.title || column.field || "");
+        const rows = Array.from(element.querySelectorAll("tbody tr"))
+            .filter(row => !row.classList.contains("k-grouping-row"))
+            .map(row =>
+                Array.from(row.querySelectorAll("td")).map(
+                    cell => cell.textContent?.trim() ?? ""
+                )
+            )
+            .filter(row => row.some(Boolean));
+
+        return {
+            headers,
+            rows,
+            total: kendoGrid?.dataSource?.total?.() ?? null
+        };
+    });
+
+    if (!result.headers.length) {
+        throw new Error("PTS Class Sales grid did not expose columns");
+    }
+
+    const headers = result.headers.map(snakeCase);
+    const rawRows = result.rows.map(values =>
+        Object.fromEntries(
+            headers.map((header, index) => [
+                header || `column_${index + 1}`,
+                values[index] ?? null
+            ])
+        )
+    );
+    const rows = normalizeClassSalesRows(rawRows, { timeZone });
+
+    if (result.total > 0 && rows.length === 0) {
+        throw new Error(
+            `PTS Class Sales grid contained ${result.total} records but no class rows were parsed`
+        );
+    }
+
+    return rows;
 }
 
 async function inspectClassReportControls(page) {
@@ -466,7 +528,6 @@ async function runPtsClassSalesReport({
 
     const studios = requestedStudios(studioCodes);
     const windows = weeklyWindows(from, to);
-    const folder = fs.mkdtempSync(path.join(os.tmpdir(), "pts-classes-"));
     let browser;
 
     try {
@@ -492,21 +553,12 @@ async function runPtsClassSalesReport({
                     diagnostics = await inspectClassReportControls(page);
                 }
 
-                const classFile = await downloadClassWorkbook(
-                    page,
-                    folder,
-                    studio,
-                    window.fromDate,
-                    window.toDate
-                );
-                const rows = classFile
-                    ? await parseClassSales(classFile, {
-                        timeZone:
-                            studio.timeZone ??
-                            DEFAULT_TIME_ZONES[studio.code] ??
-                            "America/New_York"
-                    })
-                    : [];
+                const rows = await readClassGrid(page, {
+                    timeZone:
+                        studio.timeZone ??
+                        DEFAULT_TIME_ZONES[studio.code] ??
+                        "America/New_York"
+                });
 
                 for (const row of rows) {
                     eventRows.set(row.source_event_key, row);
@@ -538,7 +590,6 @@ async function runPtsClassSalesReport({
         if (browser) {
             await browser.close();
         }
-        fs.rmSync(folder, { recursive: true, force: true });
     }
 }
 

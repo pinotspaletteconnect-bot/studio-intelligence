@@ -18,6 +18,28 @@ function normalizedValue(value) {
     return value === undefined ? null : value;
 }
 
+function numericValue(value) {
+    if (typeof value === "number") {
+        return value;
+    }
+
+    const normalized = String(value ?? "")
+        .replace(/[,$%]/g, "")
+        .replace(/^\((.*)\)$/, "-$1")
+        .trim();
+    const parsed = Number(normalized);
+
+    return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function percentageValue(value) {
+    const numeric = numericValue(value);
+
+    return typeof value === "string" && value.includes("%")
+        ? numeric / 100
+        : numeric;
+}
+
 function rowHash(row) {
     return crypto
         .createHash("sha256")
@@ -26,6 +48,31 @@ function rowHash(row) {
 }
 
 function wallClockParts(value) {
+    if (typeof value === "string") {
+        const ptsDateTime = value.trim().match(
+            /^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})\s*(AM|PM)$/i
+        );
+
+        if (ptsDateTime) {
+            const [, month, day, year, hourValue, minute, meridiem] =
+                ptsDateTime;
+            let hour = Number(hourValue) % 12;
+
+            if (meridiem.toUpperCase() === "PM") {
+                hour += 12;
+            }
+
+            return {
+                year: Number(year),
+                month: Number(month),
+                day: Number(day),
+                hour,
+                minute: Number(minute),
+                second: 0
+            };
+        }
+    }
+
     const date = value instanceof Date ? value : new Date(value);
 
     if (Number.isNaN(date.getTime())) {
@@ -136,6 +183,13 @@ async function parseClassSales(filePath, { timeZone = "America/New_York" } = {})
         "Net Sales"
     ]);
 
+    return normalizeClassSalesRows(rows, { timeZone });
+}
+
+function normalizeClassSalesRows(
+    rows,
+    { timeZone = "America/New_York" } = {}
+) {
     return rows
         .filter(row => row.painting && row.time && row.type)
         .map(row => {
@@ -153,14 +207,17 @@ async function parseClassSales(filePath, { timeZone = "America/New_York" } = {})
                 class_time: zonedWallClockToIso(row.time, timeZone),
                 room: row.room ?? null,
                 class_type: row.type,
-                seats_sold: row.seats ?? 0,
-                capacity: row.cap ?? 0,
-                percent_full: row.full ?? 0,
-                lead_time_average: row.lead_avg ?? null,
-                class_sales: row.classes ?? 0,
-                product_sales: row.products ?? 0,
-                fee_sales: row.fees ?? 0,
-                net_sales: row.net_sales ?? 0,
+                seats_sold: numericValue(row.seats),
+                capacity: numericValue(row.cap),
+                percent_full: percentageValue(row.full),
+                lead_time_average:
+                    row.lead_avg === null || row.lead_avg === undefined
+                        ? null
+                        : numericValue(row.lead_avg),
+                class_sales: numericValue(row.classes),
+                product_sales: numericValue(row.products),
+                fee_sales: numericValue(row.fees),
+                net_sales: numericValue(row.net_sales),
                 raw_payload: row
             };
         });
@@ -203,6 +260,7 @@ async function parseNonClassSales(filePath) {
 }
 
 module.exports = {
+    normalizeClassSalesRows,
     parseClassSales,
     parseNonClassSales
 };
