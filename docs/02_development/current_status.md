@@ -1,7 +1,7 @@
 # Studio Intelligence Current Status
 
 **Version:** 4.1  
-**Last updated:** July 28, 2026
+**Last updated:** July 29, 2026
 
 ## Purpose
 
@@ -83,6 +83,13 @@ Meta Ads and Page Insights share the authentication and Graph API foundation in 
 
 The live Supabase schema is authoritative. Update `docs/01_architecture/schema.md` whenever tables or views change.
 
+### Current PTS facts
+
+- `pts_sales_daily_summary` — one summary row per studio and report date
+- `pts_non_class_sales_items` — one product line per studio, report date, and
+  source row hash; customer names are excluded
+- `pts_class_sales_daily` — provisioned for future class-detail loads
+
 ## Dashboard State
 
 Implemented foundation:
@@ -104,12 +111,14 @@ Implemented foundation:
 
 Known incomplete surfaces:
 
-- PTS Sales Report collection is deployed to Railway. The authenticated
-  four-studio n8n run and idempotent `pts_sales_daily_summary` upsert are
-  validated for July 28, 2026; rerunning the date updated the same four rows
-  without duplicates. Class and non-class detail upsert batches are configured
-  but still need a source date that returns detail rows. Daily scheduling and a
-  controlled historical-backfill workflow remain incomplete.
+- PTS Daily Sales and Product Sales collection are deployed to Railway. Daily
+  Sales summary upserts are validated for all four studios for July 28, 2026.
+  The published `06 - PTS Product Sales Import` workflow collected and upserted
+  47 product lines for the same date across all four studios. A same-date rerun
+  retained 47 unique IDs while refreshing update timestamps. Product Sales runs
+  daily at 2:00 AM using the previous completed America/New_York business date.
+  Class-detail loading and a controlled historical-backfill workflow remain
+  incomplete.
 - Reciprocal benchmark storage and CPC display behavior are prepared, but the
   owner-facing participation control must remain unavailable until login and
   organization-role authorization are implemented.

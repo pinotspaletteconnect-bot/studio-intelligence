@@ -144,22 +144,22 @@ Planned scope includes profile insights, reviews, search visibility, and custome
   `admin.pinotspalette.com`; PTS does not provide an API
 - **Pilot credentials:** `PTS_USERNAME` and `PTS_PASSWORD` in protected Railway
   variables; credentials are never stored in Git or ordinary Supabase tables
-- **Collector authorization:** `POST /pts/sales-report` requires a bearer token
-  matching the protected `COLLECTOR_API_TOKEN` Railway variable; n8n must store
-  the same value in an encrypted header-auth credential
+- **Collector authorization:** `POST /pts/sales-report` and
+  `POST /pts/product-sales-report` require a bearer token matching the protected
+  `COLLECTOR_API_TOKEN` Railway variable; n8n stores the same value in an
+  encrypted header-auth credential
 - **Configuration:** one `studio_integrations` row per authorized PTS location,
   with `integration_type = 'pts'` and the PTS location ID in `external_id`
 - **Warehouse:** `pts_sales_daily_summary`, `pts_class_sales_daily`, and
   `pts_non_class_sales_items`
 - **Privacy:** customer names in the Sales Report workbook are discarded by the
   collector because product and revenue reporting does not require them
-- **Status:** Active development. Location discovery, secure mappings, storage,
-  Playwright route, Excel parsers, Railway deployment, and the authenticated
-  four-studio n8n collector run are validated. The July 28, 2026 daily summaries
-  were validated and idempotently upserted for all four studios; a same-date
-  rerun preserved the four existing row IDs. The workflow is prepared to upsert
-  class and non-class detail batches when the collector returns them, but the
-  validated date returned no detail rows. The production schedule and controlled
+- **Status:** Active development. Daily Sales summaries and Product Sales item
+  details are validated through warehouse loading for all four studios on July
+  28, 2026. The Product Sales workflow upserted 47 rows into
+  `pts_non_class_sales_items`; a same-date rerun retained the same 47 IDs.
+  Product Sales is published on a daily 2:00 AM schedule using the previous
+  completed America/New_York date. Class-detail loading and controlled
   historical backfills remain incomplete.
 
 #### Scalable PTS onboarding

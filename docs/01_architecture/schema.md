@@ -39,10 +39,13 @@ Confirm exact columns, constraints, and foreign-key behavior in Supabase before 
 | --- | --- | --- |
 | `pts_sales_daily_summary` | One PTS sales summary per studio/report date | Current |
 | `pts_class_sales_daily` | One class-sales export row per studio/report date/source row hash | Current |
-| `pts_non_class_sales_items` | One minimized non-class line item per studio/report date/source row hash | Current |
+| `pts_non_class_sales_items` | One minimized Product Sales line item per studio/report date/source row hash | Current and loading daily |
 
-PTS imports preserve source row hashes for idempotency. Non-class sale records
-retain business transaction and product information but exclude customer names.
+PTS imports preserve source row hashes for idempotency. Product Sales records
+retain category, subcategory, item, quantity, revenue, tax, and business
+transaction information but exclude customer names. The July 28, 2026
+four-studio validation loaded 47 unique item rows and retained those row IDs on
+a repeated import.
 All PTS tables are service-role-only until authenticated tenant RLS policies and
 dashboard access are implemented.
 

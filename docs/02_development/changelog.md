@@ -21,6 +21,10 @@ This project follows a milestone-based changelog rather than tracking every indi
   idempotent Supabase upserts for PTS Daily Sales. Validated four July 28, 2026
   summary rows and confirmed a same-date rerun reused the same row IDs; detail
   upserts remain awaiting a report date that returns detail rows.
+- Added the PTS Product Sales collector and published daily n8n workflow. The
+  July 28, 2026 four-studio validation loaded 47 customer-free product lines
+  into `pts_non_class_sales_items`; a repeated run preserved all 47 row IDs.
+  Category totals reconcile to the Daily Sales alcohol and other-product totals.
 - Documented scalable PTS onboarding through encrypted credential references,
   owner-controlled location mapping, shared credential-grouped collection, and
   resumable historical backfills.

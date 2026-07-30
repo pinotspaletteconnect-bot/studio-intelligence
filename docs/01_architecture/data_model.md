@@ -65,7 +65,20 @@ Weather-related tables appear in older documentation, but production status requ
 
 ## Operations Intelligence
 
-Planned facts and dimensions include reservations, classes/events, attendance, capacity, staffing, labor, schedules, inventory, products, and studio hours.
+Current PTS source facts:
+
+- `pts_sales_daily_summary`: one row per studio and report date; natural key
+  `(studio_id, report_date)`
+- `pts_non_class_sales_items`: one product transaction line per studio, report
+  date, and source row hash; natural key
+  `(studio_id, report_date, source_row_hash)`
+- `pts_class_sales_daily`: provisioned class-detail grain per studio, report
+  date, and source row hash
+
+Product item facts retain category, subcategory, item name, quantity, sales,
+tax, and source transaction context while deliberately excluding customer
+names. Planned extensions include reservations, staffing, labor, inventory,
+products, and studio hours.
 
 ## Financial Intelligence
 
