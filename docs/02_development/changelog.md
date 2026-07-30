@@ -11,8 +11,9 @@ This project follows a milestone-based changelog rather than tracking every indi
 ## Added
 
 - Added a PTS Class Sales Summary collector with rolling date-range support,
-  stable event identity, studio-local time conversion, totals-row exclusion,
-  and an event-grain migration for `pts_class_sales_daily`.
+  seven-day source-window chunking, stable event identity, studio-local time
+  conversion, totals-row exclusion, and an event-grain migration for
+  `pts_class_sales_daily`.
 - Added the PTS Sales Report foundation: secure Railway credential boundary,
   four verified PTS location mappings, a multi-studio Playwright collector,
   separate class/non-class Excel parsers, data-minimized sales facts, and

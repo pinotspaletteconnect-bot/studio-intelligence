@@ -69,6 +69,25 @@ function displayDate(isoDate) {
     return `${Number(month)}/${Number(day)}/${year}`;
 }
 
+function isoDateOffset(isoDate, days) {
+    const value = new Date(`${isoDate}T00:00:00.000Z`);
+    value.setUTCDate(value.getUTCDate() + days);
+    return value.toISOString().slice(0, 10);
+}
+
+function weeklyWindows(fromDate, toDate) {
+    const windows = [];
+    let start = fromDate;
+
+    while (start <= toDate) {
+        const end = [isoDateOffset(start, 6), toDate].sort()[0];
+        windows.push({ fromDate: start, toDate: end });
+        start = isoDateOffset(end, 1);
+    }
+
+    return windows;
+}
+
 function requestedStudios(studioCodes) {
     const studios = configuredStudios();
 
@@ -330,6 +349,7 @@ async function runPtsClassSalesReport({
     }
 
     const studios = requestedStudios(studioCodes);
+    const windows = weeklyWindows(from, to);
     const folder = fs.mkdtempSync(path.join(os.tmpdir(), "pts-classes-"));
     let browser;
 
@@ -345,22 +365,32 @@ async function runPtsClassSalesReport({
                 waitUntil: "domcontentloaded"
             });
             await selectStudio(page, studio);
-            await runReport(page, from, to);
-            const classFile = await downloadClassWorkbook(
-                page,
-                folder,
-                studio,
-                from,
-                to
-            );
-            const rows = classFile
-                ? await parseClassSales(classFile, {
-                    timeZone:
-                        studio.timeZone ??
-                        DEFAULT_TIME_ZONES[studio.code] ??
-                        "America/New_York"
-                })
-                : [];
+            const eventRows = new Map();
+
+            for (const window of windows) {
+                await runReport(page, window.fromDate, window.toDate);
+                const classFile = await downloadClassWorkbook(
+                    page,
+                    folder,
+                    studio,
+                    window.fromDate,
+                    window.toDate
+                );
+                const rows = classFile
+                    ? await parseClassSales(classFile, {
+                        timeZone:
+                            studio.timeZone ??
+                            DEFAULT_TIME_ZONES[studio.code] ??
+                            "America/New_York"
+                    })
+                    : [];
+
+                for (const row of rows) {
+                    eventRows.set(row.source_event_key, row);
+                }
+            }
+
+            const rows = Array.from(eventRows.values());
 
             results.push({
                 studioId: studio.studioId,
@@ -373,6 +403,7 @@ async function runPtsClassSalesReport({
                     "America/New_York",
                 fromDate: from,
                 toDate: to,
+                windowCount: windows.length,
                 rowCount: rows.length,
                 rows
             });
