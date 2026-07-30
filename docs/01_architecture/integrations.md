@@ -159,13 +159,18 @@ Planned scope includes profile insights, reviews, search visibility, and custome
   `Type` for later reporting groups.
 - **Privacy:** customer names in the Sales Report workbook are discarded by the
   collector because product and revenue reporting does not require them
-- **Status:** Active development. Daily Sales summaries and Product Sales item
-  details are validated through warehouse loading for all four studios on July
-  28, 2026. The Product Sales workflow upserted 47 rows into
+- **Status:** Production for the current four-studio pilot. Daily Sales
+  summaries and Product Sales item details are validated through warehouse
+  loading for all four studios on July 28, 2026. The Product Sales workflow
+  upserted 47 rows into
   `pts_non_class_sales_items`; a same-date rerun retained the same 47 IDs.
   Product Sales is published on a daily 2:00 AM schedule using the previous
-  completed America/New_York date. Class-detail loading and controlled
-  historical backfills remain incomplete.
+  completed America/New_York date. Class Sales directly reads the populated PTS
+  Kendo grid because PTS's Excel button exports a stale zero-row dataset after
+  automated refreshes. The published Class Sales workflow loaded 158 events
+  across all four studios for July 16–29, 2026 and refreshes the prior 14
+  completed event days daily at 5:00 AM. Broader controlled historical
+  backfills remain incomplete.
 
 #### Scalable PTS onboarding
 

@@ -1,7 +1,7 @@
 # Studio Intelligence Warehouse Schema
 
 **Version:** 4.1  
-**Last updated:** July 23, 2026
+**Last updated:** July 30, 2026
 
 ## Purpose
 
@@ -38,8 +38,10 @@ Confirm exact columns, constraints, and foreign-key behavior in Supabase before 
 | Object | Grain/purpose | Status |
 | --- | --- | --- |
 | `pts_sales_daily_summary` | One PTS sales summary per studio/report date | Current |
-| `pts_class_sales_daily` | One latest-observed PTS class event per studio/source event key | Current; event-grain migration pending production validation |
+| `pts_class_sales_daily` | One latest-observed PTS class event per studio/source event key | Current and loading daily |
 | `pts_non_class_sales_items` | One minimized Product Sales line item per studio/report date/source row hash | Current and loading daily |
+| `pts_class_type_mappings` | Organization-governed raw PTS Type to reporting class-type mapping | Current |
+| `pts_product_reporting_mappings` | Organization-governed category/subcategory/item to product group and department mapping | Current |
 
 PTS imports preserve source row hashes for idempotency. Product Sales records
 retain category, subcategory, item, quantity, revenue, tax, and business
@@ -48,6 +50,18 @@ four-studio validation loaded 47 unique item rows and retained those row IDs on
 a repeated import.
 All PTS tables are service-role-only until authenticated tenant RLS policies and
 dashboard access are implemented.
+
+## PTS Reporting Views
+
+| Object | Grain/purpose | Status |
+| --- | --- | --- |
+| `pts_class_sales_reporting` | One class event with raw and governed reporting class types | Current |
+| `pts_product_sales_reporting` | One product item with governed product group and department | Current |
+| `pts_daily_operations_reporting` | One studio/report date combining summary totals with separately aggregated class and product facts | Current |
+
+The reporting views do not join event and product rows directly. Each source is
+aggregated at its own grain before daily metrics are combined, preventing
+duplicated class revenue, seats, or attendance.
 
 ## Marketing Fact Tables
 

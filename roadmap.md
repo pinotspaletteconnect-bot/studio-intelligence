@@ -93,9 +93,17 @@ The current Next.js shared context, service layer, API layer, and reusable dashb
 
 ## Phase 5 — Operations Intelligence
 
-**Status:** Planned
+**Status:** Active
 
-Planned sources and capabilities:
+Current foundation:
+
+- Production PTS daily sales summaries for four studios
+- Production PTS product item sales with category and subcategory detail
+- Production PTS class-event sales, attendance, capacity, room, and type detail
+- Governed class-type and product reporting mappings
+- Daily operations reporting that preserves source grains
+
+Planned extensions:
 
 - Reservations and attendance
 - Capacity utilization

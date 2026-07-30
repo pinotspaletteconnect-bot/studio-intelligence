@@ -82,6 +82,22 @@ tax, and source transaction context while deliberately excluding customer
 names. Planned extensions include reservations, staffing, labor, inventory,
 products, and studio hours.
 
+PTS operations reporting preserves these source grains and applies governed
+organization-level mappings downstream:
+
+- `pts_class_type_mappings` maps raw PTS Type values into Regular, Little
+  Brushes, Paint it Forward, Private Party, Mobile Events, and No Class
+  reporting groups. Holiday remains preserved as the source value and reports
+  as Regular.
+- `pts_product_reporting_mappings` maps source category, subcategory, or item
+  values into product groups and the Food & Beverage or Other Products
+  departments.
+- `pts_class_sales_reporting` and `pts_product_sales_reporting` expose mapped
+  detail without replacing source values.
+- `pts_daily_operations_reporting` aggregates each fact source independently
+  before combining studio/date metrics, avoiding duplicated event or product
+  amounts.
+
 ## Financial Intelligence
 
 Planned facts and dimensions include sales, payments, expenses, payroll, budgets, forecasts, and profitability.

@@ -10,6 +10,15 @@ This project follows a milestone-based changelog rather than tracking every indi
 
 ## Added
 
+- Completed the production PTS Class Sales pipeline. The collector now reads
+  the populated Kendo grid directly because PTS's Excel button exports stale
+  zero-row data after automated report refreshes. The published daily workflow
+  validated and upserted 158 class events across all four studios for July
+  16–29, 2026 and refreshes the prior 14 completed event days at 5:00 AM.
+- Added governed class-type and product reporting mappings plus service-role
+  class, product, and daily operations reporting views. Raw PTS values remain
+  intact while Holiday reports as Regular, class aliases roll into the approved
+  groups, and products roll into Food & Beverage or Other Products.
 - Added a PTS Class Sales Summary collector with rolling date-range support,
   seven-day source-window chunking, stable event identity, studio-local time
   conversion, totals-row exclusion, and an event-grain migration for
