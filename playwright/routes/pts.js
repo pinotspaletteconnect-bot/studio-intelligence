@@ -4,7 +4,10 @@ const crypto = require("crypto");
 const {
     runPtsProductSalesReport
 } = require("../scripts/pts/productSalesReport");
-const { runPtsSalesReport } = require("../scripts/pts/salesReport");
+const {
+    runPtsClassSalesReport,
+    runPtsSalesReport
+} = require("../scripts/pts/salesReport");
 
 const router = express.Router();
 
@@ -82,6 +85,34 @@ router.post("/product-sales-report", requireCollectorAuth, async (req, res) => {
         });
     } catch (error) {
         console.error("PTS Product Sales Report failed:", error.message);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+router.post("/class-sales-report", requireCollectorAuth, async (req, res) => {
+    try {
+        const results = await runPtsClassSalesReport({
+            fromDate: req.body?.fromDate,
+            toDate: req.body?.toDate,
+            studioCodes: req.body?.studioCodes
+        });
+
+        res.json({
+            success: true,
+            fromDate: req.body.fromDate,
+            toDate: req.body.toDate,
+            studioCount: results.length,
+            rowCount: results.reduce(
+                (total, result) => total + result.rowCount,
+                0
+            ),
+            results
+        });
+    } catch (error) {
+        console.error("PTS Class Sales Report failed:", error.message);
         res.status(500).json({
             success: false,
             error: error.message

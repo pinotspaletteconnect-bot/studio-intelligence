@@ -72,8 +72,10 @@ Current PTS source facts:
 - `pts_non_class_sales_items`: one product transaction line per studio, report
   date, and source row hash; natural key
   `(studio_id, report_date, source_row_hash)`
-- `pts_class_sales_daily`: provisioned class-detail grain per studio, report
-  date, and source row hash
+- `pts_class_sales_daily`: one latest-observed PTS class event per studio and
+  stable source event key. The event date comes from the class time rather than
+  the collector's report window. Source type, room, capacity, attendance, and
+  class/product/fee sales remain available for operational reporting.
 
 Product item facts retain category, subcategory, item name, quantity, sales,
 tax, and source transaction context while deliberately excluding customer
