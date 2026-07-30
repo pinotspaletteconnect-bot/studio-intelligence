@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase/server"
 
 type SalesRow = {
+  studio_id: number
   report_date: string
   net_sales: number | string | null
   class_sales: number | string | null
@@ -43,6 +44,11 @@ export type OperationsDashboardData = {
     revenuePerSeat: number
     foodBeveragePerSeat: number
   }>
+  studioSales: Array<{
+    studioId: number
+    studioName: string
+    daily: Array<{ date: string; totalSales: number }>
+  }>
   foodBeverage: Array<{
     subcategory: string
     sales: number
@@ -81,7 +87,7 @@ export async function getOperationsDashboard(
     supabase
       .from("pts_sales_daily_summary")
       .select(
-        "report_date,net_sales,class_sales,alcohol_sales,other_product_sales,seats_sold,attendance_percent"
+        "studio_id,report_date,net_sales,class_sales,alcohol_sales,other_product_sales,seats_sold,attendance_percent"
       )
       .gte("report_date", periodStart)
       .lte("report_date", periodEnd),
@@ -106,6 +112,21 @@ export async function getOperationsDashboard(
 
   const salesRows = (salesResult.data ?? []) as SalesRow[]
   const productRows = (productsResult.data ?? []) as ProductRow[]
+  const studioIds = [...new Set(salesRows.map((row) => row.studio_id))]
+  const studioNames = new Map<number, string>()
+
+  if (studioIds.length) {
+    const { data: studios, error: studiosError } = await supabase
+      .from("studios")
+      .select("id,studio_name")
+      .in("id", studioIds)
+
+    if (studiosError) throw studiosError
+    for (const studio of studios ?? []) {
+      studioNames.set(studio.id, studio.studio_name)
+    }
+  }
+
   const dailyMap = new Map<
     string,
     OperationsDashboardData["daily"][number]
@@ -213,6 +234,28 @@ export async function getOperationsDashboard(
       items: group.items.sort((a, b) => b.sales - a.sales),
     }))
     .sort((a, b) => b.sales - a.sales)
+  const studioDailyMap = new Map<number, Map<string, number>>()
+
+  for (const row of salesRows) {
+    const studioDays =
+      studioDailyMap.get(row.studio_id) ?? new Map<string, number>()
+    studioDays.set(
+      row.report_date,
+      (studioDays.get(row.report_date) ?? 0) + numberValue(row.net_sales)
+    )
+    studioDailyMap.set(row.studio_id, studioDays)
+  }
+
+  const studioSales = [...studioDailyMap.entries()]
+    .map(([currentStudioId, studioDays]) => ({
+      studioId: currentStudioId,
+      studioName:
+        studioNames.get(currentStudioId) ?? `Studio ${currentStudioId}`,
+      daily: [...studioDays.entries()]
+        .map(([date, totalSales]) => ({ date, totalSales }))
+        .sort((a, b) => a.date.localeCompare(b.date)),
+    }))
+    .sort((a, b) => a.studioName.localeCompare(b.studioName))
 
   return {
     period: {
@@ -238,6 +281,7 @@ export async function getOperationsDashboard(
       averageDailySales: daily.length ? totals.totalSales / daily.length : 0,
     },
     daily,
+    studioSales,
     foodBeverage,
   }
 }

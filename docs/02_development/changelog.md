@@ -42,6 +42,8 @@ This project follows a milestone-based changelog rather than tracking every indi
   F&B dollars and sales share, revenue and F&B per seat, seats sold, class
   sales, average daily sales, daily trends, and expandable F&B subcategory and
   item-name reporting.
+- Separated the Operations completed-day sales trend into a labeled series for
+  each studio when viewing the combined portfolio.
 - Documented scalable PTS onboarding through encrypted credential references,
   owner-controlled location mapping, shared credential-grouped collection, and
   resumable historical backfills.

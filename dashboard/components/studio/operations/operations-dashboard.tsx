@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import {
   Armchair,
   ChartNoAxesCombined,
@@ -45,6 +45,7 @@ const dayLabel = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
   timeZone: "UTC",
 })
+const studioColors = ["#2563eb", "#7c3aed", "#f97316", "#059669", "#dc2626"]
 
 const cards = [
   { key: "totalSales", label: "Total sales", icon: CircleDollarSign },
@@ -74,6 +75,32 @@ export function OperationsDashboard() {
   const [data, setData] = useState<OperationsDashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const studioChart = useMemo(() => {
+    if (!data) return { config: {}, rows: [] }
+
+    const rows = new Map<string, Record<string, string | number>>()
+    const config: Record<string, { label: string; color: string }> = {}
+
+    data.studioSales.forEach((studio, index) => {
+      const key = `studio_${studio.studioId}`
+      config[key] = {
+        label: studio.studioName,
+        color: studioColors[index % studioColors.length],
+      }
+      studio.daily.forEach((day) => {
+        const row = rows.get(day.date) ?? { date: day.date }
+        row[key] = day.totalSales
+        rows.set(day.date, row)
+      })
+    })
+
+    return {
+      config,
+      rows: [...rows.values()].sort((a, b) =>
+        String(a.date).localeCompare(String(b.date))
+      ),
+    }
+  }, [data])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -173,27 +200,37 @@ export function OperationsDashboard() {
         <CardHeader>
           <CardTitle>Completed-day sales</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Total sales with the food and beverage portion shown for each
-            imported day.
+            Total sales for each studio on every imported completed day.
           </p>
         </CardHeader>
         <CardContent>
           <ChartContainer
             className="h-[320px] w-full"
-            config={{
-              totalSales: { label: "Total sales", color: "var(--chart-1)" },
-              foodBeverageSales: {
-                label: "F&B sales",
-                color: "var(--chart-2)",
-              },
-            }}
+            config={studioChart.config}
           >
-            <AreaChart data={data.daily}>
+            <AreaChart data={studioChart.rows}>
               <defs>
-                <linearGradient id="totalSalesFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="var(--color-totalSales)" stopOpacity={0.35} />
-                  <stop offset="95%" stopColor="var(--color-totalSales)" stopOpacity={0.03} />
-                </linearGradient>
+                {data.studioSales.map((studio, index) => (
+                  <linearGradient
+                    key={studio.studioId}
+                    id={`studio-fill-${studio.studioId}`}
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop
+                      offset="5%"
+                      stopColor={studioColors[index % studioColors.length]}
+                      stopOpacity={0.24}
+                    />
+                    <stop
+                      offset="95%"
+                      stopColor={studioColors[index % studioColors.length]}
+                      stopOpacity={0}
+                    />
+                  </linearGradient>
+                ))}
               </defs>
               <CartesianGrid vertical={false} />
               <XAxis
@@ -211,22 +248,36 @@ export function OperationsDashboard() {
               <ChartTooltip
                 content={<ChartTooltipContent indicator="dot" />}
               />
-              <Area
-                dataKey="totalSales"
-                type="monotone"
-                stroke="var(--color-totalSales)"
-                fill="url(#totalSalesFill)"
-                strokeWidth={2}
-              />
-              <Area
-                dataKey="foodBeverageSales"
-                type="monotone"
-                stroke="var(--color-foodBeverageSales)"
-                fill="transparent"
-                strokeWidth={2}
-              />
+              {data.studioSales.map((studio, index) => (
+                <Area
+                  key={studio.studioId}
+                  dataKey={`studio_${studio.studioId}`}
+                  name={studio.studioName}
+                  type="monotone"
+                  stroke={studioColors[index % studioColors.length]}
+                  fill={`url(#studio-fill-${studio.studioId})`}
+                  strokeWidth={2}
+                  connectNulls
+                />
+              ))}
             </AreaChart>
           </ChartContainer>
+          <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm">
+            {data.studioSales.map((studio, index) => (
+              <div key={studio.studioId} className="flex items-center gap-2">
+                <span
+                  className="size-2.5 rounded-full"
+                  style={{
+                    backgroundColor:
+                      studioColors[index % studioColors.length],
+                  }}
+                />
+                <span className="text-muted-foreground">
+                  {studio.studioName}
+                </span>
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
 
