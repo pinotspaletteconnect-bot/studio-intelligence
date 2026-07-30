@@ -185,12 +185,17 @@ async function downloadWorkbooks(page, folder, studio, reportDate) {
             };
         });
 
+        if (!(await excelButton.isVisible())) {
+            files.push(null);
+            continue;
+        }
+
         let download;
 
         try {
             [download] = await Promise.all([
                 page.waitForEvent("download"),
-                excelButton.evaluate(button => button.click())
+                excelButton.click({ force: true })
             ]);
         } catch (error) {
             throw new Error(
