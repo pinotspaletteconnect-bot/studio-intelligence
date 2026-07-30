@@ -1,7 +1,7 @@
 # Studio Intelligence Current Status
 
 **Version:** 4.1  
-**Last updated:** July 29, 2026
+**Last updated:** July 30, 2026
 
 ## Purpose
 
@@ -88,8 +88,14 @@ The live Supabase schema is authoritative. Update `docs/01_architecture/schema.m
 - `pts_sales_daily_summary` — one summary row per studio and report date
 - `pts_non_class_sales_items` — one product line per studio, report date, and
   source row hash; customer names are excluded
-- `pts_class_sales_daily` — class-event collector and event-grain migration are
-  implemented for validation; production scheduling and backfill remain
+- `pts_class_sales_daily` — one latest-observed class event per studio and
+  stable source event key; the published daily workflow refreshes the prior 14
+  completed event days at 5:00 AM America/New_York
+- `pts_class_type_mappings` and `pts_product_reporting_mappings` — governed
+  organization-level mappings for operations reporting groups
+- `pts_class_sales_reporting`, `pts_product_sales_reporting`, and
+  `pts_daily_operations_reporting` — service-role reporting views that preserve
+  source grains while exposing class, product, and daily operations metrics
 
 ## Dashboard State
 
@@ -112,14 +118,17 @@ Implemented foundation:
 
 Known incomplete surfaces:
 
-- PTS Daily Sales and Product Sales collection are deployed to Railway. Daily
+- PTS Daily Sales, Product Sales, and Class Sales collection are deployed to
+  Railway. Daily
   Sales summary upserts are validated for all four studios for July 28, 2026.
   The published `06 - PTS Product Sales Import` workflow collected and upserted
   47 product lines for the same date across all four studios. A same-date rerun
   retained 47 unique IDs while refreshing update timestamps. Product Sales runs
   daily at 2:00 AM using the previous completed America/New_York business date.
-  Class-detail loading and a controlled historical-backfill workflow remain
-  incomplete.
+  The published `07 - PTS Class Sales Import` workflow collected, validated,
+  and upserted 158 unique class events across all four studios for July 16–29,
+  2026. It refreshes the prior 14 completed event days daily at 5:00 AM.
+  Broader controlled historical backfill remains incomplete.
 - Reciprocal benchmark storage and CPC display behavior are prepared, but the
   owner-facing participation control must remain unavailable until login and
   organization-role authorization are implemented.
