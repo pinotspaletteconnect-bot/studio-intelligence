@@ -97,7 +97,8 @@ router.post("/class-sales-report", requireCollectorAuth, async (req, res) => {
         const results = await runPtsClassSalesReport({
             fromDate: req.body?.fromDate,
             toDate: req.body?.toDate,
-            studioCodes: req.body?.studioCodes
+            studioCodes: req.body?.studioCodes,
+            debug: req.body?.debug === true
         });
 
         res.json({
