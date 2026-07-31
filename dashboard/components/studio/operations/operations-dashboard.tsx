@@ -376,6 +376,49 @@ export function OperationsDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Sales by class type</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Class revenue and attendance grouped into the governed PTS reporting types.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[620px] text-sm">
+              <thead>
+                <tr className="border-b text-left text-xs text-muted-foreground">
+                  <th className="px-2 py-2 font-medium">Class type</th>
+                  <th className="px-2 py-2 text-right font-medium">Events</th>
+                  <th className="px-2 py-2 text-right font-medium">Seats</th>
+                  <th className="px-2 py-2 text-right font-medium">Class sales</th>
+                  <th className="px-2 py-2 text-right font-medium">Fees</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.classTypes.map((classType) => (
+                  <tr key={classType.name} className="border-b last:border-0">
+                    <td className="px-2 py-3 font-medium">{classType.name}</td>
+                    <td className="px-2 py-3 text-right tabular-nums">
+                      {classType.events.toLocaleString()}
+                    </td>
+                    <td className="px-2 py-3 text-right tabular-nums">
+                      {classType.seatsSold.toLocaleString()}
+                    </td>
+                    <td className="px-2 py-3 text-right tabular-nums">
+                      {currency.format(classType.classSales)}
+                    </td>
+                    <td className="px-2 py-3 text-right tabular-nums">
+                      {currency.format(classType.feeSales)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

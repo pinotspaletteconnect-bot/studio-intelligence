@@ -1,23 +1,36 @@
 import { supabase } from "@/lib/supabase/server"
 
-type SalesRow = {
+type DailyOperationsRow = {
   studio_id: number
   report_date: string
-  net_sales: number | string | null
+  class_event_count: number | string | null
+  seats_sold: number | string | null
+  capacity: number | string | null
   class_sales: number | string | null
-  alcohol_sales: number | string | null
+  fee_sales: number | string | null
+  product_sales: number | string | null
+  food_and_beverage_sales: number | string | null
   other_product_sales: number | string | null
-  seats_sold: number | null
-  attendance_percent: number | string | null
+  unmapped_product_sales: number | string | null
+  total_sales: number | string | null
 }
 
 type ProductRow = {
   report_date: string
-  category: string | null
+  product_group: string | null
+  department: string | null
   subcategory: string | null
   item_name: string | null
   quantity: number | string | null
   net_sales: number | string | null
+}
+
+type ClassTypeRow = {
+  reporting_class_type: string
+  class_event_count: number | string | null
+  seats_sold: number | string | null
+  class_sales: number | string | null
+  fee_sales: number | string | null
 }
 
 export type OperationsDashboardData = {
@@ -48,6 +61,13 @@ export type OperationsDashboardData = {
     studioId: number
     studioName: string
     daily: Array<{ date: string; totalSales: number }>
+  }>
+  classTypes: Array<{
+    name: string
+    events: number
+    seatsSold: number
+    classSales: number
+    feeSales: number
   }>
   foodBeverage: Array<{
     subcategory: string
@@ -83,11 +103,11 @@ export async function getOperationsDashboard(
   fallbackStart.setUTCDate(fallbackStart.getUTCDate() - 6)
   const periodStart = startDate ?? fallbackStart.toISOString().slice(0, 10)
 
-  const salesQuery = addStudioFilter(
+  const dailyQuery = addStudioFilter(
     supabase
-      .from("pts_sales_daily_summary")
+      .from("pts_operations_daily")
       .select(
-        "studio_id,report_date,net_sales,class_sales,alcohol_sales,other_product_sales,seats_sold,attendance_percent"
+        "studio_id,report_date,class_event_count,seats_sold,capacity,class_sales,fee_sales,product_sales,food_and_beverage_sales,other_product_sales,unmapped_product_sales,total_sales"
       )
       .gte("report_date", periodStart)
       .lte("report_date", periodEnd),
@@ -95,24 +115,39 @@ export async function getOperationsDashboard(
   )
   const productsQuery = addStudioFilter(
     supabase
-      .from("pts_non_class_sales_items")
-      .select("report_date,category,subcategory,item_name,quantity,net_sales")
+      .from("pts_product_sales_daily_reporting")
+      .select(
+        "report_date,product_group,department,subcategory,item_name,quantity,net_sales"
+      )
+      .gte("report_date", periodStart)
+      .lte("report_date", periodEnd),
+    studioId
+  )
+  const classTypesQuery = addStudioFilter(
+    supabase
+      .from("pts_class_type_sales_daily_reporting")
+      .select(
+        "reporting_class_type,class_event_count,seats_sold,class_sales,fee_sales"
+      )
       .gte("report_date", periodStart)
       .lte("report_date", periodEnd),
     studioId
   )
 
-  const [salesResult, productsResult] = await Promise.all([
-    salesQuery.order("report_date").range(0, 4999),
+  const [dailyResult, productsResult, classTypesResult] = await Promise.all([
+    dailyQuery.order("report_date").range(0, 4999),
     productsQuery.order("report_date").range(0, 9999),
+    classTypesQuery.order("report_date").range(0, 4999),
   ])
 
-  if (salesResult.error) throw salesResult.error
+  if (dailyResult.error) throw dailyResult.error
   if (productsResult.error) throw productsResult.error
+  if (classTypesResult.error) throw classTypesResult.error
 
-  const salesRows = (salesResult.data ?? []) as SalesRow[]
+  const dailyRows = (dailyResult.data ?? []) as DailyOperationsRow[]
   const productRows = (productsResult.data ?? []) as ProductRow[]
-  const studioIds = [...new Set(salesRows.map((row) => row.studio_id))]
+  const classTypeRows = (classTypesResult.data ?? []) as ClassTypeRow[]
+  const studioIds = [...new Set(dailyRows.map((row) => row.studio_id))]
   const studioNames = new Map<number, string>()
 
   if (studioIds.length) {
@@ -129,10 +164,11 @@ export async function getOperationsDashboard(
 
   const dailyMap = new Map<
     string,
-    OperationsDashboardData["daily"][number]
+    OperationsDashboardData["daily"][number] & { capacity: number }
   >()
+  const studioDailyMap = new Map<number, Map<string, number>>()
 
-  for (const row of salesRows) {
+  for (const row of dailyRows) {
     const current = dailyMap.get(row.report_date) ?? {
       date: row.report_date,
       totalSales: 0,
@@ -140,13 +176,27 @@ export async function getOperationsDashboard(
       foodBeverageSales: 0,
       merchandiseSales: 0,
       seatsSold: 0,
+      capacity: 0,
       revenuePerSeat: 0,
       foodBeveragePerSeat: 0,
     }
-    current.totalSales += numberValue(row.net_sales)
+    current.totalSales += numberValue(row.total_sales)
     current.classSales += numberValue(row.class_sales)
+    current.foodBeverageSales += numberValue(row.food_and_beverage_sales)
+    current.merchandiseSales +=
+      numberValue(row.other_product_sales) +
+      numberValue(row.unmapped_product_sales)
     current.seatsSold += numberValue(row.seats_sold)
+    current.capacity += numberValue(row.capacity)
     dailyMap.set(row.report_date, current)
+
+    const studioDays =
+      studioDailyMap.get(row.studio_id) ?? new Map<string, number>()
+    studioDays.set(
+      row.report_date,
+      (studioDays.get(row.report_date) ?? 0) + numberValue(row.total_sales)
+    )
+    studioDailyMap.set(row.studio_id, studioDays)
   }
 
   const foodBeverageMap = new Map<
@@ -155,49 +205,60 @@ export async function getOperationsDashboard(
   >()
 
   for (const row of productRows) {
+    if (row.department !== "Food & Beverage") continue
+
     const sales = numberValue(row.net_sales)
     const quantity = numberValue(row.quantity)
-    const current = dailyMap.get(row.report_date) ?? {
-      date: row.report_date,
-      totalSales: 0,
-      classSales: 0,
-      foodBeverageSales: 0,
-      merchandiseSales: 0,
-      seatsSold: 0,
-      revenuePerSeat: 0,
-      foodBeveragePerSeat: 0,
+    const subcategory =
+      row.product_group || row.subcategory || "Uncategorized"
+    const group = foodBeverageMap.get(subcategory) ?? {
+      subcategory,
+      sales: 0,
+      quantity: 0,
+      share: 0,
+      items: [],
     }
-
-    if (row.category === "Food & Beverage") {
-      current.foodBeverageSales += sales
-      const subcategory = row.subcategory || "Uncategorized"
-      const group = foodBeverageMap.get(subcategory) ?? {
-        subcategory,
-        sales: 0,
-        quantity: 0,
-        share: 0,
-        items: [],
-      }
-      group.sales += sales
-      group.quantity += quantity
-      const itemName = row.item_name || "Unnamed item"
-      const item = group.items.find((candidate) => candidate.name === itemName)
-      if (item) {
-        item.sales += sales
-        item.quantity += quantity
-      } else {
-        group.items.push({ name: itemName, sales, quantity })
-      }
-      foodBeverageMap.set(subcategory, group)
+    group.sales += sales
+    group.quantity += quantity
+    const itemName = row.item_name || "Unnamed item"
+    const item = group.items.find((candidate) => candidate.name === itemName)
+    if (item) {
+      item.sales += sales
+      item.quantity += quantity
     } else {
-      current.merchandiseSales += sales
+      group.items.push({ name: itemName, sales, quantity })
     }
-    dailyMap.set(row.report_date, current)
+    foodBeverageMap.set(subcategory, group)
+  }
+
+  const classTypeMap = new Map<
+    string,
+    OperationsDashboardData["classTypes"][number]
+  >()
+  for (const row of classTypeRows) {
+    const name = row.reporting_class_type
+    const group = classTypeMap.get(name) ?? {
+      name,
+      events: 0,
+      seatsSold: 0,
+      classSales: 0,
+      feeSales: 0,
+    }
+    group.events += numberValue(row.class_event_count)
+    group.seatsSold += numberValue(row.seats_sold)
+    group.classSales += numberValue(row.class_sales)
+    group.feeSales += numberValue(row.fee_sales)
+    classTypeMap.set(name, group)
   }
 
   const daily = [...dailyMap.values()]
     .map((row) => ({
-      ...row,
+      date: row.date,
+      totalSales: row.totalSales,
+      classSales: row.classSales,
+      foodBeverageSales: row.foodBeverageSales,
+      merchandiseSales: row.merchandiseSales,
+      seatsSold: row.seatsSold,
       revenuePerSeat: row.seatsSold ? row.totalSales / row.seatsSold : 0,
       foodBeveragePerSeat: row.seatsSold
         ? row.foodBeverageSales / row.seatsSold
@@ -205,13 +266,14 @@ export async function getOperationsDashboard(
     }))
     .sort((a, b) => a.date.localeCompare(b.date))
 
-  const totals = daily.reduce(
+  const totals = [...dailyMap.values()].reduce(
     (sum, row) => ({
       totalSales: sum.totalSales + row.totalSales,
       classSales: sum.classSales + row.classSales,
       foodBeverageSales: sum.foodBeverageSales + row.foodBeverageSales,
       merchandiseSales: sum.merchandiseSales + row.merchandiseSales,
       seatsSold: sum.seatsSold + row.seatsSold,
+      capacity: sum.capacity + row.capacity,
     }),
     {
       totalSales: 0,
@@ -219,11 +281,8 @@ export async function getOperationsDashboard(
       foodBeverageSales: 0,
       merchandiseSales: 0,
       seatsSold: 0,
+      capacity: 0,
     }
-  )
-  const attendance = salesRows.reduce(
-    (sum, row) => sum + numberValue(row.attendance_percent),
-    0
   )
   const foodBeverage = [...foodBeverageMap.values()]
     .map((group) => ({
@@ -234,18 +293,6 @@ export async function getOperationsDashboard(
       items: group.items.sort((a, b) => b.sales - a.sales),
     }))
     .sort((a, b) => b.sales - a.sales)
-  const studioDailyMap = new Map<number, Map<string, number>>()
-
-  for (const row of salesRows) {
-    const studioDays =
-      studioDailyMap.get(row.studio_id) ?? new Map<string, number>()
-    studioDays.set(
-      row.report_date,
-      (studioDays.get(row.report_date) ?? 0) + numberValue(row.net_sales)
-    )
-    studioDailyMap.set(row.studio_id, studioDays)
-  }
-
   const studioSales = [...studioDailyMap.entries()]
     .map(([currentStudioId, studioDays]) => ({
       studioId: currentStudioId,
@@ -277,11 +324,16 @@ export async function getOperationsDashboard(
       foodBeveragePerSeat: totals.seatsSold
         ? totals.foodBeverageSales / totals.seatsSold
         : 0,
-      attendancePercent: salesRows.length ? attendance / salesRows.length : 0,
+      attendancePercent: totals.capacity
+        ? (totals.seatsSold / totals.capacity) * 100
+        : 0,
       averageDailySales: daily.length ? totals.totalSales / daily.length : 0,
     },
     daily,
     studioSales,
+    classTypes: [...classTypeMap.values()].sort(
+      (a, b) => b.classSales - a.classSales
+    ),
     foodBeverage,
   }
 }

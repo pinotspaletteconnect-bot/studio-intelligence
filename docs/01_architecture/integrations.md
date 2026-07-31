@@ -153,6 +153,10 @@ Planned scope includes profile insights, reviews, search visibility, and custome
   with `integration_type = 'pts'` and the PTS location ID in `external_id`
 - **Warehouse:** `pts_sales_daily_summary`, `pts_class_sales_daily`, and
   `pts_non_class_sales_items`
+- **Range-load replacement:** `pts_class_type_sales_daily` and
+  `pts_product_sales_daily`, exposed through `pts_operations_daily`. The
+  original facts remain available during controlled reconciliation and
+  rollback.
 - **Class-event grain:** the Class Sales Summary export is collected in
   seven-day source windows and the daily workflow refreshes the prior 14
   completed event days. Rows use a stable event key and preserve the source
@@ -171,6 +175,12 @@ Planned scope includes profile insights, reviews, search visibility, and custome
   across all four studios for July 16–29, 2026 and refreshes the prior 14
   completed event days daily at 5:00 AM. Broader controlled historical
   backfills remain incomplete.
+- **Range-export migration:** Product Sales now accepts `fromDate` and `toDate`
+  while retaining backward compatibility with `reportDate`. Class and Product
+  exports can therefore cover a weekly or monthly window and be grouped by
+  their embedded event/sale dates in n8n. Product Sales is authoritative for
+  product revenue, including Recorded Videos; the Sales Report non-class export
+  is reconciliation-only to prevent duplicate product rows.
 
 #### Scalable PTS onboarding
 

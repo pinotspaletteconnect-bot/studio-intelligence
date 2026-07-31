@@ -10,6 +10,12 @@ This project follows a milestone-based changelog rather than tracking every indi
 
 ## Added
 
+- Added the PTS range-load replacement model:
+  `pts_class_type_sales_daily`, `pts_product_sales_daily`, and their governed
+  reporting views. `pts_operations_daily` calculates sales from class revenue,
+  fees, and authoritative Product Sales detail without double-counting the
+  Class Sales Summary product column.
+
 - Completed the production PTS Class Sales pipeline. The collector now reads
   the populated Kendo grid directly because PTS's Excel button exports stale
   zero-row data after automated report refreshes. The published daily workflow
@@ -114,6 +120,11 @@ This project follows a milestone-based changelog rather than tracking every indi
   click-based platforms while MNTN reports CPM and modeled ROAS.
 
 ## Changed
+
+- Extended the PTS Product Sales collector to accept `fromDate` and `toDate`
+  while preserving the existing single-day `reportDate` request contract.
+- Updated the Operations service and dashboard to consume the replacement
+  reporting model and show class-type sales detail.
 
 - Marketing KPIs now expose CPC immediately while withholding revenue attribution and ROAS until the existing GA4 source/medium workflow is populated and validated.
 - Marketing API input is validated and API failures return stable user-facing errors.

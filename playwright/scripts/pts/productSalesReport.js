@@ -188,12 +188,13 @@ async function selectStudio(page, studio) {
     }
 }
 
-async function runReport(page, reportDate) {
-    const date = displayDate(reportDate);
+async function runReport(page, fromDate, toDate) {
+    const from = displayDate(fromDate);
+    const to = displayDate(toDate);
 
-    await page.locator("#DateFilter_FromDate").fill(date);
+    await page.locator("#DateFilter_FromDate").fill(from);
     await page.locator("#DateFilter_FromDate").press("Tab");
-    await page.locator("#DateFilter_ToDate").fill(date);
+    await page.locator("#DateFilter_ToDate").fill(to);
     await page.locator("#DateFilter_ToDate").press("Tab");
 
     await Promise.all([
@@ -205,7 +206,7 @@ async function runReport(page, reportDate) {
     await page.locator(".k-grid-excel").nth(0).waitFor({ state: "attached" });
 }
 
-async function downloadProductWorkbook(page, folder, studio, reportDate) {
+async function downloadProductWorkbook(page, folder, studio, fromDate, toDate) {
     const excelButton = page.locator(".k-grid-excel").nth(0);
 
     const [download] = await Promise.all([
@@ -214,7 +215,7 @@ async function downloadProductWorkbook(page, folder, studio, reportDate) {
     ]);
     const filePath = path.join(
         folder,
-        `${studio.code}_${reportDate}_product-sales.xlsx`
+        `${studio.code}_${fromDate}_${toDate}_product-sales.xlsx`
     );
     await download.saveAs(filePath);
 
@@ -333,8 +334,19 @@ async function readProductGrid(page) {
     };
 }
 
-async function runPtsProductSalesReport({ reportDate, studioCodes } = {}) {
-    const date = validateDate(reportDate);
+async function runPtsProductSalesReport({
+    reportDate,
+    fromDate,
+    toDate,
+    studioCodes
+} = {}) {
+    const from = validateDate(fromDate ?? reportDate);
+    const to = validateDate(toDate ?? reportDate);
+
+    if (from > to) {
+        throw new Error("PTS fromDate must be on or before toDate");
+    }
+
     const studios = requestedStudios(studioCodes);
     const folder = fs.mkdtempSync(path.join(os.tmpdir(), "pts-products-"));
     let browser;
@@ -351,12 +363,13 @@ async function runPtsProductSalesReport({ reportDate, studioCodes } = {}) {
                 waitUntil: "domcontentloaded"
             });
             await selectStudio(page, studio);
-            await runReport(page, date);
+            await runReport(page, from, to);
             const productFile = await downloadProductWorkbook(
                 page,
                 folder,
                 studio,
-                date
+                from,
+                to
             );
             const rows = (await parseNonClassSales(productFile)).filter(
                 row => row.category && row.item_name
@@ -367,7 +380,8 @@ async function runPtsProductSalesReport({ reportDate, studioCodes } = {}) {
                 studioCode: studio.code,
                 locationId: studio.locationId,
                 locationName: studio.locationName,
-                reportDate: date,
+                fromDate: from,
+                toDate: to,
                 gridId: "griddDetailsData",
                 columns: [
                     "order_number",

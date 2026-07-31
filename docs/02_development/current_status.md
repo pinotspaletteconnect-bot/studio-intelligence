@@ -93,9 +93,15 @@ The live Supabase schema is authoritative. Update `docs/01_architecture/schema.m
   completed event days at 5:00 AM America/New_York
 - `pts_class_type_mappings` and `pts_product_reporting_mappings` — governed
   organization-level mappings for operations reporting groups
+- `pts_class_type_sales_daily` and `pts_product_sales_daily` — replacement
+  range-load facts grouped by embedded event/sale date; deployed schema is
+  ready for controlled Short North validation
 - `pts_class_sales_reporting`, `pts_product_sales_reporting`, and
   `pts_daily_operations_reporting` — service-role reporting views that preserve
   source grains while exposing class, product, and daily operations metrics
+- `pts_class_type_sales_daily_reporting`,
+  `pts_product_sales_daily_reporting`, and `pts_operations_daily` — replacement
+  reporting layer that avoids double-counting Product Sales amounts
 
 ## Dashboard State
 
@@ -133,6 +139,11 @@ Known incomplete surfaces:
   and upserted 158 unique class events across all four studios for July 16–29,
   2026. It refreshes the prior 14 completed event days daily at 5:00 AM.
   Broader controlled historical backfill remains incomplete.
+- The range-export replacement is implemented in code and Supabase. Product
+  Sales accepts date ranges, and the Operations service targets the new
+  reporting views. Production workflow loading and one-week Short North
+  reconciliation must complete before the dashboard deployment switches away
+  from the existing populated facts.
 - Reciprocal benchmark storage and CPC display behavior are prepared, but the
   owner-facing participation control must remain unavailable until login and
   organization-role authorization are implemented.
