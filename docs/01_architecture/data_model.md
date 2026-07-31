@@ -97,6 +97,14 @@ organization-level mappings downstream:
 - `pts_daily_operations_reporting` aggregates each fact source independently
   before combining studio/date metrics, avoiding duplicated event or product
   amounts.
+- `pts_class_type_sales_daily` and `pts_product_sales_daily` are the range-load
+  replacement facts. The first groups Class Sales Summary rows by event date
+  and raw class type; the second groups Product Sales rows by sale date,
+  category, subcategory, and item.
+- `pts_operations_daily` treats Product Sales as the authoritative product
+  source. It adds class revenue and fees but does not add the Class Sales
+  Summary `Products` amount, preventing the same product revenue from being
+  counted twice.
 
 ## Financial Intelligence
 
