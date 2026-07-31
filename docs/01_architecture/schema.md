@@ -42,6 +42,8 @@ Confirm exact columns, constraints, and foreign-key behavior in Supabase before 
 | `pts_non_class_sales_items` | One minimized Product Sales line item per studio/report date/source row hash | Current and loading daily |
 | `pts_class_type_mappings` | Organization-governed raw PTS Type to reporting class-type mapping | Current |
 | `pts_product_reporting_mappings` | Organization-governed category/subcategory/item to product group and department mapping | Current |
+| `pts_class_type_sales_daily` | One aggregate per studio/event date/raw PTS class type from a range export | Current; replacement range-load destination |
+| `pts_product_sales_daily` | One aggregate per studio/sale date/category/subcategory/item from Product Sales | Current; replacement range-load destination |
 
 PTS imports preserve source row hashes for idempotency. Product Sales records
 retain category, subcategory, item, quantity, revenue, tax, and business
@@ -58,10 +60,18 @@ dashboard access are implemented.
 | `pts_class_sales_reporting` | One class event with raw and governed reporting class types | Current |
 | `pts_product_sales_reporting` | One product item with governed product group and department | Current |
 | `pts_daily_operations_reporting` | One studio/report date combining summary totals with separately aggregated class and product facts | Current |
+| `pts_class_type_sales_daily_reporting` | Daily class-type aggregates with governed reporting types | Current |
+| `pts_product_sales_daily_reporting` | Daily product/item aggregates with governed product groups and departments | Current |
+| `pts_operations_daily` | One studio/date derived from class revenue, fees, and authoritative Product Sales detail | Current replacement reporting view |
 
 The reporting views do not join event and product rows directly. Each source is
 aggregated at its own grain before daily metrics are combined, preventing
 duplicated class revenue, seats, or attendance.
+
+The replacement range model deliberately excludes the Class Sales Summary
+`Products` amount from total-sales arithmetic because the same merchandise is
+represented authoritatively in Product Sales. `pts_operations_daily` calculates
+total sales as class sales plus class fees plus Product Sales net sales.
 
 ## Marketing Fact Tables
 

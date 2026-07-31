@@ -10,6 +10,12 @@ This project follows a milestone-based changelog rather than tracking every indi
 
 ## Added
 
+- Added the PTS range-load replacement model:
+  `pts_class_type_sales_daily`, `pts_product_sales_daily`, and their governed
+  reporting views. `pts_operations_daily` calculates sales from class revenue,
+  fees, and authoritative Product Sales detail without double-counting the
+  Class Sales Summary product column.
+
 - Completed the production PTS Class Sales pipeline. The collector now reads
   the populated Kendo grid directly because PTS's Excel button exports stale
   zero-row data after automated report refreshes. The published daily workflow
@@ -38,6 +44,12 @@ This project follows a milestone-based changelog rather than tracking every indi
   July 28, 2026 four-studio validation loaded 47 customer-free product lines
   into `pts_non_class_sales_items`; a repeated run preserved all 47 row IDs.
   Category totals reconcile to the Daily Sales alcohol and other-product totals.
+- Added the first PTS-backed Operations dashboard with completed-day sales,
+  F&B dollars and sales share, revenue and F&B per seat, seats sold, class
+  sales, average daily sales, daily trends, and expandable F&B subcategory and
+  item-name reporting.
+- Separated the Operations completed-day sales trend into a labeled series for
+  each studio when viewing the combined portfolio.
 - Documented scalable PTS onboarding through encrypted credential references,
   owner-controlled location mapping, shared credential-grouped collection, and
   resumable historical backfills.
@@ -108,6 +120,11 @@ This project follows a milestone-based changelog rather than tracking every indi
   click-based platforms while MNTN reports CPM and modeled ROAS.
 
 ## Changed
+
+- Extended the PTS Product Sales collector to accept `fromDate` and `toDate`
+  while preserving the existing single-day `reportDate` request contract.
+- Updated the Operations service and dashboard to consume the replacement
+  reporting model and show class-type sales detail.
 
 - Marketing KPIs now expose CPC immediately while withholding revenue attribution and ROAS until the existing GA4 source/medium workflow is populated and validated.
 - Marketing API input is validated and API failures return stable user-facing errors.

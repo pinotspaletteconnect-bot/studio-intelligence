@@ -74,13 +74,20 @@ router.post("/product-sales-report", requireCollectorAuth, async (req, res) => {
     try {
         const results = await runPtsProductSalesReport({
             reportDate: req.body?.reportDate,
+            fromDate: req.body?.fromDate,
+            toDate: req.body?.toDate,
             studioCodes: req.body?.studioCodes
         });
 
         res.json({
             success: true,
-            reportDate: req.body.reportDate,
+            fromDate: req.body?.fromDate ?? req.body?.reportDate,
+            toDate: req.body?.toDate ?? req.body?.reportDate,
             studioCount: results.length,
+            rowCount: results.reduce(
+                (total, result) => total + result.rowCount,
+                0
+            ),
             results
         });
     } catch (error) {
