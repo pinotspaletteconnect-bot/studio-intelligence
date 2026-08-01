@@ -105,6 +105,10 @@ organization-level mappings downstream:
   source. It adds class revenue and fees but does not add the Class Sales
   Summary `Products` amount, preventing the same product revenue from being
   counted twice.
+- `pts_upcoming_class_snapshots` preserves one observation per future class,
+  studio, and daily snapshot. Consecutive snapshots support net seats and
+  class-plus-fee revenue pickup without relying on the non-downloadable PTS
+  Reservations grid.
 
 ## Financial Intelligence
 

@@ -214,33 +214,54 @@ async function refreshClassGrid(page) {
             return { initialized: false };
         }
 
-        const outcome = await Promise.race([
-            Promise.resolve(grid.dataSource.read())
-                .then(() => ({
-                    initialized: true,
-                    error: null
-                }))
-                .catch(error => ({
-                    initialized: true,
-                    error:
-                        error?.status ??
-                        error?.errorThrown ??
-                        error?.message ??
-                        "request failed"
-                })),
-            new Promise(resolve =>
-                setTimeout(
-                    () =>
-                        resolve({
-                            initialized: true,
-                            error: "request timed out"
-                        }),
-                    15000
-                )
-            )
-        ]);
+        return new Promise(resolve => {
+            const dataSource = grid.dataSource;
+            let settled = false;
+            let timeout;
 
-        return outcome;
+            const finish = error => {
+                if (settled) {
+                    return;
+                }
+
+                settled = true;
+                clearTimeout(timeout);
+                dataSource.unbind("change", handleChange);
+                dataSource.unbind("error", handleError);
+                resolve({
+                    initialized: true,
+                    error,
+                    total: dataSource.total?.() ?? null,
+                    viewCount: dataSource.view?.()?.length ?? null
+                });
+            };
+            const handleChange = () => {
+                // Kendo's change event means the refreshed records have been
+                // applied. Give the grid two paint frames to update its rows
+                // before Playwright reads the DOM.
+                requestAnimationFrame(() =>
+                    requestAnimationFrame(() => finish(null))
+                );
+            };
+            const handleError = event => {
+                finish(
+                    event?.xhr?.status ??
+                        event?.errorThrown ??
+                        event?.status ??
+                        "request failed"
+                );
+            };
+
+            dataSource.bind("change", handleChange);
+            dataSource.bind("error", handleError);
+            timeout = setTimeout(() => finish("request timed out"), 15000);
+
+            try {
+                dataSource.read();
+            } catch (error) {
+                finish(error?.message ?? "request failed");
+            }
+        });
     });
 
     if (!refreshResult.initialized) {

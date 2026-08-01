@@ -197,10 +197,14 @@ async function runReport(page, fromDate, toDate) {
     await page.locator("#DateFilter_ToDate").fill(to);
     await page.locator("#DateFilter_ToDate").press("Tab");
 
-    await Promise.all([
-        page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-        page.getByRole("button", { name: "Run", exact: true }).click()
-    ]);
+    const navigation = page
+        .waitForNavigation({
+            waitUntil: "domcontentloaded",
+            timeout: 10000
+        })
+        .catch(() => null);
+    await page.getByRole("button", { name: "Run", exact: true }).click();
+    await navigation;
 
     await page.locator(".k-grid").nth(0).waitFor({ state: "attached" });
     await page.locator(".k-grid-excel").nth(0).waitFor({ state: "attached" });

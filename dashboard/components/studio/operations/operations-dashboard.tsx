@@ -1,14 +1,22 @@
 "use client"
 
+import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import {
+  ArrowRight,
   Armchair,
+  CalendarClock,
+  Flame,
   ChartNoAxesCombined,
   ChevronDown,
   CircleDollarSign,
   GlassWater,
+  Palette,
+  PartyPopper,
   Percent,
   ReceiptText,
+  Timer,
+  Truck,
   Utensils,
 } from "lucide-react"
 import {
@@ -22,6 +30,7 @@ import {
 import { useApp } from "@/contexts/app-context"
 import type { OperationsDashboardData } from "@/lib/services/operations"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { buttonVariants } from "@/components/ui/button"
 import {
   ChartContainer,
   ChartTooltip,
@@ -49,13 +58,19 @@ const studioColors = ["#2563eb", "#7c3aed", "#f97316", "#059669", "#dc2626"]
 
 const cards = [
   { key: "totalSales", label: "Total sales", icon: CircleDollarSign },
-  { key: "foodBeverageSales", label: "F&B sales", icon: Utensils },
+    { key: "classSales", label: "Class sales", icon: ChartNoAxesCombined },
+      { key: "seatsSold", label: "Seats sold", icon: Armchair },
+  { key: "averageLeadTime", label: "Average lead time", icon: Timer },
+    { key: "foodBeverageSales", label: "F&B sales", icon: Utensils },
+  { key: "foodSales", label: "Food sales", icon: Utensils },
   { key: "foodBeverageShare", label: "F&B % of sales", icon: Percent },
+    { key: "foodBeveragePerSeat", label: "F&B / seat", icon: GlassWater },
   { key: "revenuePerSeat", label: "Revenue / seat", icon: ReceiptText },
-  { key: "foodBeveragePerSeat", label: "F&B / seat", icon: GlassWater },
-  { key: "seatsSold", label: "Seats sold", icon: Armchair },
-  { key: "classSales", label: "Class sales", icon: ChartNoAxesCombined },
+  { key: "candleSales", label: "Candle sales", icon: Flame },
+  { key: "artSuppliesSales", label: "Art supplies", icon: Palette },
   { key: "averageDailySales", label: "Average daily sales", icon: CircleDollarSign },
+  { key: "privatePartyEvents", label: "Private parties", icon: PartyPopper },
+  { key: "mobileEventCount", label: "Mobile events", icon: Truck },
 ] as const
 
 function formatCard(
@@ -63,6 +78,17 @@ function formatCard(
   value: number
 ) {
   if (key === "foodBeverageShare") return `${value.toFixed(1)}%`
+  if (key === "averageLeadTime") return `${value.toFixed(1)} days`
+  if (key === "privatePartyEvents" || key === "mobileEventCount") {
+    return `${value.toLocaleString()} events`
+  }
+  if (
+    key === "candleSales" ||
+    key === "artSuppliesSales" ||
+    key === "foodSales"
+  ) {
+    return decimalCurrency.format(value)
+  }
   if (key === "seatsSold") return value.toLocaleString()
   if (key === "revenuePerSeat" || key === "foodBeveragePerSeat") {
     return decimalCurrency.format(value)
@@ -176,16 +202,59 @@ export function OperationsDashboard() {
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-end">
+        <Link
+          href="/operations/upcoming"
+          className={buttonVariants({ variant: "outline" })}
+        >
+          <CalendarClock />
+          View upcoming classes
+        </Link>
+      </div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {cards.map(({ key, label, icon: Icon }) => (
-          <Card key={key}>
+        {cards.map(({ key, label, icon: Icon }) => {
+          const card = (
+          <Card className={key === "foodSales" ? "h-full transition-colors hover:border-primary/50" : undefined}>
             <CardContent>
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{label}</p>
-                  <p className="mt-2 text-2xl font-semibold tabular-nums">
+                  <p className="mt-2 flex flex-wrap items-baseline gap-x-2 text-2xl font-semibold tabular-nums">
                     {formatCard(key, data.kpis[key])}
+                    {(key === "candleSales" ||
+                      key === "artSuppliesSales" ||
+                      key === "foodSales") && (
+                      <span className="text-sm font-normal text-muted-foreground">
+                      {(key === "candleSales"
+                        ? data.kpis.candleQuantity
+                        : key === "artSuppliesSales"
+                          ? data.kpis.artSuppliesQuantity
+                          : data.kpis.foodQuantity
+                      ).toLocaleString()} sold
+                      </span>
+                    )}
                   </p>
+                  {key === "privatePartyEvents" && (
+                    <p className="mt-1 text-sm tabular-nums text-muted-foreground">
+                      {data.kpis.privatePartyAverageSeats.toFixed(1)} avg seats ·{" "}
+                      {currency.format(data.kpis.privatePartyAverageRevenue)} avg revenue
+                    </p>
+                  )}
+                  {key === "mobileEventCount" && (
+                    <p className="mt-1 text-sm tabular-nums text-muted-foreground">
+                      {data.kpis.mobileEventAverageSeats.toFixed(1)} avg seats ·{" "}
+                      {currency.format(data.kpis.mobileEventAverageRevenue)} avg revenue
+                    </p>
+                  )}
+                  {key === "foodBeverageShare" && (
+                    <p className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs tabular-nums text-muted-foreground">
+                      {data.studioSales.map((studio) => (
+                        <span key={studio.studioId}>
+                          {studio.studioName} {studio.foodBeverageShare.toFixed(1)}%
+                        </span>
+                      ))}
+                    </p>
+                  )}
                 </div>
                 <div className="rounded-lg bg-primary/10 p-2 text-primary">
                   <Icon className="size-5" />
@@ -193,7 +262,32 @@ export function OperationsDashboard() {
               </div>
             </CardContent>
           </Card>
-        ))}
+          )
+
+          return key === "foodSales" ? (
+            <Link key={key} href="#food-sales-detail" className="rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              {card}
+            </Link>
+          ) : key === "candleSales" ? (
+            <Link key={key} href="/operations/candles" className="rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              {card}
+            </Link>
+          ) : key === "artSuppliesSales" ? (
+            <Link key={key} href="/operations/art-supplies" className="rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              {card}
+            </Link>
+          ) : key === "privatePartyEvents" ? (
+            <Link key={key} href="/operations/private-parties" className="rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              {card}
+            </Link>
+          ) : key === "mobileEventCount" ? (
+            <Link key={key} href="/operations/mobile-events" className="rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              {card}
+            </Link>
+          ) : (
+            <div key={key}>{card}</div>
+          )
+        })}
       </div>
 
       <Card>
@@ -282,7 +376,7 @@ export function OperationsDashboard() {
       </Card>
 
       <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <Card>
+        <Card id="food-sales-detail" className="scroll-mt-6">
           <CardHeader>
             <CardTitle>Food & beverage drill-down</CardTitle>
             <p className="text-sm text-muted-foreground">
@@ -294,6 +388,7 @@ export function OperationsDashboard() {
               <details
                 key={group.subcategory}
                 className="group rounded-lg border"
+                open={group.subcategory.toLowerCase() === "food" || undefined}
               >
                 <summary className="grid cursor-pointer list-none grid-cols-[1fr_auto_auto_auto] items-center gap-4 px-4 py-3">
                   <span className="font-medium">{group.subcategory}</span>
@@ -330,8 +425,20 @@ export function OperationsDashboard() {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Daily operating detail</CardTitle>
+          <CardHeader className="flex flex-row items-start justify-between gap-4">
+            <div>
+              <CardTitle>Daily operating detail</CardTitle>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Open any date to see its class-level attendance and sales.
+              </p>
+            </div>
+            <Link
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+              href={`/operations/daily?date=${data.daily.at(-1)?.date ?? dateRange.endDate}`}
+            >
+              View class detail
+              <ArrowRight />
+            </Link>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -343,13 +450,19 @@ export function OperationsDashboard() {
                     <th className="px-2 py-2 text-right font-medium">F&B</th>
                     <th className="px-2 py-2 text-right font-medium">Seats</th>
                     <th className="px-2 py-2 text-right font-medium">Rev/seat</th>
+                    <th className="px-2 py-2 text-right font-medium">Classes</th>
                   </tr>
                 </thead>
                 <tbody>
                   {[...data.daily].reverse().map((day) => (
                     <tr key={day.date} className="border-b last:border-0">
                       <td className="px-2 py-3 font-medium">
-                        {dayLabel.format(new Date(`${day.date}T00:00:00Z`))}
+                        <Link
+                          className="text-primary underline-offset-4 hover:underline"
+                          href={`/operations/daily?date=${day.date}`}
+                        >
+                          {dayLabel.format(new Date(`${day.date}T00:00:00Z`))}
+                        </Link>
                       </td>
                       <td className="px-2 py-3 text-right tabular-nums">
                         {currency.format(day.totalSales)}
@@ -363,6 +476,15 @@ export function OperationsDashboard() {
                       <td className="px-2 py-3 text-right tabular-nums">
                         {decimalCurrency.format(day.revenuePerSeat)}
                       </td>
+                      <td className="px-2 py-3 text-right">
+                        <Link
+                          className="inline-flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline"
+                          href={`/operations/daily?date=${day.date}`}
+                        >
+                          View
+                          <ArrowRight className="size-3.5" />
+                        </Link>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -373,6 +495,11 @@ export function OperationsDashboard() {
               {currency.format(data.kpis.merchandiseSales)}. Average reported
               attendance: {data.kpis.attendancePercent.toFixed(1)}%.
             </p>
+            {selectedStudio === "all" && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Class detail will show each studio in its own section.
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>

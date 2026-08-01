@@ -1,7 +1,7 @@
 # Studio Intelligence Current Status
 
 **Version:** 4.1  
-**Last updated:** July 30, 2026
+**Last updated:** July 31, 2026
 
 ## Purpose
 
@@ -123,8 +123,31 @@ Implemented foundation:
   last-touch attribution, CPM, cost per verified visit, and cost per conversion
 - Operations Performance dashboard backed by PTS Daily Sales and Product Sales,
   with completed-day sales, F&B sales/share, revenue per seat, F&B per seat,
-  seats sold, class sales, daily trends, and expandable F&B
+  seats sold, class sales, daily trends, studio-level F&B share on the portfolio
+  KPI card, and expandable F&B
   subcategory/item detail
+- Daily Operating Detail drill-down for a selected studio and date, with an
+  event-level class grid covering painting, time, governed and source class
+  type, room, attendance, capacity, lead time, and sales. Portfolio selection
+  presents every studio in a separate section for the chosen date.
+- Private Party and Mobile Events KPI cards link to completed-day drill-downs
+  with expandable studio sections and event-level seats, capacity, and revenue.
+- Operations product reporting excludes zero-dollar items labeled as preorders
+  from displayed quantities because PTS uses them as website placeholders;
+  paid preorder sales remain included.
+- Upcoming Classes dashboard, service, API, and warehouse schema are
+  implemented, and migration `20260731160000` is deployed to Supabase. The page
+  is designed for a daily 90-day future Class
+  Sales snapshot and exposes current capacity/revenue plus consecutive-day net
+  seats and revenue pickup. Published workflow `12 - PTS Upcoming Class
+  Snapshots` runs daily at 5:30 AM America/New_York and replaces the current
+  snapshot by studio. Its July 31, 2026 validation loaded 700 future classes:
+  146 St. Matthews, 233 Short North, 215 Gilbert, and 106 Jeffersonville.
+  August 1 comparison exposed a collector refresh race: matched future events
+  retained unchanged July 31 values despite confirmed reservation activity.
+  The Class Sales collector now waits for Kendo's completed data-change event
+  before reading rows; deployment and a fresh two-day pickup validation remain
+  pending.
 
 Known incomplete surfaces:
 
@@ -153,8 +176,8 @@ Known incomplete surfaces:
 - Comparison-period behavior needs end-to-end completion
 - The legacy `marketing_daily_summary` view is driven by GA4 dates. The Marketing Performance service now builds a complete source-date timeline from GA4, Meta Ads, Eulerity, and Meta Page Insights so source-only dates are retained; this should eventually move into a unified reporting view.
 - Executive, financial, customer, and settings experiences are not production
-  complete. Operations now has its first PTS-backed reporting surface, but
-  comparisons, class detail, and broader operational sources remain incomplete.
+  complete. Operations now includes summary and class-level daily reporting,
+  but comparisons and broader operational sources remain incomplete.
 - AI insight cards are planned
 
 Do not infer feature completeness from the presence of an empty route file.

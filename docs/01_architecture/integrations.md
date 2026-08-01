@@ -181,6 +181,15 @@ Planned scope includes profile insights, reviews, search visibility, and custome
   their embedded event/sale dates in n8n. Product Sales is authoritative for
   product revenue, including Recorded Videos; the Sales Report non-class export
   is reconciliation-only to prevent duplicate product rows.
+- **Upcoming Classes foundation:** the existing Class Sales endpoint can collect
+  a rolling 90-day future range. A daily event-grain snapshot migration,
+  reporting views, dashboard, and workflow contract are implemented. The
+  Supabase migration is deployed, and published workflow `12 - PTS Upcoming
+  Class Snapshots` runs daily at 5:30 AM America/New_York. To remain below the
+  Railway request gateway limit, n8n sends one 90-day collector request per
+  studio and combines the validated results before atomic replacement. The
+  July 31, 2026 run loaded 700 classes across all four studios, including 215
+  for Gilbert. Controlled two-day pickup validation remains pending.
 
 #### Scalable PTS onboarding
 

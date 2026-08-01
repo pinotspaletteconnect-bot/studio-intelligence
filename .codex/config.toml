@@ -1,0 +1,3 @@
+[mcp_servers.base44]
+url = "https://app.base44.com/mcp"
+auth = "oauth"

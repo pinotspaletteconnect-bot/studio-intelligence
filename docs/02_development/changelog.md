@@ -10,6 +10,43 @@ This project follows a milestone-based changelog rather than tracking every indi
 
 ## Added
 
+- Added the PTS Upcoming Classes foundation: daily event-grain snapshot schema,
+  governed current and pickup reporting views, a dedicated dashboard with
+  studio sections, and a documented 90-day replacement workflow contract.
+  Published daily n8n workflow `12 - PTS Upcoming Class Snapshots` at 5:30 AM
+  America/New_York after validating 700 future classes across all four studios
+  (including 215 Gilbert classes). Collector calls are split by studio to stay
+  within the Railway gateway timeout.
+
+- Added a Daily Operating Detail drill-down from the Operations dashboard for
+  a selected studio and date, with class-event attendance, capacity, lead time,
+  source and governed class type, room, painting, and sales detail. Dates are
+  direct links, and the all-studios view separates each studio into its own
+  daily detail section. The daily summary includes seats-weighted average lead
+  time across reported classes, authoritative F&B revenue, and revenue per
+  seat. The percent-full KPI is labeled Capacity.
+- Added seats-weighted average class lead time to the main Operations KPI cards
+  for the selected studio and completed-day range.
+- Added Private parties and Mobile events KPI cards with event counts, average
+  seats, and average class-plus-fee revenue per event.
+- Added a main Operations candle-sales KPI with net sales and quantity sourced
+  from the governed Candles product reporting group. The card opens a dedicated
+  studio-separated detail page with candle items, dates, quantities, and sales.
+- Standardized product KPI currency to two decimal places so the main-page
+  candle total displays identically to its drill-down total.
+- Changed the Candle KPI to query the governed Candles group directly instead
+  of filtering a broad mixed-product response that could reach the warehouse
+  row limit before every studio was represented.
+- Changed Food, Art Supplies, and F&B detail to use server-filtered governed
+  product queries as well, removing the same mixed-product row-limit risk from
+  the remaining product KPIs and breakdown.
+- Added a main Operations Art Supplies KPI with net sales and quantity sourced
+  from the governed Art Supplies product reporting group. The card opens a
+  collapsible, studio-separated item detail page matching Candle reporting.
+- Added a separate Food sales KPI with net sales and quantity while retaining
+  the broader Food & Beverage total. The Food card links directly to the
+  expanded item-level Food detail used by the metric.
+
 - Added the PTS range-load replacement model:
   `pts_class_type_sales_daily`, `pts_product_sales_daily`, and their governed
   reporting views. `pts_operations_daily` calculates sales from class revenue,
@@ -121,6 +158,12 @@ This project follows a milestone-based changelog rather than tracking every indi
 
 ## Changed
 
+- Corrected a PTS Class Sales collector race that treated Kendo
+  `dataSource.read()` as a completed promise. The collector now waits for the
+  grid's actual change/error event before reading refreshed class rows.
+  Production deployment and two-day pickup validation remain pending.
+- Excluded zero-dollar Product Sales rows labeled as preorders from Operations
+  quantities and product detail while retaining any paid preorder sales.
 - Extended the PTS Product Sales collector to accept `fromDate` and `toDate`
   while preserving the existing single-day `reportDate` request contract.
 - Updated the Operations service and dashboard to consume the replacement
