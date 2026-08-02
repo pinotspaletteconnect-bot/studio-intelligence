@@ -158,6 +158,9 @@ This project follows a milestone-based changelog rather than tracking every indi
 
 ## Changed
 
+- Restored the legacy `reportDate` field in Product Sales collector responses
+  so production workflow 06 remains compatible with the newer range-enabled
+  `fromDate` and `toDate` contract.
 - Corrected a PTS Class Sales collector race that treated Kendo
   `dataSource.read()` as a completed promise. The collector now waits for the
   grid's actual change/error event before reading refreshed class rows.

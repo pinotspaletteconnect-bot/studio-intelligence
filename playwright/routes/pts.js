@@ -81,6 +81,12 @@ router.post("/product-sales-report", requireCollectorAuth, async (req, res) => {
 
         res.json({
             success: true,
+            // Preserve the original single-day response contract used by the
+            // production 06 workflow while also exposing range boundaries.
+            reportDate:
+                req.body?.reportDate ??
+                req.body?.fromDate ??
+                req.body?.toDate,
             fromDate: req.body?.fromDate ?? req.body?.reportDate,
             toDate: req.body?.toDate ?? req.body?.reportDate,
             studioCount: results.length,

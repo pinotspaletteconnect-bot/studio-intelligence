@@ -162,6 +162,10 @@ Known incomplete surfaces:
   and upserted 158 unique class events across all four studios for July 16–29,
   2026. It refreshes the prior 14 completed event days daily at 5:00 AM.
   Broader controlled historical backfill remains incomplete.
+- Workflow 06 stopped after the range-enabled Product Sales collector response
+  omitted the legacy `reportDate` field required by its validation node. The
+  collector response now restores `reportDate` while retaining `fromDate` and
+  `toDate`; deployment and a controlled workflow rerun remain pending.
 - The range-export replacement is implemented in code and Supabase. Product
   Sales accepts date ranges, and the Operations service targets the new
   reporting views. Production workflow loading and one-week Short North
