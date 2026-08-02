@@ -126,11 +126,11 @@ Implemented foundation:
   seats sold, class sales, daily trends, studio-level F&B share on the portfolio
   KPI card, and expandable F&B
   subcategory/item detail
-- Operations summary and product drill-downs consume the production reporting
-  views fed by workflows 05–07 (`pts_daily_operations_reporting`,
-  `pts_product_sales_reporting`, and `pts_class_sales_reporting`). The dormant
-  range-load facts remain available for reconciliation but are no longer the
-  dashboard's active source.
+- Operations summary combines the preserved range-load history with the
+  reporting views fed by workflows 05–07. Current production rows take
+  precedence by studio/date on overlap. Product queries explicitly paginate
+  Supabase results so F&B, candle, food, and art-supply history is not truncated
+  at the API's 1,000-row response limit.
 - Daily Operating Detail drill-down for a selected studio and date, with an
   event-level class grid covering painting, time, governed and source class
   type, room, attendance, capacity, lead time, and sales. Portfolio selection

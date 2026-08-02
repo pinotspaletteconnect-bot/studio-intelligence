@@ -158,6 +158,14 @@ This project follows a milestone-based changelog rather than tracking every indi
 
 ## Changed
 
+- Restored complete historical Operations product reporting by merging
+  `pts_product_sales_daily_reporting` with the current
+  `pts_product_sales_reporting` feed, preferring current rows by studio/date.
+  Product retrieval now uses explicit 1,000-row pagination so F&B and other
+  product KPIs are not silently truncated as the selected period grows.
+- Restored historical daily sales alongside the current production feed by
+  merging `pts_operations_daily` and `pts_daily_operations_reporting` without
+  double-counting overlapping studio/date rows.
 - Reconnected Operations summary, class-type metrics, and product drill-downs
   to the reporting views refreshed by production workflows 05–07. The dormant
   range-load tables remain available for reconciliation but no longer freeze

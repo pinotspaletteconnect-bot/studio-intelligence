@@ -16,6 +16,7 @@ type DailyOperationsRow = {
 }
 
 type ProductRow = {
+  studio_id: number
   report_date: string
   product_group: string | null
   department: string | null
@@ -236,6 +237,41 @@ function addStudioFilter<T>(query: T, studioId?: string): T {
   return query
 }
 
+async function getPagedProductRows(
+  table: "pts_product_sales_reporting" | "pts_product_sales_daily_reporting",
+  periodStart: string,
+  periodEnd: string,
+  studioId?: string
+): Promise<ProductRow[]> {
+  const pageSize = 1000
+  const rows: ProductRow[] = []
+
+  for (let page = 0; page < 20; page += 1) {
+    const from = page * pageSize
+    const query = addStudioFilter(
+      supabase
+        .from(table)
+        .select(
+          "studio_id,report_date,product_group,department,subcategory,item_name,quantity,net_sales"
+        )
+        .gte("report_date", periodStart)
+        .lte("report_date", periodEnd),
+      studioId
+    )
+    const result = await query
+      .order("report_date")
+      .range(from, from + pageSize - 1)
+
+    if (result.error) throw result.error
+
+    const pageRows = (result.data ?? []) as ProductRow[]
+    rows.push(...pageRows)
+    if (pageRows.length < pageSize) return rows
+  }
+
+  throw new Error("PTS product query exceeded the 20,000-row safety limit")
+}
+
 export async function getOperationsDashboard(
   studioId?: string,
   startDate?: string,
@@ -252,17 +288,6 @@ export async function getOperationsDashboard(
       .select(
         "studio_id,report_date,class_event_count,seats_sold,capacity:class_reported_capacity,class_sales,fee_sales:class_reported_fee_sales,product_sales:other_product_sales,food_and_beverage_sales,other_product_sales:detailed_other_product_sales,unmapped_product_sales,total_sales:net_sales"
       )
-      .gte("report_date", periodStart)
-      .lte("report_date", periodEnd),
-    studioId
-  )
-  const foodBeverageQuery = addStudioFilter(
-    supabase
-      .from("pts_product_sales_reporting")
-      .select(
-        "report_date,product_group,department,subcategory,item_name,quantity,net_sales"
-      )
-      .eq("department", "Food & Beverage")
       .gte("report_date", periodStart)
       .lte("report_date", periodEnd),
     studioId
@@ -287,37 +312,6 @@ export async function getOperationsDashboard(
       .lte("report_date", periodEnd),
     studioId
   )
-  const candlesQuery = addStudioFilter(
-    supabase
-      .from("pts_product_sales_reporting")
-      .select("report_date,product_group,department,subcategory,item_name,quantity,net_sales")
-      .eq("product_group", "Candles")
-      .gte("report_date", periodStart)
-      .lte("report_date", periodEnd),
-    studioId
-  )
-  const foodQuery = addStudioFilter(
-    supabase
-      .from("pts_product_sales_reporting")
-      .select(
-        "report_date,product_group,department,subcategory,item_name,quantity,net_sales"
-      )
-      .eq("product_group", "Food")
-      .gte("report_date", periodStart)
-      .lte("report_date", periodEnd),
-    studioId
-  )
-  const artSuppliesQuery = addStudioFilter(
-    supabase
-      .from("pts_product_sales_reporting")
-      .select(
-        "report_date,product_group,department,subcategory,item_name,quantity,net_sales"
-      )
-      .eq("product_group", "Art Supplies")
-      .gte("report_date", periodStart)
-      .lte("report_date", periodEnd),
-    studioId
-  )
   const classLeadTimeQuery = addStudioFilter(
     supabase
       .from("pts_class_sales_reporting")
@@ -331,30 +325,32 @@ export async function getOperationsDashboard(
   const [
     currentDailyResult,
     historicalDailyResult,
-    foodBeverageResult,
-    candlesResult,
-    foodResult,
-    artSuppliesResult,
+    currentProductRows,
+    historicalProductRows,
     classTypesResult,
     classLeadTimeResult,
   ] =
     await Promise.all([
       currentDailyQuery.order("report_date").range(0, 4999),
       historicalDailyQuery.order("report_date").range(0, 4999),
-      foodBeverageQuery.order("report_date").range(0, 9999),
-      candlesQuery.order("report_date").range(0, 4999),
-      foodQuery.order("report_date").range(0, 4999),
-      artSuppliesQuery.order("report_date").range(0, 4999),
+      getPagedProductRows(
+        "pts_product_sales_reporting",
+        periodStart,
+        periodEnd,
+        studioId
+      ),
+      getPagedProductRows(
+        "pts_product_sales_daily_reporting",
+        periodStart,
+        periodEnd,
+        studioId
+      ),
       classTypesQuery.order("event_date").range(0, 4999),
       classLeadTimeQuery.range(0, 4999),
     ])
 
   if (currentDailyResult.error) throw currentDailyResult.error
   if (historicalDailyResult.error) throw historicalDailyResult.error
-  if (foodBeverageResult.error) throw foodBeverageResult.error
-  if (candlesResult.error) throw candlesResult.error
-  if (foodResult.error) throw foodResult.error
-  if (artSuppliesResult.error) throw artSuppliesResult.error
   if (classTypesResult.error) throw classTypesResult.error
   if (classLeadTimeResult.error) throw classLeadTimeResult.error
 
@@ -369,7 +365,17 @@ export async function getOperationsDashboard(
     dailyRowsByStudioDate.set(`${row.studio_id}:${row.report_date}`, row)
   }
   const dailyRows = [...dailyRowsByStudioDate.values()]
-  const productRows = ((foodBeverageResult.data ?? []) as ProductRow[]).filter(
+  const currentProductStudioDates = new Set(
+    currentProductRows.map((row) => `${row.studio_id}:${row.report_date}`)
+  )
+  const allProductRows = [
+    ...historicalProductRows.filter(
+      (row) =>
+        !currentProductStudioDates.has(`${row.studio_id}:${row.report_date}`)
+    ),
+    ...currentProductRows,
+  ]
+  const productRows = allProductRows.filter(
     (row) => {
       const productLabel = [
         row.product_group,
@@ -381,29 +387,38 @@ export async function getOperationsDashboard(
         .toLowerCase()
       const isPreorderPlaceholder = /pre[\s-]*order/.test(productLabel)
 
-      return numberValue(row.net_sales) !== 0 || !isPreorderPlaceholder
+      return (
+        row.department === "Food & Beverage" &&
+        (numberValue(row.net_sales) !== 0 || !isPreorderPlaceholder)
+      )
     }
   )
-  const candleRows = ((candlesResult.data ?? []) as ProductRow[]).filter(
+  const candleRows = allProductRows.filter(
     (row) => {
       const productLabel = [row.subcategory, row.item_name]
         .filter(Boolean)
         .join(" ")
         .toLowerCase()
       return (
-        numberValue(row.net_sales) !== 0 ||
-        !/pre[\s-]*order/.test(productLabel)
+        row.product_group === "Candles" &&
+        (numberValue(row.net_sales) !== 0 ||
+          !/pre[\s-]*order/.test(productLabel))
       )
     }
   )
-  const foodRows = ((foodResult.data ?? []) as ProductRow[]).filter((row) => {
+  const foodRows = allProductRows.filter((row) => {
     const label = [row.subcategory, row.item_name]
       .filter(Boolean)
       .join(" ")
       .toLowerCase()
-    return numberValue(row.net_sales) !== 0 || !/pre[\s-]*order/.test(label)
+    return (
+      row.product_group === "Food" &&
+      (numberValue(row.net_sales) !== 0 || !/pre[\s-]*order/.test(label))
+    )
   })
-  const artSuppliesRows = (artSuppliesResult.data ?? []) as ProductRow[]
+  const artSuppliesRows = allProductRows.filter(
+    (row) => row.product_group === "Art Supplies"
+  )
   const classTypeRows = (classTypesResult.data ?? []) as ClassTypeRow[]
   const classLeadTimeRows = (classLeadTimeResult.data ?? []) as ClassLeadTimeRow[]
   const studioIds = [...new Set(dailyRows.map((row) => row.studio_id))]

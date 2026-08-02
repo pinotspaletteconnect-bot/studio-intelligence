@@ -153,10 +153,10 @@ Planned scope includes profile insights, reviews, search visibility, and custome
   with `integration_type = 'pts'` and the PTS location ID in `external_id`
 - **Warehouse:** `pts_sales_daily_summary`, `pts_class_sales_daily`, and
   `pts_non_class_sales_items`
-- **Range-load replacement:** `pts_class_type_sales_daily` and
-  `pts_product_sales_daily`, exposed through `pts_operations_daily`. The
-  original production facts remain the active dashboard source; the range
-  model remains available for controlled reconciliation only.
+- **Range-load history:** `pts_class_type_sales_daily` and
+  `pts_product_sales_daily`, exposed through `pts_operations_daily`. Operations
+  reporting combines this preserved history with the daily production facts;
+  current production rows take precedence by studio/date on overlap.
 - **Class-event grain:** the Class Sales Summary export is collected in
   seven-day source windows and the daily workflow refreshes the prior 14
   completed event days. Rows use a stable event key and preserve the source
