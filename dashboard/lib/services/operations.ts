@@ -246,7 +246,7 @@ export async function getOperationsDashboard(
   fallbackStart.setUTCDate(fallbackStart.getUTCDate() - 6)
   const periodStart = startDate ?? fallbackStart.toISOString().slice(0, 10)
 
-  const dailyQuery = addStudioFilter(
+  const currentDailyQuery = addStudioFilter(
     supabase
       .from("pts_daily_operations_reporting")
       .select(
@@ -275,6 +275,16 @@ export async function getOperationsDashboard(
       )
       .gte("event_date", periodStart)
       .lte("event_date", periodEnd),
+    studioId
+  )
+  const historicalDailyQuery = addStudioFilter(
+    supabase
+      .from("pts_operations_daily")
+      .select(
+        "studio_id,report_date,class_event_count,seats_sold,capacity,class_sales,fee_sales,product_sales,food_and_beverage_sales,other_product_sales,unmapped_product_sales,total_sales"
+      )
+      .gte("report_date", periodStart)
+      .lte("report_date", periodEnd),
     studioId
   )
   const candlesQuery = addStudioFilter(
@@ -319,7 +329,8 @@ export async function getOperationsDashboard(
   )
 
   const [
-    dailyResult,
+    currentDailyResult,
+    historicalDailyResult,
     foodBeverageResult,
     candlesResult,
     foodResult,
@@ -328,7 +339,8 @@ export async function getOperationsDashboard(
     classLeadTimeResult,
   ] =
     await Promise.all([
-      dailyQuery.order("report_date").range(0, 4999),
+      currentDailyQuery.order("report_date").range(0, 4999),
+      historicalDailyQuery.order("report_date").range(0, 4999),
       foodBeverageQuery.order("report_date").range(0, 9999),
       candlesQuery.order("report_date").range(0, 4999),
       foodQuery.order("report_date").range(0, 4999),
@@ -337,7 +349,8 @@ export async function getOperationsDashboard(
       classLeadTimeQuery.range(0, 4999),
     ])
 
-  if (dailyResult.error) throw dailyResult.error
+  if (currentDailyResult.error) throw currentDailyResult.error
+  if (historicalDailyResult.error) throw historicalDailyResult.error
   if (foodBeverageResult.error) throw foodBeverageResult.error
   if (candlesResult.error) throw candlesResult.error
   if (foodResult.error) throw foodResult.error
@@ -345,7 +358,17 @@ export async function getOperationsDashboard(
   if (classTypesResult.error) throw classTypesResult.error
   if (classLeadTimeResult.error) throw classLeadTimeResult.error
 
-  const dailyRows = (dailyResult.data ?? []) as DailyOperationsRow[]
+  // The range-import table preserves historical dashboard dates while the
+  // daily-production view supplies newly collected dates. Prefer production
+  // rows for the same studio/date so overlapping imports are never doubled.
+  const dailyRowsByStudioDate = new Map<string, DailyOperationsRow>()
+  for (const row of (historicalDailyResult.data ?? []) as DailyOperationsRow[]) {
+    dailyRowsByStudioDate.set(`${row.studio_id}:${row.report_date}`, row)
+  }
+  for (const row of (currentDailyResult.data ?? []) as DailyOperationsRow[]) {
+    dailyRowsByStudioDate.set(`${row.studio_id}:${row.report_date}`, row)
+  }
+  const dailyRows = [...dailyRowsByStudioDate.values()]
   const productRows = ((foodBeverageResult.data ?? []) as ProductRow[]).filter(
     (row) => {
       const productLabel = [
