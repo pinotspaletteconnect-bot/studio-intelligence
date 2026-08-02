@@ -163,6 +163,9 @@ This project follows a milestone-based changelog rather than tracking every indi
   `pts_product_sales_reporting` feed, preferring current rows by studio/date.
   Product retrieval now uses explicit 1,000-row pagination so F&B and other
   product KPIs are not silently truncated as the selected period grows.
+- Applied the same paginated historical/current merge to the shared Candle and
+  Art Supplies drill-down service so drill-down totals reconcile to their KPI
+  cards for the selected studio and period.
 - Restored historical daily sales alongside the current production feed by
   merging `pts_operations_daily` and `pts_daily_operations_reporting` without
   double-counting overlapping studio/date rows.

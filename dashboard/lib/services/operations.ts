@@ -157,15 +157,6 @@ export type DailyOperatingDetailData = {
   }>
 }
 
-type CandleDetailRow = {
-  studio_id: number
-  report_date: string
-  item_name: string | null
-  subcategory: string | null
-  quantity: number | string | null
-  net_sales: number | string | null
-}
-
 export type CandleSalesDetailData = {
   period: { startDate: string; endDate: string }
   totals: { sales: number; quantity: number }
@@ -832,35 +823,47 @@ async function getProductGroupSalesDetail(
   startDate: string,
   endDate: string
 ): Promise<CandleSalesDetailData> {
-  let productsQuery = supabase
-    .from("pts_product_sales_reporting")
-    .select("studio_id,report_date,item_name,subcategory,quantity,net_sales")
-    .eq("product_group", productGroup)
-    .gte("report_date", startDate)
-    .lte("report_date", endDate)
-    .order("report_date", { ascending: false })
-    .range(0, 4999)
   let studiosQuery = supabase.from("studios").select("id,studio_name")
 
   if (studioId) {
-    productsQuery = productsQuery.eq("studio_id", studioId)
     studiosQuery = studiosQuery.eq("id", studioId)
   }
 
-  const [productsResult, studiosResult] = await Promise.all([
-    productsQuery,
+  const [currentRows, historicalRows, studiosResult] = await Promise.all([
+    getPagedProductRows(
+      "pts_product_sales_reporting",
+      startDate,
+      endDate,
+      studioId?.toString()
+    ),
+    getPagedProductRows(
+      "pts_product_sales_daily_reporting",
+      startDate,
+      endDate,
+      studioId?.toString()
+    ),
     studiosQuery.order("studio_name"),
   ])
-  if (productsResult.error) throw productsResult.error
   if (studiosResult.error) throw studiosResult.error
 
-  const rows = ((productsResult.data ?? []) as CandleDetailRow[]).filter(
+  const currentStudioDates = new Set(
+    currentRows.map((row) => `${row.studio_id}:${row.report_date}`)
+  )
+  const rows = [
+    ...historicalRows.filter(
+      (row) => !currentStudioDates.has(`${row.studio_id}:${row.report_date}`)
+    ),
+    ...currentRows,
+  ].filter(
     (row) => {
       const label = [row.subcategory, row.item_name]
         .filter(Boolean)
         .join(" ")
         .toLowerCase()
-      return numberValue(row.net_sales) !== 0 || !/pre[\s-]*order/.test(label)
+      return (
+        row.product_group === productGroup &&
+        (numberValue(row.net_sales) !== 0 || !/pre[\s-]*order/.test(label))
+      )
     }
   )
   const studios = (studiosResult.data ?? []).map((studio) => {
