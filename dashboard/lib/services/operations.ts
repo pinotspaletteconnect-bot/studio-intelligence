@@ -27,7 +27,7 @@ type ProductRow = {
 
 type ClassTypeRow = {
   reporting_class_type: string
-  class_event_count: number | string | null
+  class_event_count?: number | string | null
   seats_sold: number | string | null
   class_sales: number | string | null
   fee_sales: number | string | null
@@ -248,9 +248,9 @@ export async function getOperationsDashboard(
 
   const dailyQuery = addStudioFilter(
     supabase
-      .from("pts_operations_daily")
+      .from("pts_daily_operations_reporting")
       .select(
-        "studio_id,report_date,class_event_count,seats_sold,capacity,class_sales,fee_sales,product_sales,food_and_beverage_sales,other_product_sales,unmapped_product_sales,total_sales"
+        "studio_id,report_date,class_event_count,seats_sold,capacity:class_reported_capacity,class_sales,fee_sales:class_reported_fee_sales,product_sales:other_product_sales,food_and_beverage_sales,other_product_sales:detailed_other_product_sales,unmapped_product_sales,total_sales:net_sales"
       )
       .gte("report_date", periodStart)
       .lte("report_date", periodEnd),
@@ -258,7 +258,7 @@ export async function getOperationsDashboard(
   )
   const foodBeverageQuery = addStudioFilter(
     supabase
-      .from("pts_product_sales_daily_reporting")
+      .from("pts_product_sales_reporting")
       .select(
         "report_date,product_group,department,subcategory,item_name,quantity,net_sales"
       )
@@ -269,17 +269,17 @@ export async function getOperationsDashboard(
   )
   const classTypesQuery = addStudioFilter(
     supabase
-      .from("pts_class_type_sales_daily_reporting")
+      .from("pts_class_sales_reporting")
       .select(
-        "reporting_class_type,class_event_count,seats_sold,class_sales,fee_sales"
+        "reporting_class_type,seats_sold,class_sales,fee_sales"
       )
-      .gte("report_date", periodStart)
-      .lte("report_date", periodEnd),
+      .gte("event_date", periodStart)
+      .lte("event_date", periodEnd),
     studioId
   )
   const candlesQuery = addStudioFilter(
     supabase
-      .from("pts_product_sales_daily_reporting")
+      .from("pts_product_sales_reporting")
       .select("report_date,product_group,department,subcategory,item_name,quantity,net_sales")
       .eq("product_group", "Candles")
       .gte("report_date", periodStart)
@@ -288,7 +288,7 @@ export async function getOperationsDashboard(
   )
   const foodQuery = addStudioFilter(
     supabase
-      .from("pts_product_sales_daily_reporting")
+      .from("pts_product_sales_reporting")
       .select(
         "report_date,product_group,department,subcategory,item_name,quantity,net_sales"
       )
@@ -299,7 +299,7 @@ export async function getOperationsDashboard(
   )
   const artSuppliesQuery = addStudioFilter(
     supabase
-      .from("pts_product_sales_daily_reporting")
+      .from("pts_product_sales_reporting")
       .select(
         "report_date,product_group,department,subcategory,item_name,quantity,net_sales"
       )
@@ -333,7 +333,7 @@ export async function getOperationsDashboard(
       candlesQuery.order("report_date").range(0, 4999),
       foodQuery.order("report_date").range(0, 4999),
       artSuppliesQuery.order("report_date").range(0, 4999),
-      classTypesQuery.order("report_date").range(0, 4999),
+      classTypesQuery.order("event_date").range(0, 4999),
       classLeadTimeQuery.range(0, 4999),
     ])
 
@@ -518,7 +518,9 @@ export async function getOperationsDashboard(
       classSales: 0,
       feeSales: 0,
     }
-    group.events += numberValue(row.class_event_count)
+    group.events += row.class_event_count === undefined
+      ? 1
+      : numberValue(row.class_event_count)
     group.seatsSold += numberValue(row.seats_sold)
     group.classSales += numberValue(row.class_sales)
     group.feeSales += numberValue(row.fee_sales)
@@ -676,8 +678,8 @@ export async function getDailyOperatingDetail(
     studiosQuery = studiosQuery.eq("id", studioId)
   }
   let operationsQuery = supabase
-    .from("pts_operations_daily")
-    .select("studio_id,seats_sold,food_and_beverage_sales,total_sales")
+    .from("pts_daily_operations_reporting")
+    .select("studio_id,seats_sold,food_and_beverage_sales,total_sales:net_sales")
     .eq("report_date", date)
   if (studioId) operationsQuery = operationsQuery.eq("studio_id", studioId)
 
@@ -793,7 +795,7 @@ async function getProductGroupSalesDetail(
   endDate: string
 ): Promise<CandleSalesDetailData> {
   let productsQuery = supabase
-    .from("pts_product_sales_daily_reporting")
+    .from("pts_product_sales_reporting")
     .select("studio_id,report_date,item_name,subcategory,quantity,net_sales")
     .eq("product_group", productGroup)
     .gte("report_date", startDate)

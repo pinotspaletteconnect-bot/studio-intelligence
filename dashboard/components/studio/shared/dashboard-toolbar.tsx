@@ -41,8 +41,9 @@ export function DashboardToolbar({
     customStart <= customEnd &&
     customEnd <= yesterday
 
-  const chooseRange = (value: string) => {
-    const preset = value as DateRangePreset
+  const chooseRange = (preset: DateRangePreset | null) => {
+    if (!preset) return
+
     setRangeMode(preset)
 
     if (preset !== "custom") {

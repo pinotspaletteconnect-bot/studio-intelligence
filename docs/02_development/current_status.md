@@ -126,6 +126,11 @@ Implemented foundation:
   seats sold, class sales, daily trends, studio-level F&B share on the portfolio
   KPI card, and expandable F&B
   subcategory/item detail
+- Operations summary and product drill-downs consume the production reporting
+  views fed by workflows 05–07 (`pts_daily_operations_reporting`,
+  `pts_product_sales_reporting`, and `pts_class_sales_reporting`). The dormant
+  range-load facts remain available for reconciliation but are no longer the
+  dashboard's active source.
 - Daily Operating Detail drill-down for a selected studio and date, with an
   event-level class grid covering painting, time, governed and source class
   type, room, attendance, capacity, lead time, and sales. Portfolio selection
@@ -166,11 +171,10 @@ Known incomplete surfaces:
   omitted the legacy `reportDate` field required by its validation node. The
   collector response now restores `reportDate` while retaining `fromDate` and
   `toDate`; deployment and a controlled workflow rerun remain pending.
-- The range-export replacement is implemented in code and Supabase. Product
-  Sales accepts date ranges, and the Operations service targets the new
-  reporting views. Production workflow loading and one-week Short North
-  reconciliation must complete before the dashboard deployment switches away
-  from the existing populated facts.
+- The range-export replacement remains implemented in Supabase for controlled
+  reconciliation, but its daily production loading is not active. Do not point
+  dashboards back to it until an all-studio daily load and reconciliation are
+  validated.
 - Reciprocal benchmark storage and CPC display behavior are prepared, but the
   owner-facing participation control must remain unavailable until login and
   organization-role authorization are implemented.

@@ -158,6 +158,10 @@ This project follows a milestone-based changelog rather than tracking every indi
 
 ## Changed
 
+- Reconnected Operations summary, class-type metrics, and product drill-downs
+  to the reporting views refreshed by production workflows 05–07. The dormant
+  range-load tables remain available for reconciliation but no longer freeze
+  the live dashboard at July 28.
 - Restored the legacy `reportDate` field in Product Sales collector responses
   so production workflow 06 remains compatible with the newer range-enabled
   `fromDate` and `toDate` contract.

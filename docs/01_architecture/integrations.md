@@ -155,8 +155,8 @@ Planned scope includes profile insights, reviews, search visibility, and custome
   `pts_non_class_sales_items`
 - **Range-load replacement:** `pts_class_type_sales_daily` and
   `pts_product_sales_daily`, exposed through `pts_operations_daily`. The
-  original facts remain available during controlled reconciliation and
-  rollback.
+  original production facts remain the active dashboard source; the range
+  model remains available for controlled reconciliation only.
 - **Class-event grain:** the Class Sales Summary export is collected in
   seven-day source windows and the daily workflow refreshes the prior 14
   completed event days. Rows use a stable event key and preserve the source
