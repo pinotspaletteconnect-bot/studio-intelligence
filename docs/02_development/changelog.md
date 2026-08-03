@@ -10,6 +10,8 @@ This project follows a milestone-based changelog rather than tracking every indi
 
 ## Added
 
+- Added the first Executive Performance dashboard, combining trusted Operations and Marketing service contracts into headline KPIs, comparison deltas, studio performance, revenue mix, and paid-platform summaries.
+
 - Replaced the nested template UI on `/dashboard` with a shell-consistent
   reporting-area landing page. Financial and Customers remain available as
   routes but are hidden from sidebar navigation until those reporting domains
