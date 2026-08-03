@@ -11,9 +11,9 @@ This project follows a milestone-based changelog rather than tracking every indi
 ## Added
 
 - Added a dedicated Operations Year-over-Year Period Comparison page with a
-  selected-period date control and collapsible studio groups. Every metric card
-  emphasizes the current year, shows the same period for the two prior years,
-  and includes a current-versus-prior-year delta. Detailed cards cover liquor,
+  selected-period date control and a compact studio-row table. Every metric
+  cell emphasizes the current year, shows the same period for the two prior
+  years, and includes a current-versus-prior-year delta. Columns cover liquor,
   wine, beer, food, candles, art supplies, other Product Sales groups, governed
   class-type revenue, seats, capacity, per-seat performance, and lead time.
 

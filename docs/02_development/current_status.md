@@ -137,8 +137,8 @@ Implemented foundation:
   explicitly selected custom comparison range.
 - A dedicated Operations Year-over-Year Period Comparison page defaults to the
   most recently completed Mondayâ€“Sunday week and supports month, rolling, and
-  custom date ranges. Studios are collapsible groups of metric cards; every
-  card emphasizes the current-year value, shows the same period for the prior
+  custom date ranges. A compact horizontal table groups metrics by studio; each
+  cell emphasizes the current-year value, shows the same period for the prior
   two years, and displays the current-versus-prior-year delta. Weekly periods
   remain weekday-aligned, while other ranges retain matching calendar dates.
 - Operations summary combines the preserved range-load history with the

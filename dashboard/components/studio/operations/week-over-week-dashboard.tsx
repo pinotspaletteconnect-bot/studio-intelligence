@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import { ChevronDown, TrendingDown, TrendingUp } from "lucide-react"
+import { TrendingDown, TrendingUp } from "lucide-react"
 
 import { DashboardToolbar } from "@/components/studio/shared/dashboard-toolbar"
 import { Card, CardContent } from "@/components/ui/card"
@@ -80,7 +80,7 @@ function priorYearRange(range: AppliedDateRange, yearsBack: number): AppliedDate
   }
 }
 
-function MetricCard({ metric, periods }: { metric: Metric; periods: PeriodResult[] }) {
+function ThreeYearValue({ metric, periods }: { metric: Metric; periods: PeriodResult[] }) {
   const [current, previous, older] = periods
   const currentValue = current.data.kpis[metric.key]
   const previousValue = previous.data.kpis[metric.key]
@@ -88,25 +88,15 @@ function MetricCard({ metric, periods }: { metric: Metric; periods: PeriodResult
   const positive = currentValue >= previousValue
   const Icon = positive ? TrendingUp : TrendingDown
 
-  return (
-    <Card>
-      <CardContent className="pt-6">
-        <p className="text-sm text-muted-foreground">{metric.label}</p>
-        <p className="mt-2 text-2xl font-semibold tabular-nums text-foreground">
-          <span className="mr-2 text-sm font-medium">{current.year}</span>
-          {formatValue(currentValue, metric.format)}
-        </p>
-        <div className="mt-3 space-y-1 text-sm tabular-nums text-muted-foreground">
-          <p>{previous.year} {formatValue(previousValue, metric.format)}</p>
-          <p>{older.year} {formatValue(older.data.kpis[metric.key], metric.format)}</p>
-        </div>
-        <div className={`mt-3 flex items-center gap-1 text-xs font-medium ${positive ? "text-emerald-700" : "text-red-700"}`}>
-          <Icon className="size-3.5" />
-          {delta === null ? "New vs prior year" : `${Math.abs(delta).toFixed(1)}% ${positive ? "up" : "down"} vs ${previous.year}`}
-        </div>
-      </CardContent>
-    </Card>
-  )
+  return <div className="min-w-32 text-right tabular-nums">
+    <div className="font-semibold text-foreground"><span className="mr-1.5 text-xs font-medium">{current.year}</span>{formatValue(currentValue, metric.format)}</div>
+    <div className="mt-1 text-xs text-muted-foreground">{previous.year} {formatValue(previousValue, metric.format)}</div>
+    <div className="text-xs text-muted-foreground">{older.year} {formatValue(older.data.kpis[metric.key], metric.format)}</div>
+    <div className={`mt-1 flex items-center justify-end gap-1 text-xs font-medium ${positive ? "text-emerald-700" : "text-red-700"}`}>
+      <Icon className="size-3" />
+      {delta === null ? "New" : `${Math.abs(delta).toFixed(1)}% ${positive ? "up" : "down"}`}
+    </div>
+  </div>
 }
 
 export function WeekOverWeekDashboard() {
@@ -168,19 +158,19 @@ export function WeekOverWeekDashboard() {
         subtitle="Choose one operating period and compare the same week or calendar dates across three years."
         defaultPreset="lastWeek"
       />
-      {loading && <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{metrics.slice(0, 8).map((metric) => <Skeleton key={metric.key} className="h-40 rounded-xl" />)}</div>}
+      {loading && <Skeleton className="h-96 rounded-xl" />}
       {error && <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">{error}</CardContent></Card>}
-      {!loading && !error && studioResults.map((studio) => (
-        <details key={studio.studioId} open className="group rounded-xl border bg-card">
-          <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4">
-            <div><h2 className="text-xl font-semibold">{studio.studioName}</h2><p className="text-sm text-muted-foreground">{studio.periods.map((period) => period.year).join(" · ")}</p></div>
-            <ChevronDown className="size-5 text-muted-foreground transition-transform group-open:rotate-180" />
-          </summary>
-          <div className="grid gap-4 border-t p-4 sm:grid-cols-2 xl:grid-cols-4">
-            {metrics.map((metric) => <MetricCard key={metric.key} metric={metric} periods={studio.periods} />)}
+      {!loading && !error && <Card>
+        <CardContent className="pt-6">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[3900px] text-sm">
+              <thead><tr className="border-b text-xs text-muted-foreground"><th className="sticky left-0 z-10 bg-card px-3 py-3 text-left font-medium">Studio</th>{metrics.map((metric) => <th key={metric.key} className="px-3 py-3 text-right font-medium">{metric.label}</th>)}</tr></thead>
+              <tbody>{studioResults.map((studio) => <tr key={studio.studioId} className="border-b align-top last:border-0"><td className="sticky left-0 z-10 bg-card px-3 py-4 text-base font-semibold">{studio.studioName}</td>{metrics.map((metric) => <td key={metric.key} className="px-3 py-4"><ThreeYearValue metric={metric} periods={studio.periods} /></td>)}</tr>)}</tbody>
+            </table>
           </div>
-        </details>
-      ))}
+          <p className="mt-3 text-xs text-muted-foreground">Scroll horizontally to review all operating categories. The studio name remains pinned.</p>
+        </CardContent>
+      </Card>}
     </div>
   )
 }
