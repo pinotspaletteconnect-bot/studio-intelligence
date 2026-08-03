@@ -196,6 +196,10 @@ async function selectStudio(page, studio) {
     }
 }
 
+function productGrid(page) {
+    return page.locator("#griddDetailsData");
+}
+
 async function runReport(page, fromDate, toDate) {
     const from = displayDate(fromDate);
     const to = displayDate(toDate);
@@ -212,11 +216,13 @@ async function runReport(page, fromDate, toDate) {
     await page.getByRole("button", { name: "Run", exact: true }).click();
     await navigation;
 
-    await page.locator(".k-grid").nth(0).waitFor({ state: "attached" });
-    await page.locator(".k-grid-excel").nth(0).waitFor({ state: "attached" });
+    await productGrid(page).waitFor({ state: "visible" });
+    await productGrid(page)
+        .locator(".k-grid-excel")
+        .waitFor({ state: "visible" });
     await page.waitForFunction(
         () => {
-            const gridElement = document.querySelector(".k-grid");
+            const gridElement = document.querySelector("#griddDetailsData");
             const grid = globalThis.jQuery?.(gridElement).data("kendoGrid");
             const dataSource = grid?.dataSource;
 
@@ -233,7 +239,8 @@ async function runReport(page, fromDate, toDate) {
 }
 
 async function downloadProductWorkbook(page, folder, studio, fromDate, toDate) {
-    const excelButton = page.locator(".k-grid-excel").nth(0);
+    const grid = productGrid(page);
+    const excelButton = grid.locator(".k-grid-excel");
 
     const waitForDownload = () =>
         page.waitForEvent("download", { timeout: 90000 });
@@ -248,7 +255,7 @@ async function downloadProductWorkbook(page, folder, studio, fromDate, toDate) {
         try {
             [download] = await Promise.all([
                 waitForDownload(),
-                page.locator(".k-grid").nth(0).evaluate(gridElement => {
+                grid.evaluate(gridElement => {
                     const grid = globalThis.jQuery?.(gridElement).data("kendoGrid");
 
                     if (!grid?.saveAsExcel) {
