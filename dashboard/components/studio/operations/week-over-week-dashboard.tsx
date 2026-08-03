@@ -17,6 +17,7 @@ type StudioResult = { studioId: number; studioName: string; periods: PeriodResul
 
 const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })
 const decimalCurrency = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const shortDate = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" })
 
 const operatingMetrics: Metric[] = [
   { key: "totalSales", label: "Total sales", format: "currency" },
@@ -61,6 +62,12 @@ function formatValue(value: number, format: Metric["format"]) {
   return value.toLocaleString(undefined, { maximumFractionDigits: 1 })
 }
 
+function formatRange(range: AppliedDateRange) {
+  const start = shortDate.format(new Date(`${range.startDate}T00:00:00Z`))
+  const end = shortDate.format(new Date(`${range.endDate}T00:00:00Z`))
+  return `${start} - ${end}`
+}
+
 function shiftDays(value: string, days: number) {
   const date = new Date(`${value}T12:00:00Z`)
   date.setUTCDate(date.getUTCDate() + days)
@@ -93,8 +100,11 @@ function ThreeYearValue({ metric, periods }: { metric: Metric; periods: PeriodRe
 
   return <div className="min-w-32 text-right tabular-nums">
     <div className="font-semibold text-foreground"><span className="mr-1.5 text-xs font-medium">{current.year}</span>{formatValue(currentValue, metric.format)}</div>
+    <div className="text-[11px] text-muted-foreground">{formatRange(current.range)}</div>
     <div className="mt-1 text-xs text-muted-foreground">{previous.year} {formatValue(previousValue, metric.format)}</div>
-    <div className="text-xs text-muted-foreground">{older.year} {formatValue(older.data.kpis[metric.key], metric.format)}</div>
+    <div className="text-[11px] text-muted-foreground">{formatRange(previous.range)}</div>
+    <div className="mt-1 text-xs text-muted-foreground">{older.year} {formatValue(older.data.kpis[metric.key], metric.format)}</div>
+    <div className="text-[11px] text-muted-foreground">{formatRange(older.range)}</div>
     <div className={`mt-1 flex items-center justify-end gap-1 text-xs font-medium ${positive ? "text-emerald-700" : "text-red-700"}`}>
       <Icon className="size-3" />
       {delta === null ? "New" : `${Math.abs(delta).toFixed(1)}% ${positive ? "up" : "down"}`}
