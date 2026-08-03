@@ -63,6 +63,21 @@ export type OperationsDashboardData = {
     artSuppliesQuantity: number
     foodSales: number
     foodQuantity: number
+    liquorSales: number
+    wineSales: number
+    beerSales: number
+    miscDrinksSales: number
+    alcoholSpecialSales: number
+    recordedVideosSales: number
+    framesSales: number
+    thpkSales: number
+    miscProductSales: number
+    regularSales: number
+    littleBrushesSales: number
+    paintItForwardSales: number
+    privatePartySales: number
+    mobileEventSales: number
+    noClassSales: number
     merchandiseSales: number
     seatsSold: number
     revenuePerSeat: number
@@ -562,6 +577,10 @@ export async function getOperationsDashboard(
     (sum, row) => sum + numberValue(row.quantity),
     0
   )
+  const productGroupSales = (name: string) => allProductRows
+    .filter((row) => row.product_group?.trim().toLowerCase() === name.toLowerCase())
+    .filter((row) => numberValue(row.net_sales) !== 0 || !/pre[\s-]*order/.test([row.subcategory, row.item_name].filter(Boolean).join(" ").toLowerCase()))
+    .reduce((sum, row) => sum + numberValue(row.net_sales), 0)
 
   for (const row of productRows) {
     if (row.department !== "Food & Beverage") continue
@@ -707,6 +726,21 @@ export async function getOperationsDashboard(
       artSuppliesQuantity,
       foodSales,
       foodQuantity,
+      liquorSales: productGroupSales("Liquor"),
+      wineSales: productGroupSales("Wine"),
+      beerSales: productGroupSales("Beer"),
+      miscDrinksSales: productGroupSales("Misc Drinks"),
+      alcoholSpecialSales: productGroupSales("Alcohol Special"),
+      recordedVideosSales: productGroupSales("Recorded Videos"),
+      framesSales: productGroupSales("Frames"),
+      thpkSales: productGroupSales("THPK"),
+      miscProductSales: productGroupSales("Misc"),
+      regularSales: (classTypeMap.get("Regular")?.classSales ?? 0) + (classTypeMap.get("Regular")?.feeSales ?? 0),
+      littleBrushesSales: (classTypeMap.get("Little Brushes")?.classSales ?? 0) + (classTypeMap.get("Little Brushes")?.feeSales ?? 0),
+      paintItForwardSales: (classTypeMap.get("Paint it Forward")?.classSales ?? 0) + (classTypeMap.get("Paint it Forward")?.feeSales ?? 0),
+      privatePartySales: (privateParty?.classSales ?? 0) + (privateParty?.feeSales ?? 0),
+      mobileEventSales: (mobileEvents?.classSales ?? 0) + (mobileEvents?.feeSales ?? 0),
+      noClassSales: (classTypeMap.get("No Class")?.classSales ?? 0) + (classTypeMap.get("No Class")?.feeSales ?? 0),
       foodBeverageShare: totals.totalSales
         ? (totals.foodBeverageSales / totals.totalSales) * 100
         : 0,

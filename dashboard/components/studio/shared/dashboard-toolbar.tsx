@@ -24,12 +24,14 @@ type DashboardToolbarProps = {
   title: string
   subtitle: string
   showComparison?: boolean
+  defaultPreset?: DateRangePreset
 }
 
 export function DashboardToolbar({
   title,
   subtitle,
   showComparison = false,
+  defaultPreset,
 }: DashboardToolbarProps) {
   const {
     comparison,
@@ -41,7 +43,7 @@ export function DashboardToolbar({
     setDateRangePreset,
   } = useApp()
   const [rangeMode, setRangeMode] = useState<DateRangePreset>(
-    dateRange.preset
+    defaultPreset ?? dateRange.preset
   )
   const [customStart, setCustomStart] = useState(dateRange.startDate)
   const [customEnd, setCustomEnd] = useState(dateRange.endDate)
