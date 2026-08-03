@@ -192,6 +192,10 @@ Known incomplete surfaces:
   omitted the legacy `reportDate` field required by its validation node. The
   collector response now restores `reportDate` while retaining `fromDate` and
   `toDate`; deployment and a controlled workflow rerun remain pending.
+- Workflow 06 also exposed a PTS Run-navigation race that could click Excel on
+  the pre-run grid and wait five minutes for a download that would never fire.
+  The collector now waits for completed navigation and Kendo loading, retries
+  export through the grid API, and reports the failing studio code.
 - The range-export replacement remains implemented in Supabase for controlled
   reconciliation, but its daily production loading is not active. Do not point
   dashboards back to it until an all-studio daily load and reconciliation are

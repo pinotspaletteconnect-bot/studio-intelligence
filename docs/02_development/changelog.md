@@ -179,6 +179,13 @@ This project follows a milestone-based changelog rather than tracking every indi
   selected studio and period have no MNTN data; CPC remains limited to
   click-based platforms while MNTN reports CPM and modeled ROAS.
 
+## Fixed
+
+- Fixed a Product Sales collector race where workflow 06 could export the
+  report's pre-run grid after giving up on PTS navigation after 10 seconds. The
+  collector now waits for completed navigation and Kendo data loading, retries
+  Excel export through the grid API, and identifies the failing studio.
+
 ## Changed
 
 - Restored complete historical Operations product reporting by merging
