@@ -8,6 +8,9 @@ const {
     runPtsClassSalesReport,
     runPtsSalesReport
 } = require("../scripts/pts/salesReport");
+const {
+    runPtsReservationsReport
+} = require("../scripts/pts/reservationsReport");
 
 const router = express.Router();
 
@@ -131,6 +134,28 @@ router.post("/class-sales-report", requireCollectorAuth, async (req, res) => {
             success: false,
             error: error.message
         });
+    }
+});
+
+router.post("/reservations-report", requireCollectorAuth, async (req, res) => {
+    try {
+        const results = await runPtsReservationsReport({
+            orderDate: req.body?.orderDate,
+            classFromDate: req.body?.classFromDate,
+            classToDate: req.body?.classToDate,
+            studioCodes: req.body?.studioCodes
+        });
+
+        res.json({
+            success: true,
+            orderDate: req.body.orderDate,
+            studioCount: results.length,
+            rowCount: results.reduce((total, result) => total + result.rowCount, 0),
+            results
+        });
+    } catch (error) {
+        console.error("PTS Reservations Report failed:", error.message);
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 
