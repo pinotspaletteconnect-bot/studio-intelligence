@@ -111,6 +111,30 @@ export type OperationsDashboardData = {
   }>
 }
 
+export type WeeklyOperationsHistoryData = {
+  years: number[]
+  rows: Array<{
+    studioId: number
+    studioName: string
+    weekStart: string
+    weekEnd: string
+    totalSales: number
+    classSales: number
+    foodBeverageSales: number
+    foodBeverageShare: number
+    merchandiseSales: number
+    seatsSold: number
+    attendancePercent: number
+    foodBeveragePerSeat: number
+    revenuePerSeat: number
+    averageLeadTime: number
+    privatePartyEvents: number
+    mobileEventCount: number
+    candleSales: number
+    artSuppliesSales: number
+  }>
+}
+
 type ClassDetailRow = {
   id: number
   studio_id: number
@@ -250,7 +274,7 @@ async function getPagedProductRows(
   const pageSize = 1000
   const rows: ProductRow[] = []
 
-  for (let page = 0; page < 20; page += 1) {
+  for (let page = 0; page < 100; page += 1) {
     const from = page * pageSize
     const query = addStudioFilter(
       supabase
@@ -273,7 +297,7 @@ async function getPagedProductRows(
     if (pageRows.length < pageSize) return rows
   }
 
-  throw new Error("PTS product query exceeded the 20,000-row safety limit")
+  throw new Error("PTS product query exceeded the 100,000-row safety limit")
 }
 
 export async function getOperationsDashboard(
@@ -812,6 +836,127 @@ export async function getOperationsDashboardWithComparison(
       changes,
     },
   }
+}
+
+const mondayForIsoDate = (value: string) => {
+  const date = new Date(`${value}T00:00:00Z`)
+  const offset = (date.getUTCDay() + 6) % 7
+  date.setUTCDate(date.getUTCDate() - offset)
+  return date.toISOString().slice(0, 10)
+}
+
+export async function getWeeklyOperationsHistory(): Promise<WeeklyOperationsHistoryData> {
+  const [currentResult, historicalResult, studiosResult] = await Promise.all([
+    supabase.from("pts_daily_operations_reporting").select(
+      "studio_id,report_date,class_event_count,seats_sold:class_reported_seats_sold,capacity:class_reported_capacity,class_sales:class_reported_class_sales,fee_sales:class_reported_fee_sales,product_sales:class_reported_product_sales,food_and_beverage_sales,other_product_sales:detailed_other_product_sales,unmapped_product_sales,total_sales:class_reported_net_sales"
+    ).order("report_date").range(0, 9999),
+    supabase.from("pts_operations_daily").select(
+      "studio_id,report_date,class_event_count,seats_sold,capacity,class_sales,fee_sales,product_sales,food_and_beverage_sales,other_product_sales,unmapped_product_sales,total_sales"
+    ).order("report_date").range(0, 9999),
+    supabase.from("studios").select("id,studio_name").eq("active", true),
+  ])
+  if (currentResult.error) throw currentResult.error
+  if (historicalResult.error) throw historicalResult.error
+  if (studiosResult.error) throw studiosResult.error
+
+  const dailyByStudioDate = new Map<string, DailyOperationsRow>()
+  for (const row of (historicalResult.data ?? []) as DailyOperationsRow[]) dailyByStudioDate.set(`${row.studio_id}:${row.report_date}`, row)
+  for (const row of (currentResult.data ?? []) as DailyOperationsRow[]) dailyByStudioDate.set(`${row.studio_id}:${row.report_date}`, row)
+  const dailyRows = [...dailyByStudioDate.values()]
+  if (!dailyRows.length) return { years: [], rows: [] }
+
+  const startDate = dailyRows.reduce((min, row) => row.report_date < min ? row.report_date : min, dailyRows[0].report_date)
+  const endDate = dailyRows.reduce((max, row) => row.report_date > max ? row.report_date : max, dailyRows[0].report_date)
+  const [currentProducts, historicalProducts] = await Promise.all([
+    getPagedProductRows("pts_product_sales_reporting", startDate, endDate),
+    getPagedProductRows("pts_product_sales_daily_reporting", startDate, endDate),
+  ])
+  const currentProductDates = new Set(currentProducts.map((row) => `${row.studio_id}:${row.report_date}`))
+  const productRows = [...historicalProducts.filter((row) => !currentProductDates.has(`${row.studio_id}:${row.report_date}`)), ...currentProducts]
+
+  type HistoryClassRow = ClassLeadTimeRow & { studio_id: number; event_date: string; reporting_class_type: string }
+  const classRows: HistoryClassRow[] = []
+  for (let from = 0; from < 50000; from += 5000) {
+    const result = await supabase.from("pts_class_sales_reporting").select(
+      "studio_id,event_date,reporting_class_type,seats_sold,lead_time_average"
+    ).gte("event_date", startDate).lte("event_date", endDate).order("event_date").range(from, from + 4999)
+    if (result.error) throw result.error
+    const page = (result.data ?? []) as HistoryClassRow[]
+    classRows.push(...page)
+    if (page.length < 5000) break
+  }
+
+  type WeeklyAccumulator = WeeklyOperationsHistoryData["rows"][number] & { capacity: number; leadWeightedDays: number; leadSeats: number }
+  const weeks = new Map<string, WeeklyAccumulator>()
+  const studioNames = new Map((studiosResult.data ?? []).map((studio) => [studio.id, studio.studio_name]))
+  const ensureWeek = (studioId: number, date: string) => {
+    const weekStart = mondayForIsoDate(date)
+    const key = `${studioId}:${weekStart}`
+    const existing = weeks.get(key)
+    if (existing) return existing
+    const weekEnd = shiftIsoDate(weekStart, 6)
+    const row: WeeklyAccumulator = {
+      studioId, studioName: studioNames.get(studioId) ?? `Studio ${studioId}`, weekStart, weekEnd,
+      totalSales: 0, classSales: 0, foodBeverageSales: 0, foodBeverageShare: 0,
+      merchandiseSales: 0, seatsSold: 0, attendancePercent: 0,
+      foodBeveragePerSeat: 0, revenuePerSeat: 0, averageLeadTime: 0,
+      privatePartyEvents: 0, mobileEventCount: 0, candleSales: 0,
+      artSuppliesSales: 0, capacity: 0, leadWeightedDays: 0, leadSeats: 0,
+    }
+    weeks.set(key, row)
+    return row
+  }
+
+  const sourceFoodByDate = new Map<string, number>()
+  for (const row of dailyRows) {
+    const week = ensureWeek(row.studio_id, row.report_date)
+    week.totalSales += numberValue(row.total_sales)
+    week.classSales += numberValue(row.class_sales)
+    week.foodBeverageSales += numberValue(row.food_and_beverage_sales)
+    week.merchandiseSales += numberValue(row.other_product_sales) + numberValue(row.unmapped_product_sales)
+    week.seatsSold += numberValue(row.seats_sold)
+    week.capacity += numberValue(row.capacity)
+    sourceFoodByDate.set(`${row.studio_id}:${row.report_date}`, numberValue(row.food_and_beverage_sales))
+  }
+
+  const detailedFoodByDate = new Map<string, number>()
+  for (const row of productRows) {
+    const label = [row.product_group, row.subcategory, row.item_name].filter(Boolean).join(" ").toLowerCase()
+    if (numberValue(row.net_sales) === 0 && /pre[\s-]*order/.test(label)) continue
+    const week = ensureWeek(row.studio_id, row.report_date)
+    if (row.department === "Food & Beverage") {
+      const key = `${row.studio_id}:${row.report_date}`
+      detailedFoodByDate.set(key, (detailedFoodByDate.get(key) ?? 0) + numberValue(row.net_sales))
+    }
+    if (row.product_group === "Candles") week.candleSales += numberValue(row.net_sales)
+    if (row.product_group === "Art Supplies") week.artSuppliesSales += numberValue(row.net_sales)
+  }
+  for (const [key, sales] of detailedFoodByDate) {
+    const [studioId, reportDate] = key.split(":")
+    ensureWeek(Number(studioId), reportDate).foodBeverageSales += sales - (sourceFoodByDate.get(key) ?? 0)
+  }
+
+  for (const row of classRows) {
+    const week = ensureWeek(row.studio_id, row.event_date)
+    const seats = numberValue(row.seats_sold)
+    if (row.lead_time_average !== null) {
+      week.leadWeightedDays += numberValue(row.lead_time_average) * seats
+      week.leadSeats += seats
+    }
+    if (row.reporting_class_type === "Private Party") week.privatePartyEvents += 1
+    if (row.reporting_class_type === "Mobile Events") week.mobileEventCount += 1
+  }
+
+  const rows = [...weeks.values()].map(({ capacity, leadWeightedDays, leadSeats, ...row }) => ({
+    ...row,
+    foodBeverageShare: row.totalSales ? row.foodBeverageSales / row.totalSales * 100 : 0,
+    attendancePercent: capacity ? row.seatsSold / capacity * 100 : 0,
+    foodBeveragePerSeat: row.seatsSold ? row.foodBeverageSales / row.seatsSold : 0,
+    revenuePerSeat: row.seatsSold ? row.totalSales / row.seatsSold : 0,
+    averageLeadTime: leadSeats ? leadWeightedDays / leadSeats : 0,
+  })).sort((a, b) => b.weekStart.localeCompare(a.weekStart) || a.studioName.localeCompare(b.studioName))
+
+  return { years: [...new Set(rows.map((row) => Number(row.weekStart.slice(0, 4))))].sort(), rows }
 }
 
 export async function getDailyOperatingDetail(

@@ -137,8 +137,10 @@ Implemented foundation:
   explicitly selected custom comparison range.
 - A dedicated Week-over-Week Operations page compares the most recently
   completed Mondayâ€“Sunday week with the prior Mondayâ€“Sunday week. It includes
-  portfolio KPI cards and a studio table covering sales mix, seats, capacity,
-  per-seat metrics, lead time, event types, candles, and art supplies.
+  portfolio KPI cards and an all-history studio/week ledger covering sales mix,
+  seats, capacity, per-seat metrics, lead time, event types, candles, and art
+  supplies. The ledger currently spans every warehouse year, including 2024,
+  2025, and 2026 where data is present.
 - Operations summary combines the preserved range-load history with the
   reporting views fed by workflows 05–07. Current production rows take
   precedence by studio/date on overlap. Product queries explicitly paginate
