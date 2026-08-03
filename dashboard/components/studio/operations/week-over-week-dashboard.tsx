@@ -49,7 +49,6 @@ const productMetrics: Metric[] = [
   { key: "artSuppliesSales", label: "Art supplies", format: "currency" },
   { key: "recordedVideosSales", label: "Recorded videos", format: "currency" },
   { key: "framesSales", label: "Frames", format: "currency" },
-  { key: "thpkSales", label: "THPK", format: "currency" },
   { key: "miscProductSales", label: "Misc product", format: "currency" },
 ]
 
