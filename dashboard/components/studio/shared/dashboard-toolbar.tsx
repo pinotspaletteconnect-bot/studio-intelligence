@@ -23,23 +23,43 @@ import {
 type DashboardToolbarProps = {
   title: string
   subtitle: string
+  showComparison?: boolean
 }
 
 export function DashboardToolbar({
   title,
   subtitle,
+  showComparison = false,
 }: DashboardToolbarProps) {
-  const { dateRange, setCustomDateRange, setDateRangePreset } = useApp()
+  const {
+    comparison,
+    comparisonDateRange,
+    dateRange,
+    setComparison,
+    setCustomComparisonRange,
+    setCustomDateRange,
+    setDateRangePreset,
+  } = useApp()
   const [rangeMode, setRangeMode] = useState<DateRangePreset>(
     dateRange.preset
   )
   const [customStart, setCustomStart] = useState(dateRange.startDate)
   const [customEnd, setCustomEnd] = useState(dateRange.endDate)
+  const [comparisonStart, setComparisonStart] = useState(
+    comparisonDateRange?.startDate ?? dateRange.startDate
+  )
+  const [comparisonEnd, setComparisonEnd] = useState(
+    comparisonDateRange?.endDate ?? dateRange.endDate
+  )
   const yesterday = getCompletedDateRange("7d").endDate
   const customIsValid =
     Boolean(customStart && customEnd) &&
     customStart <= customEnd &&
     customEnd <= yesterday
+  const comparisonIsValid =
+    Boolean(comparisonStart && comparisonEnd) &&
+    comparisonStart <= comparisonEnd &&
+    comparisonEnd <= yesterday
 
   const chooseRange = (preset: DateRangePreset | null) => {
     if (!preset) return
@@ -75,6 +95,10 @@ export function DashboardToolbar({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="7d">Last 7 completed days</SelectItem>
+              <SelectItem value="thisWeek">This week (Mon–Sun)</SelectItem>
+              <SelectItem value="lastWeek">Last week (Mon–Sun)</SelectItem>
+              <SelectItem value="mtd">Month to date</SelectItem>
+              <SelectItem value="lastMonth">Last complete month</SelectItem>
               <SelectItem value="30d">Last 30 completed days</SelectItem>
               <SelectItem value="90d">Last 90 completed days</SelectItem>
               <SelectItem value="custom">Custom range</SelectItem>
@@ -107,6 +131,60 @@ export function DashboardToolbar({
                 onClick={() => setCustomDateRange(customStart, customEnd)}
               >
                 Apply
+              </Button>
+            </>
+          )}
+
+          {showComparison && (
+            <Select
+              value={comparison}
+              onValueChange={(value) =>
+                setComparison(
+                  value as "previous" | "priorYearWeek" | "custom"
+                )
+              }
+            >
+              <SelectTrigger className="w-48" aria-label="Comparison period">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="previous">Previous period</SelectItem>
+                <SelectItem value="priorYearWeek">
+                  Same weekdays last year
+                </SelectItem>
+                <SelectItem value="custom">Custom comparison</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+
+          {showComparison && comparison === "custom" && (
+            <>
+              <Input
+                type="date"
+                value={comparisonStart}
+                max={comparisonEnd || yesterday}
+                onChange={(event) => setComparisonStart(event.target.value)}
+                className="w-[145px]"
+                aria-label="Comparison start date"
+              />
+              <span className="text-sm text-muted-foreground">to</span>
+              <Input
+                type="date"
+                value={comparisonEnd}
+                min={comparisonStart}
+                max={yesterday}
+                onChange={(event) => setComparisonEnd(event.target.value)}
+                className="w-[145px]"
+                aria-label="Comparison end date"
+              />
+              <Button
+                size="sm"
+                disabled={!comparisonIsValid}
+                onClick={() =>
+                  setCustomComparisonRange(comparisonStart, comparisonEnd)
+                }
+              >
+                Compare
               </Button>
             </>
           )}

@@ -41,6 +41,17 @@ type ClassLeadTimeRow = {
 
 export type OperationsDashboardData = {
   period: { startDate: string; endDate: string; days: number }
+  comparison?: {
+    label: string
+    period: { startDate: string; endDate: string }
+    kpis: OperationsDashboardData["kpis"]
+    changes: Partial<
+      Record<
+        keyof OperationsDashboardData["kpis"],
+        { absolute: number; percent: number | null }
+      >
+    >
+  }
   kpis: {
     totalSales: number
     classSales: number
@@ -79,6 +90,8 @@ export type OperationsDashboardData = {
   studioSales: Array<{
     studioId: number
     studioName: string
+    totalSales: number
+    seatsSold: number
     foodBeverageShare: number
     daily: Array<{ date: string; totalSales: number }>
   }>
@@ -277,7 +290,7 @@ export async function getOperationsDashboard(
     supabase
       .from("pts_daily_operations_reporting")
       .select(
-        "studio_id,report_date,class_event_count,seats_sold,capacity:class_reported_capacity,class_sales,fee_sales:class_reported_fee_sales,product_sales:other_product_sales,food_and_beverage_sales,other_product_sales:detailed_other_product_sales,unmapped_product_sales,total_sales:net_sales"
+        "studio_id,report_date,class_event_count,seats_sold:class_reported_seats_sold,capacity:class_reported_capacity,class_sales:class_reported_class_sales,fee_sales:class_reported_fee_sales,product_sales:class_reported_product_sales,food_and_beverage_sales,other_product_sales:detailed_other_product_sales,unmapped_product_sales,total_sales:class_reported_net_sales"
       )
       .gte("report_date", periodStart)
       .lte("report_date", periodEnd),
@@ -432,10 +445,15 @@ export async function getOperationsDashboard(
     OperationsDashboardData["daily"][number] & { capacity: number }
   >()
   const studioDailyMap = new Map<number, Map<string, number>>()
+  const studioTotalsMap = new Map<
+    number,
+    { totalSales: number; seatsSold: number }
+  >()
   const studioFoodBeverageMap = new Map<
     number,
     { foodBeverageSales: number; totalSales: number }
   >()
+  const sourceFoodBeverageByStudioDate = new Map<string, number>()
 
   for (const row of dailyRows) {
     const current = dailyMap.get(row.report_date) ?? {
@@ -467,6 +485,14 @@ export async function getOperationsDashboard(
     )
     studioDailyMap.set(row.studio_id, studioDays)
 
+    const studioTotals = studioTotalsMap.get(row.studio_id) ?? {
+      totalSales: 0,
+      seatsSold: 0,
+    }
+    studioTotals.totalSales += numberValue(row.total_sales)
+    studioTotals.seatsSold += numberValue(row.seats_sold)
+    studioTotalsMap.set(row.studio_id, studioTotals)
+
     const studioFoodBeverage = studioFoodBeverageMap.get(row.studio_id) ?? {
       foodBeverageSales: 0,
       totalSales: 0,
@@ -476,6 +502,36 @@ export async function getOperationsDashboard(
     )
     studioFoodBeverage.totalSales += numberValue(row.total_sales)
     studioFoodBeverageMap.set(row.studio_id, studioFoodBeverage)
+    sourceFoodBeverageByStudioDate.set(
+      `${row.studio_id}:${row.report_date}`,
+      numberValue(row.food_and_beverage_sales)
+    )
+  }
+
+  // Product Sales is the auditable item-level source for F&B. When detail is
+  // available for a studio/date, replace the summary amount so the KPI and
+  // product drill-down reconcile. Preserve the summary fallback when product
+  // detail has not been loaded for that studio/date.
+  const detailedFoodBeverageByStudioDate = new Map<string, number>()
+  for (const row of productRows) {
+    const key = `${row.studio_id}:${row.report_date}`
+    detailedFoodBeverageByStudioDate.set(
+      key,
+      (detailedFoodBeverageByStudioDate.get(key) ?? 0) +
+        numberValue(row.net_sales)
+    )
+  }
+  for (const [key, detailedSales] of detailedFoodBeverageByStudioDate) {
+    const [studioIdText, reportDate] = key.split(":")
+    const currentStudioId = Number(studioIdText)
+    const difference =
+      detailedSales - (sourceFoodBeverageByStudioDate.get(key) ?? 0)
+    const day = dailyMap.get(reportDate)
+    if (day) day.foodBeverageSales += difference
+    const studioFoodBeverage = studioFoodBeverageMap.get(currentStudioId)
+    if (studioFoodBeverage) {
+      studioFoodBeverage.foodBeverageSales += difference
+    }
   }
 
   const foodBeverageMap = new Map<
@@ -614,11 +670,14 @@ export async function getOperationsDashboard(
   const studioSales = [...studioDailyMap.entries()]
     .map(([currentStudioId, studioDays]) => {
       const studioFoodBeverage = studioFoodBeverageMap.get(currentStudioId)
+      const studioTotals = studioTotalsMap.get(currentStudioId)
 
       return {
         studioId: currentStudioId,
         studioName:
           studioNames.get(currentStudioId) ?? `Studio ${currentStudioId}`,
+        totalSales: studioTotals?.totalSales ?? 0,
+        seatsSold: studioTotals?.seatsSold ?? 0,
         foodBeverageShare: studioFoodBeverage?.totalSales
           ? (studioFoodBeverage.foodBeverageSales /
               studioFoodBeverage.totalSales) *
@@ -688,6 +747,73 @@ export async function getOperationsDashboard(
   }
 }
 
+const shiftIsoDate = (value: string, days: number) => {
+  const date = new Date(`${value}T00:00:00Z`)
+  date.setUTCDate(date.getUTCDate() + days)
+  return date.toISOString().slice(0, 10)
+}
+
+export async function getOperationsDashboardWithComparison(
+  studioId?: string,
+  startDate?: string,
+  endDate?: string,
+  comparisonMode: "previous" | "priorYearWeek" | "custom" = "previous",
+  customComparisonStart?: string,
+  customComparisonEnd?: string
+): Promise<OperationsDashboardData> {
+  const current = await getOperationsDashboard(studioId, startDate, endDate)
+  const duration = current.period.days
+  const useCustomComparison =
+    comparisonMode === "custom" &&
+    Boolean(customComparisonStart && customComparisonEnd)
+  const comparisonEnd = useCustomComparison
+    ? customComparisonEnd!
+    : comparisonMode === "priorYearWeek"
+      ? shiftIsoDate(current.period.endDate, -364)
+      : shiftIsoDate(current.period.startDate, -1)
+  const comparisonStart = useCustomComparison
+    ? customComparisonStart!
+    : comparisonMode === "priorYearWeek"
+      ? shiftIsoDate(current.period.startDate, -364)
+      : shiftIsoDate(comparisonEnd, -(duration - 1))
+  const previous = await getOperationsDashboard(
+    studioId,
+    comparisonStart,
+    comparisonEnd
+  )
+  const changes: OperationsDashboardData["comparison"] extends infer T
+    ? T extends { changes: infer C }
+      ? C
+      : never
+    : never = {}
+
+  for (const key of Object.keys(current.kpis) as Array<keyof typeof current.kpis>) {
+    const currentValue = current.kpis[key]
+    const previousValue = previous.kpis[key]
+    changes[key] = {
+      absolute: currentValue - previousValue,
+      percent: previousValue
+        ? ((currentValue - previousValue) / Math.abs(previousValue)) * 100
+        : null,
+    }
+  }
+
+  return {
+    ...current,
+    comparison: {
+      label:
+        useCustomComparison
+          ? "Custom comparison"
+          : comparisonMode === "priorYearWeek"
+          ? "Same weekdays last year"
+          : "Previous period",
+      period: { startDate: comparisonStart, endDate: comparisonEnd },
+      kpis: previous.kpis,
+      changes,
+    },
+  }
+}
+
 export async function getDailyOperatingDetail(
   studioId: number | undefined,
   date: string
@@ -708,7 +834,9 @@ export async function getDailyOperatingDetail(
   }
   let operationsQuery = supabase
     .from("pts_daily_operations_reporting")
-    .select("studio_id,seats_sold,food_and_beverage_sales,total_sales:net_sales")
+    .select(
+      "studio_id,seats_sold:class_reported_seats_sold,food_and_beverage_sales,total_sales:class_reported_net_sales"
+    )
     .eq("report_date", date)
   if (studioId) operationsQuery = operationsQuery.eq("studio_id", studioId)
 

@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 
-import { getOperationsDashboard } from "@/lib/services/operations"
+import { getOperationsDashboardWithComparison } from "@/lib/services/operations"
 
 const querySchema = z.object({
   studioId: z.string().max(100).optional(),
   startDate: z.iso.date().optional(),
   endDate: z.iso.date().optional(),
+  comparison: z.enum(["previous", "priorYearWeek", "custom"]).default("previous"),
+  comparisonStartDate: z.iso.date().optional(),
+  comparisonEndDate: z.iso.date().optional(),
 })
 
 export async function GET(request: NextRequest) {
@@ -23,10 +26,13 @@ export async function GET(request: NextRequest) {
 
   try {
     return NextResponse.json(
-      await getOperationsDashboard(
+      await getOperationsDashboardWithComparison(
         parsed.data.studioId,
         parsed.data.startDate,
-        parsed.data.endDate
+        parsed.data.endDate,
+        parsed.data.comparison,
+        parsed.data.comparisonStartDate,
+        parsed.data.comparisonEndDate
       )
     )
   } catch (error) {

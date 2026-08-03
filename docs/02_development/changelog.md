@@ -10,6 +10,17 @@ This project follows a milestone-based changelog rather than tracking every indi
 
 ## Added
 
+- Added MTD, last-month, and Monday–Sunday week presets plus KPI-card comparison
+  deltas for Operations. Prior-year weekly comparisons shift by 364 days so
+  weekdays remain aligned rather than matching calendar dates. A separate
+  custom comparison range can also be selected explicitly.
+
+- Added studio-level values beneath the portfolio Total Sales and Seats Sold
+  KPI totals on the Operations Performance dashboard.
+
+- Added studio-level modeled ROAS to the MNTN Connected TV dashboard, with each
+  studio's attributed order value and spend shown beside the ratio.
+
 - Converted workflow `10 - PTS Product Sales Backfill` to the same private
   studio-and-Excel upload pattern as Class Sales. The authenticated parser
   removes customer names and retains the existing historical product table,
@@ -178,6 +189,16 @@ This project follows a milestone-based changelog rather than tracking every indi
   mix chart, and platform performance. MNTN reporting is omitted when the
   selected studio and period have no MNTN data; CPC remains limited to
   click-based platforms while MNTN reports CPM and modeled ROAS.
+
+## Fixed
+
+- Corrected Operations and Daily Operating Detail totals to use class-reported
+  seats, class sales, product sales, fees, and net sales. The dashboard had
+  mixed Daily Sales summary totals with Class Sales drill-down rows, producing
+  visible discrepancies such as St. Matthews on July 29.
+- Reconciled the Operations F&B KPI to item-level Product Sales whenever detail
+  exists for a studio/date. Daily summary F&B remains a fallback only for dates
+  without detailed product rows.
 
 ## Changed
 

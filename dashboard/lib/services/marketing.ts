@@ -71,6 +71,7 @@ type EulerityChannelRow = {
 }
 
 type MntnPerformanceRow = {
+  studio_id: number
   advertiser_id: string
   advertiser_name: string
   report_date: string
@@ -179,6 +180,13 @@ export type MarketingDashboard = {
   }>
   mntn: {
     advertisers: Array<{ id: string; name: string }>
+    studios: Array<{
+      id: number
+      name: string
+      spend: number
+      orderValue: number
+      roas: number
+    }>
     spend: number
     impressions: number
     householdsReached: number
@@ -304,12 +312,16 @@ export async function getMarketingDashboard(
     supabase
       .from("mntn_performance_daily")
       .select(
-        "advertiser_id,advertiser_name,report_date,spend,impressions,households_reached,commercials_aired,verified_visits,conversions,order_value,last_touch_visits,last_touch_conversions,last_touch_order_value,retrieved_at"
+        "studio_id,advertiser_id,advertiser_name,report_date,spend,impressions,households_reached,commercials_aired,verified_visits,conversions,order_value,last_touch_visits,last_touch_conversions,last_touch_order_value,retrieved_at"
       )
       .gte("report_date", periodStart)
       .lte("report_date", periodEnd),
     studioId
   )
+  const studiosQuery = supabase
+    .from("studios")
+    .select("id,studio_name")
+    .order("studio_name")
 
   const paidCpcBenchmarkQuery =
     studioId && studioId !== "all"
@@ -329,6 +341,7 @@ export async function getMarketingDashboard(
     { data: metaCampaignData, error: metaCampaignError },
     { data: eulerityChannelData, error: eulerityChannelError },
     { data: mntnData, error: mntnError },
+    { data: studiosData, error: studiosError },
     { data: paidCpcBenchmarkData, error: paidCpcBenchmarkError },
   ] = await Promise.all([
     ga4Query.order("date"),
@@ -339,6 +352,7 @@ export async function getMarketingDashboard(
     metaCampaignQuery.range(0, 4999),
     eulerityChannelQuery.range(0, 4999),
     mntnQuery.range(0, 4999),
+    studiosQuery,
     paidCpcBenchmarkQuery,
   ])
 
@@ -362,6 +376,7 @@ export async function getMarketingDashboard(
   ) {
     throw mntnError
   }
+  if (studiosError) throw studiosError
   if (
     paidCpcBenchmarkError &&
     !["42883", "PGRST202"].includes(paidCpcBenchmarkError.code ?? "")
@@ -697,6 +712,33 @@ export async function getMarketingDashboard(
       ])
     ).values(),
   ].sort((a, b) => a.name.localeCompare(b.name))
+  const studioNames = new Map(
+    (studiosData ?? []).map((studio) => [
+      Number(studio.id),
+      String(studio.studio_name),
+    ])
+  )
+  const mntnStudioTotals = new Map<
+    number,
+    { spend: number; orderValue: number }
+  >()
+  for (const row of mntnRows) {
+    const current = mntnStudioTotals.get(row.studio_id) ?? {
+      spend: 0,
+      orderValue: 0,
+    }
+    current.spend += numberValue(row.spend)
+    current.orderValue += numberValue(row.order_value)
+    mntnStudioTotals.set(row.studio_id, current)
+  }
+  const mntnStudios = [...mntnStudioTotals.entries()]
+    .map(([id, totals]) => ({
+      id,
+      name: studioNames.get(id) ?? `Studio ${id}`,
+      ...totals,
+      roas: totals.spend ? totals.orderValue / totals.spend : 0,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name))
   const latestMntnRetrievedAt =
     mntnRows
       .map((row) => row.retrieved_at)
@@ -815,6 +857,7 @@ export async function getMarketingDashboard(
     eulerityChannels,
     mntn: {
       advertisers: mntnAdvertisers,
+      studios: mntnStudios,
       ...mntnTotals,
       roas: mntnTotals.spend ? mntnTotals.orderValue / mntnTotals.spend : 0,
       cpm: mntnTotals.impressions

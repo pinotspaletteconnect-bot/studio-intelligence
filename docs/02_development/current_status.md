@@ -123,17 +123,29 @@ Implemented foundation:
 - Working 7-, 30-, and 90-day marketing filters
 - Permanent drill-down routes for GA4, Meta Ads, Meta Organic, and Eulerity
 - MNTN Connected TV dashboard card with delivery, modeled attribution,
-  last-touch attribution, CPM, cost per verified visit, and cost per conversion
+  studio-level modeled ROAS, last-touch attribution, CPM, cost per verified
+  visit, and cost per conversion
 - Operations Performance dashboard backed by PTS Daily Sales and Product Sales,
   with completed-day sales, F&B sales/share, revenue per seat, F&B per seat,
-  seats sold, class sales, daily trends, studio-level F&B share on the portfolio
-  KPI card, and expandable F&B
+  seats sold, class sales, daily trends, studio-level total sales, seats sold,
+  and F&B share on the portfolio KPI cards, and expandable F&B
   subcategory/item detail
+- Operations date controls include completed-day rolling ranges, month to date,
+  the last complete month, and calendar weeks aligned Monday through Sunday.
+  KPI cards show absolute and percentage change against either the immediately
+  preceding equal-length period, the same weekdays 364 days earlier, or an
+  explicitly selected custom comparison range.
 - Operations summary combines the preserved range-load history with the
   reporting views fed by workflows 05–07. Current production rows take
   precedence by studio/date on overlap. Product queries explicitly paginate
   Supabase results so F&B, candle, food, and art-supply history is not truncated
   at the API's 1,000-row response limit.
+- Current Operations totals and Daily Operating Detail use the class-reported
+  seats and sales columns from `pts_daily_operations_reporting`, keeping KPI
+  totals consistent with the class-level rows displayed in the drill-down.
+- F&B KPI totals use item-level Product Sales when that studio/date detail is
+  available, falling back to the daily summary only when detail has not been
+  loaded. This keeps the KPI and F&B breakdown on the same source.
 - Daily Operating Detail drill-down for a selected studio and date, with an
   event-level class grid covering painting, time, governed and source class
   type, room, attendance, capacity, lead time, and sales. Portfolio selection

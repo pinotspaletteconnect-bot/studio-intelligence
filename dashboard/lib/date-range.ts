@@ -1,4 +1,12 @@
-export type DateRangePreset = "7d" | "30d" | "90d" | "custom"
+export type DateRangePreset =
+  | "7d"
+  | "30d"
+  | "90d"
+  | "thisWeek"
+  | "lastWeek"
+  | "mtd"
+  | "lastMonth"
+  | "custom"
 
 export type AppliedDateRange = {
   preset: DateRangePreset
@@ -6,7 +14,7 @@ export type AppliedDateRange = {
   endDate: string
 }
 
-const presetDays: Record<Exclude<DateRangePreset, "custom">, number> = {
+const presetDays = {
   "7d": 7,
   "30d": 30,
   "90d": 90,
@@ -27,8 +35,25 @@ export function getCompletedDateRange(
   end.setHours(12, 0, 0, 0)
   end.setDate(end.getDate() - 1)
 
-  const start = new Date(end)
-  start.setDate(start.getDate() - (presetDays[preset] - 1))
+  let start = new Date(end)
+  if (preset === "thisWeek") {
+    const mondayOffset = (end.getDay() + 6) % 7
+    start.setDate(end.getDate() - mondayOffset)
+  } else if (preset === "lastWeek") {
+    const mondayOffset = (end.getDay() + 6) % 7
+    start.setDate(end.getDate() - mondayOffset - 7)
+    end.setTime(start.getTime())
+    end.setDate(start.getDate() + 6)
+  } else if (preset === "mtd") {
+    start = new Date(end.getFullYear(), end.getMonth(), 1, 12)
+  } else if (preset === "lastMonth") {
+    start = new Date(end.getFullYear(), end.getMonth() - 1, 1, 12)
+    end.setTime(new Date(end.getFullYear(), end.getMonth(), 0, 12).getTime())
+  } else {
+    start.setDate(
+      start.getDate() - (presetDays[preset as keyof typeof presetDays] - 1)
+    )
+  }
 
   return {
     preset,

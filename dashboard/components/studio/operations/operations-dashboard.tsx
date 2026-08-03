@@ -17,6 +17,8 @@ import {
   Percent,
   ReceiptText,
   Timer,
+  TrendingDown,
+  TrendingUp,
   Truck,
   Upload,
   Utensils,
@@ -98,8 +100,23 @@ function formatCard(
   return currency.format(value)
 }
 
+function formatAbsoluteChange(
+  key: (typeof cards)[number]["key"],
+  value: number
+) {
+  if (key === "foodBeverageShare") {
+    return `${value.toFixed(1)} pts`
+  }
+  return formatCard(key, value)
+}
+
 export function OperationsDashboard() {
-  const { selectedStudio, dateRange } = useApp()
+  const {
+    selectedStudio,
+    dateRange,
+    comparison,
+    comparisonDateRange,
+  } = useApp()
   const [data, setData] = useState<OperationsDashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -141,7 +158,12 @@ export function OperationsDashboard() {
           studioId: selectedStudio,
           startDate: dateRange.startDate,
           endDate: dateRange.endDate,
+          comparison,
         })
+        if (comparison === "custom" && comparisonDateRange) {
+          params.set("comparisonStartDate", comparisonDateRange.startDate)
+          params.set("comparisonEndDate", comparisonDateRange.endDate)
+        }
         const response = await fetch(`/api/operations/summary?${params}`, {
           signal: controller.signal,
         })
@@ -167,7 +189,13 @@ export function OperationsDashboard() {
 
     load()
     return () => controller.abort()
-  }, [dateRange.endDate, dateRange.startDate, selectedStudio])
+  }, [
+    comparison,
+    comparisonDateRange,
+    dateRange.endDate,
+    dateRange.startDate,
+    selectedStudio,
+  ])
 
   if (loading) {
     return (
@@ -233,6 +261,10 @@ export function OperationsDashboard() {
       </div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map(({ key, label, icon: Icon }) => {
+          const change = data.comparison?.changes[key]
+          const ChangeIcon = (change?.absolute ?? 0) >= 0
+            ? TrendingUp
+            : TrendingDown
           const card = (
           <Card className={key === "foodSales" ? "h-full transition-colors hover:border-primary/50" : undefined}>
             <CardContent>
@@ -274,6 +306,43 @@ export function OperationsDashboard() {
                         </span>
                       ))}
                     </p>
+                  )}
+                  {(key === "totalSales" || key === "seatsSold") && (
+                    <p className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs tabular-nums text-muted-foreground">
+                      {data.studioSales.map((studio) => (
+                        <span key={studio.studioId}>
+                          {studio.studioName}{" "}
+                          {key === "totalSales"
+                            ? currency.format(studio.totalSales)
+                            : studio.seatsSold.toLocaleString()}
+                        </span>
+                      ))}
+                    </p>
+                  )}
+                  {change && (
+                    <div
+                      className={`mt-2 flex flex-wrap items-center gap-x-1.5 text-xs tabular-nums ${
+                        change.absolute >= 0
+                          ? "text-emerald-700 dark:text-emerald-400"
+                          : "text-red-700 dark:text-red-400"
+                      }`}
+                    >
+                      <ChangeIcon className="size-3.5" />
+                      <span className="font-medium">
+                        {change.percent === null
+                          ? "New"
+                          : `${Math.abs(change.percent).toFixed(1)}% ${
+                              change.absolute >= 0 ? "up" : "down"
+                            }`}
+                      </span>
+                      <span>
+                        ({change.absolute >= 0 ? "+" : "-"}
+                        {formatAbsoluteChange(key, Math.abs(change.absolute))})
+                      </span>
+                      <span className="text-muted-foreground">
+                        vs {data.comparison?.label.toLowerCase()}
+                      </span>
+                    </div>
                   )}
                 </div>
                 <div className="rounded-lg bg-primary/10 p-2 text-primary">

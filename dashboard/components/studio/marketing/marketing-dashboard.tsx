@@ -776,6 +776,29 @@ export function MarketingDashboard() {
                 ))}
               </div>
 
+              <div>
+                <p className="mb-2 text-sm font-medium">Modeled ROAS by studio</p>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  {data.mntn.studios.map((studio) => (
+                    <div
+                      key={studio.id}
+                      className="rounded-lg border bg-muted/20 p-4"
+                    >
+                      <p className="text-xs text-muted-foreground">
+                        {studio.name}
+                      </p>
+                      <p className="mt-1 text-xl font-semibold tabular-nums">
+                        {studio.roas.toFixed(2)}x
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {currency.format(studio.orderValue)} attributed /{" "}
+                        {currency.format(studio.spend)} spend
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="overflow-x-auto rounded-lg border">
                 <table className="w-full min-w-[760px] text-sm">
                   <thead>

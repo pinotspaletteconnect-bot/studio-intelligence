@@ -35,8 +35,10 @@ interface AppContextType {
   ) => void
   setCustomDateRange: (startDate: string, endDate: string) => void
 
-  comparison: string
-  setComparison: (value: string) => void
+  comparison: "previous" | "priorYearWeek" | "custom"
+  setComparison: (value: "previous" | "priorYearWeek" | "custom") => void
+  comparisonDateRange: { startDate: string; endDate: string } | null
+  setCustomComparisonRange: (startDate: string, endDate: string) => void
 }
 
 const AppContext =
@@ -54,7 +56,13 @@ export function AppProvider({
   const [dateRange, setDateRange] = useState<AppliedDateRange>(() =>
     getCompletedDateRange("30d")
   )
-  const [comparison, setComparison] = useState("previous")
+  const [comparison, setComparison] = useState<
+    "previous" | "priorYearWeek" | "custom"
+  >("previous")
+  const [comparisonDateRange, setComparisonDateRange] = useState<{
+    startDate: string
+    endDate: string
+  } | null>(null)
 
   useEffect(() => {
     async function loadStudios() {
@@ -84,6 +92,11 @@ export function AppProvider({
           setDateRange({ preset: "custom", startDate, endDate }),
         comparison,
         setComparison,
+        comparisonDateRange,
+        setCustomComparisonRange: (startDate, endDate) => {
+          setComparisonDateRange({ startDate, endDate })
+          setComparison("custom")
+        },
       }}
     >
       {children}

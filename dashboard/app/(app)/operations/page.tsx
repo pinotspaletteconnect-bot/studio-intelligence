@@ -9,6 +9,7 @@ export default function OperationsPage() {
       <DashboardToolbar
         title="Operations Performance"
         subtitle="Review completed-day sales, seats, per-seat revenue, and food and beverage mix."
+        showComparison
       />
       <OperationsDashboard />
     </div>
