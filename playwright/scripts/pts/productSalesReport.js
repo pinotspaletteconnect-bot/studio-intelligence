@@ -103,6 +103,8 @@ function normalizeProductRows(rows) {
                 .createHash("sha256")
                 .update(JSON.stringify(minimizedRow))
                 .digest("hex"),
+            sale_date: firstValue(minimizedRow, ["sale_date", "sale"]),
+            order_date: firstValue(minimizedRow, ["order_date", "ordered_at"]),
             category: firstValue(minimizedRow, [
                 "category",
                 "product_category",
@@ -146,6 +148,12 @@ function normalizeProductRows(rows) {
             ),
             tax: numberValue(
                 firstValue(minimizedRow, ["tax", "taxes", "sales_tax"])
+            ),
+            alcohol_tax: numberValue(
+                firstValue(minimizedRow, ["alcohol_tax", "alc_tax"])
+            ),
+            nat_sales: numberValue(
+                firstValue(minimizedRow, ["nat_sales", "nat"])
             ),
             raw_payload: minimizedRow
         };
