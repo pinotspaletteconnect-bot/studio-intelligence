@@ -1,14 +1,12 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
-import { ArrowLeft, CalendarRange, TrendingDown, TrendingUp } from "lucide-react"
-import Link from "next/link"
+import { useEffect, useRef, useState } from "react"
+import { TrendingDown, TrendingUp } from "lucide-react"
 
-import { StudioSelect } from "@/components/studio/shared/studio-select"
+import { DashboardToolbar } from "@/components/studio/shared/dashboard-toolbar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useApp } from "@/contexts/app-context"
-import { formatAppliedDateRange, getCompletedDateRange } from "@/lib/date-range"
 import type { OperationsDashboardData, WeeklyOperationsHistoryData } from "@/lib/services/operations"
 
 type KpiKey = keyof OperationsDashboardData["kpis"]
@@ -39,6 +37,24 @@ type HistoryMetricKey = Exclude<keyof WeeklyOperationsHistoryData["rows"][number
 const columns: Array<{ key: HistoryMetricKey; label: string; format: "currency" | "decimal" | "number" | "percent" | "days" }> = [
   { key: "totalSales", label: "Total sales", format: "currency" },
   { key: "classSales", label: "Class sales", format: "currency" },
+  { key: "liquorSales", label: "Liquor", format: "currency" },
+  { key: "wineSales", label: "Wine", format: "currency" },
+  { key: "beerSales", label: "Beer", format: "currency" },
+  { key: "miscDrinksSales", label: "Misc drinks", format: "currency" },
+  { key: "alcoholSpecialSales", label: "Alcohol special", format: "currency" },
+  { key: "foodSales", label: "Food", format: "currency" },
+  { key: "artSuppliesSales", label: "Art supplies", format: "currency" },
+  { key: "recordedVideosSales", label: "Recorded videos", format: "currency" },
+  { key: "framesSales", label: "Frames", format: "currency" },
+  { key: "thpkSales", label: "THPK", format: "currency" },
+  { key: "candleSales", label: "Candles", format: "currency" },
+  { key: "miscProductSales", label: "Misc product", format: "currency" },
+  { key: "regularSales", label: "Regular", format: "currency" },
+  { key: "littleBrushesSales", label: "Little Brushes", format: "currency" },
+  { key: "paintItForwardSales", label: "Paint it Forward", format: "currency" },
+  { key: "privatePartySales", label: "Private Party", format: "currency" },
+  { key: "mobileEventSales", label: "Mobile Events", format: "currency" },
+  { key: "noClassSales", label: "No Class", format: "currency" },
   { key: "foodBeverageSales", label: "F&B", format: "currency" },
   { key: "foodBeverageShare", label: "F&B %", format: "percent" },
   { key: "merchandiseSales", label: "Other product", format: "currency" },
@@ -49,8 +65,6 @@ const columns: Array<{ key: HistoryMetricKey; label: string; format: "currency" 
   { key: "averageLeadTime", label: "Lead time", format: "days" },
   { key: "privatePartyEvents", label: "Private", format: "number" },
   { key: "mobileEventCount", label: "Mobile", format: "number" },
-  { key: "candleSales", label: "Candles", format: "currency" },
-  { key: "artSuppliesSales", label: "Art supplies", format: "currency" },
 ]
 
 function formatValue(value: number, format: string) {
@@ -83,22 +97,39 @@ function ComparisonValue({ current, previous, format }: { current: number; previ
 }
 
 export function WeekOverWeekDashboard() {
-  const { selectedStudio, studios } = useApp()
-  const week = useMemo(() => getCompletedDateRange("lastWeek"), [])
+  const {
+    selectedStudio,
+    studios,
+    dateRange,
+    comparison,
+    comparisonDateRange,
+    setDateRangePreset,
+  } = useApp()
+  const initialized = useRef(false)
   const [portfolio, setPortfolio] = useState<OperationsDashboardData | null>(null)
   const [history, setHistory] = useState<WeeklyOperationsHistoryData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (initialized.current) return
+    initialized.current = true
+    setDateRangePreset("lastWeek")
+  }, [setDateRangePreset])
+
+  useEffect(() => {
     const controller = new AbortController()
     async function request(studioId: string) {
       const params = new URLSearchParams({
         studioId,
-        startDate: week.startDate,
-        endDate: week.endDate,
-        comparison: "previous",
+        startDate: dateRange.startDate,
+        endDate: dateRange.endDate,
+        comparison,
       })
+      if (comparison === "custom" && comparisonDateRange) {
+        params.set("comparisonStartDate", comparisonDateRange.startDate)
+        params.set("comparisonEndDate", comparisonDateRange.endDate)
+      }
       const response = await fetch(`/api/operations/summary?${params}`, { signal: controller.signal })
       const result = await response.json()
       if (!response.ok) throw new Error(result.error || "Week-over-week data is unavailable.")
@@ -127,7 +158,7 @@ export function WeekOverWeekDashboard() {
 
     if (studios.length) load()
     return () => controller.abort()
-  }, [selectedStudio, studios, week.endDate, week.startDate])
+  }, [comparison, comparisonDateRange, dateRange.endDate, dateRange.startDate, selectedStudio, studios])
 
   if (loading) return <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{cards.map((card) => <Skeleton key={card.key} className="h-32 rounded-xl" />)}</div>
   if (error || !portfolio?.comparison || !history) return <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">{error || "Comparison data is unavailable."}</CardContent></Card>
@@ -136,14 +167,12 @@ export function WeekOverWeekDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 rounded-lg border bg-card p-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <Link href="/operations" className="mb-2 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" /> Operations Performance</Link>
-          <h1 className="flex items-center gap-2 text-2xl font-bold"><CalendarRange className="size-6 text-primary" /> Week-over-Week Comparison</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{formatAppliedDateRange(week)} compared with {formatAppliedDateRange({ preset: "custom", ...portfolio.comparison.period })}</p>
-        </div>
-        <StudioSelect />
-      </div>
+      <DashboardToolbar
+        title="Period Comparison"
+        subtitle="Compare completed weeks, months, or a custom operating period across every studio."
+        showComparison
+        defaultPreset="lastWeek"
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {cards.map((card) => {

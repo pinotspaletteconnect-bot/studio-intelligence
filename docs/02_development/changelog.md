@@ -16,6 +16,12 @@ This project follows a milestone-based changelog rather than tracking every indi
   events, candles, and art supplies. The KPI comparison uses the latest
   completed Mondayâ€“Sunday week and the immediately prior week; the grid spans
   every available warehouse year.
+- Extended the Operations comparison page with shared date/comparison controls
+  defaulted to the last completed week, enabling month and custom-period
+  comparisons. Expanded the historical grid with item-level liquor, wine,
+  beer, miscellaneous drinks, alcohol specials, food, candles, art supplies,
+  recorded videos, frames, THPK, miscellaneous product, and governed class-type
+  revenue columns.
 
 - Added MTD, last-month, and Monday–Sunday week presets plus KPI-card comparison
   deltas for Operations. Prior-year weekly comparisons shift by 364 days so
