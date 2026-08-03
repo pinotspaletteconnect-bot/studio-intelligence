@@ -25,6 +25,7 @@ type DashboardToolbarProps = {
   subtitle: string
   showComparison?: boolean
   defaultPreset?: DateRangePreset
+  dateRangeNote?: string
 }
 
 export function DashboardToolbar({
@@ -32,6 +33,7 @@ export function DashboardToolbar({
   subtitle,
   showComparison = false,
   defaultPreset,
+  dateRangeNote,
 }: DashboardToolbarProps) {
   const {
     comparison,
@@ -192,6 +194,7 @@ export function DashboardToolbar({
 
           <p className="basis-full text-right text-xs text-muted-foreground">
             Showing {formatAppliedDateRange(dateRange)}
+            {dateRangeNote ? ` | ${dateRangeNote}` : ""}
           </p>
         </div>
       </div>
