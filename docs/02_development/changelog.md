@@ -14,7 +14,8 @@ This project follows a milestone-based changelog rather than tracking every indi
   browser request to a manual Excel upload form. The authenticated collector
   now parses operator-downloaded Class Sales workbooks with the production
   parser, and the workflow keeps the established tenant mapping, aggregation,
-  natural keys, Supabase table, and dashboard reporting path.
+  natural keys, Supabase table, and dashboard reporting path. Added a stable
+  Operations-dashboard link to the authenticated workflow editor.
 
 - Added the authenticated PTS Reservations-grid collector and published daily
   workflow `13 - PTS Reservation Bookings Import` at 6:00 AM

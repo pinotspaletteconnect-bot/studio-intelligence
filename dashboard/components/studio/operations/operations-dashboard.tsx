@@ -17,6 +17,7 @@ import {
   ReceiptText,
   Timer,
   Truck,
+  Upload,
   Utensils,
 } from "lucide-react"
 import {
@@ -202,7 +203,16 @@ export function OperationsDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
+      <div className="flex flex-wrap justify-end gap-2">
+        <Link
+          href="https://primary-production-a88c.up.railway.app/workflow/AX02mK80Tz98UiqA"
+          target="_blank"
+          rel="noreferrer"
+          className={buttonVariants({ variant: "outline" })}
+        >
+          <Upload />
+          Class Sales backfill
+        </Link>
         <Link
           href="/operations/upcoming"
           className={buttonVariants({ variant: "outline" })}
