@@ -13,8 +13,10 @@ import {
   Users,
   Utensils,
 } from "lucide-react"
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useApp } from "@/contexts/app-context"
 import type { ExecutiveDashboardData } from "@/lib/services/executive"
@@ -30,6 +32,13 @@ const preciseMoney = new Intl.NumberFormat("en-US", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 })
+const shortDate = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  timeZone: "UTC",
+})
+
+const dateLabel = (value: string) => shortDate.format(new Date(`${value}T00:00:00Z`))
 
 type Metric = {
   label: string
@@ -176,6 +185,10 @@ export function ExecutiveDashboard() {
 
   const maxStudioSales = Math.max(...data.operations.studioSales.map((studio) => studio.totalSales), 1)
   const comparisonLabel = data.comparison?.label.toLowerCase() ?? "comparison period"
+  const weeklyTrend = data.weeklySales.map((week) => ({
+    ...week,
+    label: dateLabel(week.startDate),
+  }))
 
   return (
     <div className="grid gap-6">
@@ -193,6 +206,52 @@ export function ExecutiveDashboard() {
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.85fr)]">
+        <Card>
+          <CardHeader>
+            <CardTitle>Weekly sales trend</CardTitle>
+            <p className="text-sm text-muted-foreground">Eight completed Monday–Sunday weeks.</p>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer className="h-[260px] w-full" config={{ sales: { label: "Sales", color: "#2563eb" } }}>
+              <BarChart data={weeklyTrend}>
+                <CartesianGrid vertical={false} />
+                <XAxis dataKey="label" tickLine={false} axisLine={false} />
+                <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `$${Math.round(Number(value) / 1000)}k`} />
+                <ChartTooltip content={<ChartTooltipContent formatter={(value) => money.format(Number(value))} />} />
+                <Bar dataKey="sales" fill="var(--color-sales)" radius={[5, 5, 0, 0]} />
+              </BarChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>This week</CardTitle>
+            <p className="text-sm text-muted-foreground">{dateLabel(data.thisWeek.startDate)}–{dateLabel(data.thisWeek.endDate)}</p>
+          </CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            <div className="rounded-lg border p-4">
+              <p className="text-xs font-medium text-muted-foreground">Completed sales WTD</p>
+              <p className="mt-2 text-2xl font-semibold tabular-nums">{money.format(data.thisWeek.salesWeekToDate)}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{data.thisWeek.completedThrough ? `Through ${dateLabel(data.thisWeek.completedThrough)} · ${data.thisWeek.seatsWeekToDate.toLocaleString()} seats` : "No completed days yet"}</p>
+            </div>
+            <div className="rounded-lg border p-4">
+              <p className="text-xs font-medium text-muted-foreground">Future booked revenue</p>
+              <p className="mt-2 text-2xl font-semibold tabular-nums">{money.format(data.thisWeek.futureBookedRevenue)}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{data.thisWeek.futureBookedSeats.toLocaleString()} seats · {data.thisWeek.futureClasses} classes</p>
+            </div>
+            <div className="rounded-lg border p-4 sm:col-span-2">
+              <div className="flex items-center justify-between gap-4">
+                <div><p className="text-xs font-medium text-muted-foreground">Parties scheduled this week</p><p className="mt-2 text-2xl font-semibold tabular-nums">{(data.thisWeek.privateParties + data.thisWeek.mobileEvents).toLocaleString()}</p></div>
+                <div className="text-right text-sm text-muted-foreground"><p><strong className="text-foreground">{data.thisWeek.privateParties}</strong> private parties</p><p><strong className="text-foreground">{data.thisWeek.mobileEvents}</strong> mobile events</p></div>
+              </div>
+            </div>
+            <Link href="/operations/upcoming" className="flex items-center justify-end gap-1 text-sm font-medium text-primary sm:col-span-2">View upcoming classes <ArrowRight className="size-4" /></Link>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(300px,0.8fr)]">
