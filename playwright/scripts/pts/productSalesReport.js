@@ -205,26 +205,65 @@ async function runReport(page, fromDate, toDate) {
     await page.locator("#DateFilter_ToDate").fill(to);
     await page.locator("#DateFilter_ToDate").press("Tab");
 
-    const navigation = page
-        .waitForNavigation({
-            waitUntil: "domcontentloaded",
-            timeout: 10000
-        })
-        .catch(() => null);
+    const navigation = page.waitForNavigation({
+        waitUntil: "domcontentloaded",
+        timeout: 60000
+    });
     await page.getByRole("button", { name: "Run", exact: true }).click();
     await navigation;
 
     await page.locator(".k-grid").nth(0).waitFor({ state: "attached" });
     await page.locator(".k-grid-excel").nth(0).waitFor({ state: "attached" });
+    await page.waitForFunction(
+        () => {
+            const gridElement = document.querySelector(".k-grid");
+            const grid = globalThis.jQuery?.(gridElement).data("kendoGrid");
+            const dataSource = grid?.dataSource;
+
+            return Boolean(
+                grid &&
+                    dataSource &&
+                    !dataSource._requestInProgress &&
+                    !gridElement.querySelector(".k-loading-mask")
+            );
+        },
+        undefined,
+        { timeout: 120000 }
+    );
 }
 
 async function downloadProductWorkbook(page, folder, studio, fromDate, toDate) {
     const excelButton = page.locator(".k-grid-excel").nth(0);
 
-    const [download] = await Promise.all([
-        page.waitForEvent("download"),
-        excelButton.dispatchEvent("click")
-    ]);
+    const waitForDownload = () =>
+        page.waitForEvent("download", { timeout: 90000 });
+    let download;
+
+    try {
+        [download] = await Promise.all([
+            waitForDownload(),
+            excelButton.dispatchEvent("click")
+        ]);
+    } catch (firstError) {
+        try {
+            [download] = await Promise.all([
+                waitForDownload(),
+                page.locator(".k-grid").nth(0).evaluate(gridElement => {
+                    const grid = globalThis.jQuery?.(gridElement).data("kendoGrid");
+
+                    if (!grid?.saveAsExcel) {
+                        throw new Error("PTS Product Sales Kendo export is unavailable");
+                    }
+
+                    grid.saveAsExcel();
+                })
+            ]);
+        } catch (retryError) {
+            throw new Error(
+                `PTS Product Sales download failed for ${studio.code} after retry: ${retryError.message}; first attempt: ${firstError.message}`
+            );
+        }
+    }
     const filePath = path.join(
         folder,
         `${studio.code}_${fromDate}_${toDate}_product-sales.xlsx`

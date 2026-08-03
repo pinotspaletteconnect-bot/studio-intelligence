@@ -192,6 +192,11 @@ This project follows a milestone-based changelog rather than tracking every indi
 
 ## Fixed
 
+- Fixed a Product Sales collector race where workflow 06 could export the
+  report's pre-run grid after giving up on PTS navigation after 10 seconds. The
+  collector now waits for completed navigation and Kendo data loading, retries
+  Excel export through the grid API, and identifies the failing studio.
+
 - Corrected Operations and Daily Operating Detail totals to use class-reported
   seats, class sales, product sales, fees, and net sales. The dashboard had
   mixed Daily Sales summary totals with Class Sales drill-down rows, producing
