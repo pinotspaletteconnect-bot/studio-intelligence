@@ -419,7 +419,40 @@ async function runPtsProductSalesReport({
     }
 }
 
+async function parsePtsProductSalesUpload({ file, studioCode }) {
+    if (!Buffer.isBuffer(file) || file.length === 0) {
+        throw new Error("PTS Product Sales upload must include a non-empty Excel file");
+    }
+
+    const normalizedCode = String(studioCode ?? "")
+        .trim()
+        .toUpperCase();
+    const studio = configuredStudios().find(
+        candidate => String(candidate.code).toUpperCase() === normalizedCode
+    );
+
+    if (!studio) {
+        throw new Error(`Unknown PTS studio code: ${normalizedCode || "missing"}`);
+    }
+
+    const rows = normalizeProductRows(await parseNonClassSales(file));
+
+    if (rows.length === 0) {
+        throw new Error("PTS Product Sales workbook contained no product rows");
+    }
+
+    return {
+        studioId: studio.studioId,
+        studioCode: studio.code,
+        locationId: studio.locationId,
+        locationName: studio.locationName,
+        rowCount: rows.length,
+        rows
+    };
+}
+
 module.exports = {
     normalizeProductRows,
+    parsePtsProductSalesUpload,
     runPtsProductSalesReport
 };

@@ -2,6 +2,7 @@ const express = require("express");
 const crypto = require("crypto");
 
 const {
+    parsePtsProductSalesUpload,
     runPtsProductSalesReport
 } = require("../scripts/pts/productSalesReport");
 const {
@@ -137,6 +138,37 @@ router.post("/class-sales-report", requireCollectorAuth, async (req, res) => {
         });
     }
 });
+
+router.post(
+    "/product-sales-upload",
+    requireCollectorAuth,
+    express.raw({
+        type: [
+            "application/octet-stream",
+            "application/vnd.ms-excel",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        ],
+        limit: "25mb"
+    }),
+    async (req, res) => {
+        try {
+            const result = await parsePtsProductSalesUpload({
+                file: req.body,
+                studioCode: req.get("x-pts-studio-code")
+            });
+
+            res.json({
+                success: true,
+                studioCount: 1,
+                rowCount: result.rowCount,
+                results: [result]
+            });
+        } catch (error) {
+            console.error("PTS Product Sales upload failed:", error.message);
+            res.status(400).json({ success: false, error: error.message });
+        }
+    }
+);
 
 router.post(
     "/class-sales-upload",
