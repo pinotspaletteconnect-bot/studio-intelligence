@@ -10,12 +10,12 @@ This project follows a milestone-based changelog rather than tracking every indi
 
 ## Added
 
-- Added a dedicated Operations Period Comparison page with portfolio KPI cards,
-  selected-period date and comparison controls, studio-grouped current/prior
-  values, and deltas. The detailed grid includes liquor, wine, beer, food,
-  candles, art supplies, other Product Sales groups, governed class-type
-  revenue, seats, capacity, per-seat performance, and lead time. It defaults to
-  the latest completed Mondayâ€“Sunday week and the immediately prior period.
+- Added a dedicated Operations Year-over-Year Period Comparison page with a
+  selected-period date control and collapsible studio groups. Every metric card
+  emphasizes the current year, shows the same period for the two prior years,
+  and includes a current-versus-prior-year delta. Detailed cards cover liquor,
+  wine, beer, food, candles, art supplies, other Product Sales groups, governed
+  class-type revenue, seats, capacity, per-seat performance, and lead time.
 
 - Added MTD, last-month, and Monday–Sunday week presets plus KPI-card comparison
   deltas for Operations. Prior-year weekly comparisons shift by 364 days so

@@ -135,11 +135,12 @@ Implemented foundation:
   KPI cards show absolute and percentage change against either the immediately
   preceding equal-length period, the same weekdays 364 days earlier, or an
   explicitly selected custom comparison range.
-- A dedicated Operations Period Comparison page defaults to the most recently
-  completed Mondayâ€“Sunday week and supports month, rolling, and custom date
-  comparisons. Its grid is limited to the selected periods, grouped by studio,
-  and shows current/prior values plus deltas for operating KPIs, detailed
-  Product Sales groups, and governed class-type revenue.
+- A dedicated Operations Year-over-Year Period Comparison page defaults to the
+  most recently completed Mondayâ€“Sunday week and supports month, rolling, and
+  custom date ranges. Studios are collapsible groups of metric cards; every
+  card emphasizes the current-year value, shows the same period for the prior
+  two years, and displays the current-versus-prior-year delta. Weekly periods
+  remain weekday-aligned, while other ranges retain matching calendar dates.
 - Operations summary combines the preserved range-load history with the
   reporting views fed by workflows 05–07. Current production rows take
   precedence by studio/date on overlap. Product queries explicitly paginate
