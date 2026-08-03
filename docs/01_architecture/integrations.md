@@ -189,6 +189,12 @@ Planned scope includes profile insights, reviews, search visibility, and custome
   `pts_class_type_sales_daily` upsert path remains unchanged. The workflow is
   intentionally unpublished and uses n8n's temporary test form to avoid a
   permanent public upload URL.
+- **Manual Product Sales backfill:** workflow `10 - PTS Product Sales
+  Backfill` accepts one operator-downloaded Product Sales workbook and studio
+  selection at a time. The authenticated `/pts/product-sales-upload` endpoint
+  removes customer names and reuses production normalization, while the
+  existing n8n mapping, grouping, and `pts_product_sales_daily` upsert path is
+  unchanged. The Operations dashboard links to the authenticated workflow.
 - **Upcoming Classes foundation:** the existing Class Sales endpoint can collect
   a rolling 90-day future range. A daily event-grain snapshot migration,
   reporting views, dashboard, and workflow contract are implemented. The

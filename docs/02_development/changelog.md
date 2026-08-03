@@ -10,6 +10,12 @@ This project follows a milestone-based changelog rather than tracking every indi
 
 ## Added
 
+- Converted workflow `10 - PTS Product Sales Backfill` to the same private
+  studio-and-Excel upload pattern as Class Sales. The authenticated parser
+  removes customer names and retains the existing historical product table,
+  natural keys, mappings, and dashboard reporting path. Added an Operations
+  dashboard shortcut to the workflow.
+
 - Converted workflow `11 - PTS Class Sales Backfill` from a long-running PTS
   browser request to a manual Excel upload form. The authenticated collector
   now parses operator-downloaded Class Sales workbooks with the production

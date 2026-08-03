@@ -160,6 +160,13 @@ Implemented foundation:
 
 Known incomplete surfaces:
 
+- Manual Product Sales history can now be loaded through workflow
+  `10 - PTS Product Sales Backfill` by selecting a studio and uploading the PTS
+  Product Sales workbook. The Operations dashboard links to the authenticated
+  workflow editor. A July 30 sample parsed 186 detail rows after excluding its
+  totals row, representing 232 units and $1,825.07 in net sales; it was not
+  warehouse-loaded because the source studio was not confirmed.
+
 - Manual Class Sales history can now be loaded through workflow
   `11 - PTS Class Sales Backfill` by selecting a studio and uploading the PTS
   Excel workbook. It uses the existing `pts_class_type_sales_daily` natural
