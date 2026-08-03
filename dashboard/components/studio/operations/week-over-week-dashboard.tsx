@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useApp } from "@/contexts/app-context"
 import { formatAppliedDateRange, getCompletedDateRange } from "@/lib/date-range"
-import type { OperationsDashboardData, WeeklyOperationsHistoryData } from "@/lib/services/operations"
+import type { OperationsDashboardData } from "@/lib/services/operations"
 
 type KpiKey = keyof OperationsDashboardData["kpis"]
 
@@ -34,9 +34,7 @@ const cards: Array<{ key: KpiKey; label: string; format: "currency" | "decimal" 
   { key: "averageLeadTime", label: "Lead time", format: "days" },
 ]
 
-type HistoryMetricKey = Exclude<keyof WeeklyOperationsHistoryData["rows"][number], "studioId" | "studioName" | "weekStart" | "weekEnd">
-
-const columns: Array<{ key: HistoryMetricKey; label: string; format: "currency" | "decimal" | "number" | "percent" | "days" }> = [
+const columns: Array<{ key: KpiKey; label: string; format: "currency" | "decimal" | "number" | "percent" | "days" }> = [
   { key: "totalSales", label: "Total sales", format: "currency" },
   { key: "classSales", label: "Class sales", format: "currency" },
   { key: "foodBeverageSales", label: "F&B", format: "currency" },
@@ -86,12 +84,16 @@ export function WeekOverWeekDashboard() {
   const { selectedStudio, studios } = useApp()
   const week = useMemo(() => getCompletedDateRange("lastWeek"), [])
   const [portfolio, setPortfolio] = useState<OperationsDashboardData | null>(null)
-  const [history, setHistory] = useState<WeeklyOperationsHistoryData | null>(null)
+  const [studioRows, setStudioRows] = useState<Array<{ studioId: number; studioName: string; data: OperationsDashboardData }>>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const controller = new AbortController()
+    const visibleStudios = selectedStudio === "all"
+      ? studios
+      : studios.filter((studio) => String(studio.id) === selectedStudio)
+
     async function request(studioId: string) {
       const params = new URLSearchParams({
         studioId,
@@ -109,14 +111,16 @@ export function WeekOverWeekDashboard() {
       setLoading(true)
       setError(null)
       try {
-        const [portfolioResult, historyResponse] = await Promise.all([
+        const [portfolioResult, rows] = await Promise.all([
           request(selectedStudio),
-          fetch("/api/operations/weekly-history", { signal: controller.signal }),
+          Promise.all(visibleStudios.map(async (studio) => ({
+            studioId: studio.id,
+            studioName: studio.studio_name,
+            data: await request(String(studio.id)),
+          }))),
         ])
-        const historyResult = await historyResponse.json()
-        if (!historyResponse.ok) throw new Error(historyResult.error || "Weekly history is unavailable.")
         setPortfolio(portfolioResult)
-        setHistory(historyResult)
+        setStudioRows(rows)
       } catch (requestError) {
         if (requestError instanceof DOMException && requestError.name === "AbortError") return
         setError(requestError instanceof Error ? requestError.message : "Week-over-week data is unavailable.")
@@ -130,9 +134,7 @@ export function WeekOverWeekDashboard() {
   }, [selectedStudio, studios, week.endDate, week.startDate])
 
   if (loading) return <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{cards.map((card) => <Skeleton key={card.key} className="h-32 rounded-xl" />)}</div>
-  if (error || !portfolio?.comparison || !history) return <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">{error || "Comparison data is unavailable."}</CardContent></Card>
-
-  const visibleHistory = history.rows.filter((row) => selectedStudio === "all" || String(row.studioId) === selectedStudio)
+  if (error || !portfolio?.comparison) return <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">{error || "Comparison data is unavailable."}</CardContent></Card>
 
   return (
     <div className="space-y-6">
@@ -154,12 +156,12 @@ export function WeekOverWeekDashboard() {
       </div>
 
       <Card>
-        <CardHeader><CardTitle>Weekly operating history</CardTitle><p className="text-sm text-muted-foreground">Every available Mondayâ€“Sunday week for {history.years.join(", ")}. Select a studio above to narrow the ledger.</p></CardHeader>
+        <CardHeader><CardTitle>Studio weekly comparison</CardTitle><p className="text-sm text-muted-foreground">Current completed week on top, prior completed week below, with percentage movement.</p></CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1900px] text-sm">
-              <thead><tr className="border-b text-xs text-muted-foreground"><th className="sticky left-0 z-10 bg-card px-3 py-3 text-left font-medium">Week</th><th className="px-3 py-3 text-left font-medium">Studio</th>{columns.map((column) => <th key={column.key} className="px-3 py-3 text-right font-medium">{column.label}</th>)}</tr></thead>
-              <tbody>{visibleHistory.map((row) => <tr key={`${row.studioId}-${row.weekStart}`} className="border-b last:border-0"><td className="sticky left-0 z-10 bg-card px-3 py-4 font-semibold tabular-nums">{row.weekStart}<div className="text-xs font-normal text-muted-foreground">through {row.weekEnd}</div></td><td className="px-3 py-4 font-medium">{row.studioName}</td>{columns.map((column) => <td key={column.key} className="px-3 py-4 text-right font-medium tabular-nums">{formatValue(row[column.key], column.format)}</td>)}</tr>)}</tbody>
+              <thead><tr className="border-b text-xs text-muted-foreground"><th className="sticky left-0 z-10 bg-card px-3 py-3 text-left font-medium">Studio</th>{columns.map((column) => <th key={column.key} className="px-3 py-3 text-right font-medium">{column.label}</th>)}</tr></thead>
+              <tbody>{studioRows.map((row) => <tr key={row.studioId} className="border-b last:border-0"><td className="sticky left-0 z-10 bg-card px-3 py-4 font-semibold">{row.studioName}</td>{columns.map((column) => <td key={column.key} className="px-3 py-4"><ComparisonValue current={row.data.kpis[column.key]} previous={row.data.comparison?.kpis[column.key] ?? 0} format={column.format} /></td>)}</tr>)}</tbody>
             </table>
           </div>
         </CardContent>

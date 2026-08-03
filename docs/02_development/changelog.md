@@ -11,11 +11,10 @@ This project follows a milestone-based changelog rather than tracking every indi
 ## Added
 
 - Added a dedicated Operations Week-over-Week page with portfolio KPI cards,
-  percentage movement, and an all-history studio/week operating ledger covering
-  revenue mix, seats, capacity, per-seat performance, lead time, private/mobile
-  events, candles, and art supplies. The KPI comparison uses the latest
-  completed Mondayâ€“Sunday week and the immediately prior week; the grid spans
-  every available warehouse year.
+  studio-level current/prior values, percentage movement, and a wide operating
+  table covering revenue mix, seats, capacity, per-seat performance, lead time,
+  private/mobile events, candles, and art supplies. The comparison uses the
+  latest completed Mondayâ€“Sunday week and the immediately prior week.
 
 - Added MTD, last-month, and Monday–Sunday week presets plus KPI-card comparison
   deltas for Operations. Prior-year weekly comparisons shift by 364 days so
