@@ -10,6 +10,11 @@ This project follows a milestone-based changelog rather than tracking every indi
 
 ## Added
 
+- Replaced the nested template UI on `/dashboard` with a shell-consistent
+  reporting-area landing page. Financial and Customers remain available as
+  routes but are hidden from sidebar navigation until those reporting domains
+  are ready.
+
 - Corrected historical Operations class-type comparisons to consume the Class
   Sales backfill reporting view as well as the event-level production view.
   Production rows take precedence for overlapping studio/dates, preventing

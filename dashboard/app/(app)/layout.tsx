@@ -59,20 +59,6 @@ export default function AppLayout({
             </Link>
 
             <Link
-              href="/financial"
-              className="block rounded-lg px-3 py-2 hover:bg-slate-100"
-            >
-              Financial
-            </Link>
-
-            <Link
-              href="/customers"
-              className="block rounded-lg px-3 py-2 hover:bg-slate-100"
-            >
-              Customers
-            </Link>
-
-            <Link
               href="/executive"
               className="block rounded-lg px-3 py-2 hover:bg-slate-100"
             >
