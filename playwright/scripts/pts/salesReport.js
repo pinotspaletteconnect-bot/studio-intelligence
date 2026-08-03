@@ -614,7 +614,49 @@ async function runPtsClassSalesReport({
     }
 }
 
+async function parsePtsClassSalesUpload({ file, studioCode }) {
+    if (!Buffer.isBuffer(file) || file.length === 0) {
+        throw new Error("PTS Class Sales upload must include a non-empty Excel file");
+    }
+
+    const normalizedCode = String(studioCode ?? "")
+        .trim()
+        .toUpperCase();
+    const studio = configuredStudios().find(
+        candidate => String(candidate.code).toUpperCase() === normalizedCode
+    );
+
+    if (!studio) {
+        throw new Error(`Unknown PTS studio code: ${normalizedCode || "missing"}`);
+    }
+
+    const rows = await parseClassSales(file, {
+        timeZone:
+            studio.timeZone ??
+            DEFAULT_TIME_ZONES[studio.code] ??
+            "America/New_York"
+    });
+
+    if (rows.length === 0) {
+        throw new Error("PTS Class Sales workbook contained no class rows");
+    }
+
+    return {
+        studioId: studio.studioId,
+        studioCode: studio.code,
+        locationId: studio.locationId,
+        locationName: studio.locationName,
+        timeZone:
+            studio.timeZone ??
+            DEFAULT_TIME_ZONES[studio.code] ??
+            "America/New_York",
+        rowCount: rows.length,
+        rows
+    };
+}
+
 module.exports = {
+    parsePtsClassSalesUpload,
     runPtsClassSalesReport,
     runPtsSalesReport
 };
