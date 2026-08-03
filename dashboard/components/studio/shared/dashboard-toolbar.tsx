@@ -95,10 +95,9 @@ export function DashboardToolbar({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="7d">Last 7 completed days</SelectItem>
-              <SelectItem value="thisWeek">This week (Mon–Sun)</SelectItem>
               <SelectItem value="lastWeek">Last week (Mon–Sun)</SelectItem>
-              <SelectItem value="mtd">Month to date</SelectItem>
-              <SelectItem value="lastMonth">Last complete month</SelectItem>
+              <SelectItem value="mtd">MTD</SelectItem>
+              <SelectItem value="lastMonth">Last month</SelectItem>
               <SelectItem value="30d">Last 30 completed days</SelectItem>
               <SelectItem value="90d">Last 90 completed days</SelectItem>
               <SelectItem value="custom">Custom range</SelectItem>

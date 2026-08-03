@@ -2,7 +2,6 @@ export type DateRangePreset =
   | "7d"
   | "30d"
   | "90d"
-  | "thisWeek"
   | "lastWeek"
   | "mtd"
   | "lastMonth"
@@ -36,14 +35,13 @@ export function getCompletedDateRange(
   end.setDate(end.getDate() - 1)
 
   let start = new Date(end)
-  if (preset === "thisWeek") {
-    const mondayOffset = (end.getDay() + 6) % 7
-    start.setDate(end.getDate() - mondayOffset)
-  } else if (preset === "lastWeek") {
-    const mondayOffset = (end.getDay() + 6) % 7
-    start.setDate(end.getDate() - mondayOffset - 7)
+  if (preset === "lastWeek") {
+    const currentWeekMondayOffset = (today.getDay() + 6) % 7
+    start = new Date(today)
+    start.setHours(12, 0, 0, 0)
+    start.setDate(today.getDate() - currentWeekMondayOffset - 7)
     end.setTime(start.getTime())
-    end.setDate(start.getDate() + 6)
+    end.setDate(end.getDate() + 6)
   } else if (preset === "mtd") {
     start = new Date(end.getFullYear(), end.getMonth(), 1, 12)
   } else if (preset === "lastMonth") {
