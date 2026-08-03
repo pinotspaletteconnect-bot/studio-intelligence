@@ -102,6 +102,9 @@ The live Supabase schema is authoritative. Update `docs/01_architecture/schema.m
 - `pts_class_type_sales_daily_reporting`,
   `pts_product_sales_daily_reporting`, and `pts_operations_daily` — replacement
   reporting layer that avoids double-counting Product Sales amounts
+- `pts_reservation_bookings`, `pts_reservation_bookings_reporting`, and
+  `pts_reservation_booking_daily` — privacy-safe reservation order facts and
+  exact daily gross booked-seat/booked-sales reporting
 
 ## Dashboard State
 
@@ -148,11 +151,12 @@ Implemented foundation:
   Snapshots` runs daily at 5:30 AM America/New_York and replaces the current
   snapshot by studio. Its July 31, 2026 validation loaded 700 future classes:
   146 St. Matthews, 233 Short North, 215 Gilbert, and 106 Jeffersonville.
-  August 1 comparison exposed a collector refresh race: matched future events
-  retained unchanged July 31 values despite confirmed reservation activity.
-  The Class Sales collector now waits for Kendo's completed data-change event
-  before reading rows; deployment and a fresh two-day pickup validation remain
-  pending.
+  Consecutive snapshots remain available as class-level net pickup. Exact gross
+  yesterday booked seats and sales now come from the PTS Reservations grid via
+  published workflow `13 - PTS Reservation Bookings Import`, scheduled daily at
+  6:00 AM America/New_York. Its August 1 production validation loaded all four
+  studios: 111 ordered seats, 107 active seats, 2 refunded seats, 2 held seats,
+  and $4,166.20 gross booked sales.
 
 Known incomplete surfaces:
 

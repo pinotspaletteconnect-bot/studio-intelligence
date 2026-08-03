@@ -56,11 +56,15 @@ exactly one calendar day earlier:
 - revenue pickup = current class sales plus fees minus prior class sales plus fees
 
 These are net pickup figures. They can be negative after cancellations or
-adjustments. They are not exact gross orders placed yesterday.
+adjustments. They are not exact gross orders placed yesterday. The Upcoming
+Classes KPI cards use `pts_reservation_booking_daily`, populated by workflow
+`13 - PTS Reservation Bookings Import`, for exact gross yesterday booked seats
+and booked sales.
 
 An event that disappears entirely from a snapshot cannot currently be measured
-as cancelled. Exact gross orders and disappeared-event handling require a
-future Reservations-grid collector or explicit zero-row tombstones.
+as cancelled in class-level net pickup. Exact gross orders are captured by the
+Reservations-grid collector; disappeared-event handling would still require
+explicit zero-row tombstones.
 
 ## Initial validation
 
@@ -71,6 +75,7 @@ future Reservations-grid collector or explicit zero-row tombstones.
 - Workflow `12 - PTS Upcoming Class Snapshots` is published on the daily 5:30
   AM America/New_York schedule.
 - Same-day replacement and consecutive-day pickup should be rechecked after
-  deployment of the Class Sales grid-refresh fix and two fresh scheduled
-  snapshots. Exact gross yesterday sales remains a future
-  Reservations-grid collector capability.
+  two fresh scheduled snapshots.
+- Workflow `13 - PTS Reservation Bookings Import` was published August 2, 2026
+  at 6:00 AM America/New_York. Its controlled August 1 load matched the PTS
+  Reservations grid at 111 gross booked seats and $4,166.20 gross booked sales.

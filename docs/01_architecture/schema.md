@@ -1,7 +1,7 @@
 # Studio Intelligence Warehouse Schema
 
-**Version:** 4.1  
-**Last updated:** July 30, 2026
+**Version:** 4.2
+**Last updated:** August 2, 2026
 
 ## Purpose
 
@@ -44,6 +44,7 @@ Confirm exact columns, constraints, and foreign-key behavior in Supabase before 
 | `pts_product_reporting_mappings` | Organization-governed category/subcategory/item to product group and department mapping | Current |
 | `pts_class_type_sales_daily` | One aggregate per studio/event date/raw PTS class type from a range export | Current; replacement range-load destination |
 | `pts_product_sales_daily` | One aggregate per studio/sale date/category/subcategory/item from Product Sales | Current; replacement range-load destination |
+| `pts_reservation_bookings` | One privacy-safe PTS Reservations grid line per studio, order date, and source row key | Current and loading daily |
 
 PTS imports preserve source row hashes for idempotency. Product Sales records
 retain category, subcategory, item, quantity, revenue, tax, and business
@@ -63,9 +64,11 @@ dashboard access are implemented.
 | `pts_class_type_sales_daily_reporting` | Daily class-type aggregates with governed reporting types | Current |
 | `pts_product_sales_daily_reporting` | Daily product/item aggregates with governed product groups and departments | Current |
 | `pts_operations_daily` | One studio/date derived from class revenue, fees, and authoritative Product Sales detail | Current replacement reporting view |
-| `pts_upcoming_class_snapshots` | One future class event per studio, snapshot date, and stable source event key | Deployed; daily workflow pending |
+| `pts_upcoming_class_snapshots` | One future class event per studio, snapshot date, and stable source event key | Current and loading daily |
 | `pts_upcoming_class_snapshots_reporting` | Snapshot history with governed class types and consecutive-day seats/revenue pickup | Deployed |
 | `pts_upcoming_classes_current` | Latest complete future-class snapshot per studio | Deployed |
+| `pts_reservation_bookings_reporting` | Reservation booking lines joined to studio names | Current |
+| `pts_reservation_booking_daily` | Exact daily gross booked seats and booked sales with active, refunded, and held seat counts | Current |
 
 The reporting views do not join event and product rows directly. Each source is
 aggregated at its own grain before daily metrics are combined, preventing

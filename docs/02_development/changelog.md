@@ -10,6 +10,16 @@ This project follows a milestone-based changelog rather than tracking every indi
 
 ## Added
 
+- Added the authenticated PTS Reservations-grid collector and published daily
+  workflow `13 - PTS Reservation Bookings Import` at 6:00 AM
+  America/New_York. The privacy-safe warehouse fact excludes purchaser names
+  and atomically replaces each studio/order-date slice.
+- Replaced the Upcoming Classes dashboard's unreliable snapshot-difference
+  yesterday KPI cards with exact gross booked seats and booked sales from the
+  Reservations grid. The first production load reconciled all four studios for
+  August 1 at 111 ordered seats, 107 active seats, 2 refunded seats, 2 held
+  seats, and $4,166.20 gross booked sales.
+
 - Added the PTS Upcoming Classes foundation: daily event-grain snapshot schema,
   governed current and pickup reporting views, a dedicated dashboard with
   studio sections, and a documented 90-day replacement workflow contract.

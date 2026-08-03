@@ -21,16 +21,31 @@ type UpcomingClassRow = {
   revenue_pickup: number | string | null
 }
 
+type ReservationBookingDailyRow = {
+  studio_id: number
+  order_date: string
+  booking_line_count: number | string | null
+  active_reservations: number | string | null
+  refunded_reservations: number | string | null
+  on_hold_reservations: number | string | null
+  ordered_seats: number | string | null
+  booked_sales: number | string | null
+}
+
 export type UpcomingClassesData = {
   snapshotDate: string | null
+  bookingDate: string
   kpis: {
     upcomingClasses: number
     seatsSold: number
     seatsRemaining: number
     capacityPercent: number
     currentRevenue: number
-    yesterdaySeats: number | null
-    yesterdayRevenue: number | null
+    bookedSeats: number | null
+    bookedSales: number | null
+    activeBookedSeats: number | null
+    refundedSeats: number | null
+    heldSeats: number | null
   }
   studios: Array<{
     id: number
@@ -48,8 +63,8 @@ export type UpcomingClassesData = {
       capacityPercent: number
       leadTimeAverage: number | null
       revenue: number
-      yesterdaySeats: number | null
-      yesterdayRevenue: number | null
+      netSeatPickup: number | null
+      netRevenuePickup: number | null
     }>
   }>
 }
@@ -59,9 +74,29 @@ const numberValue = (value: unknown) => {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
+function completedEasternDate() {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/New_York",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    })
+      .formatToParts(new Date())
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, part.value])
+  )
+  const date = new Date(
+    Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day))
+  )
+  date.setUTCDate(date.getUTCDate() - 1)
+  return date.toISOString().slice(0, 10)
+}
+
 export async function getUpcomingClasses(
   studioId?: string
 ): Promise<UpcomingClassesData> {
+  const bookingDate = completedEasternDate()
   let query = supabase
     .from("pts_upcoming_classes_current")
     .select(
@@ -72,11 +107,28 @@ export async function getUpcomingClasses(
 
   if (studioId && studioId !== "all") query = query.eq("studio_id", studioId)
 
-  const { data, error } = await query
+  let bookingQuery = supabase
+    .from("pts_reservation_booking_daily")
+    .select(
+      "studio_id,order_date,booking_line_count,active_reservations,refunded_reservations,on_hold_reservations,ordered_seats,booked_sales"
+    )
+    .eq("order_date", bookingDate)
+  if (studioId && studioId !== "all") {
+    bookingQuery = bookingQuery.eq("studio_id", studioId)
+  }
+
+  const [{ data, error }, bookingResult] = await Promise.all([query, bookingQuery])
   if (error) throw error
+  if (bookingResult.error) throw bookingResult.error
 
   const rows = (data ?? []) as UpcomingClassRow[]
-  const studioIds = [...new Set(rows.map((row) => row.studio_id))]
+  const bookingRows = (bookingResult.data ?? []) as ReservationBookingDailyRow[]
+  const studioIds = [
+    ...new Set([
+      ...rows.map((row) => row.studio_id),
+      ...bookingRows.map((row) => row.studio_id),
+    ]),
+  ]
   const studioNames = new Map<number, string>()
   if (studioIds.length) {
     const studiosResult = await supabase
@@ -104,9 +156,9 @@ export async function getUpcomingClasses(
     leadTimeAverage:
       row.lead_time_average === null ? null : numberValue(row.lead_time_average),
     revenue: numberValue(row.class_sales) + numberValue(row.fee_sales),
-    yesterdaySeats:
+    netSeatPickup:
       row.seats_pickup === null ? null : numberValue(row.seats_pickup),
-    yesterdayRevenue:
+    netRevenuePickup:
       row.revenue_pickup === null ? null : numberValue(row.revenue_pickup),
   }))
   const totals = classes.reduce(
@@ -115,26 +167,42 @@ export async function getUpcomingClasses(
       capacity: sum.capacity + row.capacity,
       seatsRemaining: sum.seatsRemaining + row.seatsRemaining,
       revenue: sum.revenue + row.revenue,
-      yesterdaySeats:
-        sum.yesterdaySeats + (row.yesterdaySeats === null ? 0 : row.yesterdaySeats),
-      yesterdayRevenue:
-        sum.yesterdayRevenue +
-        (row.yesterdayRevenue === null ? 0 : row.yesterdayRevenue),
     }),
-    { seatsSold: 0, capacity: 0, seatsRemaining: 0, revenue: 0, yesterdaySeats: 0, yesterdayRevenue: 0 }
+    { seatsSold: 0, capacity: 0, seatsRemaining: 0, revenue: 0 }
   )
-  const hasPickup = classes.some((row) => row.yesterdaySeats !== null)
+  const bookingTotals = bookingRows.reduce(
+    (sum, row) => ({
+      bookedSeats: sum.bookedSeats + numberValue(row.ordered_seats),
+      bookedSales: sum.bookedSales + numberValue(row.booked_sales),
+      activeBookedSeats:
+        sum.activeBookedSeats + numberValue(row.active_reservations),
+      refundedSeats: sum.refundedSeats + numberValue(row.refunded_reservations),
+      heldSeats: sum.heldSeats + numberValue(row.on_hold_reservations),
+    }),
+    {
+      bookedSeats: 0,
+      bookedSales: 0,
+      activeBookedSeats: 0,
+      refundedSeats: 0,
+      heldSeats: 0,
+    }
+  )
+  const hasBookings = bookingRows.length > 0
 
   return {
     snapshotDate: rows[0]?.snapshot_date ?? null,
+    bookingDate,
     kpis: {
       upcomingClasses: classes.length,
       seatsSold: totals.seatsSold,
       seatsRemaining: totals.seatsRemaining,
       capacityPercent: totals.capacity ? (totals.seatsSold / totals.capacity) * 100 : 0,
       currentRevenue: totals.revenue,
-      yesterdaySeats: hasPickup ? totals.yesterdaySeats : null,
-      yesterdayRevenue: hasPickup ? totals.yesterdayRevenue : null,
+      bookedSeats: hasBookings ? bookingTotals.bookedSeats : null,
+      bookedSales: hasBookings ? bookingTotals.bookedSales : null,
+      activeBookedSeats: hasBookings ? bookingTotals.activeBookedSeats : null,
+      refundedSeats: hasBookings ? bookingTotals.refundedSeats : null,
+      heldSeats: hasBookings ? bookingTotals.heldSeats : null,
     },
     studios: studioIds
       .map((id) => ({

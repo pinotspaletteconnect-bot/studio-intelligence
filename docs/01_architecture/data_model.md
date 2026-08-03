@@ -76,11 +76,15 @@ Current PTS source facts:
   stable source event key. The event date comes from the class time rather than
   the collector's report window. Source type, room, capacity, attendance, and
   class/product/fee sales remain available for operational reporting.
+- `pts_reservation_bookings`: one privacy-safe Reservations grid line per
+  studio, order date, and source row key. It preserves gross ordered seats,
+  current active/refunded/held counts, booked sales, and the future class label
+  while excluding purchaser names.
 
 Product item facts retain category, subcategory, item name, quantity, sales,
 tax, and source transaction context while deliberately excluding customer
-names. Planned extensions include reservations, staffing, labor, inventory,
-products, and studio hours.
+names. Planned extensions include staffing, labor, inventory, products, and
+studio hours.
 
 PTS operations reporting preserves these source grains and applies governed
 organization-level mappings downstream:
@@ -109,6 +113,10 @@ organization-level mappings downstream:
   studio, and daily snapshot. Consecutive snapshots support net seats and
   class-plus-fee revenue pickup without relying on the non-downloadable PTS
   Reservations grid.
+- `pts_reservation_booking_daily` aggregates the non-downloadable Reservations
+  grid by studio and order date. It is the authoritative source for exact gross
+  yesterday booked seats and booked sales; snapshot differences remain net
+  class-level pickup only.
 
 ## Financial Intelligence
 

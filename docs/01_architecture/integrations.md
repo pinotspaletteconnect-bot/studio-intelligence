@@ -145,14 +145,15 @@ Planned scope includes profile insights, reviews, search visibility, and custome
 - **Pilot credentials:** `PTS_USERNAME` and `PTS_PASSWORD` in protected Railway
   variables; credentials are never stored in Git or ordinary Supabase tables
 - **Collector authorization:** `POST /pts/sales-report`,
-  `POST /pts/product-sales-report`, and `POST /pts/class-sales-report` require
+  `POST /pts/product-sales-report`, `POST /pts/class-sales-report`, and
+  `POST /pts/reservations-report` require
   a bearer token matching the protected
   `COLLECTOR_API_TOKEN` Railway variable; n8n stores the same value in an
   encrypted header-auth credential
 - **Configuration:** one `studio_integrations` row per authorized PTS location,
   with `integration_type = 'pts'` and the PTS location ID in `external_id`
-- **Warehouse:** `pts_sales_daily_summary`, `pts_class_sales_daily`, and
-  `pts_non_class_sales_items`
+- **Warehouse:** `pts_sales_daily_summary`, `pts_class_sales_daily`,
+  `pts_non_class_sales_items`, and `pts_reservation_bookings`
 - **Range-load history:** `pts_class_type_sales_daily` and
   `pts_product_sales_daily`, exposed through `pts_operations_daily`. Operations
   reporting combines this preserved history with the daily production facts;
@@ -190,6 +191,13 @@ Planned scope includes profile insights, reviews, search visibility, and custome
   studio and combines the validated results before atomic replacement. The
   July 31, 2026 run loaded 700 classes across all four studios, including 215
   for Gilbert. Controlled two-day pickup validation remains pending.
+- **Reservation bookings:** published workflow `13 - PTS Reservation Bookings
+  Import` runs daily at 6:00 AM America/New_York for the prior completed order
+  date. The collector reads each studio's non-downloadable Reservations grid,
+  omits purchaser names, validates all four studio slices, and atomically
+  replaces each studio/date slice. The August 1, 2026 production validation
+  loaded 111 gross booked seats and $4,166.20 gross booked sales, including 2
+  refunded and 2 held seats.
 
 #### Scalable PTS onboarding
 
