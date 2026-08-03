@@ -6,6 +6,7 @@ import {
   ArrowRight,
   Armchair,
   CalendarClock,
+  CalendarRange,
   Flame,
   ChartNoAxesCombined,
   ChevronDown,
@@ -257,6 +258,13 @@ export function OperationsDashboard() {
         >
           <CalendarClock />
           View upcoming classes
+        </Link>
+        <Link
+          href="/operations/week-over-week"
+          className={buttonVariants({ variant: "outline" })}
+        >
+          <CalendarRange />
+          Week-over-week
         </Link>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
