@@ -182,6 +182,13 @@ Planned scope includes profile insights, reviews, search visibility, and custome
   their embedded event/sale dates in n8n. Product Sales is authoritative for
   product revenue, including Recorded Videos; the Sales Report non-class export
   is reconciliation-only to prevent duplicate product rows.
+- **Manual Class Sales backfill:** workflow `11 - PTS Class Sales Backfill`
+  accepts one operator-downloaded PTS Excel workbook and studio selection at a
+  time. The authenticated `/pts/class-sales-upload` endpoint reuses the
+  production parser, while the existing n8n mapping, grouping, and
+  `pts_class_type_sales_daily` upsert path remains unchanged. The workflow is
+  intentionally unpublished and uses n8n's temporary test form to avoid a
+  permanent public upload URL.
 - **Upcoming Classes foundation:** the existing Class Sales endpoint can collect
   a rolling 90-day future range. A daily event-grain snapshot migration,
   reporting views, dashboard, and workflow contract are implemented. The

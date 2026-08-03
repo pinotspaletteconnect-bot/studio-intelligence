@@ -160,6 +160,14 @@ Implemented foundation:
 
 Known incomplete surfaces:
 
+- Manual Class Sales history can now be loaded through workflow
+  `11 - PTS Class Sales Backfill` by selecting a studio and uploading the PTS
+  Excel workbook. It uses the existing `pts_class_type_sales_daily` natural
+  keys and dashboard reporting path. The workflow remains unpublished so its
+  upload form is available only during an authenticated test execution. An
+  August 3 sample workbook parsed 402 rows spanning January 1 through July 1;
+  it was not warehouse-loaded because the source studio was not confirmed.
+
 - PTS Daily Sales, Product Sales, and Class Sales collection are deployed to
   Railway. Daily
   Sales summary upserts are validated for all four studios for July 28, 2026.

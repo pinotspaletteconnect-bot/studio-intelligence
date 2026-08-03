@@ -10,6 +10,12 @@ This project follows a milestone-based changelog rather than tracking every indi
 
 ## Added
 
+- Converted workflow `11 - PTS Class Sales Backfill` from a long-running PTS
+  browser request to a manual Excel upload form. The authenticated collector
+  now parses operator-downloaded Class Sales workbooks with the production
+  parser, and the workflow keeps the established tenant mapping, aggregation,
+  natural keys, Supabase table, and dashboard reporting path.
+
 - Added the authenticated PTS Reservations-grid collector and published daily
   workflow `13 - PTS Reservation Bookings Import` at 6:00 AM
   America/New_York. The privacy-safe warehouse fact excludes purchaser names
