@@ -141,12 +141,6 @@ Implemented foundation:
   seats, capacity, per-seat metrics, lead time, event types, candles, and art
   supplies. The ledger currently spans every warehouse year, including 2024,
   2025, and 2026 where data is present.
-  The KPI comparison defaults to the last completed week but uses the shared
-  Operations date and comparison controls, allowing MTD, last month, rolling,
-  and custom month/date comparisons. Historical rows expose detailed Product
-  Sales groups (including liquor, wine, beer, food, candles, art supplies,
-  frames, videos, THPK, and miscellaneous products) plus governed class-type
-  revenue.
 - Operations summary combines the preserved range-load history with the
   reporting views fed by workflows 05–07. Current production rows take
   precedence by studio/date on overlap. Product queries explicitly paginate

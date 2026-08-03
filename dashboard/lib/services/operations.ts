@@ -130,22 +130,6 @@ export type WeeklyOperationsHistoryData = {
     averageLeadTime: number
     privatePartyEvents: number
     mobileEventCount: number
-    liquorSales: number
-    wineSales: number
-    beerSales: number
-    miscDrinksSales: number
-    alcoholSpecialSales: number
-    foodSales: number
-    recordedVideosSales: number
-    framesSales: number
-    thpkSales: number
-    miscProductSales: number
-    regularSales: number
-    littleBrushesSales: number
-    paintItForwardSales: number
-    privatePartySales: number
-    mobileEventSales: number
-    noClassSales: number
     candleSales: number
     artSuppliesSales: number
   }>
@@ -890,11 +874,11 @@ export async function getWeeklyOperationsHistory(): Promise<WeeklyOperationsHist
   const currentProductDates = new Set(currentProducts.map((row) => `${row.studio_id}:${row.report_date}`))
   const productRows = [...historicalProducts.filter((row) => !currentProductDates.has(`${row.studio_id}:${row.report_date}`)), ...currentProducts]
 
-  type HistoryClassRow = ClassLeadTimeRow & { studio_id: number; event_date: string; reporting_class_type: string; class_sales: number | string | null; fee_sales: number | string | null }
+  type HistoryClassRow = ClassLeadTimeRow & { studio_id: number; event_date: string; reporting_class_type: string }
   const classRows: HistoryClassRow[] = []
   for (let from = 0; from < 50000; from += 5000) {
     const result = await supabase.from("pts_class_sales_reporting").select(
-      "studio_id,event_date,reporting_class_type,seats_sold,lead_time_average,class_sales,fee_sales"
+      "studio_id,event_date,reporting_class_type,seats_sold,lead_time_average"
     ).gte("event_date", startDate).lte("event_date", endDate).order("event_date").range(from, from + 4999)
     if (result.error) throw result.error
     const page = (result.data ?? []) as HistoryClassRow[]
@@ -917,11 +901,6 @@ export async function getWeeklyOperationsHistory(): Promise<WeeklyOperationsHist
       merchandiseSales: 0, seatsSold: 0, attendancePercent: 0,
       foodBeveragePerSeat: 0, revenuePerSeat: 0, averageLeadTime: 0,
       privatePartyEvents: 0, mobileEventCount: 0, candleSales: 0,
-      liquorSales: 0, wineSales: 0, beerSales: 0, miscDrinksSales: 0,
-      alcoholSpecialSales: 0, foodSales: 0, recordedVideosSales: 0,
-      framesSales: 0, thpkSales: 0, miscProductSales: 0,
-      regularSales: 0, littleBrushesSales: 0, paintItForwardSales: 0,
-      privatePartySales: 0, mobileEventSales: 0, noClassSales: 0,
       artSuppliesSales: 0, capacity: 0, leadWeightedDays: 0, leadSeats: 0,
     }
     weeks.set(key, row)
@@ -951,17 +930,6 @@ export async function getWeeklyOperationsHistory(): Promise<WeeklyOperationsHist
     }
     if (row.product_group === "Candles") week.candleSales += numberValue(row.net_sales)
     if (row.product_group === "Art Supplies") week.artSuppliesSales += numberValue(row.net_sales)
-    const productGroup = row.product_group?.trim().toLowerCase()
-    if (productGroup === "liquor") week.liquorSales += numberValue(row.net_sales)
-    if (productGroup === "wine") week.wineSales += numberValue(row.net_sales)
-    if (productGroup === "beer") week.beerSales += numberValue(row.net_sales)
-    if (productGroup === "misc drinks") week.miscDrinksSales += numberValue(row.net_sales)
-    if (productGroup === "alcohol special") week.alcoholSpecialSales += numberValue(row.net_sales)
-    if (productGroup === "food") week.foodSales += numberValue(row.net_sales)
-    if (productGroup === "recorded videos") week.recordedVideosSales += numberValue(row.net_sales)
-    if (productGroup === "frames") week.framesSales += numberValue(row.net_sales)
-    if (productGroup === "thpk") week.thpkSales += numberValue(row.net_sales)
-    if (productGroup === "misc") week.miscProductSales += numberValue(row.net_sales)
   }
   for (const [key, sales] of detailedFoodByDate) {
     const [studioId, reportDate] = key.split(":")
@@ -977,13 +945,6 @@ export async function getWeeklyOperationsHistory(): Promise<WeeklyOperationsHist
     }
     if (row.reporting_class_type === "Private Party") week.privatePartyEvents += 1
     if (row.reporting_class_type === "Mobile Events") week.mobileEventCount += 1
-    const classRevenue = numberValue(row.class_sales) + numberValue(row.fee_sales)
-    if (row.reporting_class_type === "Regular") week.regularSales += classRevenue
-    if (row.reporting_class_type === "Little Brushes") week.littleBrushesSales += classRevenue
-    if (row.reporting_class_type === "Paint it Forward") week.paintItForwardSales += classRevenue
-    if (row.reporting_class_type === "Private Party") week.privatePartySales += classRevenue
-    if (row.reporting_class_type === "Mobile Events") week.mobileEventSales += classRevenue
-    if (row.reporting_class_type === "No Class") week.noClassSales += classRevenue
   }
 
   const rows = [...weeks.values()].map(({ capacity, leadWeightedDays, leadSeats, ...row }) => ({
