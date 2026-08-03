@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select"
 import { useApp } from "@/contexts/app-context"
 import {
+  type AppliedDateRange,
   type DateRangePreset,
   formatAppliedDateRange,
   getCompletedDateRange,
@@ -26,6 +27,34 @@ type DashboardToolbarProps = {
   showComparison?: boolean
   defaultPreset?: DateRangePreset
   dateRangeNote?: string
+}
+
+const shiftIsoDate = (value: string, days: number) => {
+  const date = new Date(`${value}T00:00:00Z`)
+  date.setUTCDate(date.getUTCDate() + days)
+  return date.toISOString().slice(0, 10)
+}
+
+function getComparisonRange(
+  dateRange: AppliedDateRange,
+  comparison: "previous" | "priorYearWeek" | "custom",
+  customRange: { startDate: string; endDate: string } | null
+) {
+  if (comparison === "custom") return customRange
+  if (comparison === "priorYearWeek") {
+    return {
+      startDate: shiftIsoDate(dateRange.startDate, -364),
+      endDate: shiftIsoDate(dateRange.endDate, -364),
+    }
+  }
+
+  const days =
+    Math.round(
+      (Date.parse(dateRange.endDate) - Date.parse(dateRange.startDate)) /
+        86_400_000
+    ) + 1
+  const endDate = shiftIsoDate(dateRange.startDate, -1)
+  return { startDate: shiftIsoDate(endDate, -(days - 1)), endDate }
 }
 
 export function DashboardToolbar({
@@ -64,6 +93,11 @@ export function DashboardToolbar({
     Boolean(comparisonStart && comparisonEnd) &&
     comparisonStart <= comparisonEnd &&
     comparisonEnd <= yesterday
+  const appliedComparisonRange = getComparisonRange(
+    dateRange,
+    comparison,
+    comparisonDateRange
+  )
 
   const chooseRange = (preset: DateRangePreset | null) => {
     if (!preset) return
@@ -192,10 +226,23 @@ export function DashboardToolbar({
             </>
           )}
 
-          <p className="basis-full text-right text-xs text-muted-foreground">
-            Showing {formatAppliedDateRange(dateRange)}
-            {dateRangeNote ? ` | ${dateRangeNote}` : ""}
-          </p>
+          <div className="basis-full text-right text-xs text-muted-foreground">
+            <p>
+              Showing {formatAppliedDateRange(dateRange)}
+              {dateRangeNote ? ` | ${dateRangeNote}` : ""}
+            </p>
+            {showComparison && (
+              <p>
+                Comparing to{" "}
+                {appliedComparisonRange
+                  ? formatAppliedDateRange({
+                      preset: "custom",
+                      ...appliedComparisonRange,
+                    })
+                  : "select comparison dates"}
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </div>

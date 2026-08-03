@@ -10,6 +10,8 @@ This project follows a milestone-based changelog rather than tracking every indi
 
 ## Added
 
+- Displayed the exact selected and comparison date ranges together in shared comparison-enabled dashboard toolbars.
+
 - Added the first Executive Performance dashboard, combining trusted Operations and Marketing service contracts into headline KPIs, comparison deltas, studio performance, revenue mix, and paid-platform summaries.
 - Added an Executive this-week snapshot for completed sales, future booked revenue and seats, scheduled private/mobile events, and an eight-week completed-sales trend.
 
