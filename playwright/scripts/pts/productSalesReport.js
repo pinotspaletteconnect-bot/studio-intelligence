@@ -219,13 +219,9 @@ async function runReport(page, fromDate, toDate) {
                     const grid = globalThis.jQuery?.(gridElement).data("kendoGrid");
                     const dataSource = grid?.dataSource;
                     const exportButton = gridElement.querySelector(".k-grid-excel");
-                    const visible = Boolean(
-                        gridElement.offsetWidth || gridElement.offsetHeight
-                    );
 
                     return Boolean(
-                        visible &&
-                            exportButton &&
+                        exportButton &&
                             grid &&
                             dataSource &&
                             !dataSource._requestInProgress &&
@@ -256,6 +252,8 @@ async function runReport(page, fromDate, toDate) {
                         grid?.dataSource?._requestInProgress ||
                             element.querySelector(".k-loading-mask")
                     ),
+                    total: grid?.dataSource?.total?.() ?? 0,
+                    viewCount: grid?.dataSource?.view?.()?.length ?? 0,
                     score:
                         (/(category|product|item)/.test(headerText) ? 4 : 0) +
                         (/(quantity|qty|units)/.test(headerText) ? 2 : 0) +
@@ -265,7 +263,6 @@ async function runReport(page, fromDate, toDate) {
             .filter(candidate =>
                 Boolean(
                     candidate.id &&
-                        candidate.visible &&
                         candidate.exportable &&
                         !candidate.loading
                 )
@@ -275,11 +272,14 @@ async function runReport(page, fromDate, toDate) {
 
     if (!selected) {
         throw new Error(
-            `PTS Product Sales did not expose a visible export grid (${JSON.stringify(candidates)})`
+            `PTS Product Sales did not initialize an export grid (${JSON.stringify(candidates)})`
         );
     }
 
-    return `#${selected.id}`;
+    return {
+        gridSelector: `#${selected.id}`,
+        hasRows: selected.total > 0 || selected.viewCount > 0
+    };
 }
 
 async function downloadProductWorkbook(
@@ -472,18 +472,22 @@ async function runPtsProductSalesReport({
                 waitUntil: "domcontentloaded"
             });
             await selectStudio(page, studio);
-            const gridSelector = await runReport(page, from, to);
-            const productFile = await downloadProductWorkbook(
-                page,
-                folder,
-                studio,
-                from,
-                to,
-                gridSelector
-            );
-            const rows = (await parseNonClassSales(productFile)).filter(
-                row => row.category && row.item_name
-            );
+            const { gridSelector, hasRows } = await runReport(page, from, to);
+            let rows = [];
+
+            if (hasRows) {
+                const productFile = await downloadProductWorkbook(
+                    page,
+                    folder,
+                    studio,
+                    from,
+                    to,
+                    gridSelector
+                );
+                rows = (await parseNonClassSales(productFile)).filter(
+                    row => row.category && row.item_name
+                );
+            }
 
             results.push({
                 studioId: studio.studioId,
