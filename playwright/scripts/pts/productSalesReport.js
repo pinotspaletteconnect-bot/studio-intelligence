@@ -196,10 +196,6 @@ async function selectStudio(page, studio) {
     }
 }
 
-function productGrid(page) {
-    return page.locator("#griddDetailsData");
-}
-
 async function runReport(page, fromDate, toDate) {
     const from = displayDate(fromDate);
     const to = displayDate(toDate);
@@ -216,30 +212,85 @@ async function runReport(page, fromDate, toDate) {
     await page.getByRole("button", { name: "Run", exact: true }).click();
     await navigation;
 
-    await productGrid(page).waitFor({ state: "visible" });
-    await productGrid(page)
-        .locator(".k-grid-excel")
-        .waitFor({ state: "visible" });
     await page.waitForFunction(
         () => {
-            const gridElement = document.querySelector("#griddDetailsData");
-            const grid = globalThis.jQuery?.(gridElement).data("kendoGrid");
-            const dataSource = grid?.dataSource;
+            return Array.from(document.querySelectorAll(".k-grid")).some(
+                gridElement => {
+                    const grid = globalThis.jQuery?.(gridElement).data("kendoGrid");
+                    const dataSource = grid?.dataSource;
+                    const exportButton = gridElement.querySelector(".k-grid-excel");
+                    const visible = Boolean(
+                        gridElement.offsetWidth || gridElement.offsetHeight
+                    );
 
-            return Boolean(
-                grid &&
-                    dataSource &&
-                    !dataSource._requestInProgress &&
-                    !gridElement.querySelector(".k-loading-mask")
+                    return Boolean(
+                        visible &&
+                            exportButton &&
+                            grid &&
+                            dataSource &&
+                            !dataSource._requestInProgress &&
+                            !gridElement.querySelector(".k-loading-mask")
+                    );
+                }
             );
         },
         undefined,
         { timeout: 120000 }
     );
+
+    const candidates = await page.locator(".k-grid").evaluateAll(elements =>
+        elements
+            .map(element => {
+                const grid = globalThis.jQuery?.(element).data("kendoGrid");
+                const columns = (grid?.columns ?? []).filter(column => column.field);
+                const headerText = columns
+                    .map(column => `${column.title ?? ""} ${column.field ?? ""}`)
+                    .join(" ")
+                    .toLowerCase();
+
+                return {
+                    id: element.id,
+                    visible: Boolean(element.offsetWidth || element.offsetHeight),
+                    exportable: Boolean(element.querySelector(".k-grid-excel")),
+                    loading: Boolean(
+                        grid?.dataSource?._requestInProgress ||
+                            element.querySelector(".k-loading-mask")
+                    ),
+                    score:
+                        (/(category|product|item)/.test(headerText) ? 4 : 0) +
+                        (/(quantity|qty|units)/.test(headerText) ? 2 : 0) +
+                        (/(sales|gross|net|total)/.test(headerText) ? 2 : 0)
+                };
+            })
+            .filter(candidate =>
+                Boolean(
+                    candidate.id &&
+                        candidate.visible &&
+                        candidate.exportable &&
+                        !candidate.loading
+                )
+            )
+    );
+    const selected = candidates.sort((a, b) => b.score - a.score)[0];
+
+    if (!selected) {
+        throw new Error(
+            `PTS Product Sales did not expose a visible export grid (${JSON.stringify(candidates)})`
+        );
+    }
+
+    return `#${selected.id}`;
 }
 
-async function downloadProductWorkbook(page, folder, studio, fromDate, toDate) {
-    const grid = productGrid(page);
+async function downloadProductWorkbook(
+    page,
+    folder,
+    studio,
+    fromDate,
+    toDate,
+    gridSelector
+) {
+    const grid = page.locator(gridSelector);
     const excelButton = grid.locator(".k-grid-excel");
 
     const waitForDownload = () =>
@@ -421,13 +472,14 @@ async function runPtsProductSalesReport({
                 waitUntil: "domcontentloaded"
             });
             await selectStudio(page, studio);
-            await runReport(page, from, to);
+            const gridSelector = await runReport(page, from, to);
             const productFile = await downloadProductWorkbook(
                 page,
                 folder,
                 studio,
                 from,
-                to
+                to,
+                gridSelector
             );
             const rows = (await parseNonClassSales(productFile)).filter(
                 row => row.category && row.item_name
