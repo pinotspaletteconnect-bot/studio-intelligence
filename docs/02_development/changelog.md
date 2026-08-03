@@ -11,7 +11,8 @@ This project follows a milestone-based changelog rather than tracking every indi
 ## Added
 
 - Added a dedicated Operations Year-over-Year Period Comparison page with a
-  selected-period date control and a compact studio-row table. Every metric
+  selected-period date control and matching studio-row tables for operating
+  performance and detailed product sales. Every metric
   cell emphasizes the current year, shows the same period for the two prior
   years, and includes a current-versus-prior-year delta. Columns cover liquor,
   wine, beer, food, candles, art supplies, other Product Sales groups, governed

@@ -18,7 +18,7 @@ type StudioResult = { studioId: number; studioName: string; periods: PeriodResul
 const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })
 const decimalCurrency = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
-const metrics: Metric[] = [
+const operatingMetrics: Metric[] = [
   { key: "totalSales", label: "Total sales", format: "currency" },
   { key: "classSales", label: "Class sales", format: "currency" },
   { key: "seatsSold", label: "Seats sold", format: "number" },
@@ -28,6 +28,17 @@ const metrics: Metric[] = [
   { key: "foodBeverageSales", label: "F&B sales", format: "currency" },
   { key: "foodBeverageShare", label: "F&B %", format: "percent" },
   { key: "foodBeveragePerSeat", label: "F&B / seat", format: "decimal" },
+  { key: "regularSales", label: "Regular", format: "currency" },
+  { key: "littleBrushesSales", label: "Little Brushes", format: "currency" },
+  { key: "paintItForwardSales", label: "Paint it Forward", format: "currency" },
+  { key: "privatePartySales", label: "Private Party", format: "currency" },
+  { key: "mobileEventSales", label: "Mobile Events", format: "currency" },
+  { key: "noClassSales", label: "No Class", format: "currency" },
+  { key: "privatePartyEvents", label: "Private party count", format: "number" },
+  { key: "mobileEventCount", label: "Mobile event count", format: "number" },
+]
+
+const productMetrics: Metric[] = [
   { key: "liquorSales", label: "Liquor", format: "currency" },
   { key: "wineSales", label: "Wine", format: "currency" },
   { key: "beerSales", label: "Beer", format: "currency" },
@@ -40,14 +51,6 @@ const metrics: Metric[] = [
   { key: "framesSales", label: "Frames", format: "currency" },
   { key: "thpkSales", label: "THPK", format: "currency" },
   { key: "miscProductSales", label: "Misc product", format: "currency" },
-  { key: "regularSales", label: "Regular", format: "currency" },
-  { key: "littleBrushesSales", label: "Little Brushes", format: "currency" },
-  { key: "paintItForwardSales", label: "Paint it Forward", format: "currency" },
-  { key: "privatePartySales", label: "Private Party", format: "currency" },
-  { key: "mobileEventSales", label: "Mobile Events", format: "currency" },
-  { key: "noClassSales", label: "No Class", format: "currency" },
-  { key: "privatePartyEvents", label: "Private party count", format: "number" },
-  { key: "mobileEventCount", label: "Mobile event count", format: "number" },
 ]
 
 function formatValue(value: number, format: Metric["format"]) {
@@ -97,6 +100,21 @@ function ThreeYearValue({ metric, periods }: { metric: Metric; periods: PeriodRe
       {delta === null ? "New" : `${Math.abs(delta).toFixed(1)}% ${positive ? "up" : "down"}`}
     </div>
   </div>
+}
+
+function ComparisonTable({ title, metrics, studios }: { title: string; metrics: Metric[]; studios: StudioResult[] }) {
+  return <Card>
+    <CardContent className="pt-6">
+      <h2 className="mb-3 text-lg font-semibold">{title}</h2>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm" style={{ minWidth: `${Math.max(1100, 180 + metrics.length * 150)}px` }}>
+          <thead><tr className="border-b text-xs text-muted-foreground"><th className="sticky left-0 z-10 bg-card px-3 py-3 text-left font-medium">Studio</th>{metrics.map((metric) => <th key={metric.key} className="px-3 py-3 text-right font-medium">{metric.label}</th>)}</tr></thead>
+          <tbody>{studios.map((studio) => <tr key={studio.studioId} className="border-b align-top last:border-0"><td className="sticky left-0 z-10 bg-card px-3 py-4 text-base font-semibold">{studio.studioName}</td>{metrics.map((metric) => <td key={metric.key} className="px-3 py-4"><ThreeYearValue metric={metric} periods={studio.periods} /></td>)}</tr>)}</tbody>
+        </table>
+      </div>
+      <p className="mt-3 text-xs text-muted-foreground">Scroll horizontally to review all categories. The studio name remains pinned.</p>
+    </CardContent>
+  </Card>
 }
 
 export function WeekOverWeekDashboard() {
@@ -160,17 +178,10 @@ export function WeekOverWeekDashboard() {
       />
       {loading && <Skeleton className="h-96 rounded-xl" />}
       {error && <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">{error}</CardContent></Card>}
-      {!loading && !error && <Card>
-        <CardContent className="pt-6">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[3900px] text-sm">
-              <thead><tr className="border-b text-xs text-muted-foreground"><th className="sticky left-0 z-10 bg-card px-3 py-3 text-left font-medium">Studio</th>{metrics.map((metric) => <th key={metric.key} className="px-3 py-3 text-right font-medium">{metric.label}</th>)}</tr></thead>
-              <tbody>{studioResults.map((studio) => <tr key={studio.studioId} className="border-b align-top last:border-0"><td className="sticky left-0 z-10 bg-card px-3 py-4 text-base font-semibold">{studio.studioName}</td>{metrics.map((metric) => <td key={metric.key} className="px-3 py-4"><ThreeYearValue metric={metric} periods={studio.periods} /></td>)}</tr>)}</tbody>
-            </table>
-          </div>
-          <p className="mt-3 text-xs text-muted-foreground">Scroll horizontally to review all operating categories. The studio name remains pinned.</p>
-        </CardContent>
-      </Card>}
+      {!loading && !error && <>
+        <ComparisonTable title="Operating performance" metrics={operatingMetrics} studios={studioResults} />
+        <ComparisonTable title="Product sales" metrics={productMetrics} studios={studioResults} />
+      </>}
     </div>
   )
 }
