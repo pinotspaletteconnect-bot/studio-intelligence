@@ -10,6 +10,12 @@ This project follows a milestone-based changelog rather than tracking every indi
 
 ## Added
 
+- Corrected historical Operations class-type comparisons to consume the Class
+  Sales backfill reporting view as well as the event-level production view.
+  Production rows take precedence for overlapping studio/dates, preventing
+  duplicates while restoring historical Regular, Little Brushes, and related
+  governed class-type revenue.
+
 - Added a dedicated Operations Year-over-Year Period Comparison page with a
   selected-period date control and matching studio-row tables for operating
   performance and detailed product sales. Every metric

@@ -27,6 +27,9 @@ type ProductRow = {
 }
 
 type ClassTypeRow = {
+  studio_id: number
+  event_date?: string
+  report_date?: string
   reporting_class_type: string
   class_event_count?: number | string | null
   seats_sold: number | string | null
@@ -315,10 +318,20 @@ export async function getOperationsDashboard(
     supabase
       .from("pts_class_sales_reporting")
       .select(
-        "reporting_class_type,seats_sold,class_sales,fee_sales"
+        "studio_id,event_date,reporting_class_type,seats_sold,class_sales,fee_sales"
       )
       .gte("event_date", periodStart)
       .lte("event_date", periodEnd),
+    studioId
+  )
+  const historicalClassTypesQuery = addStudioFilter(
+    supabase
+      .from("pts_class_type_sales_daily_reporting")
+      .select(
+        "studio_id,report_date,reporting_class_type,class_event_count,seats_sold,class_sales,fee_sales"
+      )
+      .gte("report_date", periodStart)
+      .lte("report_date", periodEnd),
     studioId
   )
   const historicalDailyQuery = addStudioFilter(
@@ -347,6 +360,7 @@ export async function getOperationsDashboard(
     currentProductRows,
     historicalProductRows,
     classTypesResult,
+    historicalClassTypesResult,
     classLeadTimeResult,
   ] =
     await Promise.all([
@@ -365,12 +379,14 @@ export async function getOperationsDashboard(
         studioId
       ),
       classTypesQuery.order("event_date").range(0, 4999),
+      historicalClassTypesQuery.order("report_date").range(0, 4999),
       classLeadTimeQuery.range(0, 4999),
     ])
 
   if (currentDailyResult.error) throw currentDailyResult.error
   if (historicalDailyResult.error) throw historicalDailyResult.error
   if (classTypesResult.error) throw classTypesResult.error
+  if (historicalClassTypesResult.error) throw historicalClassTypesResult.error
   if (classLeadTimeResult.error) throw classLeadTimeResult.error
 
   // The range-import table preserves historical dashboard dates while the
@@ -438,7 +454,16 @@ export async function getOperationsDashboard(
   const artSuppliesRows = allProductRows.filter(
     (row) => row.product_group === "Art Supplies"
   )
-  const classTypeRows = (classTypesResult.data ?? []) as ClassTypeRow[]
+  const currentClassTypeRows = (classTypesResult.data ?? []) as ClassTypeRow[]
+  const currentClassStudioDates = new Set(
+    currentClassTypeRows.map((row) => `${row.studio_id}:${row.event_date}`)
+  )
+  const classTypeRows = [
+    ...((historicalClassTypesResult.data ?? []) as ClassTypeRow[]).filter(
+      (row) => !currentClassStudioDates.has(`${row.studio_id}:${row.report_date}`)
+    ),
+    ...currentClassTypeRows,
+  ]
   const classLeadTimeRows = (classLeadTimeResult.data ?? []) as ClassLeadTimeRow[]
   const studioIds = [...new Set(dailyRows.map((row) => row.studio_id))]
   const studioNames = new Map<number, string>()

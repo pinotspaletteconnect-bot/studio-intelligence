@@ -147,6 +147,11 @@ Implemented foundation:
   precedence by studio/date on overlap. Product queries explicitly paginate
   Supabase results so F&B, candle, food, and art-supply history is not truncated
   at the API's 1,000-row response limit.
+- Operations class-type metrics merge event-level production rows from
+  `pts_class_sales_reporting` with aggregate Class Sales backfill rows from
+  `pts_class_type_sales_daily_reporting`, preferring production by studio/date
+  on overlap so historical Regular, Little Brushes, and other governed types
+  remain complete without duplication.
 - Current Operations totals and Daily Operating Detail use the class-reported
   seats and sales columns from `pts_daily_operations_reporting`, keeping KPI
   totals consistent with the class-level rows displayed in the drill-down.
