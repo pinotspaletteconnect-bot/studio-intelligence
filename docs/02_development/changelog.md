@@ -219,6 +219,10 @@ This project follows a milestone-based changelog rather than tracking every indi
 
 ## Fixed
 
+- Stabilized recurring PTS studio selection by setting the Kendo location
+  widget directly, with a forced UI fallback, so animated dropdown options
+  cannot intercept or lose Class and Product collector location changes.
+
 - Prevented recurring PTS Product Sales imports from treating hidden stale PTS
   grids as legitimate empty reports; the collector activates the lazily loaded
   Product Sales Details tab, and populated visible grids require a successfully

@@ -141,10 +141,29 @@ async function login(page) {
 }
 
 async function selectStudio(page, studio) {
-    await page.locator('[aria-owns="LocationSelect_listbox"]').click();
-    await page
-        .getByRole("option", { name: studio.locationName, exact: true })
-        .click();
+    const selectedByWidget = await page.locator("#LocationSelect").evaluate(
+        (input, locationId) => {
+            const widget = globalThis.jQuery
+                ? globalThis.jQuery(input).data("kendoDropDownList")
+                : null;
+
+            if (!widget) {
+                return null;
+            }
+
+            widget.value(String(locationId));
+            widget.trigger("change");
+            return widget.value();
+        },
+        studio.locationId
+    );
+
+    if (selectedByWidget === null) {
+        await page.locator('[aria-owns="LocationSelect_listbox"]').click();
+        await page
+            .getByRole("option", { name: studio.locationName, exact: true })
+            .click({ force: true });
+    }
 
     const selectedLocationId = await page.locator("#LocationSelect").inputValue();
 
