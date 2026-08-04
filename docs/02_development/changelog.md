@@ -16,6 +16,7 @@ This project follows a milestone-based changelog rather than tracking every indi
 - Added an Executive this-week snapshot for completed sales, future booked revenue and seats, scheduled private/mobile events, and an eight-week completed-sales trend.
 - Split the Executive weekly sales trend into color-coded stacked studio contributions with a studio legend.
 - Added studio share percentages inside sufficiently large weekly sales chart segments while retaining exact dollar values in the tooltip.
+- Added an on/off control for the studio percentage labels in the Executive weekly sales trend.
 
 - Replaced the nested template UI on `/dashboard` with a shell-consistent
   reporting-area landing page. Financial and Customers remain available as

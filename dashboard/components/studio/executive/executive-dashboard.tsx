@@ -16,6 +16,7 @@ import {
 import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis } from "recharts"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import {
   ChartContainer,
   ChartLegend,
@@ -77,6 +78,7 @@ export function ExecutiveDashboard() {
   const [data, setData] = useState<ExecutiveDashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showStudioShares, setShowStudioShares] = useState(true)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -240,9 +242,20 @@ export function ExecutiveDashboard() {
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.85fr)]">
         <Card>
-          <CardHeader>
-            <CardTitle>Weekly sales trend</CardTitle>
-            <p className="text-sm text-muted-foreground">Eight completed Monday–Sunday weeks.</p>
+          <CardHeader className="flex-row items-start justify-between gap-4">
+            <div>
+              <CardTitle>Weekly sales trend</CardTitle>
+              <p className="mt-1 text-sm text-muted-foreground">Eight completed Monday–Sunday weeks.</p>
+            </div>
+            <Button
+              type="button"
+              variant={showStudioShares ? "secondary" : "outline"}
+              size="sm"
+              aria-pressed={showStudioShares}
+              onClick={() => setShowStudioShares((current) => !current)}
+            >
+              Studio % {showStudioShares ? "on" : "off"}
+            </Button>
           </CardHeader>
           <CardContent>
             <ChartContainer className="h-[280px] w-full" config={weeklyChartConfig}>
@@ -262,13 +275,15 @@ export function ExecutiveDashboard() {
                       fill={`var(--color-${key})`}
                       radius={index === trendStudios.length - 1 ? [5, 5, 0, 0] : 0}
                     >
-                      <LabelList
-                        dataKey={`${key}_share`}
-                        position="center"
-                        fill="#ffffff"
-                        fontSize={11}
-                        fontWeight={600}
-                      />
+                      {showStudioShares && (
+                        <LabelList
+                          dataKey={`${key}_share`}
+                          position="center"
+                          fill="#ffffff"
+                          fontSize={11}
+                          fontWeight={600}
+                        />
+                      )}
                     </Bar>
                   )
                 })}
