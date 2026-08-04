@@ -181,6 +181,18 @@ This project follows a milestone-based changelog rather than tracking every indi
 
 ## Fixed
 
+- Stabilized recurring PTS studio selection by setting the Kendo location
+  widget directly, with a forced UI fallback, so animated dropdown options
+  cannot intercept or lose Class and Product collector location changes.
+
+- Prevented recurring PTS Product Sales imports from treating hidden stale PTS
+  grids as legitimate empty reports; the collector activates the lazily loaded
+  Product Sales Details tab, and populated visible grids require a successfully
+  parsed Excel workbook with per-studio grid diagnostics.
+- Deployed and validated the Product Sales detail-tab fix: workflow 06 parsed
+  and upserted 24 rows for the August 3, 2026 report date after Railway finished
+  replacing the collector instance.
+
 - Fixed a Product Sales collector race where workflow 06 could export the
   report's pre-run grid after giving up on PTS navigation after 10 seconds. The
   collector now waits for completed navigation and Kendo data loading, retries
