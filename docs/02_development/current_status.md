@@ -225,9 +225,9 @@ Known incomplete surfaces:
   Sales Details tab is activated. Product Sales now explicitly opens that tab,
   requires a visible completed grid, prefers a populated candidate, logs its
   grid counts, and fails instead of silently succeeding when a populated grid
-  produces an empty workbook parse. All four studios must be requested
-  separately because a combined Excel-export request exceeds Railway's gateway
-  response window.
+  produces an empty workbook parse. The August 4 controlled rerun for report
+  date August 3 completed after deployment settled, parsed 24 product rows, and
+  successfully upserted all 24 rows through workflow 06.
 - The range-export replacement remains implemented in Supabase for controlled
   reconciliation, but its daily production loading is not active. Do not point
   dashboards back to it until an all-studio daily load and reconciliation are
