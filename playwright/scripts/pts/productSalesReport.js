@@ -219,13 +219,27 @@ async function runReport(page, fromDate, toDate) {
                     const grid = globalThis.jQuery?.(gridElement).data("kendoGrid");
                     const dataSource = grid?.dataSource;
                     const exportButton = gridElement.querySelector(".k-grid-excel");
+                    const visible = Boolean(
+                        gridElement.offsetWidth || gridElement.offsetHeight
+                    );
+                    const headerText = (grid?.columns ?? [])
+                        .filter(column => column.field)
+                        .map(column => `${column.title ?? ""} ${column.field ?? ""}`)
+                        .join(" ")
+                        .toLowerCase();
+                    const productGridScore =
+                        (/(category|product|item)/.test(headerText) ? 4 : 0) +
+                        (/(quantity|qty|units)/.test(headerText) ? 2 : 0) +
+                        (/(sales|gross|net|total)/.test(headerText) ? 2 : 0);
 
                     return Boolean(
+                        visible &&
+                        productGridScore >= 6 &&
                         exportButton &&
-                            grid &&
-                            dataSource &&
-                            !dataSource._requestInProgress &&
-                            !gridElement.querySelector(".k-loading-mask")
+                        grid &&
+                        dataSource &&
+                        !dataSource._requestInProgress &&
+                        !gridElement.querySelector(".k-loading-mask")
                     );
                 }
             );
@@ -263,12 +277,25 @@ async function runReport(page, fromDate, toDate) {
             .filter(candidate =>
                 Boolean(
                     candidate.id &&
+                        candidate.visible &&
                         candidate.exportable &&
                         !candidate.loading
                 )
             )
     );
-    const selected = candidates.sort((a, b) => b.score - a.score)[0];
+    const selected = candidates
+        .filter(candidate => candidate.score >= 6)
+        .sort((a, b) => {
+            const bHasRows = b.total > 0 || b.viewCount > 0 ? 1 : 0;
+            const aHasRows = a.total > 0 || a.viewCount > 0 ? 1 : 0;
+
+            return (
+                bHasRows - aHasRows ||
+                b.score - a.score ||
+                b.total - a.total ||
+                b.viewCount - a.viewCount
+            );
+        })[0];
 
     if (!selected) {
         throw new Error(
@@ -278,7 +305,9 @@ async function runReport(page, fromDate, toDate) {
 
     return {
         gridSelector: `#${selected.id}`,
-        hasRows: selected.total > 0 || selected.viewCount > 0
+        hasRows: selected.total > 0 || selected.viewCount > 0,
+        total: selected.total,
+        viewCount: selected.viewCount
     };
 }
 
@@ -472,7 +501,12 @@ async function runPtsProductSalesReport({
                 waitUntil: "domcontentloaded"
             });
             await selectStudio(page, studio);
-            const { gridSelector, hasRows } = await runReport(page, from, to);
+            const {
+                gridSelector,
+                hasRows,
+                total,
+                viewCount
+            } = await runReport(page, from, to);
             let rows = [];
 
             if (hasRows) {
@@ -487,7 +521,17 @@ async function runPtsProductSalesReport({
                 rows = (await parseNonClassSales(productFile)).filter(
                     row => row.category && row.item_name
                 );
+
+                if (rows.length === 0) {
+                    throw new Error(
+                        `PTS Product Sales ${studio.code} visible grid reported ${total} rows (${viewCount} in view), but the downloaded workbook parsed no product rows`
+                    );
+                }
             }
+
+            console.log(
+                `PTS Product Sales ${studio.code} ${from} through ${to}: grid=${gridSelector}, total=${total}, view=${viewCount}, parsed=${rows.length}`
+            );
 
             results.push({
                 studioId: studio.studioId,
@@ -496,7 +540,7 @@ async function runPtsProductSalesReport({
                 locationName: studio.locationName,
                 fromDate: from,
                 toDate: to,
-                gridId: "griddDetailsData",
+                gridId: gridSelector.slice(1),
                 columns: [
                     "order_number",
                     "sale_date",
