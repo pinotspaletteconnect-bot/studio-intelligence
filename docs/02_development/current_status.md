@@ -219,7 +219,11 @@ Known incomplete surfaces:
 - Workflow 06 also exposed a PTS Run-navigation race that could click Excel on
   the pre-run grid and wait five minutes for a download that would never fire.
   The collector now waits for completed navigation and Kendo loading, retries
-  export through the grid API, and reports the failing studio code.
+  export through the grid API, and reports the failing studio code. A subsequent
+  empty-import defect showed that hidden stale grids could still win report
+  selection. Product Sales now requires a visible completed grid, prefers a
+  populated candidate, logs its grid counts, and fails instead of silently
+  succeeding when a populated grid produces an empty workbook parse.
 - The range-export replacement remains implemented in Supabase for controlled
   reconciliation, but its daily production loading is not active. Do not point
   dashboards back to it until an all-studio daily load and reconciliation are

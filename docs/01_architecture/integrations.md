@@ -182,6 +182,11 @@ Planned scope includes profile insights, reviews, search visibility, and custome
   their embedded event/sale dates in n8n. Product Sales is authoritative for
   product revenue, including Recorded Videos; the Sales Report non-class export
   is reconciliation-only to prevent duplicate product rows.
+- **Report-grid reliability:** recurring PTS Product Sales collection selects
+  only a visible, fully loaded Kendo report grid after Run. A legitimate visible
+  zero-row grid returns an empty studio slice without downloading; a populated
+  grid must download and parse a non-empty Excel workbook or the collector fails
+  with studio and grid-count diagnostics rather than recording a false success.
 - **Manual Class Sales backfill:** workflow `11 - PTS Class Sales Backfill`
   accepts one operator-downloaded PTS Excel workbook and studio selection at a
   time. The authenticated `/pts/class-sales-upload` endpoint reuses the

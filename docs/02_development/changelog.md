@@ -219,6 +219,10 @@ This project follows a milestone-based changelog rather than tracking every indi
 
 ## Fixed
 
+- Prevented recurring PTS Product Sales imports from treating hidden stale PTS
+  grids as legitimate empty reports; populated visible grids now require a
+  successfully parsed Excel workbook and emit per-studio grid diagnostics.
+
 - Fixed a Product Sales collector race where workflow 06 could export the
   report's pre-run grid after giving up on PTS navigation after 10 seconds. The
   collector now waits for completed navigation and Kendo data loading, retries
