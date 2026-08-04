@@ -212,6 +212,13 @@ async function runReport(page, fromDate, toDate) {
     await page.getByRole("button", { name: "Run", exact: true }).click();
     await navigation;
 
+    const detailsTab = page.getByRole("tab", {
+        name: "Product Sales Details",
+        exact: true
+    });
+    await detailsTab.waitFor({ state: "visible", timeout: 60000 });
+    await detailsTab.click();
+
     await page.waitForFunction(
         () => {
             return Array.from(document.querySelectorAll(".k-grid")).some(

@@ -221,9 +221,13 @@ Known incomplete surfaces:
   The collector now waits for completed navigation and Kendo loading, retries
   export through the grid API, and reports the failing studio code. A subsequent
   empty-import defect showed that hidden stale grids could still win report
-  selection. Product Sales now requires a visible completed grid, prefers a
-  populated candidate, logs its grid counts, and fails instead of silently
-  succeeding when a populated grid produces an empty workbook parse.
+  selection and that PTS initializes the product grid only after its Product
+  Sales Details tab is activated. Product Sales now explicitly opens that tab,
+  requires a visible completed grid, prefers a populated candidate, logs its
+  grid counts, and fails instead of silently succeeding when a populated grid
+  produces an empty workbook parse. All four studios must be requested
+  separately because a combined Excel-export request exceeds Railway's gateway
+  response window.
 - The range-export replacement remains implemented in Supabase for controlled
   reconciliation, but its daily production loading is not active. Do not point
   dashboards back to it until an all-studio daily load and reconciliation are

@@ -220,8 +220,9 @@ This project follows a milestone-based changelog rather than tracking every indi
 ## Fixed
 
 - Prevented recurring PTS Product Sales imports from treating hidden stale PTS
-  grids as legitimate empty reports; populated visible grids now require a
-  successfully parsed Excel workbook and emit per-studio grid diagnostics.
+  grids as legitimate empty reports; the collector activates the lazily loaded
+  Product Sales Details tab, and populated visible grids require a successfully
+  parsed Excel workbook with per-studio grid diagnostics.
 
 - Fixed a Product Sales collector race where workflow 06 could export the
   report's pre-run grid after giving up on PTS navigation after 10 seconds. The
