@@ -134,6 +134,13 @@ Implemented foundation:
   precedence by studio/date on overlap. Product queries explicitly paginate
   Supabase results so F&B, candle, food, and art-supply history is not truncated
   at the API's 1,000-row response limit.
+- Recurring PTS completed-class and product collectors now select studios
+  through the underlying Kendo location widget, avoiding animated dropdown
+  interception. Workflow 07 was rerun successfully for July 21-August 3 and
+  replaced 160 class rows; the Gilbert Moondancing row was verified at 6 seats,
+  $238.68 class sales, $33.04 product sales, and $271.72 net sales. Workflow 07
+  retains its 5:00 AM run and now reconciles again at 10:30 AM Eastern;
+  workflow 06 retains its 8:00 AM run and also reconciles at 10:30 AM Eastern.
 - Daily Operating Detail drill-down for a selected studio and date, with an
   event-level class grid covering painting, time, governed and source class
   type, room, attendance, capacity, lead time, and sales. Portfolio selection
