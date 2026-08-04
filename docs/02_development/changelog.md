@@ -222,6 +222,10 @@ This project follows a milestone-based changelog rather than tracking every indi
 - Stabilized recurring PTS studio selection by setting the Kendo location
   widget directly, with a forced UI fallback, so animated dropdown options
   cannot intercept or lose Class and Product collector location changes.
+- Validated the completed-class overwrite path by rerunning workflow 07 for
+  July 21-August 3: 160 rows loaded and Gilbert's Moondancing event reconciled
+  to 6 seats and $271.72 net sales. Added a 10:30 AM Eastern reconciliation to
+  workflows 06 and 07 while preserving their existing morning schedules.
 
 - Prevented recurring PTS Product Sales imports from treating hidden stale PTS
   grids as legitimate empty reports; the collector activates the lazily loaded

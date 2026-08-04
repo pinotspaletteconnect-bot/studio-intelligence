@@ -155,6 +155,13 @@ Implemented foundation:
 - Current Operations totals and Daily Operating Detail use the class-reported
   seats and sales columns from `pts_daily_operations_reporting`, keeping KPI
   totals consistent with the class-level rows displayed in the drill-down.
+- Recurring PTS completed-class and product collectors now select studios
+  through the underlying Kendo location widget, avoiding animated dropdown
+  interception. Workflow 07 was rerun successfully for July 21-August 3 and
+  replaced 160 class rows; the Gilbert Moondancing row was verified at 6 seats,
+  $238.68 class sales, $33.04 product sales, and $271.72 net sales. Workflow 07
+  retains its 5:00 AM run and now reconciles again at 10:30 AM Eastern;
+  workflow 06 retains its 8:00 AM run and also reconciles at 10:30 AM Eastern.
 - F&B KPI totals use item-level Product Sales when that studio/date detail is
   available, falling back to the daily summary only when detail has not been
   loaded. This keeps the KPI and F&B breakdown on the same source.
