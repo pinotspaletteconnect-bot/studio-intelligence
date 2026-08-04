@@ -14,6 +14,7 @@ This project follows a milestone-based changelog rather than tracking every indi
 
 - Added the first Executive Performance dashboard, combining trusted Operations and Marketing service contracts into headline KPIs, comparison deltas, studio performance, revenue mix, and paid-platform summaries.
 - Added an Executive this-week snapshot for completed sales, future booked revenue and seats, scheduled private/mobile events, and an eight-week completed-sales trend.
+- Split the Executive weekly sales trend into color-coded stacked studio contributions with a studio legend.
 
 - Replaced the nested template UI on `/dashboard` with a shell-consistent
   reporting-area landing page. Financial and Customers remain available as

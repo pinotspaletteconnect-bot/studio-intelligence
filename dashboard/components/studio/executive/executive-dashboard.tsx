@@ -16,7 +16,14 @@ import {
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useApp } from "@/contexts/app-context"
 import type { ExecutiveDashboardData } from "@/lib/services/executive"
@@ -39,6 +46,7 @@ const shortDate = new Intl.DateTimeFormat("en-US", {
 })
 
 const dateLabel = (value: string) => shortDate.format(new Date(`${value}T00:00:00Z`))
+const studioColors = ["#2563eb", "#7c3aed", "#f97316", "#10b981", "#e11d48", "#0891b2"]
 
 type Metric = {
   label: string
@@ -185,10 +193,26 @@ export function ExecutiveDashboard() {
 
   const maxStudioSales = Math.max(...data.operations.studioSales.map((studio) => studio.totalSales), 1)
   const comparisonLabel = data.comparison?.label.toLowerCase() ?? "comparison period"
+  const trendStudios = data.weeklySales[0]?.studios ?? []
   const weeklyTrend = data.weeklySales.map((week) => ({
-    ...week,
     label: dateLabel(week.startDate),
+    total: week.sales,
+    ...Object.fromEntries(
+      week.studios.map((studio) => [
+        `studio_${studio.studioId}`,
+        studio.sales,
+      ])
+    ),
   }))
+  const weeklyChartConfig = Object.fromEntries(
+    trendStudios.map((studio, index) => [
+      `studio_${studio.studioId}`,
+      {
+        label: studio.studioName,
+        color: studioColors[index % studioColors.length],
+      },
+    ])
+  ) satisfies ChartConfig
 
   return (
     <div className="grid gap-6">
@@ -215,13 +239,25 @@ export function ExecutiveDashboard() {
             <p className="text-sm text-muted-foreground">Eight completed Monday–Sunday weeks.</p>
           </CardHeader>
           <CardContent>
-            <ChartContainer className="h-[260px] w-full" config={{ sales: { label: "Sales", color: "#2563eb" } }}>
+            <ChartContainer className="h-[280px] w-full" config={weeklyChartConfig}>
               <BarChart data={weeklyTrend}>
                 <CartesianGrid vertical={false} />
                 <XAxis dataKey="label" tickLine={false} axisLine={false} />
                 <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `$${Math.round(Number(value) / 1000)}k`} />
                 <ChartTooltip content={<ChartTooltipContent formatter={(value) => money.format(Number(value))} />} />
-                <Bar dataKey="sales" fill="var(--color-sales)" radius={[5, 5, 0, 0]} />
+                <ChartLegend content={<ChartLegendContent />} />
+                {trendStudios.map((studio, index) => {
+                  const key = `studio_${studio.studioId}`
+                  return (
+                    <Bar
+                      key={key}
+                      dataKey={key}
+                      stackId="weekly-sales"
+                      fill={`var(--color-${key})`}
+                      radius={index === trendStudios.length - 1 ? [5, 5, 0, 0] : 0}
+                    />
+                  )
+                })}
               </BarChart>
             </ChartContainer>
           </CardContent>

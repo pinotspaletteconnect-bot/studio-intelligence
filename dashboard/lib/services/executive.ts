@@ -29,6 +29,11 @@ export type ExecutiveDashboardData = {
     endDate: string
     sales: number
     seats: number
+    studios: Array<{
+      studioId: number
+      studioName: string
+      sales: number
+    }>
   }>
 }
 
@@ -112,6 +117,13 @@ export async function getExecutiveDashboard(
       endDate,
       sales: days.reduce((sum, day) => sum + day.totalSales, 0),
       seats: days.reduce((sum, day) => sum + day.seatsSold, 0),
+      studios: trendOperations.studioSales.map((studio) => ({
+        studioId: studio.studioId,
+        studioName: studio.studioName,
+        sales: studio.daily
+          .filter((day) => day.date >= startDate && day.date <= endDate)
+          .reduce((sum, day) => sum + day.totalSales, 0),
+      })),
     }
   })
   const completedPrivateParties =
