@@ -13,7 +13,7 @@ import {
   Users,
   Utensils,
 } from "lucide-react"
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
+import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis } from "recharts"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -194,16 +194,22 @@ export function ExecutiveDashboard() {
   const maxStudioSales = Math.max(...data.operations.studioSales.map((studio) => studio.totalSales), 1)
   const comparisonLabel = data.comparison?.label.toLowerCase() ?? "comparison period"
   const trendStudios = data.weeklySales[0]?.studios ?? []
-  const weeklyTrend = data.weeklySales.map((week) => ({
-    label: dateLabel(week.startDate),
-    total: week.sales,
-    ...Object.fromEntries(
-      week.studios.map((studio) => [
-        `studio_${studio.studioId}`,
-        studio.sales,
-      ])
-    ),
-  }))
+  const weeklyTrend = data.weeklySales.map((week) => {
+    const studioValues = Object.fromEntries(
+      week.studios.flatMap((studio) => {
+        const share = week.sales ? (studio.sales / week.sales) * 100 : 0
+        return [
+          [`studio_${studio.studioId}`, studio.sales],
+          [`studio_${studio.studioId}_share`, share >= 8 ? `${share.toFixed(0)}%` : ""],
+        ]
+      })
+    )
+    return {
+      label: dateLabel(week.startDate),
+      total: week.sales,
+      ...studioValues,
+    }
+  })
   const weeklyChartConfig = Object.fromEntries(
     trendStudios.map((studio, index) => [
       `studio_${studio.studioId}`,
@@ -255,7 +261,15 @@ export function ExecutiveDashboard() {
                       stackId="weekly-sales"
                       fill={`var(--color-${key})`}
                       radius={index === trendStudios.length - 1 ? [5, 5, 0, 0] : 0}
-                    />
+                    >
+                      <LabelList
+                        dataKey={`${key}_share`}
+                        position="center"
+                        fill="#ffffff"
+                        fontSize={11}
+                        fontWeight={600}
+                      />
+                    </Bar>
                   )
                 })}
               </BarChart>
