@@ -4,6 +4,7 @@ import { redirect } from "next/navigation"
 import { z } from "zod"
 
 import { createAuthClient } from "@/lib/supabase/auth-server"
+import { supabase } from "@/lib/supabase/server"
 
 export type UpdatePasswordState = { error?: string } | undefined
 
@@ -33,8 +34,26 @@ export async function updatePassword(
   const { data } = await auth.auth.getUser()
   if (!data.user) return { error: "The reset link is invalid or has expired." }
 
-  const { error } = await auth.auth.updateUser({ password: parsed.data.password })
-  if (error) return { error: "The password could not be updated." }
+  // The recovery access token can be refreshed or replaced after the user signs
+  // in, which makes auth.updateUser() unreliable on this page even though the
+  // server can still verify the authenticated user. Use the server-only admin
+  // client after that verification and scope the mutation to the verified ID.
+  const { error } = await supabase.auth.admin.updateUserById(data.user.id, {
+    password: parsed.data.password,
+  })
+  if (error) {
+    console.error("Unable to update authenticated user password", {
+      code: error.code,
+      status: error.status,
+      userId: data.user.id,
+    })
+    return {
+      error:
+        error.code === "same_password"
+          ? "Choose a password you have not used for this account."
+          : "The password could not be updated. Please try again.",
+    }
+  }
 
   redirect("/dashboard")
 }
