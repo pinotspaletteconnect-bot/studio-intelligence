@@ -250,6 +250,10 @@ This project follows a milestone-based changelog rather than tracking every indi
 
 ## Changed
 
+- Deployed the invite-only dashboard to a separate Railway service with an
+  isolated `dashboard/` root, Supabase publishable/server credentials, and a
+  canonical HTTPS `APP_URL`. Supabase Auth Site URL now matches the deployment;
+  first-owner bootstrap and remaining Auth hardening are still pending.
 - Added the invite-only authentication and onboarding foundation: Supabase SSR
   cookie sessions, login/recovery/logout, tenant memberships and studio grants,
   protected pages and APIs, role-gated invitations, default-off benchmark

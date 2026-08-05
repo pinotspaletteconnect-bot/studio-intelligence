@@ -118,7 +118,9 @@ Implemented foundation:
   caller, rejects unauthorized studio IDs, and scopes portfolio queries to the
   user's assigned studios. Migration `20260805110000` is deployed and provides
   profiles, organization memberships, studio grants, and non-secret integration
-  references; dashboard deployment and first-owner bootstrap remain pending.
+  references. The protected dashboard is deployed as an isolated Railway
+  service at `https://proud-manifestation-production-3f2d.up.railway.app` from
+  branch `codex/auth-onboarding`; first-owner bootstrap remains pending.
 - Studio list API: `/api/studios`
 - Marketing summary API: `/api/marketing/summary`
 - Supabase access isolated behind frontend services
@@ -198,9 +200,10 @@ Implemented foundation:
 
 Known incomplete surfaces:
 
-- Production authentication activation is pending Supabase Auth URL and
-  email-template configuration, custom SMTP and abuse
-  controls, deployment publishable-key configuration, first-owner bootstrap,
+- Production authentication activation has the canonical Site URL, Railway
+  `APP_URL`, and publishable-key configuration in place. It remains pending
+  redirect allow-list and email-template configuration, custom SMTP and abuse
+  controls, first-owner bootstrap,
   and cross-tenant security testing. Location credential entry remains disabled
   until the encrypted secret-provider handoff (preferably Supabase Vault) is
   implemented and validated.

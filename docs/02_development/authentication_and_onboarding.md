@@ -22,6 +22,11 @@ error messages.
 
 ## Required deployment configuration
 
+The V1 production dashboard is deployed at
+`https://proud-manifestation-production-3f2d.up.railway.app`. Railway service
+`studio-intelligence-dashboard` uses `dashboard/` as its root and tracks
+`codex/auth-onboarding` during the controlled rollout.
+
 - `APP_URL` (the canonical HTTPS dashboard origin used for invite and recovery links)
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (preferred) or the legacy
