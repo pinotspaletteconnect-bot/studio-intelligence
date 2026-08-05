@@ -10,8 +10,13 @@ export type OnboardingState = { error?: string } | undefined
 
 const onboardingSchema = z.object({
   fullName: z.string().trim().min(2).max(120),
+  password: z.string().min(12).max(72),
+  confirmation: z.string().min(1),
   acceptTerms: z.literal("on"),
   benchmarkConsent: z.enum(["on"]).optional(),
+}).refine((value) => value.password === value.confirmation, {
+  message: "Passwords do not match.",
+  path: ["confirmation"],
 })
 
 export async function completeOnboarding(
@@ -20,6 +25,8 @@ export async function completeOnboarding(
 ): Promise<OnboardingState> {
   const parsed = onboardingSchema.safeParse({
     fullName: formData.get("fullName"),
+    password: formData.get("password"),
+    confirmation: formData.get("confirmation"),
     acceptTerms: formData.get("acceptTerms"),
     benchmarkConsent: formData.get("benchmarkConsent") ?? undefined,
   })
@@ -32,6 +39,18 @@ export async function completeOnboarding(
   if (!user || !context) return { error: "Your invitation could not be verified." }
 
   const now = new Date().toISOString()
+  const { error: passwordError } = await supabase.auth.admin.updateUserById(user.id, {
+    password: parsed.data.password,
+  })
+  if (passwordError && passwordError.code !== "same_password") {
+    console.error("Invited user password setup failed", {
+      code: passwordError.code,
+      status: passwordError.status,
+      userId: user.id,
+    })
+    return { error: "Your password could not be created. Please try again." }
+  }
+
   const { error: profileError } = await supabase.from("user_profiles").upsert({
     user_id: user.id,
     full_name: parsed.data.fullName,

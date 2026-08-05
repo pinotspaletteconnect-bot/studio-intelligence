@@ -24,6 +24,17 @@ export function OnboardingForm({
         <Input id="fullName" name="fullName" defaultValue={initialName} autoComplete="name" required />
       </div>
 
+      <div className="space-y-2">
+        <Label htmlFor="password">Create your password</Label>
+        <Input id="password" name="password" type="password" autoComplete="new-password" minLength={12} required />
+        <p className="text-xs text-slate-500">Use at least 12 characters and a password manager.</p>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="confirmation">Confirm password</Label>
+        <Input id="confirmation" name="confirmation" type="password" autoComplete="new-password" minLength={12} required />
+      </div>
+
       <label className="flex items-start gap-3 rounded-xl border p-4 text-sm leading-6">
         <Checkbox name="acceptTerms" required />
         <span>I accept the platform terms and acknowledge that access is limited to authorized business use.</span>

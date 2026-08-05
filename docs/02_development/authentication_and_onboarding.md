@@ -8,6 +8,12 @@ assigned to an organization with one role: owner, administrator, manager, or
 viewer. Owners and administrators inherit all active studios in their
 organization; managers and viewers receive explicit studio grants.
 
+An accepted invitation opens the protected onboarding form. The invited user
+creates and confirms a password there before their profile is completed and
+their membership changes from `invited` to `active`. The password update is a
+server-only mutation scoped to the identity verified by the invitation session;
+password values are never returned, logged, or stored in application tables.
+
 The dashboard protects data in three layers:
 
 1. Next.js proxy session refresh and route gating.
