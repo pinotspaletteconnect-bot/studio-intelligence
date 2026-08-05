@@ -1,4 +1,5 @@
 import { InviteUserForm } from "@/app/(app)/settings/invite-user-form"
+import { AddStudioForm } from "@/app/(app)/settings/add-studio-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { requireDashboardContext } from "@/lib/auth/session"
 import { getAccountSettings } from "@/lib/services/account-settings"
@@ -16,10 +17,21 @@ export default async function SettingsPage() {
       </div>
 
       {canAdminister ? (
-        <Card>
-          <CardHeader><CardTitle>Invite a user</CardTitle></CardHeader>
-          <CardContent><InviteUserForm studios={settings.studios} /></CardContent>
-        </Card>
+        <>
+          <Card>
+            <CardHeader><CardTitle>Add a studio</CardTitle></CardHeader>
+            <CardContent>
+              <AddStudioForm
+                brands={settings.brands.map((brand) => ({ id: brand.id, label: brand.name }))}
+                ptsAccounts={settings.ptsAccounts.map((account) => ({ id: account.id, label: account.account_name }))}
+              />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader><CardTitle>Invite a user</CardTitle></CardHeader>
+            <CardContent><InviteUserForm studios={settings.studios} /></CardContent>
+          </Card>
+        </>
       ) : null}
 
       <Card>

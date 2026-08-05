@@ -208,6 +208,14 @@ Known incomplete surfaces:
   until the encrypted secret-provider handoff (preferably Supabase Vault) is
   implemented and validated.
 
+- An owner-only Settings form for adding a studio through an existing
+  organization PTS account is implemented locally. It stores only studio
+  metadata and the non-secret PTS location ID, validates tenant ownership of
+  the selected brand and credential reference, and creates the PTS mapping.
+  The live `studios.id` column was verified as an existing `GENERATED ALWAYS`
+  identity backed by `studios_id_seq`; existing IDs 1-4 remain unchanged and
+  the next studio will receive ID 5. Production deployment remains pending.
+
 - Manual Product Sales history can now be loaded through workflow
   `10 - PTS Product Sales Backfill` by selecting a studio and uploading the PTS
   Product Sales workbook. The Operations dashboard links to the authenticated

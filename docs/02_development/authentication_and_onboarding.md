@@ -75,6 +75,18 @@ the database. Until its permissions, collector retrieval path, rotation, and
 audit behavior are tested, credential entry remains disabled. Existing Railway
 variables remain the production source for current collectors.
 
+### Existing-account studio onboarding
+
+The first controlled studio-onboarding path may reuse an active PTS credential
+reference already owned by the organization. An owner or administrator enters
+the studio metadata and non-secret PTS location ID; the server verifies that
+the brand and PTS account belong to the caller's organization, rejects duplicate
+studio codes and PTS locations, creates the studio, and writes its active
+`studio_integrations` mapping. No username or password is collected, returned,
+or copied. This path is appropriate for adding a location already accessible to
+the organization's existing PTS login. A new organization or a location using
+a different login still requires the encrypted one-time secret handoff above.
+
 ## Production activation checklist
 
 1. Review and apply migration `20260805110000_auth_tenant_foundation.sql`.
