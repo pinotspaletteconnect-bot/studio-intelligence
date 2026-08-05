@@ -254,7 +254,10 @@ This project follows a milestone-based changelog rather than tracking every indi
   cookie sessions, login/recovery/logout, tenant memberships and studio grants,
   protected pages and APIs, role-gated invitations, default-off benchmark
   consent, security headers, and metadata-only integration secret references.
-  Production schema and Auth configuration remain pending controlled rollout.
+- Deployed migration `20260805110000_auth_tenant_foundation.sql` to production
+  Supabase after reconciling the already-present reservations schema with its
+  migration history. Existing reporting data was not changed; Auth application
+  configuration remains pending controlled rollout.
 
 - Restored complete historical Operations product reporting by merging
   `pts_product_sales_daily_reporting` with the current
