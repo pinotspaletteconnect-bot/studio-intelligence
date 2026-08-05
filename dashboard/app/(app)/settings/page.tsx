@@ -1,5 +1,6 @@
 import { InviteUserForm } from "@/app/(app)/settings/invite-user-form"
 import { AddStudioForm } from "@/app/(app)/settings/add-studio-form"
+import { AuthorizedUsers } from "@/app/(app)/settings/authorized-users"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { requireDashboardContext } from "@/lib/auth/session"
 import { getAccountSettings } from "@/lib/services/account-settings"
@@ -36,13 +37,13 @@ export default async function SettingsPage() {
 
       <Card>
         <CardHeader><CardTitle>Authorized users</CardTitle></CardHeader>
-        <CardContent className="space-y-3">
-          {settings.members.map((member) => (
-            <div key={member.user_id} className="flex items-center justify-between rounded-lg border p-3 text-sm">
-              <div><div className="font-medium">{member.name}</div><div className="capitalize text-muted-foreground">{member.role}</div></div>
-              <span className="capitalize text-muted-foreground">{member.status}</span>
-            </div>
-          ))}
+        <CardContent>
+          <AuthorizedUsers
+            members={settings.members}
+            studios={settings.studios}
+            actorId={access.userId}
+            actorRole={access.role}
+          />
         </CardContent>
       </Card>
 

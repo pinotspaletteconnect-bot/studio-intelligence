@@ -10,12 +10,132 @@ import { supabase } from "@/lib/supabase/server"
 
 export type InviteState = { complete?: boolean; error?: string } | undefined
 export type AddStudioState = { complete?: boolean; error?: string } | undefined
+export type MemberAccessState = { complete?: boolean; error?: string } | undefined
 
 const inviteSchema = z.object({
   email: z.email().max(254).transform((value) => value.trim().toLowerCase()),
   role: z.enum(["administrator", "manager", "viewer"]),
   studioIds: z.array(z.coerce.number().int().positive()).max(500),
 })
+
+const memberAccessSchema = z.object({
+  userId: z.uuid(),
+  role: z.enum(["administrator", "manager", "viewer"]),
+  studioIds: z.array(z.coerce.number().int().positive()).max(500),
+})
+
+const memberTargetSchema = z.object({ userId: z.uuid() })
+
+async function getManageableMembership(organizationId: number, userId: string) {
+  const { data, error } = await supabase
+    .from("organization_memberships")
+    .select("user_id,role,status")
+    .eq("organization_id", organizationId)
+    .eq("user_id", userId)
+    .in("status", ["invited", "active"])
+    .maybeSingle()
+  if (error) throw error
+  return data
+}
+
+function canManageTarget(actorRole: string, actorId: string, target: { user_id: string; role: string }) {
+  if (actorId === target.user_id || target.role === "owner") return false
+  if (actorRole === "owner") return true
+  return actorRole === "administrator" && ["manager", "viewer"].includes(target.role)
+}
+
+export async function updateOrganizationUserAccess(
+  _previousState: MemberAccessState,
+  formData: FormData
+): Promise<MemberAccessState> {
+  const [access, actor] = await Promise.all([requireDashboardContext(), getAuthenticatedUser()])
+  if (!actor || !["owner", "administrator"].includes(access.role)) {
+    return { error: "You do not have permission to edit users." }
+  }
+
+  const parsed = memberAccessSchema.safeParse({
+    userId: formData.get("userId"),
+    role: formData.get("role"),
+    studioIds: formData.getAll("studioIds"),
+  })
+  if (!parsed.success) return { error: "Choose a valid role and studio access." }
+
+  const target = await getManageableMembership(access.organizationId, parsed.data.userId)
+  if (!target || !canManageTarget(access.role, actor.id, target)) {
+    return { error: "That user cannot be edited by your account." }
+  }
+  if (access.role !== "owner" && parsed.data.role === "administrator") {
+    return { error: "Only an owner can grant administrator access." }
+  }
+  if (parsed.data.role !== "administrator" && parsed.data.studioIds.length === 0) {
+    return { error: "Managers and viewers need at least one studio." }
+  }
+  if (parsed.data.studioIds.some((id) => !access.allowedStudioIds.includes(id))) {
+    return { error: "One or more studios are outside your access." }
+  }
+
+  const { error: membershipError } = await supabase
+    .from("organization_memberships")
+    .update({ role: parsed.data.role, updated_at: new Date().toISOString() })
+    .eq("organization_id", access.organizationId)
+    .eq("user_id", target.user_id)
+  if (membershipError) return { error: "The user's role could not be updated." }
+
+  const { error: deleteError } = await supabase
+    .from("user_studio_access")
+    .delete()
+    .eq("organization_id", access.organizationId)
+    .eq("user_id", target.user_id)
+  if (deleteError) return { error: "The role was updated, but studio access needs review." }
+
+  if (parsed.data.role !== "administrator") {
+    const { error: grantError } = await supabase.from("user_studio_access").insert(
+      parsed.data.studioIds.map((studioId) => ({
+        organization_id: access.organizationId,
+        user_id: target.user_id,
+        studio_id: studioId,
+        granted_by: actor.id,
+      }))
+    )
+    if (grantError) return { error: "The role was updated, but studio access needs review." }
+  }
+
+  revalidatePath("/settings")
+  return { complete: true }
+}
+
+export async function suspendOrganizationUser(
+  _previousState: MemberAccessState,
+  formData: FormData
+): Promise<MemberAccessState> {
+  const [access, actor] = await Promise.all([requireDashboardContext(), getAuthenticatedUser()])
+  if (!actor || !["owner", "administrator"].includes(access.role)) {
+    return { error: "You do not have permission to remove users." }
+  }
+  const parsed = memberTargetSchema.safeParse({ userId: formData.get("userId") })
+  if (!parsed.success) return { error: "The selected user is invalid." }
+
+  const target = await getManageableMembership(access.organizationId, parsed.data.userId)
+  if (!target || !canManageTarget(access.role, actor.id, target)) {
+    return { error: "That user cannot be removed by your account." }
+  }
+
+  const { error } = await supabase
+    .from("organization_memberships")
+    .update({ status: "suspended", updated_at: new Date().toISOString() })
+    .eq("organization_id", access.organizationId)
+    .eq("user_id", target.user_id)
+  if (error) return { error: "The user's access could not be removed." }
+
+  await supabase
+    .from("user_studio_access")
+    .delete()
+    .eq("organization_id", access.organizationId)
+    .eq("user_id", target.user_id)
+
+  revalidatePath("/settings")
+  return { complete: true }
+}
 
 const addStudioSchema = z.object({
   studioName: z.string().trim().min(2).max(120),

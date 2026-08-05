@@ -2,8 +2,25 @@ import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
 import { getSupabasePublicConfig } from "@/lib/supabase/config"
+import {
+  activityCookieOptions,
+  createActivityCookieValue,
+  readActivityTimestamp,
+  SESSION_ABSOLUTE_LIMIT_MS,
+  SESSION_ACTIVITY_COOKIE,
+  SESSION_IDLE_LIMIT_MS,
+} from "@/lib/auth/session-policy"
 
-const publicRoutes = ["/login", "/forgot-password", "/reset-password", "/auth"]
+const publicRoutes = ["/login", "/forgot-password", "/reset-password", "/auth", "/api/session/end"]
+
+function redirectWithCookies(request: NextRequest, response: NextResponse, pathname: string, reason?: string) {
+  const url = request.nextUrl.clone()
+  url.pathname = pathname
+  url.search = reason ? `?reason=${reason}` : ""
+  const redirect = NextResponse.redirect(url)
+  response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie))
+  return redirect
+}
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request })
@@ -27,10 +44,24 @@ export async function proxy(request: NextRequest) {
   )
 
   if (!data.user && !isPublicRoute) {
-    const loginUrl = request.nextUrl.clone()
-    loginUrl.pathname = "/login"
-    loginUrl.search = ""
-    return NextResponse.redirect(loginUrl)
+    return redirectWithCookies(request, response, "/login")
+  }
+
+  if (data.user && !isPublicRoute) {
+    const now = Date.now()
+    const signedInAt = data.user.last_sign_in_at ? Date.parse(data.user.last_sign_in_at) : Number.NaN
+    const activityAt = await readActivityTimestamp(request.cookies.get(SESSION_ACTIVITY_COOKIE)?.value)
+    const absoluteExpired = !Number.isFinite(signedInAt) || now - signedInAt >= SESSION_ABSOLUTE_LIMIT_MS
+    const idleExpired = activityAt !== null && now - activityAt >= SESSION_IDLE_LIMIT_MS
+
+    if (absoluteExpired || idleExpired) {
+      await auth.auth.signOut()
+      response.cookies.set(SESSION_ACTIVITY_COOKIE, "", { path: "/", maxAge: 0 })
+      return redirectWithCookies(request, response, "/login", absoluteExpired ? "maximum" : "inactive")
+    }
+    if (activityAt === null) {
+      response.cookies.set(SESSION_ACTIVITY_COOKIE, await createActivityCookieValue(now), activityCookieOptions)
+    }
   }
 
   if (data.user && request.nextUrl.pathname === "/login") {

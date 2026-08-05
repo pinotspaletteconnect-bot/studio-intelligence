@@ -114,7 +114,10 @@ Implemented foundation:
 - Shared application context for active studio and common dashboard state
 - Invite-only Supabase Auth foundation with SSR cookie sessions, login,
   password recovery, protected routes, onboarding, logout, owner/admin user
-  invitations, and security headers. Every dashboard API now authenticates the
+  invitations, owner-protected per-user role and studio-access management,
+  reversible membership suspension, a server-enforced 30-minute inactivity
+  timeout with a five-minute warning, a 12-hour absolute session limit, and
+  security headers. Every dashboard API now authenticates the
   caller, rejects unauthorized studio IDs, and scopes portfolio queries to the
   user's assigned studios. Migration `20260805110000` is deployed and provides
   profiles, organization memberships, studio grants, and non-secret integration

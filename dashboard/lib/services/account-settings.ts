@@ -12,6 +12,7 @@ export async function getAccountSettings(
         .from("organization_memberships")
         .select("user_id,role,status,joined_at,created_at")
         .eq("organization_id", organizationId)
+        .in("status", ["invited", "active"])
         .order("created_at"),
       supabase
         .from("studios")
@@ -56,10 +57,38 @@ export async function getAccountSettings(
     (profileResult.data ?? []).map((profile) => [profile.user_id, profile.full_name])
   )
 
+  const [authUsers, studioAccessResult] = await Promise.all([
+    Promise.all(
+      memberIds.map(async (userId) => {
+        const { data, error } = await supabase.auth.admin.getUserById(userId)
+        if (error) throw error
+        return [userId, data.user.email ?? ""] as const
+      })
+    ),
+    memberIds.length
+      ? supabase
+          .from("user_studio_access")
+          .select("user_id,studio_id")
+          .eq("organization_id", organizationId)
+          .in("user_id", memberIds)
+      : Promise.resolve({ data: [], error: null }),
+  ])
+  if (studioAccessResult.error) throw studioAccessResult.error
+
+  const emails = new Map(authUsers)
+  const studioIdsByUser = new Map<string, number[]>()
+  for (const grant of studioAccessResult.data ?? []) {
+    const studioIds = studioIdsByUser.get(grant.user_id) ?? []
+    studioIds.push(grant.studio_id)
+    studioIdsByUser.set(grant.user_id, studioIds)
+  }
+
   return {
     members: (membershipResult.data ?? []).map((membership) => ({
       ...membership,
       name: profiles.get(membership.user_id) ?? "Invited user",
+      email: emails.get(membership.user_id) ?? "",
+      studioIds: studioIdsByUser.get(membership.user_id) ?? [],
     })),
     studios: studioResult.data ?? [],
     integrations: integrationResult.data ?? [],

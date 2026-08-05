@@ -4,6 +4,7 @@ import { AppProvider } from "@/contexts/app-context";
 import { logout } from "@/app/(app)/actions";
 import { requireDashboardContext } from "@/lib/auth/session";
 import { Button } from "@/components/ui/button";
+import { SessionTimeoutGuard } from "@/components/session-timeout-guard";
 
 export default async function AppLayout({
   children,
@@ -14,6 +15,7 @@ export default async function AppLayout({
 
   return (
     <AppProvider>
+      <SessionTimeoutGuard />
       <div className="flex min-h-screen bg-slate-50">
         {/* Sidebar */}
         <aside className="w-64 border-r bg-white">
