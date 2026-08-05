@@ -10,6 +10,8 @@ export type UpdatePasswordState = { error?: string } | undefined
 
 const passwordSchema = z
   .object({
+    email: z.union([z.literal(""), z.email().max(254)]),
+    currentPassword: z.string().max(1024),
     password: z.string().min(12).max(72),
     confirmation: z.string().min(1),
   })
@@ -23,6 +25,8 @@ export async function updatePassword(
   formData: FormData
 ): Promise<UpdatePasswordState> {
   const parsed = passwordSchema.safeParse({
+    email: String(formData.get("email") ?? "").trim().toLowerCase(),
+    currentPassword: String(formData.get("currentPassword") ?? ""),
     password: formData.get("password"),
     confirmation: formData.get("confirmation"),
   })
@@ -32,20 +36,39 @@ export async function updatePassword(
 
   const auth = await createAuthClient()
   const { data } = await auth.auth.getUser()
-  if (!data.user) return { error: "The reset link is invalid or has expired." }
+  let user = data.user
+
+  if (!user) {
+    if (!parsed.data.email || !parsed.data.currentPassword) {
+      return {
+        error:
+          "Your session has expired. Enter your email and current or temporary password.",
+      }
+    }
+
+    const { data: signInData, error: signInError } =
+      await auth.auth.signInWithPassword({
+        email: parsed.data.email,
+        password: parsed.data.currentPassword,
+      })
+    if (signInError || !signInData.user) {
+      return { error: "The email or current password is incorrect." }
+    }
+    user = signInData.user
+  }
 
   // The recovery access token can be refreshed or replaced after the user signs
   // in, which makes auth.updateUser() unreliable on this page even though the
   // server can still verify the authenticated user. Use the server-only admin
   // client after that verification and scope the mutation to the verified ID.
-  const { error } = await supabase.auth.admin.updateUserById(data.user.id, {
+  const { error } = await supabase.auth.admin.updateUserById(user.id, {
     password: parsed.data.password,
   })
   if (error) {
     console.error("Unable to update authenticated user password", {
       code: error.code,
       status: error.status,
-      userId: data.user.id,
+      userId: user.id,
     })
     return {
       error:

@@ -12,6 +12,22 @@ export function ResetPasswordForm() {
   return (
     <form action={action} className="space-y-5">
       <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input id="email" name="email" type="email" autoComplete="email" />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="currentPassword">Current or temporary password</Label>
+        <Input
+          id="currentPassword"
+          name="currentPassword"
+          type="password"
+          autoComplete="current-password"
+        />
+        <p className="text-xs text-slate-500">
+          Required when your reset link or browser session has expired.
+        </p>
+      </div>
+      <div className="space-y-2">
         <Label htmlFor="password">New password</Label>
         <Input id="password" name="password" type="password" autoComplete="new-password" minLength={12} required />
         <p className="text-xs text-slate-500">Use at least 12 characters and a password manager.</p>
