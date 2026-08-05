@@ -225,12 +225,19 @@ const numberValue = (value: unknown) => {
 
 function addStudioFilter<T>(
   query: T,
-  studioId?: string
+  studioId?: string,
+  allowedStudioIds?: number[]
 ): T {
   if (studioId && studioId !== "all") {
     return (query as T & { eq: (column: string, value: string) => T }).eq(
       "studio_id",
       studioId
+    )
+  }
+  if (allowedStudioIds) {
+    return (query as T & { in: (column: string, values: number[]) => T }).in(
+      "studio_id",
+      allowedStudioIds
     )
   }
   return query
@@ -239,7 +246,8 @@ function addStudioFilter<T>(
 export async function getMarketingDashboard(
   studioId?: string,
   startDate?: string,
-  endDate?: string
+  endDate?: string,
+  allowedStudioIds?: number[]
 ): Promise<MarketingDashboard> {
   const periodEnd = endDate ?? new Date().toISOString().slice(0, 10)
   const fallbackStart = new Date(`${periodEnd}T00:00:00Z`)
@@ -252,7 +260,8 @@ export async function getMarketingDashboard(
       .select("date,sessions,new_users,engaged_sessions,key_events")
       .gte("date", periodStart)
       .lte("date", periodEnd),
-    studioId
+    studioId,
+    allowedStudioIds
   )
   const metaQuery = addStudioFilter(
     supabase
@@ -260,7 +269,8 @@ export async function getMarketingDashboard(
       .select("integration_date,spend,clicks,impressions")
       .gte("integration_date", periodStart)
       .lte("integration_date", periodEnd),
-    studioId
+    studioId,
+    allowedStudioIds
   )
   const eulerityQuery = addStudioFilter(
     supabase
@@ -268,7 +278,8 @@ export async function getMarketingDashboard(
       .select("report_date,spend_total,clicks_total,impressions_total")
       .gte("report_date", periodStart)
       .lte("report_date", periodEnd),
-    studioId
+    studioId,
+    allowedStudioIds
   )
   const organicQuery = addStudioFilter(
     supabase
@@ -276,7 +287,8 @@ export async function getMarketingDashboard(
       .select("insight_date,metric")
       .gte("insight_date", periodStart)
       .lte("insight_date", periodEnd),
-    studioId
+    studioId,
+    allowedStudioIds
   )
   const sourceMediumQuery = addStudioFilter(
     supabase
@@ -286,7 +298,8 @@ export async function getMarketingDashboard(
       )
       .gte("report_date", periodStart)
       .lte("report_date", periodEnd),
-    studioId
+    studioId,
+    allowedStudioIds
   )
   const metaCampaignQuery = addStudioFilter(
     supabase
@@ -296,7 +309,8 @@ export async function getMarketingDashboard(
       )
       .gte("date_start", periodStart)
       .lte("date_start", periodEnd),
-    studioId
+    studioId,
+    allowedStudioIds
   )
   const eulerityChannelQuery = addStudioFilter(
     supabase
@@ -306,7 +320,8 @@ export async function getMarketingDashboard(
       )
       .gte("report_date", periodStart)
       .lte("report_date", periodEnd),
-    studioId
+    studioId,
+    allowedStudioIds
   )
   const mntnQuery = addStudioFilter(
     supabase
@@ -316,12 +331,14 @@ export async function getMarketingDashboard(
       )
       .gte("report_date", periodStart)
       .lte("report_date", periodEnd),
-    studioId
+    studioId,
+    allowedStudioIds
   )
-  const studiosQuery = supabase
+  let studiosQuery = supabase
     .from("studios")
     .select("id,studio_name")
     .order("studio_name")
+  if (allowedStudioIds) studiosQuery = studiosQuery.in("id", allowedStudioIds)
 
   const paidCpcBenchmarkQuery =
     studioId && studioId !== "all"

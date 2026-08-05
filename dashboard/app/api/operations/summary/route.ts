@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 
 import { getOperationsDashboardWithComparison } from "@/lib/services/operations"
+import { apiAccessResponse, assertStudioAccess, requireApiAccess } from "@/lib/auth/api"
 
 const querySchema = z.object({
   studioId: z.string().max(100).optional(),
@@ -25,6 +26,8 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const access = await requireApiAccess()
+    assertStudioAccess(access, parsed.data.studioId)
     return NextResponse.json(
       await getOperationsDashboardWithComparison(
         parsed.data.studioId,
@@ -32,10 +35,13 @@ export async function GET(request: NextRequest) {
         parsed.data.endDate,
         parsed.data.comparison,
         parsed.data.comparisonStartDate,
-        parsed.data.comparisonEndDate
+        parsed.data.comparisonEndDate,
+        access.allowedStudioIds
       )
     )
   } catch (error) {
+    const accessResponse = apiAccessResponse(error)
+    if (accessResponse) return accessResponse
     console.error("Operations summary failed", error)
     return NextResponse.json(
       { error: "Operations data is temporarily unavailable." },

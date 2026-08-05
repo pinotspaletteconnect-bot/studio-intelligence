@@ -249,11 +249,17 @@ const numberValue = (value: unknown) => {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
-function addStudioFilter<T>(query: T, studioId?: string): T {
+function addStudioFilter<T>(query: T, studioId?: string, allowedStudioIds?: number[]): T {
   if (studioId && studioId !== "all") {
     return (query as T & { eq: (column: string, value: string) => T }).eq(
       "studio_id",
       studioId
+    )
+  }
+  if (allowedStudioIds) {
+    return (query as T & { in: (column: string, values: number[]) => T }).in(
+      "studio_id",
+      allowedStudioIds
     )
   }
   return query
@@ -263,7 +269,8 @@ async function getPagedProductRows(
   table: "pts_product_sales_reporting" | "pts_product_sales_daily_reporting",
   periodStart: string,
   periodEnd: string,
-  studioId?: string
+  studioId?: string,
+  allowedStudioIds?: number[]
 ): Promise<ProductRow[]> {
   const pageSize = 1000
   const rows: ProductRow[] = []
@@ -278,7 +285,8 @@ async function getPagedProductRows(
         )
         .gte("report_date", periodStart)
         .lte("report_date", periodEnd),
-      studioId
+      studioId,
+      allowedStudioIds
     )
     const result = await query
       .order("report_date")
@@ -297,7 +305,8 @@ async function getPagedProductRows(
 export async function getOperationsDashboard(
   studioId?: string,
   startDate?: string,
-  endDate?: string
+  endDate?: string,
+  allowedStudioIds?: number[]
 ): Promise<OperationsDashboardData> {
   const periodEnd = endDate ?? new Date().toISOString().slice(0, 10)
   const fallbackStart = new Date(`${periodEnd}T00:00:00Z`)
@@ -312,7 +321,8 @@ export async function getOperationsDashboard(
       )
       .gte("report_date", periodStart)
       .lte("report_date", periodEnd),
-    studioId
+    studioId,
+    allowedStudioIds
   )
   const classTypesQuery = addStudioFilter(
     supabase
@@ -322,7 +332,8 @@ export async function getOperationsDashboard(
       )
       .gte("event_date", periodStart)
       .lte("event_date", periodEnd),
-    studioId
+    studioId,
+    allowedStudioIds
   )
   const historicalClassTypesQuery = addStudioFilter(
     supabase
@@ -332,7 +343,8 @@ export async function getOperationsDashboard(
       )
       .gte("report_date", periodStart)
       .lte("report_date", periodEnd),
-    studioId
+    studioId,
+    allowedStudioIds
   )
   const historicalDailyQuery = addStudioFilter(
     supabase
@@ -342,7 +354,8 @@ export async function getOperationsDashboard(
       )
       .gte("report_date", periodStart)
       .lte("report_date", periodEnd),
-    studioId
+    studioId,
+    allowedStudioIds
   )
   const classLeadTimeQuery = addStudioFilter(
     supabase
@@ -351,7 +364,8 @@ export async function getOperationsDashboard(
       .gte("event_date", periodStart)
       .lte("event_date", periodEnd)
       .not("lead_time_average", "is", null),
-    studioId
+    studioId,
+    allowedStudioIds
   )
 
   const [
@@ -370,13 +384,15 @@ export async function getOperationsDashboard(
         "pts_product_sales_reporting",
         periodStart,
         periodEnd,
-        studioId
+        studioId,
+        allowedStudioIds
       ),
       getPagedProductRows(
         "pts_product_sales_daily_reporting",
         periodStart,
         periodEnd,
-        studioId
+        studioId,
+        allowedStudioIds
       ),
       classTypesQuery.order("event_date").range(0, 4999),
       historicalClassTypesQuery.order("report_date").range(0, 4999),
@@ -818,9 +834,10 @@ export async function getOperationsDashboardWithComparison(
   endDate?: string,
   comparisonMode: "previous" | "priorYearWeek" | "custom" = "previous",
   customComparisonStart?: string,
-  customComparisonEnd?: string
+  customComparisonEnd?: string,
+  allowedStudioIds?: number[]
 ): Promise<OperationsDashboardData> {
-  const current = await getOperationsDashboard(studioId, startDate, endDate)
+  const current = await getOperationsDashboard(studioId, startDate, endDate, allowedStudioIds)
   const duration = current.period.days
   const useCustomComparison =
     comparisonMode === "custom" &&
@@ -838,7 +855,8 @@ export async function getOperationsDashboardWithComparison(
   const previous = await getOperationsDashboard(
     studioId,
     comparisonStart,
-    comparisonEnd
+    comparisonEnd,
+    allowedStudioIds
   )
   const changes: OperationsDashboardData["comparison"] extends infer T
     ? T extends { changes: infer C }
@@ -875,7 +893,8 @@ export async function getOperationsDashboardWithComparison(
 
 export async function getDailyOperatingDetail(
   studioId: number | undefined,
-  date: string
+  date: string,
+  allowedStudioIds?: number[]
 ): Promise<DailyOperatingDetailData> {
   let classesQuery = supabase
     .from("pts_class_sales_reporting")
@@ -891,6 +910,10 @@ export async function getDailyOperatingDetail(
     classesQuery = classesQuery.eq("studio_id", studioId)
     studiosQuery = studiosQuery.eq("id", studioId)
   }
+  if (!studioId && allowedStudioIds) {
+    classesQuery = classesQuery.in("studio_id", allowedStudioIds)
+    studiosQuery = studiosQuery.in("id", allowedStudioIds)
+  }
   let operationsQuery = supabase
     .from("pts_daily_operations_reporting")
     .select(
@@ -898,6 +921,7 @@ export async function getDailyOperatingDetail(
     )
     .eq("report_date", date)
   if (studioId) operationsQuery = operationsQuery.eq("studio_id", studioId)
+  else if (allowedStudioIds) operationsQuery = operationsQuery.in("studio_id", allowedStudioIds)
 
   const [classesResult, studioResult, operationsResult] = await Promise.all([
     classesQuery,
@@ -1008,12 +1032,15 @@ async function getProductGroupSalesDetail(
   unnamedItem: string,
   studioId: number | undefined,
   startDate: string,
-  endDate: string
+  endDate: string,
+  allowedStudioIds?: number[]
 ): Promise<CandleSalesDetailData> {
   let studiosQuery = supabase.from("studios").select("id,studio_name")
 
   if (studioId) {
     studiosQuery = studiosQuery.eq("id", studioId)
+  } else if (allowedStudioIds) {
+    studiosQuery = studiosQuery.in("id", allowedStudioIds)
   }
 
   const [currentRows, historicalRows, studiosResult] = await Promise.all([
@@ -1021,13 +1048,15 @@ async function getProductGroupSalesDetail(
       "pts_product_sales_reporting",
       startDate,
       endDate,
-      studioId?.toString()
+      studioId?.toString(),
+      allowedStudioIds
     ),
     getPagedProductRows(
       "pts_product_sales_daily_reporting",
       startDate,
       endDate,
-      studioId?.toString()
+      studioId?.toString(),
+      allowedStudioIds
     ),
     studiosQuery.order("studio_name"),
   ])
@@ -1085,28 +1114,32 @@ async function getProductGroupSalesDetail(
 export function getCandleSalesDetail(
   studioId: number | undefined,
   startDate: string,
-  endDate: string
+  endDate: string,
+  allowedStudioIds?: number[]
 ) {
   return getProductGroupSalesDetail(
     "Candles",
     "Unnamed candle",
     studioId,
     startDate,
-    endDate
+    endDate,
+    allowedStudioIds
   )
 }
 
 export function getArtSuppliesSalesDetail(
   studioId: number | undefined,
   startDate: string,
-  endDate: string
+  endDate: string,
+  allowedStudioIds?: number[]
 ) {
   return getProductGroupSalesDetail(
     "Art Supplies",
     "Unnamed art supply",
     studioId,
     startDate,
-    endDate
+    endDate,
+    allowedStudioIds
   )
 }
 
@@ -1114,7 +1147,8 @@ export async function getClassEventSalesDetail(
   reportingClassType: "Private Party" | "Mobile Events",
   studioId: number | undefined,
   startDate: string,
-  endDate: string
+  endDate: string,
+  allowedStudioIds?: number[]
 ): Promise<ClassEventSalesDetailData> {
   let classesQuery = supabase
     .from("pts_class_sales_reporting")
@@ -1131,6 +1165,10 @@ export async function getClassEventSalesDetail(
   if (studioId) {
     classesQuery = classesQuery.eq("studio_id", studioId)
     studiosQuery = studiosQuery.eq("id", studioId)
+  }
+  if (!studioId && allowedStudioIds) {
+    classesQuery = classesQuery.in("studio_id", allowedStudioIds)
+    studiosQuery = studiosQuery.in("id", allowedStudioIds)
   }
 
   const [classesResult, studiosResult] = await Promise.all([

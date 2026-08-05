@@ -94,7 +94,8 @@ function completedEasternDate() {
 }
 
 export async function getUpcomingClasses(
-  studioId?: string
+  studioId?: string,
+  allowedStudioIds?: number[]
 ): Promise<UpcomingClassesData> {
   const bookingDate = completedEasternDate()
   let query = supabase
@@ -106,6 +107,7 @@ export async function getUpcomingClasses(
     .range(0, 4999)
 
   if (studioId && studioId !== "all") query = query.eq("studio_id", studioId)
+  else if (allowedStudioIds) query = query.in("studio_id", allowedStudioIds)
 
   let bookingQuery = supabase
     .from("pts_reservation_booking_daily")
@@ -115,6 +117,8 @@ export async function getUpcomingClasses(
     .eq("order_date", bookingDate)
   if (studioId && studioId !== "all") {
     bookingQuery = bookingQuery.eq("studio_id", studioId)
+  } else if (allowedStudioIds) {
+    bookingQuery = bookingQuery.in("studio_id", allowedStudioIds)
   }
 
   const [{ data, error }, bookingResult] = await Promise.all([query, bookingQuery])

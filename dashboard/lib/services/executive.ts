@@ -64,7 +64,8 @@ export async function getExecutiveDashboard(
   endDate?: string,
   comparisonMode: "previous" | "priorYearWeek" | "custom" = "previous",
   customComparisonStart?: string,
-  customComparisonEnd?: string
+  customComparisonEnd?: string,
+  allowedStudioIds?: number[]
 ): Promise<ExecutiveDashboardData> {
   const operations = await getOperationsDashboardWithComparison(
     studioId,
@@ -72,7 +73,8 @@ export async function getExecutiveDashboard(
     endDate,
     comparisonMode,
     customComparisonStart,
-    customComparisonEnd
+    customComparisonEnd,
+    allowedStudioIds
   )
   const comparisonPeriod = operations.comparison?.period ?? {
     startDate: operations.period.startDate,
@@ -90,17 +92,18 @@ export async function getExecutiveDashboard(
   const trendStart = shiftIsoDate(lastCompletedSunday, -55)
 
   const [marketing, marketingComparison, upcoming, completedWeek, trendOperations] = await Promise.all([
-    getMarketingDashboard(studioId, operations.period.startDate, operations.period.endDate),
+    getMarketingDashboard(studioId, operations.period.startDate, operations.period.endDate, allowedStudioIds),
     getMarketingDashboard(
       studioId,
       comparisonPeriod.startDate,
-      comparisonPeriod.endDate
+      comparisonPeriod.endDate,
+      allowedStudioIds
     ),
-    getUpcomingClasses(studioId),
+    getUpcomingClasses(studioId, allowedStudioIds),
     hasCompletedWeekDays
-      ? getOperationsDashboard(studioId, weekStart, yesterday)
+      ? getOperationsDashboard(studioId, weekStart, yesterday, allowedStudioIds)
       : Promise.resolve(null),
-    getOperationsDashboard(studioId, trendStart, lastCompletedSunday),
+    getOperationsDashboard(studioId, trendStart, lastCompletedSunday, allowedStudioIds),
   ])
 
   const remainingWeekClasses = upcoming.studios

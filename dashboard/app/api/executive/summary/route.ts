@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 
 import { getExecutiveDashboard } from "@/lib/services/executive"
+import { apiAccessResponse, assertStudioAccess, requireApiAccess } from "@/lib/auth/api"
 
 const querySchema = z.object({
   studioId: z.string().max(100).optional(),
@@ -20,6 +21,8 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const access = await requireApiAccess()
+    assertStudioAccess(access, parsed.data.studioId)
     return NextResponse.json(
       await getExecutiveDashboard(
         parsed.data.studioId,
@@ -27,10 +30,13 @@ export async function GET(request: NextRequest) {
         parsed.data.endDate,
         parsed.data.comparison,
         parsed.data.comparisonStartDate,
-        parsed.data.comparisonEndDate
+        parsed.data.comparisonEndDate,
+        access.allowedStudioIds
       )
     )
   } catch (error) {
+    const accessResponse = apiAccessResponse(error)
+    if (accessResponse) return accessResponse
     console.error("Executive summary failed", error)
     return NextResponse.json(
       { error: "Executive performance is temporarily unavailable." },

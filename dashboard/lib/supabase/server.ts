@@ -1,6 +1,14 @@
+import "server-only"
+
 import { createClient } from "@supabase/supabase-js"
 
 export const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVER_SECRET!
+  process.env.SUPABASE_SERVER_SECRET!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  }
 )

@@ -112,6 +112,13 @@ Implemented foundation:
 
 - Next.js App Router application in `dashboard/`
 - Shared application context for active studio and common dashboard state
+- Invite-only Supabase Auth foundation with SSR cookie sessions, login,
+  password recovery, protected routes, onboarding, logout, owner/admin user
+  invitations, and security headers. Every dashboard API now authenticates the
+  caller, rejects unauthorized studio IDs, and scopes portfolio queries to the
+  user's assigned studios. Migration `20260805110000` prepares profiles,
+  organization memberships, studio grants, and non-secret integration
+  references; production application and first-owner bootstrap remain pending.
 - Studio list API: `/api/studios`
 - Marketing summary API: `/api/marketing/summary`
 - Supabase access isolated behind frontend services
@@ -160,7 +167,7 @@ Implemented foundation:
   interception. Workflow 07 was rerun successfully for July 21-August 3 and
   replaced 160 class rows; the Gilbert Moondancing row was verified at 6 seats,
   $238.68 class sales, $33.04 product sales, and $271.72 net sales. Workflow 07
-  retains its 5:00 AM run and now reconciles again at 10:30 AM Eastern;
+  retains its 8:00 AM run and now reconciles again at 10:30 AM Eastern;
   workflow 06 retains its 8:00 AM run and also reconciles at 10:30 AM Eastern.
 - F&B KPI totals use item-level Product Sales when that studio/date detail is
   available, falling back to the daily summary only when detail has not been
@@ -190,6 +197,13 @@ Implemented foundation:
   and $4,166.20 gross booked sales.
 
 Known incomplete surfaces:
+
+- Production authentication activation is pending migration review/application,
+  Supabase Auth URL and email-template configuration, custom SMTP and abuse
+  controls, deployment publishable-key configuration, first-owner bootstrap,
+  and cross-tenant security testing. Location credential entry remains disabled
+  until the encrypted secret-provider handoff (preferably Supabase Vault) is
+  implemented and validated.
 
 - Manual Product Sales history can now be loaded through workflow
   `10 - PTS Product Sales Backfill` by selecting a studio and uploading the PTS

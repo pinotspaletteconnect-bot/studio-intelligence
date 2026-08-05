@@ -1,12 +1,17 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { AppProvider } from "@/contexts/app-context";
+import { logout } from "@/app/(app)/actions";
+import { requireDashboardContext } from "@/lib/auth/session";
+import { Button } from "@/components/ui/button";
 
-export default function AppLayout({
+export default async function AppLayout({
   children,
 }: {
   children: ReactNode;
 }) {
+  const access = await requireDashboardContext();
+
   return (
     <AppProvider>
       <div className="flex min-h-screen bg-slate-50">
@@ -82,8 +87,16 @@ export default function AppLayout({
                 Studio Intelligence
               </h2>
 
-              <div className="text-sm text-slate-500">
-                Jeff Duff
+              <div className="flex items-center gap-4">
+                <div className="text-right text-sm">
+                  <div className="font-medium text-slate-900">
+                    {access.fullName ?? access.email}
+                  </div>
+                  <div className="text-xs capitalize text-slate-500">{access.role}</div>
+                </div>
+                <form action={logout}>
+                  <Button type="submit" variant="outline" size="sm">Sign out</Button>
+                </form>
               </div>
             </div>
           </header>

@@ -225,7 +225,7 @@ This project follows a milestone-based changelog rather than tracking every indi
 - Validated the completed-class overwrite path by rerunning workflow 07 for
   July 21-August 3: 160 rows loaded and Gilbert's Moondancing event reconciled
   to 6 seats and $271.72 net sales. Added a 10:30 AM Eastern reconciliation to
-  workflows 06 and 07 while preserving their existing morning schedules.
+  workflows 06 and 07 while preserving their existing 8:00 AM schedules.
 
 - Prevented recurring PTS Product Sales imports from treating hidden stale PTS
   grids as legitimate empty reports; the collector activates the lazily loaded
@@ -249,6 +249,12 @@ This project follows a milestone-based changelog rather than tracking every indi
   without detailed product rows.
 
 ## Changed
+
+- Added the invite-only authentication and onboarding foundation: Supabase SSR
+  cookie sessions, login/recovery/logout, tenant memberships and studio grants,
+  protected pages and APIs, role-gated invitations, default-off benchmark
+  consent, security headers, and metadata-only integration secret references.
+  Production schema and Auth configuration remain pending controlled rollout.
 
 - Restored complete historical Operations product reporting by merging
   `pts_product_sales_daily_reporting` with the current

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 
 import { getClassEventSalesDetail } from "@/lib/services/operations"
+import { apiAccessResponse, assertStudioAccess, requireApiAccess } from "@/lib/auth/api"
 
 const querySchema = z.object({
   studioId: z.union([z.literal("all"), z.coerce.number().int().positive()]),
@@ -16,15 +17,20 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const access = await requireApiAccess()
+    assertStudioAccess(access, parsed.data.studioId)
     return NextResponse.json(
       await getClassEventSalesDetail(
         "Private Party",
         parsed.data.studioId === "all" ? undefined : parsed.data.studioId,
         parsed.data.startDate,
-        parsed.data.endDate
+        parsed.data.endDate,
+        access.allowedStudioIds
       )
     )
   } catch (error) {
+    const accessResponse = apiAccessResponse(error)
+    if (accessResponse) return accessResponse
     console.error("Private party detail failed", error)
     return NextResponse.json({ error: "Private party detail is temporarily unavailable." }, { status: 500 })
   }

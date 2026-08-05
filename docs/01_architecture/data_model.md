@@ -36,8 +36,17 @@ Current configuration entities:
 - `studios`
 - `studio_integrations`
 - `integration_runs`
+- `user_profiles`
+- `organization_memberships`
+- `user_studio_access`
+- `integration_secret_references` (non-secret metadata and opaque references)
 
 Expected future configuration may include credential references, feature flags, schedules, permissions, and notification rules. Secret values should remain in the appropriate secret manager/environment rather than ordinary warehouse tables or Git.
+
+Dashboard access is invite-only. Membership roles are owner, administrator,
+manager, and viewer. Owners and administrators inherit active organization
+studios; managers and viewers require explicit studio grants. Integration
+credentials are represented only by an opaque encrypted-secret reference.
 
 ## Marketing Intelligence
 
