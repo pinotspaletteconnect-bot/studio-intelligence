@@ -21,11 +21,11 @@ export default async function AppLayout({
         <aside className="w-64 border-r bg-white">
           <div className="border-b p-6">
             <h1 className="text-xl font-bold">
-              Studio Intelligence
+              SASHA
             </h1>
 
             <p className="text-sm text-slate-500">
-              Business Intelligence Platform
+              Studio Intelligence Platform
             </p>
           </div>
 
@@ -38,10 +38,10 @@ export default async function AppLayout({
             </Link>
 
             <Link
-              href="/marketing"
+              href="/executive"
               className="block rounded-lg px-3 py-2 hover:bg-slate-100"
             >
-              Marketing
+              Executive
             </Link>
 
             <Link
@@ -66,10 +66,10 @@ export default async function AppLayout({
             </Link>
 
             <Link
-              href="/executive"
+              href="/marketing"
               className="block rounded-lg px-3 py-2 hover:bg-slate-100"
             >
-              Executive
+              Marketing
             </Link>
 
             <Link
@@ -93,7 +93,7 @@ export default async function AppLayout({
           <header className="border-b bg-white px-8 py-4">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-semibold">
-                Studio Intelligence
+                SASHA
               </h2>
 
               <div className="flex items-center gap-4">

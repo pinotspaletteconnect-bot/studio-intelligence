@@ -15,7 +15,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboardIcon, ListIcon, ChartBarIcon, UsersIcon, CameraIcon, FileTextIcon, Settings2Icon, CircleHelpIcon, SearchIcon, DatabaseIcon, FileChartColumnIcon, CommandIcon } from "lucide-react"
+import { LayoutDashboardIcon, ListIcon, ChartBarIcon, CameraIcon, FileTextIcon, Settings2Icon, CircleHelpIcon, SearchIcon, FileChartColumnIcon, CommandIcon } from "lucide-react"
 
 const data = {
   user: {
@@ -25,14 +25,14 @@ const data = {
   },
   navMain: [
   {
-    title: "Executive",
+    title: "Dashboard",
     url: "/dashboard",
     icon: <LayoutDashboardIcon />,
   },
   {
-    title: "Marketing",
-    url: "/marketing",
-    icon: <ChartBarIcon />,
+    title: "Executive",
+    url: "/executive",
+    icon: <LayoutDashboardIcon />,
   },
   {
     title: "Operations",
@@ -40,14 +40,14 @@ const data = {
     icon: <ListIcon />,
   },
   {
-    title: "Financial",
-    url: "/financial",
-    icon: <DatabaseIcon />,
+    title: "Marketing",
+    url: "/marketing",
+    icon: <ChartBarIcon />,
   },
   {
-    title: "Customers",
-    url: "/customers",
-    icon: <UsersIcon />,
+    title: "Settings",
+    url: "/settings",
+    icon: <Settings2Icon />,
   },
 ],
   navClouds: [
@@ -173,7 +173,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             >
               <CommandIcon className="size-5!" />
               <span className="text-base font-semibold">
-              Studio Intelligence
+              SASHA
               </span>
             </SidebarMenuButton>
           </SidebarMenuItem>

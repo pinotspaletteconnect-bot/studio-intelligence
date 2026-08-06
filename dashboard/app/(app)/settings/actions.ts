@@ -57,7 +57,7 @@ export async function createPtsAccount(
     email: actor.email,
     password: parsed.data.currentPassword,
   })
-  if (authenticationError) return { error: "Your Studio Intelligence password is incorrect." }
+  if (authenticationError) return { error: "Your SASHA password is incorrect." }
 
   const { data: duplicate } = await supabase
     .from("pts_integration_accounts")

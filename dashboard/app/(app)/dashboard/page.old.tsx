@@ -6,7 +6,7 @@ export default function DashboardPage() {
       </h1>
 
       <p className="mt-2 text-slate-500">
-        Welcome to Studio Intelligence.
+        Welcome to SASHA.
       </p>
     </>
   );

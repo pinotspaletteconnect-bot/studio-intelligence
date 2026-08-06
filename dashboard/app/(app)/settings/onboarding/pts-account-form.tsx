@@ -30,7 +30,7 @@ export function PtsAccountForm() {
         <Input id="ptsPassword" name="ptsPassword" type="password" autoComplete="new-password" required />
       </div>
       <div className="space-y-2 md:col-span-2">
-        <Label htmlFor="currentPassword">Confirm your Studio Intelligence password</Label>
+        <Label htmlFor="currentPassword">Confirm your SASHA password</Label>
         <Input id="currentPassword" name="currentPassword" type="password" autoComplete="current-password" required />
         <p className="text-xs text-muted-foreground">Required before changing protected connection credentials.</p>
       </div>

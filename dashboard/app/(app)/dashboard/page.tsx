@@ -30,7 +30,7 @@ export default function DashboardPage() {
       <div>
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Choose a reporting area to review Studio Intelligence data.
+          Choose a reporting area to review SASHA data.
         </p>
       </div>
       <div className="grid gap-4 md:grid-cols-3">
