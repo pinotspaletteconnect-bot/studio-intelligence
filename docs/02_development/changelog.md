@@ -19,6 +19,7 @@ This project follows a milestone-based changelog rather than tracking every indi
 - Added an on/off control for the studio percentage labels in the Executive weekly sales trend.
 - Added an independent comparison range to the Executive this-week snapshot. Completed sales compare at the same elapsed day, while future revenue and scheduled parties use the matching historical booking snapshot and explicitly report when that snapshot is unavailable.
 - Stopped the Food & Beverage drill-down from opening Food by default and excluded `Available for...` marketing placeholder classes from completed, upcoming, Executive, Private Party, and Mobile Event reporting.
+- Excluded completed private/mobile rows only when they have no selected painting and both zero seats and zero class-plus-fee revenue; zero-dollar events with a selected painting remain visible as real events.
 
 - Replaced the nested template UI on `/dashboard` with a shell-consistent
   reporting-area landing page. Financial and Customers remain available as

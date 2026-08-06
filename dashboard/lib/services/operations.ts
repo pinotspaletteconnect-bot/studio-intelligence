@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase/server"
 import {
   isMarketingPlaceholderClass,
-  isPrivateOrMobileClassType,
+  isZeroActivityPartyEvent,
 } from "@/lib/services/pts-class-filters"
 
 type DailyOperationsRow = {
@@ -480,16 +480,19 @@ export async function getOperationsDashboard(
     allCurrentClassTypeRows.map((row) => `${row.studio_id}:${row.event_date}`)
   )
   const currentClassTypeRows = allCurrentClassTypeRows.filter(
-    (row) => !isMarketingPlaceholderClass(row.painting)
+    (row) =>
+      !isMarketingPlaceholderClass(row.painting) &&
+      !isZeroActivityPartyEvent({
+        classType: row.reporting_class_type,
+        painting: row.painting,
+        seatsSold: row.seats_sold,
+        classSales: row.class_sales,
+        feeSales: row.fee_sales,
+      })
   )
   const classTypeRows = [
     ...((historicalClassTypesResult.data ?? []) as ClassTypeRow[]).filter(
-      (row) =>
-        !currentClassStudioDates.has(`${row.studio_id}:${row.report_date}`) &&
-        (!isPrivateOrMobileClassType(row.reporting_class_type) ||
-          numberValue(row.seats_sold) !== 0 ||
-          numberValue(row.class_sales) !== 0 ||
-          numberValue(row.fee_sales) !== 0)
+      (row) => !currentClassStudioDates.has(`${row.studio_id}:${row.report_date}`)
     ),
     ...currentClassTypeRows,
   ]
@@ -947,7 +950,17 @@ export async function getDailyOperatingDetail(
   if (operationsResult.error) throw operationsResult.error
 
   const rows = ((classesResult.data ?? []) as ClassDetailRow[])
-    .filter((row) => !isMarketingPlaceholderClass(row.painting))
+    .filter(
+      (row) =>
+        !isMarketingPlaceholderClass(row.painting) &&
+        !isZeroActivityPartyEvent({
+          classType: row.reporting_class_type,
+          painting: row.painting,
+          seatsSold: row.seats_sold,
+          classSales: row.class_sales,
+          feeSales: row.fee_sales,
+        })
+    )
     .map((row) => {
     const seatsSold = numberValue(row.seats_sold)
     const capacity = numberValue(row.capacity)
@@ -1194,7 +1207,17 @@ export async function getClassEventSalesDetail(
   if (studiosResult.error) throw studiosResult.error
 
   const rows = ((classesResult.data ?? []) as ClassEventDetailRow[])
-    .filter((row) => !isMarketingPlaceholderClass(row.painting))
+    .filter(
+      (row) =>
+        !isMarketingPlaceholderClass(row.painting) &&
+        !isZeroActivityPartyEvent({
+          classType: reportingClassType,
+          painting: row.painting,
+          seatsSold: row.seats_sold,
+          classSales: row.class_sales,
+          feeSales: row.fee_sales,
+        })
+    )
   const studios = (studiosResult.data ?? []).map((studio) => {
     const classes = rows
       .filter((row) => row.studio_id === studio.id)
