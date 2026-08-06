@@ -186,6 +186,11 @@ Implemented foundation:
   presents every studio in a separate section for the chosen date.
 - Private Party and Mobile Events KPI cards link to completed-day drill-downs
   with expandable studio sections and event-level seats, capacity, and revenue.
+- PTS classes whose painting name begins with `Available for` are governed as
+  marketing availability placeholders. They are excluded from upcoming-class,
+  Executive, Daily Operating Detail, Private Party, and Mobile Event metrics
+  and drill-downs. Aggregate-only historical private/mobile rows without a
+  painting name are excluded when they contain no seats or revenue activity.
 - Operations product reporting excludes zero-dollar items labeled as preorders
   from displayed quantities because PTS uses them as website placeholders;
   paid preorder sales remain included.

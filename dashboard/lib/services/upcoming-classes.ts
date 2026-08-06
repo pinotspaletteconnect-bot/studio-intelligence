@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase/server"
+import { isMarketingPlaceholderClass } from "@/lib/services/pts-class-filters"
 
 type UpcomingClassRow = {
   studio_id: number
@@ -125,7 +126,8 @@ export async function getUpcomingClasses(
   if (error) throw error
   if (bookingResult.error) throw bookingResult.error
 
-  const rows = (data ?? []) as UpcomingClassRow[]
+  const rows = ((data ?? []) as UpcomingClassRow[])
+    .filter((row) => !isMarketingPlaceholderClass(row.painting))
   const bookingRows = (bookingResult.data ?? []) as ReservationBookingDailyRow[]
   const studioIds = [
     ...new Set([

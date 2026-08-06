@@ -5,6 +5,7 @@ import {
   type OperationsDashboardData,
 } from "@/lib/services/operations"
 import { getUpcomingClasses } from "@/lib/services/upcoming-classes"
+import { isMarketingPlaceholderClass } from "@/lib/services/pts-class-filters"
 import { supabase } from "@/lib/supabase/server"
 
 export type ExecutiveDashboardData = {
@@ -84,7 +85,7 @@ async function getHistoricalUpcomingClasses(
 
   let rowsQuery = supabase
     .from("pts_upcoming_class_snapshots_reporting")
-    .select("studio_id,event_date,reporting_class_type,class_sales,fee_sales,seats_sold")
+    .select("studio_id,event_date,painting,reporting_class_type,class_sales,fee_sales,seats_sold")
     .eq("snapshot_date", snapshotDate)
     .gt("event_date", eventAfterDate)
     .lte("event_date", eventEndDate)
@@ -93,7 +94,12 @@ async function getHistoricalUpcomingClasses(
   else if (allowedStudioIds) rowsQuery = rowsQuery.in("studio_id", allowedStudioIds)
   const rowsResult = await rowsQuery
   if (rowsResult.error) throw rowsResult.error
-  return { snapshotDate, rows: rowsResult.data ?? [] }
+  return {
+    snapshotDate,
+    rows: (rowsResult.data ?? []).filter(
+      (row) => !isMarketingPlaceholderClass(row.painting)
+    ),
+  }
 }
 
 function easternToday() {

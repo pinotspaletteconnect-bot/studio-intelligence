@@ -485,7 +485,6 @@ export function OperationsDashboard() {
               <details
                 key={group.subcategory}
                 className="group rounded-lg border"
-                open={group.subcategory.toLowerCase() === "food" || undefined}
               >
                 <summary className="grid cursor-pointer list-none grid-cols-[1fr_auto_auto_auto] items-center gap-4 px-4 py-3">
                   <span className="font-medium">{group.subcategory}</span>

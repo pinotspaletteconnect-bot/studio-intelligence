@@ -18,6 +18,7 @@ This project follows a milestone-based changelog rather than tracking every indi
 - Added studio share percentages inside sufficiently large weekly sales chart segments while retaining exact dollar values in the tooltip.
 - Added an on/off control for the studio percentage labels in the Executive weekly sales trend.
 - Added an independent comparison range to the Executive this-week snapshot. Completed sales compare at the same elapsed day, while future revenue and scheduled parties use the matching historical booking snapshot and explicitly report when that snapshot is unavailable.
+- Stopped the Food & Beverage drill-down from opening Food by default and excluded `Available for...` marketing placeholder classes from completed, upcoming, Executive, Private Party, and Mobile Event reporting.
 
 - Replaced the nested template UI on `/dashboard` with a shell-consistent
   reporting-area landing page. Financial and Customers remain available as
