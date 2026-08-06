@@ -7,10 +7,12 @@ import { z } from "zod"
 import { getTrustedAppOrigin } from "@/lib/auth/app-origin"
 import { getAuthenticatedUser, requireDashboardContext } from "@/lib/auth/session"
 import { supabase } from "@/lib/supabase/server"
+import { createAuthClient } from "@/lib/supabase/auth-server"
 
 export type InviteState = { complete?: boolean; error?: string } | undefined
 export type AddStudioState = { complete?: boolean; error?: string } | undefined
 export type MemberAccessState = { complete?: boolean; error?: string } | undefined
+export type PtsAccountState = { complete?: boolean; error?: string } | undefined
 
 const inviteSchema = z.object({
   email: z.email().max(254).transform((value) => value.trim().toLowerCase()),
@@ -25,6 +27,65 @@ const memberAccessSchema = z.object({
 })
 
 const memberTargetSchema = z.object({ userId: z.uuid() })
+
+const ptsAccountSchema = z.object({
+  accountName: z.string().trim().min(2).max(120),
+  ptsUsername: z.string().trim().min(2).max(254),
+  ptsPassword: z.string().min(1).max(1024),
+  currentPassword: z.string().min(1).max(1024),
+})
+
+export async function createPtsAccount(
+  _previousState: PtsAccountState,
+  formData: FormData
+): Promise<PtsAccountState> {
+  const [access, actor] = await Promise.all([requireDashboardContext(), getAuthenticatedUser()])
+  if (!actor?.email || !["owner", "administrator"].includes(access.role)) {
+    return { error: "Only an owner or administrator can add a PTS account." }
+  }
+
+  const parsed = ptsAccountSchema.safeParse({
+    accountName: formData.get("accountName"),
+    ptsUsername: formData.get("ptsUsername"),
+    ptsPassword: formData.get("ptsPassword"),
+    currentPassword: formData.get("currentPassword"),
+  })
+  if (!parsed.success) return { error: "Complete every account and security field." }
+
+  const auth = await createAuthClient()
+  const { error: authenticationError } = await auth.auth.signInWithPassword({
+    email: actor.email,
+    password: parsed.data.currentPassword,
+  })
+  if (authenticationError) return { error: "Your Studio Intelligence password is incorrect." }
+
+  const { data: duplicate } = await supabase
+    .from("pts_integration_accounts")
+    .select("id")
+    .eq("organization_id", access.organizationId)
+    .ilike("account_name", parsed.data.accountName)
+    .maybeSingle()
+  if (duplicate) return { error: "A PTS account with that label already exists." }
+
+  const { error } = await supabase.rpc("create_pts_account_with_secret", {
+    p_organization_id: access.organizationId,
+    p_account_name: parsed.data.accountName,
+    p_username: parsed.data.ptsUsername,
+    p_password: parsed.data.ptsPassword,
+  })
+  if (error) {
+    console.error("PTS Vault account creation failed", {
+      organizationId: access.organizationId,
+      actorId: actor.id,
+      code: error.code,
+    })
+    return { error: "The encrypted PTS account could not be created." }
+  }
+
+  revalidatePath("/settings")
+  revalidatePath("/settings/onboarding")
+  return { complete: true }
+}
 
 async function getManageableMembership(organizationId: number, userId: string) {
   const { data, error } = await supabase
@@ -134,6 +195,48 @@ export async function suspendOrganizationUser(
     .eq("user_id", target.user_id)
 
   revalidatePath("/settings")
+  return { complete: true }
+}
+
+export async function resendOrganizationSetup(
+  _previousState: MemberAccessState,
+  formData: FormData
+): Promise<MemberAccessState> {
+  const [access, actor] = await Promise.all([requireDashboardContext(), getAuthenticatedUser()])
+  if (!actor || !["owner", "administrator"].includes(access.role)) {
+    return { error: "You do not have permission to resend setup links." }
+  }
+  const parsed = memberTargetSchema.safeParse({ userId: formData.get("userId") })
+  if (!parsed.success) return { error: "The selected user is invalid." }
+
+  const target = await getManageableMembership(access.organizationId, parsed.data.userId)
+  if (!target || target.status !== "invited" || !canManageTarget(access.role, actor.id, target)) {
+    return { error: "A setup link cannot be sent to that account." }
+  }
+  const { data: targetUser, error: targetError } = await supabase.auth.admin.getUserById(target.user_id)
+  if (targetError || !targetUser.user?.email) return { error: "The invited email address is unavailable." }
+
+  let origin: string
+  try {
+    origin = getTrustedAppOrigin((await headers()).get("origin"))
+  } catch (error) {
+    console.error("Setup-link origin is not configured", error)
+    return { error: "Setup links are temporarily unavailable." }
+  }
+
+  const auth = await createAuthClient()
+  const { error } = await auth.auth.resetPasswordForEmail(targetUser.user.email, {
+    redirectTo: `${origin}/auth/callback?next=/reset-password`,
+  })
+  if (error) {
+    console.error("Invited-user setup link failed", {
+      organizationId: access.organizationId,
+      actorId: actor.id,
+      targetId: target.user_id,
+      code: error.code,
+    })
+    return { error: "The setup email could not be sent." }
+  }
   return { complete: true }
 }
 
@@ -247,6 +350,7 @@ export async function addStudioWithExistingPtsAccount(
     external_id: parsed.data.ptsLocationId,
     is_active: true,
     configuration: {
+      pts_account_id: ptsAccount.id,
       credential_reference: ptsAccount.secret_reference,
       reports: ["sales", "product_sales", "class_sales", "reservations", "upcoming_classes"],
     },

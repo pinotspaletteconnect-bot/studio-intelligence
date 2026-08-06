@@ -1,6 +1,8 @@
 import { InviteUserForm } from "@/app/(app)/settings/invite-user-form"
 import { AddStudioForm } from "@/app/(app)/settings/add-studio-form"
 import { AuthorizedUsers } from "@/app/(app)/settings/authorized-users"
+import Link from "next/link"
+import { buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { requireDashboardContext } from "@/lib/auth/session"
 import { getAccountSettings } from "@/lib/services/account-settings"
@@ -20,7 +22,14 @@ export default async function SettingsPage() {
       {canAdminister ? (
         <>
           <Card>
-            <CardHeader><CardTitle>Add a studio</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Workspace onboarding</CardTitle></CardHeader>
+            <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="max-w-2xl text-sm leading-6 text-muted-foreground">Review studio mappings, secured PTS account references, authorized users, and the latest data received for every required feed.</p>
+              <Link className={buttonVariants()} href="/settings/onboarding">Open setup checklist</Link>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader id="add-studio"><CardTitle>Add a studio</CardTitle></CardHeader>
             <CardContent>
               <AddStudioForm
                 brands={settings.brands.map((brand) => ({ id: brand.id, label: brand.name }))}
@@ -36,7 +45,7 @@ export default async function SettingsPage() {
       ) : null}
 
       <Card>
-        <CardHeader><CardTitle>Authorized users</CardTitle></CardHeader>
+        <CardHeader id="authorized-users"><CardTitle>Authorized users</CardTitle></CardHeader>
         <CardContent>
           <AuthorizedUsers
             members={settings.members}

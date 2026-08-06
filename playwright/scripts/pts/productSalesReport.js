@@ -43,8 +43,14 @@ function displayDate(isoDate) {
     return `${Number(month)}/${Number(day)}/${year}`;
 }
 
-function requestedStudios(studioCodes) {
-    const studios = configuredStudios();
+function requestedStudios(studioCodes, studioTargets) {
+    const studios = studioTargets ?? configuredStudios();
+
+    if (!Array.isArray(studios) || studios.length === 0 || studios.some(studio =>
+        !studio.studioId || !studio.code || !studio.locationId || !studio.locationName || !studio.timeZone
+    )) {
+        throw new Error("PTS studio configuration is invalid");
+    }
 
     if (!studioCodes?.length) {
         return studios;
@@ -160,16 +166,18 @@ function normalizeProductRows(rows) {
     });
 }
 
-async function login(page) {
-    if (!process.env.PTS_USERNAME || !process.env.PTS_PASSWORD) {
+async function login(page, credentials = {}) {
+    const username = credentials.username ?? process.env.PTS_USERNAME;
+    const password = credentials.password ?? process.env.PTS_PASSWORD;
+    if (!username || !password) {
         throw new Error("PTS_USERNAME and PTS_PASSWORD must be configured");
     }
 
     await page.goto(`${PTS_URL}/Account/LogOn`, {
         waitUntil: "domcontentloaded"
     });
-    await page.locator("#UserName").fill(process.env.PTS_USERNAME);
-    await page.locator("#Password").fill(process.env.PTS_PASSWORD);
+    await page.locator("#UserName").fill(username);
+    await page.locator("#Password").fill(password);
 
     await Promise.all([
         page.waitForURL(url => !url.pathname.includes("/Account/LogOn")),
@@ -502,7 +510,9 @@ async function runPtsProductSalesReport({
     reportDate,
     fromDate,
     toDate,
-    studioCodes
+    studioCodes,
+    credentials,
+    studioTargets
 } = {}) {
     const from = validateDate(fromDate ?? reportDate);
     const to = validateDate(toDate ?? reportDate);
@@ -511,7 +521,7 @@ async function runPtsProductSalesReport({
         throw new Error("PTS fromDate must be on or before toDate");
     }
 
-    const studios = requestedStudios(studioCodes);
+    const studios = requestedStudios(studioCodes, studioTargets);
     const folder = fs.mkdtempSync(path.join(os.tmpdir(), "pts-products-"));
     let browser;
 
@@ -519,7 +529,7 @@ async function runPtsProductSalesReport({
         browser = await chromium.launch({ headless: true });
         const context = await browser.newContext({ acceptDownloads: true });
         const page = await context.newPage();
-        await login(page);
+        await login(page, credentials);
         const results = [];
 
         for (const studio of studios) {

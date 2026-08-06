@@ -10,45 +10,52 @@ export type OnboardingState = { error?: string } | undefined
 
 const onboardingSchema = z.object({
   fullName: z.string().trim().min(2).max(120),
-  password: z.string().min(12).max(72),
-  confirmation: z.string().min(1),
+  password: z.string().max(72),
+  confirmation: z.string().max(72),
   acceptTerms: z.literal("on"),
   benchmarkConsent: z.enum(["on"]).optional(),
-}).refine((value) => value.password === value.confirmation, {
-  message: "Passwords do not match.",
-  path: ["confirmation"],
 })
 
 export async function completeOnboarding(
   _previousState: OnboardingState,
   formData: FormData
 ): Promise<OnboardingState> {
-  const parsed = onboardingSchema.safeParse({
-    fullName: formData.get("fullName"),
-    password: formData.get("password"),
-    confirmation: formData.get("confirmation"),
-    acceptTerms: formData.get("acceptTerms"),
-    benchmarkConsent: formData.get("benchmarkConsent") ?? undefined,
-  })
-  if (!parsed.success) return { error: "Complete the required account information." }
-
   const [user, context] = await Promise.all([
     getAuthenticatedUser(),
     getUserAccessContext(),
   ])
   if (!user || !context) return { error: "Your invitation could not be verified." }
 
-  const now = new Date().toISOString()
-  const { error: passwordError } = await supabase.auth.admin.updateUserById(user.id, {
-    password: parsed.data.password,
+  const parsed = onboardingSchema.safeParse({
+    fullName: formData.get("fullName"),
+    password: String(formData.get("password") ?? ""),
+    confirmation: String(formData.get("confirmation") ?? ""),
+    acceptTerms: formData.get("acceptTerms"),
+    benchmarkConsent: formData.get("benchmarkConsent") ?? undefined,
   })
-  if (passwordError && passwordError.code !== "same_password") {
-    console.error("Invited user password setup failed", {
-      code: passwordError.code,
-      status: passwordError.status,
-      userId: user.id,
+  if (!parsed.success) return { error: "Complete the required account information." }
+  const passwordAlreadyCreated = Boolean(user.app_metadata?.onboarding_password_created_at)
+  if (!passwordAlreadyCreated && (parsed.data.password.length < 12 || parsed.data.password !== parsed.data.confirmation)) {
+    return { error: parsed.data.password !== parsed.data.confirmation ? "Passwords do not match." : "Use a password with at least 12 characters." }
+  }
+
+  const now = new Date().toISOString()
+  if (!passwordAlreadyCreated) {
+    const { error: passwordError } = await supabase.auth.admin.updateUserById(user.id, {
+      password: parsed.data.password,
+      app_metadata: {
+        ...user.app_metadata,
+        onboarding_password_created_at: now,
+      },
     })
-    return { error: "Your password could not be created. Please try again." }
+    if (passwordError && passwordError.code !== "same_password") {
+      console.error("Invited user password setup failed", {
+        code: passwordError.code,
+        status: passwordError.status,
+        userId: user.id,
+      })
+      return { error: "Your password could not be created. Please try again." }
+    }
   }
 
   const { error: profileError } = await supabase.from("user_profiles").upsert({

@@ -114,10 +114,13 @@ Implemented foundation:
 - Shared application context for active studio and common dashboard state
 - Invite-only Supabase Auth foundation with SSR cookie sessions, login,
   password recovery, protected routes, onboarding, logout, owner/admin user
-  invitations, owner-protected per-user role and studio-access management,
+  invitations, recovery-aware setup-link resends for incomplete invited users,
+  owner-protected per-user role and studio-access management,
   reversible membership suspension, a server-enforced 30-minute inactivity
   timeout with a five-minute warning, a 12-hour absolute session limit, and
-  security headers. Every dashboard API now authenticates the
+  security headers. Owners and administrators also have a persistent Workspace
+  Setup checklist that derives studio, PTS mapping, user, and five-feed data
+  readiness from live configuration and warehouse records. Every dashboard API now authenticates the
   caller, rejects unauthorized studio IDs, and scopes portfolio queries to the
   user's assigned studios. Migration `20260805110000` is deployed and provides
   profiles, organization memberships, studio grants, and non-secret integration
@@ -207,9 +210,11 @@ Known incomplete surfaces:
   `APP_URL`, and publishable-key configuration in place. It remains pending
   redirect allow-list and email-template configuration, custom SMTP and abuse
   controls, first-owner bootstrap,
-  and cross-tenant security testing. Location credential entry remains disabled
-  until the encrypted secret-provider handoff (preferably Supabase Vault) is
-  implemented and validated.
+  and cross-tenant security testing. Supabase Vault-backed PTS credential entry,
+  password reauthentication, a dedicated collector broker, and configuration-
+  driven account/studio targets are implemented locally. Production remains
+  disabled until migration `20260805190000`, broker variables, deployment, and
+  a controlled new-account login/report validation are complete.
 
 - An owner-only Settings form for adding a studio through an existing
   organization PTS account is implemented locally. It stores only studio

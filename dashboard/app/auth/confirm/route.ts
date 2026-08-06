@@ -1,7 +1,8 @@
 import type { EmailOtpType } from "@supabase/supabase-js"
+import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
-import { createAuthClient } from "@/lib/supabase/auth-server"
+import { getSupabasePublicConfig } from "@/lib/supabase/config"
 
 function safeNext(value: string | null, type: EmailOtpType | null) {
   if (value?.startsWith("/") && !value.startsWith("//")) return value
@@ -16,9 +17,16 @@ export async function GET(request: NextRequest) {
   redirectTo.search = ""
 
   if (tokenHash && type) {
-    const auth = await createAuthClient()
+    const response = NextResponse.redirect(redirectTo)
+    const { url, publishableKey } = getSupabasePublicConfig()
+    const auth = createServerClient(url, publishableKey, {
+      cookies: {
+        getAll: () => request.cookies.getAll(),
+        setAll: (cookiesToSet) => cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options)),
+      },
+    })
     const { error } = await auth.auth.verifyOtp({ token_hash: tokenHash, type })
-    if (!error) return NextResponse.redirect(redirectTo)
+    if (!error) return response
   }
 
   redirectTo.pathname = "/login"

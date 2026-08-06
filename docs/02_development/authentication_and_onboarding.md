@@ -13,6 +13,11 @@ creates and confirms a password there before their profile is completed and
 their membership changes from `invited` to `active`. The password update is a
 server-only mutation scoped to the identity verified by the invitation session;
 password values are never returned, logged, or stored in application tables.
+If the invitation session is lost before completion, an owner or administrator
+can send a new setup link from Authorized Users. The invited user chooses their
+own password through the recovery session and then resumes profile and terms
+setup without a duplicate password prompt. Administrators never generate or
+view that password.
 
 The dashboard protects data in three layers:
 
@@ -92,6 +97,26 @@ studio codes and PTS locations, creates the studio, and writes its active
 or copied. This path is appropriate for adding a location already accessible to
 the organization's existing PTS login. A new organization or a location using
 a different login still requires the encrypted one-time secret handoff above.
+
+### Persistent workspace setup
+
+Owners and administrators have a Workspace Setup checklist under Settings. It
+derives readiness from existing organization, brand, studio, PTS mapping,
+secured account-reference, membership, and warehouse fact records; it does not
+duplicate that state in a separate onboarding table. The per-studio grid shows
+the latest Daily Sales, Product Sales, completed Class Sales, Upcoming Classes,
+and Reservations dates so missing feeds are visible before a studio is treated
+as ready. New credential entry remains unavailable in production until the
+encrypted one-time handoff below is migrated, configured, and validated.
+
+The implemented next-stage handoff uses Supabase Vault and a dedicated
+server-to-server broker token. The dashboard alone holds the Supabase
+service-role secret. The collector exchanges an opaque PTS account ID for that
+account's decrypted credential and mapped studios over TLS; neither the Vault
+credential nor the broker token is exposed to n8n or browser code. Production
+activation requires migration `20260805190000`, matching
+`PTS_SECRET_BROKER_TOKEN` values on the dashboard and collector, and
+`PTS_SECRET_BROKER_URL` on the collector.
 
 ## Production activation checklist
 

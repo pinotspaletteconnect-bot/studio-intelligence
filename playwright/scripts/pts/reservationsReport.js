@@ -42,8 +42,13 @@ function displayDate(isoDate) {
     return `${Number(month)}/${Number(day)}/${year}`;
 }
 
-function requestedStudios(studioCodes) {
-    const studios = configuredStudios();
+function requestedStudios(studioCodes, studioTargets) {
+    const studios = studioTargets ?? configuredStudios();
+    if (!Array.isArray(studios) || studios.length === 0 || studios.some(studio =>
+        !studio.studioId || !studio.code || !studio.locationId || !studio.locationName || !studio.timeZone
+    )) {
+        throw new Error("PTS studio configuration is invalid");
+    }
     if (!studioCodes?.length) return studios;
     const requested = new Set(studioCodes.map(code => String(code).toUpperCase()));
     const selected = studios.filter(studio => requested.has(studio.code));
@@ -96,13 +101,15 @@ function normalizeReservationRow(rawRow) {
     };
 }
 
-async function login(page) {
-    if (!process.env.PTS_USERNAME || !process.env.PTS_PASSWORD) {
+async function login(page, credentials = {}) {
+    const username = credentials.username ?? process.env.PTS_USERNAME;
+    const password = credentials.password ?? process.env.PTS_PASSWORD;
+    if (!username || !password) {
         throw new Error("PTS_USERNAME and PTS_PASSWORD must be configured");
     }
     await page.goto(`${PTS_URL}/Account/LogOn`, { waitUntil: "domcontentloaded" });
-    await page.locator("#UserName").fill(process.env.PTS_USERNAME);
-    await page.locator("#Password").fill(process.env.PTS_PASSWORD);
+    await page.locator("#UserName").fill(username);
+    await page.locator("#Password").fill(password);
     await Promise.all([
         page.waitForURL(url => !url.pathname.includes("/Account/LogOn")),
         page.getByRole("button", { name: "Sign In" }).click()
@@ -183,20 +190,22 @@ async function runPtsReservationsReport({
     orderDate,
     classFromDate,
     classToDate,
-    studioCodes
+    studioCodes,
+    credentials,
+    studioTargets
 } = {}) {
     const targetDate = validateDate(orderDate);
     const fromDate = validateDate(classFromDate ?? targetDate, "classFromDate");
     const toDate = validateDate(classToDate ?? isoDateOffset(targetDate, 516), "classToDate");
     if (fromDate > toDate) throw new Error("PTS classFromDate must be on or before classToDate");
 
-    const studios = requestedStudios(studioCodes);
+    const studios = requestedStudios(studioCodes, studioTargets);
     let browser;
     try {
         browser = await chromium.launch({ headless: true });
         const context = await browser.newContext();
         const page = await context.newPage();
-        await login(page);
+        await login(page, credentials);
         const results = [];
 
         for (const studio of studios) {

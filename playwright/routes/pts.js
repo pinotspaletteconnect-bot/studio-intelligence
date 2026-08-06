@@ -15,6 +15,7 @@ const {
 } = require("../scripts/pts/reservationsReport");
 
 const router = express.Router();
+const { resolvePtsAccount } = require("../services/ptsCredentials");
 
 function requireCollectorAuth(req, res, next) {
     const configuredToken = process.env.COLLECTOR_API_TOKEN;
@@ -55,9 +56,12 @@ router.get("/health", (req, res) => {
 
 router.post("/sales-report", requireCollectorAuth, async (req, res) => {
     try {
+        const account = await resolvePtsAccount(req.body?.accountId);
         const results = await runPtsSalesReport({
             reportDate: req.body?.reportDate,
-            studioCodes: req.body?.studioCodes
+            studioCodes: req.body?.studioCodes,
+            credentials: account.credentials,
+            studioTargets: account.studios
         });
 
         res.json({
@@ -77,11 +81,14 @@ router.post("/sales-report", requireCollectorAuth, async (req, res) => {
 
 router.post("/product-sales-report", requireCollectorAuth, async (req, res) => {
     try {
+        const account = await resolvePtsAccount(req.body?.accountId);
         const results = await runPtsProductSalesReport({
             reportDate: req.body?.reportDate,
             fromDate: req.body?.fromDate,
             toDate: req.body?.toDate,
-            studioCodes: req.body?.studioCodes
+            studioCodes: req.body?.studioCodes,
+            credentials: account.credentials,
+            studioTargets: account.studios
         });
 
         res.json({
@@ -112,11 +119,14 @@ router.post("/product-sales-report", requireCollectorAuth, async (req, res) => {
 
 router.post("/class-sales-report", requireCollectorAuth, async (req, res) => {
     try {
+        const account = await resolvePtsAccount(req.body?.accountId);
         const results = await runPtsClassSalesReport({
             fromDate: req.body?.fromDate,
             toDate: req.body?.toDate,
             studioCodes: req.body?.studioCodes,
-            debug: req.body?.debug === true
+            debug: req.body?.debug === true,
+            credentials: account.credentials,
+            studioTargets: account.studios
         });
 
         res.json({
@@ -203,11 +213,14 @@ router.post(
 
 router.post("/reservations-report", requireCollectorAuth, async (req, res) => {
     try {
+        const account = await resolvePtsAccount(req.body?.accountId);
         const results = await runPtsReservationsReport({
             orderDate: req.body?.orderDate,
             classFromDate: req.body?.classFromDate,
             classToDate: req.body?.classToDate,
-            studioCodes: req.body?.studioCodes
+            studioCodes: req.body?.studioCodes,
+            credentials: account.credentials,
+            studioTargets: account.studios
         });
 
         res.json({

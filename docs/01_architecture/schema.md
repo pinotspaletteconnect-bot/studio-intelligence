@@ -23,6 +23,7 @@ This document inventories warehouse objects confirmed by current project documen
 | `studio_integrations` | Configuration and external-account mapping per studio | Current |
 | `integration_runs` | Integration execution/audit records | Current |
 | `pts_integration_accounts` | PTS account metadata and encrypted-secret references; never credential values | Current |
+| `pts_collection_targets` | Service-only PTS account-to-studio collection configuration | Migration `20260805190000` implemented locally; production application pending |
 | `user_profiles` | Auth-user profile, terms acceptance, and onboarding completion | Current; migration `20260805110000` deployed August 5, 2026 |
 | `organization_memberships` | Invite-only user role and status by organization | Current; migration `20260805110000` deployed August 5, 2026 |
 | `user_studio_access` | Explicit manager/viewer studio grants | Current; migration `20260805110000` deployed August 5, 2026 |

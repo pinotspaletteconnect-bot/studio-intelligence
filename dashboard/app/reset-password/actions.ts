@@ -63,6 +63,10 @@ export async function updatePassword(
   // client after that verification and scope the mutation to the verified ID.
   const { error } = await supabase.auth.admin.updateUserById(user.id, {
     password: parsed.data.password,
+    app_metadata: {
+      ...user.app_metadata,
+      onboarding_password_created_at: new Date().toISOString(),
+    },
   })
   if (error) {
     console.error("Unable to update authenticated user password", {

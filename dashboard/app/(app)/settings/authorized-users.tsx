@@ -4,6 +4,7 @@ import { useActionState, useState } from "react"
 
 import {
   suspendOrganizationUser,
+  resendOrganizationSetup,
   updateOrganizationUserAccess,
 } from "@/app/(app)/settings/actions"
 import { Button } from "@/components/ui/button"
@@ -34,6 +35,7 @@ function AuthorizedUserRow({
   const [role, setRole] = useState(member.role)
   const [updateState, updateAction, updating] = useActionState(updateOrganizationUserAccess, undefined)
   const [removeState, removeAction, removing] = useActionState(suspendOrganizationUser, undefined)
+  const [setupState, setupAction, sendingSetup] = useActionState(resendOrganizationSetup, undefined)
   const isSelf = member.user_id === actorId
   const canEdit = !isSelf && member.role !== "owner" && (
     actorRole === "owner" || (actorRole === "administrator" && ["manager", "viewer"].includes(member.role))
@@ -48,13 +50,23 @@ function AuthorizedUserRow({
           <div className="mt-1 capitalize text-muted-foreground">{member.role} · {member.status}</div>
         </div>
         {canEdit ? (
-          <Button type="button" variant="outline" size="sm" onClick={() => setEditing((value) => !value)}>
-            {editing ? "Cancel" : "Edit permissions"}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            {member.status === "invited" ? (
+              <form action={setupAction}>
+                <input type="hidden" name="userId" value={member.user_id} />
+                <Button type="submit" variant="outline" size="sm" disabled={sendingSetup}>{sendingSetup ? "Sending…" : "Resend setup link"}</Button>
+              </form>
+            ) : null}
+            <Button type="button" variant="outline" size="sm" onClick={() => setEditing((value) => !value)}>
+              {editing ? "Cancel" : "Edit permissions"}
+            </Button>
+          </div>
         ) : (
           <span className="text-xs text-muted-foreground">{isSelf ? "Your account" : "Protected owner"}</span>
         )}
       </div>
+      {setupState?.error ? <p role="alert" className="mt-3 text-red-700">{setupState.error}</p> : null}
+      {setupState?.complete ? <p role="status" className="mt-3 text-emerald-700">A new password setup link was sent.</p> : null}
 
       {editing ? (
         <div className="mt-5 space-y-5 border-t pt-5">

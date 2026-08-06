@@ -226,7 +226,19 @@ Planned scope includes profile insights, reviews, search visibility, and custome
    credentials through an authenticated secret-entry flow.
 2. The username/password are written to an approved encrypted secret manager.
    Supabase stores only the provider and opaque secret reference in
-   `pts_integration_accounts`.
+  `pts_integration_accounts`.
+
+### Multi-account credential rollout
+
+Migration `20260805190000` introduces Supabase Vault-backed PTS account secrets,
+restricted service-role create/replace/read functions, and the service-only
+`pts_collection_targets` view. The dashboard requires owner/administrator
+authorization plus password reauthentication before accepting a credential.
+The collector resolves an opaque account ID through a separately authenticated
+dashboard broker and never receives the Supabase service-role key. n8n receives
+account and studio configuration but never credential values. The existing
+Railway `PTS_USERNAME`/`PTS_PASSWORD` path remains the rollback default until a
+new account passes a controlled PTS login and report test.
 3. A server-side validation job logs in, discovers only the PTS locations that
    account can access, and presents those locations for mapping.
 4. The owner maps each PTS location to an existing studio or creates the studio.
