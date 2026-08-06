@@ -79,6 +79,9 @@ export function ExecutiveDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showStudioShares, setShowStudioShares] = useState(true)
+  const [weekComparisonMode, setWeekComparisonMode] = useState<"previous" | "custom">("previous")
+  const [weekComparisonStart, setWeekComparisonStart] = useState("")
+  const [weekComparisonEnd, setWeekComparisonEnd] = useState("")
 
   useEffect(() => {
     const controller = new AbortController()
@@ -97,6 +100,10 @@ export function ExecutiveDashboard() {
           params.set("comparisonStartDate", comparisonDateRange.startDate)
           params.set("comparisonEndDate", comparisonDateRange.endDate)
         }
+        if (weekComparisonMode === "custom" && weekComparisonStart && weekComparisonEnd) {
+          params.set("weekComparisonStartDate", weekComparisonStart)
+          params.set("weekComparisonEndDate", weekComparisonEnd)
+        }
         const response = await fetch(`/api/executive/summary?${params}`, {
           signal: controller.signal,
         })
@@ -113,7 +120,7 @@ export function ExecutiveDashboard() {
 
     load()
     return () => controller.abort()
-  }, [comparison, comparisonDateRange, dateRange.endDate, dateRange.startDate, selectedStudio])
+  }, [comparison, comparisonDateRange, dateRange.endDate, dateRange.startDate, selectedStudio, weekComparisonEnd, weekComparisonMode, weekComparisonStart])
 
   const metrics = useMemo<Metric[]>(() => {
     if (!data) return []
@@ -221,6 +228,20 @@ export function ExecutiveDashboard() {
       },
     ])
   ) satisfies ChartConfig
+  const weekComparison = data.thisWeekComparison
+  const partyTotal = data.thisWeek.privateParties + data.thisWeek.mobileEvents
+  const comparisonPartyTotal = weekComparison.privateParties === null || weekComparison.mobileEvents === null
+    ? null
+    : weekComparison.privateParties + weekComparison.mobileEvents
+  const comparisonLine = (current: number, previous: number | null, formatter: (value: number) => string) => {
+    if (previous === null) return <span className="text-xs text-muted-foreground">No equivalent booking snapshot is available yet.</span>
+    const change = percentChange(current, previous)
+    return (
+      <span className="text-xs text-muted-foreground">
+        vs {formatter(previous)} {change === null ? "· no percentage baseline" : `· ${Math.abs(change).toFixed(1)}% ${change >= 0 ? "ahead" : "behind"}`}
+      </span>
+    )
+  }
 
   return (
     <div className="grid gap-6">
@@ -293,24 +314,51 @@ export function ExecutiveDashboard() {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>This week</CardTitle>
-            <p className="text-sm text-muted-foreground">{dateLabel(data.thisWeek.startDate)}–{dateLabel(data.thisWeek.endDate)}</p>
+          <CardHeader className="gap-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div><CardTitle>This week</CardTitle><p className="text-sm text-muted-foreground">{dateLabel(data.thisWeek.startDate)}–{dateLabel(data.thisWeek.endDate)}</p></div>
+              <label className="text-xs text-muted-foreground">Compare to
+                <select
+                  className="mt-1 block h-8 rounded-md border bg-background px-2 text-sm text-foreground"
+                  value={weekComparisonMode}
+                  onChange={(event) => {
+                    const mode = event.target.value as "previous" | "custom"
+                    setWeekComparisonMode(mode)
+                    if (mode === "custom" && !weekComparisonStart) {
+                      setWeekComparisonStart(data.thisWeekComparison.startDate)
+                      setWeekComparisonEnd(data.thisWeekComparison.endDate)
+                    }
+                  }}
+                >
+                  <option value="previous">Previous week</option>
+                  <option value="custom">Custom dates</option>
+                </select>
+              </label>
+            </div>
+            {weekComparisonMode === "custom" ? (
+              <div className="grid gap-2 sm:grid-cols-2">
+                <label className="text-xs text-muted-foreground">Comparison start<input className="mt-1 block h-8 w-full rounded-md border bg-background px-2 text-sm text-foreground" type="date" value={weekComparisonStart} onChange={(event) => setWeekComparisonStart(event.target.value)} /></label>
+                <label className="text-xs text-muted-foreground">Comparison end<input className="mt-1 block h-8 w-full rounded-md border bg-background px-2 text-sm text-foreground" type="date" value={weekComparisonEnd} min={weekComparisonStart} onChange={(event) => setWeekComparisonEnd(event.target.value)} /></label>
+              </div>
+            ) : null}
+            <p className="text-xs text-muted-foreground">Compared with {dateLabel(weekComparison.startDate)}–{dateLabel(weekComparison.endDate)} through {dateLabel(weekComparison.completedThrough)}{weekComparison.snapshotDate ? ` using the ${dateLabel(weekComparison.snapshotDate)} booking snapshot` : " · no booking snapshot available"}.</p>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-lg border p-4">
               <p className="text-xs font-medium text-muted-foreground">Completed sales WTD</p>
               <p className="mt-2 text-2xl font-semibold tabular-nums">{money.format(data.thisWeek.salesWeekToDate)}</p>
               <p className="mt-1 text-xs text-muted-foreground">{data.thisWeek.completedThrough ? `Through ${dateLabel(data.thisWeek.completedThrough)} · ${data.thisWeek.seatsWeekToDate.toLocaleString()} seats` : "No completed days yet"}</p>
+              <p className="mt-2">{comparisonLine(data.thisWeek.salesWeekToDate, weekComparison.salesWeekToDate, money.format)}</p>
             </div>
             <div className="rounded-lg border p-4">
               <p className="text-xs font-medium text-muted-foreground">Future booked revenue</p>
               <p className="mt-2 text-2xl font-semibold tabular-nums">{money.format(data.thisWeek.futureBookedRevenue)}</p>
               <p className="mt-1 text-xs text-muted-foreground">{data.thisWeek.futureBookedSeats.toLocaleString()} seats · {data.thisWeek.futureClasses} classes</p>
+              <p className="mt-2">{comparisonLine(data.thisWeek.futureBookedRevenue, weekComparison.futureBookedRevenue, money.format)}</p>
             </div>
             <div className="rounded-lg border p-4 sm:col-span-2">
               <div className="flex items-center justify-between gap-4">
-                <div><p className="text-xs font-medium text-muted-foreground">Parties scheduled this week</p><p className="mt-2 text-2xl font-semibold tabular-nums">{(data.thisWeek.privateParties + data.thisWeek.mobileEvents).toLocaleString()}</p></div>
+                <div><p className="text-xs font-medium text-muted-foreground">Parties scheduled this week</p><p className="mt-2 text-2xl font-semibold tabular-nums">{partyTotal.toLocaleString()}</p><p className="mt-2">{comparisonLine(partyTotal, comparisonPartyTotal, (value) => `${value.toLocaleString()} parties`)}</p></div>
                 <div className="text-right text-sm text-muted-foreground"><p><strong className="text-foreground">{data.thisWeek.privateParties}</strong> private parties</p><p><strong className="text-foreground">{data.thisWeek.mobileEvents}</strong> mobile events</p></div>
               </div>
             </div>

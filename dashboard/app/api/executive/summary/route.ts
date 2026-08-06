@@ -11,6 +11,17 @@ const querySchema = z.object({
   comparison: z.enum(["previous", "priorYearWeek", "custom"]).default("previous"),
   comparisonStartDate: z.iso.date().optional(),
   comparisonEndDate: z.iso.date().optional(),
+  weekComparisonStartDate: z.iso.date().optional(),
+  weekComparisonEndDate: z.iso.date().optional(),
+}).superRefine((value, context) => {
+  const hasStart = Boolean(value.weekComparisonStartDate)
+  const hasEnd = Boolean(value.weekComparisonEndDate)
+  if (hasStart !== hasEnd) {
+    context.addIssue({ code: "custom", message: "Both week comparison dates are required." })
+  }
+  if (value.weekComparisonStartDate && value.weekComparisonEndDate && value.weekComparisonStartDate > value.weekComparisonEndDate) {
+    context.addIssue({ code: "custom", message: "The week comparison start must be on or before its end." })
+  }
 })
 
 export async function GET(request: NextRequest) {
@@ -31,7 +42,9 @@ export async function GET(request: NextRequest) {
         parsed.data.comparison,
         parsed.data.comparisonStartDate,
         parsed.data.comparisonEndDate,
-        access.allowedStudioIds
+        access.allowedStudioIds,
+        parsed.data.weekComparisonStartDate,
+        parsed.data.weekComparisonEndDate
       )
     )
   } catch (error) {
