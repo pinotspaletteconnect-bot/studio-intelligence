@@ -33,6 +33,64 @@ const senderSchema = z.object({
   senderNumber: z.string().trim().regex(/^\+[1-9][0-9]{7,14}$/),
 })
 
+const testMessageSchema = z.object({
+  textellentAccountId: z.coerce.number().int().positive(),
+  recipientNumber: z.string().trim().regex(/^\+[1-9][0-9]{7,14}$/),
+  message: z.string().trim().min(1).max(1000),
+  currentPassword: z.string().min(1).max(1024),
+  confirmSend: z.literal("on"),
+})
+
+export async function sendTextellentTestMessage(
+  _state: TextellentActionState,
+  formData: FormData
+): Promise<TextellentActionState> {
+  const [access, user] = await Promise.all([requireDashboardContext(), getAuthenticatedUser()])
+  if (!user?.email || !["owner", "administrator"].includes(access.role)) {
+    return { error: "Only an owner or administrator can send a Textellent test." }
+  }
+  const parsed = testMessageSchema.safeParse(Object.fromEntries(formData))
+  if (!parsed.success) return { error: "Select a connection, enter an E.164 test number and message, and confirm the send." }
+
+  const auth = await createAuthClient()
+  const { error: authError } = await auth.auth.signInWithPassword({
+    email: user.email,
+    password: parsed.data.currentPassword,
+  })
+  if (authError) return { error: "Your SASHA password is incorrect." }
+
+  const { data: account, error: accountError } = await supabase
+    .from("textellent_accounts")
+    .select("id,sender_number")
+    .eq("id", parsed.data.textellentAccountId)
+    .eq("organization_id", access.organizationId)
+    .eq("is_active", true)
+    .maybeSingle()
+  if (accountError || !account) return { error: "The selected Textellent connection is unavailable." }
+
+  const { data: secret, error: secretError } = await supabase.rpc("get_textellent_account_secret", {
+    p_account_id: account.id,
+  })
+  if (secretError || !secret?.authCode) return { error: "The selected Textellent credentials are unavailable." }
+
+  const response = await fetch("https://client.textellent.com/api/v1/messages.json", {
+    method: "POST",
+    headers: { authCode: secret.authCode, "content-type": "application/json", accept: "application/json" },
+    body: JSON.stringify({
+      text: parsed.data.message,
+      from: account.sender_number,
+      to: parsed.data.recipientNumber,
+      ignoreQuietHours: false,
+    }),
+    cache: "no-store",
+    signal: AbortSignal.timeout(15_000),
+  }).catch(() => null)
+  if (!response?.ok) return { error: "Textellent did not accept the test message." }
+  const result = await response.json().catch(() => null)
+  if (!result?.messageId) return { error: "Textellent did not confirm the test message." }
+  return { complete: true }
+}
+
 export async function createTextellentAccount(_state: TextellentActionState, formData: FormData): Promise<TextellentActionState> {
   const [access, user] = await Promise.all([requireDashboardContext(), getAuthenticatedUser()])
   if (!user?.email || !["owner", "administrator"].includes(access.role)) return { error: "Only an owner or administrator can add a Textellent account." }

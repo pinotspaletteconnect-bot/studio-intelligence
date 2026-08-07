@@ -1,7 +1,7 @@
 "use client"
 
 import { useActionState, useState } from "react"
-import { createTextellentAccount, saveClassAlertSettings, updateTextellentSender } from "./actions"
+import { createTextellentAccount, saveClassAlertSettings, sendTextellentTestMessage, updateTextellentSender } from "./actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
@@ -11,6 +11,18 @@ function Status({ state }: { state: { complete?: boolean; error?: string } | und
   if (state?.error) return <p className="text-sm text-destructive">{state.error}</p>
   if (state?.complete) return <p className="text-sm text-emerald-600">Saved.</p>
   return null
+}
+
+export function TextellentTestForm({ accounts }: { accounts: Array<{ id: number; account_name: string; sender_number: string }> }) {
+  const [state, action, pending] = useActionState(sendTextellentTestMessage, undefined)
+  return <form action={action} className="grid gap-4 md:grid-cols-2">
+    <label className="space-y-1 text-sm md:col-span-2"><span>Textellent connection</span><select name="textellentAccountId" defaultValue="" required className="h-9 w-full rounded-md border bg-background px-3"><option value="" disabled>Select a connection</option>{accounts.map(account => <option key={account.id} value={account.id}>{account.account_name} · {account.sender_number}</option>)}</select></label>
+    <label className="space-y-1 text-sm"><span>Test recipient number</span><Input name="recipientNumber" type="tel" placeholder="+15025551212" autoComplete="tel" required /><span className="block text-xs text-muted-foreground">Used for this send only. It is not stored.</span></label>
+    <label className="space-y-1 text-sm"><span>Your SASHA password</span><Input name="currentPassword" type="password" autoComplete="current-password" required /></label>
+    <label className="space-y-1 text-sm md:col-span-2"><span>Test message</span><textarea name="message" defaultValue="This is a test of the SASHA low-enrollment class alert system. No action is needed." maxLength={1000} required className="min-h-24 w-full rounded-md border bg-background p-3 text-sm" /></label>
+    <label className="flex items-start gap-2 text-sm md:col-span-2"><input name="confirmSend" type="checkbox" required className="mt-1" /><span>I understand that clicking Send one test will immediately send a real text to the test recipient.</span></label>
+    <div className="flex items-center gap-3 md:col-span-2"><Button type="submit" disabled={pending || !accounts.length}>{pending ? "Sending…" : "Send one test"}</Button>{state?.error ? <p role="alert" className="text-sm text-destructive">{state.error}</p> : null}{state?.complete ? <p role="status" className="text-sm text-emerald-600">Textellent accepted the test message.</p> : null}</div>
+  </form>
 }
 
 export function TextellentAccountForm() {

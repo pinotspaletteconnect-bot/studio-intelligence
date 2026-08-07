@@ -4,7 +4,7 @@ import { ArrowLeft, MessageSquareText } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { requireDashboardContext } from "@/lib/auth/session"
 import { getTextellentAutomation } from "@/lib/services/textellent-automation"
-import { StudioAlertForm } from "./textellent-settings"
+import { StudioAlertForm, TextellentTestForm } from "./textellent-settings"
 
 export default async function TextellentPage() {
   const access = await requireDashboardContext()
@@ -21,6 +21,7 @@ export default async function TextellentPage() {
         <CardHeader className="flex flex-row items-center gap-3"><span className="rounded-lg bg-primary/10 p-2 text-primary"><MessageSquareText className="size-5" /></span><CardTitle>Class alert rules</CardTitle></CardHeader>
         <CardContent><p className="text-sm leading-6 text-muted-foreground">Classes below each studio&apos;s minimum reservation setting are rechecked at send time. A minimum of 3 alerts classes with 1 or 2 reservations. Purchaser phone numbers are read transiently from the PTS Seating Chart and are never saved in SASHA.</p></CardContent>
       </Card>
+      {canManage ? <Card><CardHeader><CardTitle>Send test message</CardTitle></CardHeader><CardContent className="space-y-4"><p className="text-sm leading-6 text-muted-foreground">Send one real message to an approved test number before enabling customer alerts. The recipient number and message are not saved in SASHA or included in audit logs.</p><TextellentTestForm accounts={data.accounts} /></CardContent></Card> : null}
       <Card><CardHeader><CardTitle>Studio automation</CardTitle></CardHeader><CardContent className="space-y-4">{canManage ? data.studios.map(studio => {
         const assignment = data.assignments.find(row => row.studio_id === studio.id)
         const setting = data.settings.find(row => row.studio_id === studio.id)
