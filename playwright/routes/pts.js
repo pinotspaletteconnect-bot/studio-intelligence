@@ -252,6 +252,7 @@ router.post("/low-reservation-class-alerts", requireCollectorAuth, async (req, r
         res.json({
             success: true,
             mode: req.body?.execute === true ? "execute" : "preview",
+            ptsAccountId: Number(req.body?.ptsAccountId),
             targetDate: req.body?.targetDate,
             resultCount: results.length,
             results

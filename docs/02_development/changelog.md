@@ -8,6 +8,7 @@ This project follows a milestone-based changelog rather than tracking every indi
 
 # Unreleased
 
+- Built disabled n8n workflow `14 - Textellent Low Reservation Class Alerts` with configuration-driven PTS account discovery, per-time-zone dates, preview-before-claim execution, duplicate prevention, privacy-safe completion auditing, and no automatic retries around ambiguous live sends. Hardened the collector to return per-class contact/send failures and to skip live sends with no valid recipients.
 - Added a protected one-time Textellent test form to Automation. Test recipient numbers and messages are sent directly to Textellent and are never persisted or logged by SASHA.
 - Added PTS credential management directly to Organization Settings, including encrypted initialization for legacy mapped accounts and protected credential replacement.
 - Renamed the Textellent enrollment threshold from inclusive “maximum reservations” to exclusive “minimum reservations.” The default is 3, so classes with 1 or 2 reservations qualify while zero-reservation classes remain excluded.

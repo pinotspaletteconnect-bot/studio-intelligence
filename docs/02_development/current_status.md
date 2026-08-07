@@ -217,9 +217,14 @@ Implemented foundation:
   disabled-by-default implementation for per-studio low-reservation class
   alerts, shared account routing, encrypted API auth codes, custom messages,
   transient PTS Seating Chart phone access, and phone-free send auditing. The
-  database migration and dashboard page are deployed. Collector deployment,
-  the n8n schedule, production Textellent secrets, and controlled test sends
-  remain pending. Seating Charts remains a planned workspace.
+  database migration and dashboard page are deployed. Vault-backed PTS and
+  Textellent credentials, the current PTS CalendarView and Seating Chart parser,
+  a six-class preview simulation, and a controlled one-time Textellent send are
+  validated. The disabled workflow artifact `14 - Textellent Low Reservation
+  Class Alerts` implements configuration discovery, local-date preview, database
+  claims, execution, and phone-free completion auditing. Collector deployment
+  and a scheduled single-studio validation remain pending. Seating Charts remains
+  a planned workspace.
 - Headline marketing spend and attributed ROAS use the same Meta-plus-Eulerity
   scope. MNTN spend and modeled attribution remain separate because MNTN uses a
   different view-through attribution model and is not connected by most users.

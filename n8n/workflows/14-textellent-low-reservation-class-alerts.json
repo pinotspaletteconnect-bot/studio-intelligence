@@ -1,0 +1,183 @@
+{
+  "name": "14 - Textellent Low Reservation Class Alerts",
+  "nodes": [
+    {
+      "parameters": { "rule": { "interval": [{ "field": "minutes", "minutesInterval": 10 }] } },
+      "id": "schedule",
+      "name": "Every 10 Minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-900, 0]
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "url": "={{ $env.SASHA_DASHBOARD_URL + '/api/internal/class-alert-accounts' }}",
+        "options": { "response": { "response": { "neverError": false, "responseFormat": "json" } }, "timeout": 30000 }
+      },
+      "id": "accounts",
+      "name": "Get Active PTS Accounts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-680, 0],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "credentials": { "httpHeaderAuth": { "id": "REPLACE_SASHA_CREDENTIAL_ID", "name": "SASHA Internal Automation" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "const output = [];\nfor (const account of ($json.accounts ?? [])) {\n  const dates = new Set();\n  for (const timeZone of account.timeZones ?? []) {\n    const parts = Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date()).filter(part => part.type !== 'literal').map(part => [part.type, part.value]));\n    dates.add(`${parts.year}-${parts.month}-${parts.day}`);\n  }\n  for (const targetDate of dates) output.push({ json: { ptsAccountId: account.ptsAccountId, targetDate } });\n}\nreturn output;"
+      },
+      "id": "expand-dates",
+      "name": "Expand Account Local Dates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-450, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "url": "={{ $env.PTS_COLLECTOR_URL + '/pts/low-reservation-class-alerts' }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { ptsAccountId: $json.ptsAccountId, targetDate: $json.targetDate, execute: false } }}",
+        "options": { "response": { "response": { "neverError": false, "responseFormat": "json" } }, "timeout": 240000 }
+      },
+      "id": "preview",
+      "name": "Preview Due Classes",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-220, 0],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 10000,
+      "credentials": { "httpHeaderAuth": { "id": "REPLACE_COLLECTOR_CREDENTIAL_ID", "name": "Studio Intelligence Collector API" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "const output = [];\nfor (const item of $input.all()) {\n  for (const result of item.json.results ?? []) {\n    if (result.status !== 'preview') continue;\n    output.push({ json: { ptsAccountId: item.json.ptsAccountId, targetDate: item.json.targetDate, studioId: result.studioId, classId: result.classId, classStartsAt: result.classStartsAt, scheduledFor: result.scheduledFor, reservationCount: result.reservationCount } });\n  }\n}\nreturn output;"
+      },
+      "id": "candidates",
+      "name": "Privacy Safe Candidates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [10, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "url": "={{ $env.SASHA_DASHBOARD_URL + '/api/internal/class-alert-audit' }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { action: 'claim', ptsAccountId: $json.ptsAccountId, targetDate: $json.targetDate, studioId: $json.studioId, classId: $json.classId, classStartsAt: $json.classStartsAt, scheduledFor: $json.scheduledFor, reservationCount: $json.reservationCount } }}",
+        "options": { "response": { "response": { "neverError": false, "responseFormat": "json" } }, "timeout": 30000 }
+      },
+      "id": "claim",
+      "name": "Claim Before Send",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [240, 0],
+      "credentials": { "httpHeaderAuth": { "id": "REPLACE_SASHA_CREDENTIAL_ID", "name": "SASHA Internal Automation" } }
+    },
+    {
+      "parameters": {
+        "conditions": { "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 }, "conditions": [{ "id": "claimed", "leftValue": "={{ $json.claimed }}", "rightValue": true, "operator": { "type": "boolean", "operation": "true", "singleValue": true } }], "combinator": "and" },
+        "options": {}
+      },
+      "id": "claimed-only",
+      "name": "Claimed Only",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [470, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const groups = new Map();\nfor (const item of $input.all()) {\n  const key = `${item.json.ptsAccountId}:${item.json.targetDate}`;\n  const group = groups.get(key) ?? { ptsAccountId: item.json.ptsAccountId, targetDate: item.json.targetDate, approvedClassIds: [] };\n  group.approvedClassIds.push(String(item.json.classId));\n  groups.set(key, group);\n}\nreturn [...groups.values()].map(json => ({ json }));"
+      },
+      "id": "group-claims",
+      "name": "Group Claimed Classes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [700, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "url": "={{ $env.PTS_COLLECTOR_URL + '/pts/low-reservation-class-alerts' }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { ptsAccountId: $json.ptsAccountId, targetDate: $json.targetDate, execute: true, approvedClassIds: $json.approvedClassIds } }}",
+        "options": { "response": { "response": { "neverError": false, "responseFormat": "json" } }, "timeout": 240000 }
+      },
+      "id": "execute",
+      "name": "Execute Claimed Classes",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [930, 0],
+      "credentials": { "httpHeaderAuth": { "id": "REPLACE_COLLECTOR_CREDENTIAL_ID", "name": "Studio Intelligence Collector API" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "const output = [];\nfor (const item of $input.all()) {\n  for (const result of item.json.results ?? []) {\n    output.push({ json: { action: 'complete', studioId: result.studioId, classId: result.classId, status: result.status, reservationCount: result.reservationCount ?? 0, recipientCount: result.recipientCount ?? 0, messageIds: result.messageIds ?? [], ...(result.errorCode ? { errorCode: result.errorCode } : {}) } });\n  }\n}\nreturn output;"
+      },
+      "id": "completion-payloads",
+      "name": "Privacy Safe Completion Payloads",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1160, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "url": "={{ $env.SASHA_DASHBOARD_URL + '/api/internal/class-alert-audit' }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": { "response": { "response": { "neverError": false, "responseFormat": "json" } }, "timeout": 30000 }
+      },
+      "id": "complete",
+      "name": "Complete Privacy Safe Audit",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1390, 0],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "credentials": { "httpHeaderAuth": { "id": "REPLACE_SASHA_CREDENTIAL_ID", "name": "SASHA Internal Automation" } }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Every 10 Minutes": { "main": [[{ "node": "Get Active PTS Accounts", "type": "main", "index": 0 }]] },
+    "Get Active PTS Accounts": { "main": [[{ "node": "Expand Account Local Dates", "type": "main", "index": 0 }]] },
+    "Expand Account Local Dates": { "main": [[{ "node": "Preview Due Classes", "type": "main", "index": 0 }]] },
+    "Preview Due Classes": { "main": [[{ "node": "Privacy Safe Candidates", "type": "main", "index": 0 }]] },
+    "Privacy Safe Candidates": { "main": [[{ "node": "Claim Before Send", "type": "main", "index": 0 }]] },
+    "Claim Before Send": { "main": [[{ "node": "Claimed Only", "type": "main", "index": 0 }]] },
+    "Claimed Only": { "main": [[{ "node": "Group Claimed Classes", "type": "main", "index": 0 }]] },
+    "Group Claimed Classes": { "main": [[{ "node": "Execute Claimed Classes", "type": "main", "index": 0 }]] },
+    "Execute Claimed Classes": { "main": [[{ "node": "Privacy Safe Completion Payloads", "type": "main", "index": 0 }]] },
+    "Privacy Safe Completion Payloads": { "main": [[{ "node": "Complete Privacy Safe Audit", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "none",
+    "saveDataSuccessExecution": "none",
+    "saveExecutionProgress": false,
+    "timezone": "America/New_York"
+  },
+  "versionId": "5e560c8a-cd92-4710-a2c7-92554c1ae414",
+  "meta": { "templateCredsSetupCompleted": false },
+  "tags": []
+}

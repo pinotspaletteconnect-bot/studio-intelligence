@@ -153,19 +153,36 @@ async function runLowReservationClassAlerts({ targetDate, now = new Date(), exec
             for (const candidate of candidates) {
                 const count = candidate.reservationCount;
                 const excludedTitle = studio.excludedTitlePatterns.some(pattern => candidate.title.toLowerCase().includes(pattern.toLowerCase()));
-                if (!isLowReservation(count, studio.minimumReservations) || excludedTitle) continue;
                 if (execute && !approved.has(candidate.classId)) continue;
+                if (!execute && (!isLowReservation(count, studio.minimumReservations) || excludedTitle)) continue;
                 const dueAt = scheduledAlertAt(candidate.startsAt, studio.leadHours, studio.earliestSendTime, studio.timeZone);
                 if (now < dueAt) continue;
                 const current = await readClass(page, candidate.classId);
-                if (!isLowReservation(current.reservationCount, studio.minimumReservations) || studio.excludedClassTypes.includes(current.classType)) {
+                if (!isLowReservation(current.reservationCount, studio.minimumReservations) || excludedTitle || studio.excludedClassTypes.includes(current.classType)) {
                     results.push({ studioId: studio.studioId, classId: candidate.classId, status: "skipped", reservationCount: current.reservationCount, recipientCount: 0, messageIds: [] });
                     continue;
                 }
-                const phones = [...new Set((await uniquePurchaserPhones(page, candidate.classId)).map(e164).filter(Boolean))];
+                let phones;
+                try {
+                    phones = [...new Set((await uniquePurchaserPhones(page, candidate.classId)).map(e164).filter(Boolean))];
+                } catch {
+                    results.push({ studioId: studio.studioId, classId: candidate.classId, classStartsAt: candidate.startsAt, scheduledFor: dueAt.toISOString(), status: "failed", reservationCount: current.reservationCount, recipientCount: 0, messageIds: [], errorCode: "PTS_CONTACT_LOOKUP_FAILED" });
+                    continue;
+                }
                 const message = renderMessage(studio.messageTemplate, { studio: studio.studioName, class_name: candidate.title.replace(/Res:.*/i, "").trim(), class_date: targetDate, class_time: new Intl.DateTimeFormat("en-US", { timeZone: studio.timeZone, hour: "numeric", minute: "2-digit" }).format(new Date(candidate.startsAt)), reservations: current.reservationCount });
                 const messageIds = [];
-                if (execute) for (const phone of phones) messageIds.push(await sendTextellent({ authCode: studio.authCode, from: studio.senderNumber, to: phone, text: message }));
+                if (execute && phones.length === 0) {
+                    results.push({ studioId: studio.studioId, classId: candidate.classId, classStartsAt: candidate.startsAt, scheduledFor: dueAt.toISOString(), status: "skipped", reservationCount: current.reservationCount, recipientCount: 0, messageIds, errorCode: "NO_VALID_RECIPIENTS" });
+                    continue;
+                }
+                if (execute) {
+                    try {
+                        for (const phone of phones) messageIds.push(await sendTextellent({ authCode: studio.authCode, from: studio.senderNumber, to: phone, text: message }));
+                    } catch {
+                        results.push({ studioId: studio.studioId, classId: candidate.classId, classStartsAt: candidate.startsAt, scheduledFor: dueAt.toISOString(), status: "failed", reservationCount: current.reservationCount, recipientCount: phones.length, messageIds, errorCode: "TEXTELLENT_SEND_FAILED" });
+                        continue;
+                    }
+                }
                 results.push({ studioId: studio.studioId, classId: candidate.classId, classStartsAt: candidate.startsAt, scheduledFor: dueAt.toISOString(), status: execute ? "sent" : "preview", reservationCount: current.reservationCount, recipientCount: phones.length, messageIds });
             }
         }

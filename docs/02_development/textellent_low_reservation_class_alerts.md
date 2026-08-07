@@ -2,8 +2,8 @@
 
 ## Purpose
 
-Warn purchasers when a public PTS class has more than zero and no more than the
-configured reservation threshold (two by default). DIY Pop in and Paint,
+Warn purchasers when a public PTS class has more than zero and fewer than the
+configured minimum reservation threshold (three by default). DIY Pop in and Paint,
 private parties, mobile parties, and marketing events are excluded.
 
 ## Schedule
@@ -47,3 +47,25 @@ their own connections.
 - Add Textellent accounts through SASHA so API auth codes enter Supabase Vault.
 - Keep n8n execution payload retention disabled for this workflow as defense in depth.
 - Perform preview validation and controlled non-customer test sends before any studio is enabled.
+
+## Workflow artifact
+
+Import `n8n/workflows/14-textellent-low-reservation-class-alerts.json` as workflow
+`14 - Textellent Low Reservation Class Alerts`. Before publishing:
+
+1. Configure `SASHA_DASHBOARD_URL` and `PTS_COLLECTOR_URL` in the n8n runtime.
+2. Attach the `SASHA Internal Automation` HTTP Header Auth credential containing
+   the shared `PTS_SECRET_BROKER_TOKEN` bearer value.
+3. Attach the `Studio Intelligence Collector API` HTTP Header Auth credential
+   containing the Railway `COLLECTOR_API_TOKEN` bearer value.
+4. Keep success and error execution payload retention disabled.
+5. Run the workflow manually with all studio rules disabled and verify it exits
+   after account discovery without calling the collector.
+6. Enable one studio for a scheduled preview validation. Disable it again before
+   publishing unless customer sends have been explicitly approved.
+
+The workflow discovers enabled PTS accounts and their studio time zones from
+SASHA, previews each distinct account-local date, claims every class through the
+database before execution, and completes the phone-free delivery audit. Preview
+requests may retry. Execute requests must not retry automatically because an
+ambiguous response after a partial vendor send could duplicate a customer text.

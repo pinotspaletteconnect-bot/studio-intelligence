@@ -274,7 +274,7 @@ Planned sources include reservation/customer systems, CRM, loyalty, email engage
 - **PTS contact path:** Live class recheck followed by `/Class/SeatingChart/{classId}`; unique purchaser phone numbers exist only in collector memory.
 - **Configuration:** Reusable Textellent accounts are assigned to studios. St. Matthews and Jeffersonville share the St. Matthews account; Short North and Gilbert use their own accounts.
 - **Safety:** Studio rules default disabled, live calls require database-claimed class IDs, and delivery audits prohibit customer contact information.
-- **Status:** Schema and SASHA dashboard deployed August 7, 2026. Not production until the collector is deployed, secure accounts are configured, the n8n schedule is published, and controlled test sends pass.
+- **Status:** Schema, SASHA configuration, Vault credentials, preview collection, and a controlled one-time Textellent send were validated August 7, 2026. Workflow artifact `14 - Textellent Low Reservation Class Alerts` is implemented but remains unpublished and disabled pending collector deployment and a scheduled single-studio validation.
 
 ## Integration Standards
 
