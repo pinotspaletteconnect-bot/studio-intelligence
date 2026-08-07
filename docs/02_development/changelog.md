@@ -24,6 +24,7 @@ This project follows a milestone-based changelog rather than tracking every indi
 - Added Executive cards for yesterday's exact booked seats and gross booked sales, expanded the KPI grid to five columns, and added planned Automation pages for Textellent and Seating Charts.
 - Aligned the headline marketing spend KPI with attributed ROAS by limiting both to Meta and Eulerity; MNTN spend and modeled attribution remain separate in the MNTN reporting section.
 - Fixed resent invited-user setup links so the recovery session belongs to the recipient's browser and opens password creation instead of falling back to login.
+- Simplified verified invited-user password setup to show only new-password and confirmation fields; current credentials remain available solely as an expired-session fallback.
 
 - Replaced the nested template UI on `/dashboard` with a shell-consistent
   reporting-area landing page. Financial and Customers remain available as

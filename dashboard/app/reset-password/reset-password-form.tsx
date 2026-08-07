@@ -10,7 +10,7 @@ import { createAuthBrowserClient } from "@/lib/supabase/browser"
 
 export function ResetPasswordForm() {
   const [state, action, pending] = useActionState(updatePassword, undefined)
-  const [linkState, setLinkState] = useState<"checking" | "ready" | "invalid">("checking")
+  const [linkState, setLinkState] = useState<"checking" | "recovery" | "fallback" | "invalid">("checking")
 
   useEffect(() => {
     async function establishRecoverySession() {
@@ -21,7 +21,7 @@ export function ResetPasswordForm() {
 
       if (!accessToken || !refreshToken) {
         await Promise.resolve()
-        setLinkState(linkError ? "invalid" : "ready")
+        setLinkState(linkError ? "invalid" : "fallback")
         return
       }
 
@@ -31,7 +31,7 @@ export function ResetPasswordForm() {
         refresh_token: refreshToken,
       })
       window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`)
-      setLinkState(error ? "invalid" : "ready")
+      setLinkState(error ? "invalid" : "recovery")
     }
 
     void establishRecoverySession()
@@ -45,22 +45,29 @@ export function ResetPasswordForm() {
       {linkState === "invalid" ? (
         <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">This setup link is invalid or has expired. Ask your administrator to resend it.</p>
       ) : null}
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
-        <Input id="email" name="email" type="email" autoComplete="email" />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="currentPassword">Current or temporary password</Label>
-        <Input
-          id="currentPassword"
-          name="currentPassword"
-          type="password"
-          autoComplete="current-password"
-        />
-        <p className="text-xs text-slate-500">
-          Required when your reset link or browser session has expired.
-        </p>
-      </div>
+      {linkState === "recovery" ? (
+        <p className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">Your secure setup link is verified. Create your first password below.</p>
+      ) : null}
+      {linkState === "fallback" ? (
+        <>
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" name="email" type="email" autoComplete="email" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="currentPassword">Current or temporary password</Label>
+            <Input
+              id="currentPassword"
+              name="currentPassword"
+              type="password"
+              autoComplete="current-password"
+            />
+            <p className="text-xs text-slate-500">
+              Required only when a reset link or browser session has expired.
+            </p>
+          </div>
+        </>
+      ) : null}
       <div className="space-y-2">
         <Label htmlFor="password">New password</Label>
         <Input id="password" name="password" type="password" autoComplete="new-password" minLength={12} required />
