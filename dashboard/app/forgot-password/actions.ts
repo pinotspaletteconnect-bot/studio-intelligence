@@ -4,7 +4,7 @@ import { headers } from "next/headers"
 import { z } from "zod"
 
 import { getTrustedAppOrigin } from "@/lib/auth/app-origin"
-import { createAuthClient } from "@/lib/supabase/auth-server"
+import { createRecoveryEmailClient } from "@/lib/supabase/recovery-server"
 
 export type ResetRequestState = { complete?: boolean; error?: string } | undefined
 
@@ -23,9 +23,9 @@ export async function requestPasswordReset(
     return { error: "Password reset is temporarily unavailable." }
   }
 
-  const auth = await createAuthClient()
+  const auth = createRecoveryEmailClient()
   await auth.auth.resetPasswordForEmail(parsed.data.trim().toLowerCase(), {
-    redirectTo: `${origin}/auth/callback?next=/reset-password`,
+    redirectTo: `${origin}/reset-password`,
   })
 
   // Never disclose whether an email address belongs to an account.

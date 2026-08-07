@@ -17,7 +17,10 @@ If the invitation session is lost before completion, an owner or administrator
 can send a new setup link from Authorized Users. The invited user chooses their
 own password through the recovery session and then resumes profile and terms
 setup without a duplicate password prompt. Administrators never generate or
-view that password.
+view that password. Resent setup emails use a recipient-safe implicit recovery
+session rather than a server-generated PKCE verifier tied to the administrator's
+browser; the reset page converts that one-time URL fragment into the secure SSR
+cookie session before accepting a new password.
 
 The dashboard protects data in three layers:
 

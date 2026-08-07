@@ -8,6 +8,7 @@ import { getTrustedAppOrigin } from "@/lib/auth/app-origin"
 import { getAuthenticatedUser, requireDashboardContext } from "@/lib/auth/session"
 import { supabase } from "@/lib/supabase/server"
 import { createAuthClient } from "@/lib/supabase/auth-server"
+import { createRecoveryEmailClient } from "@/lib/supabase/recovery-server"
 
 export type InviteState = { complete?: boolean; error?: string } | undefined
 export type AddStudioState = { complete?: boolean; error?: string } | undefined
@@ -224,9 +225,9 @@ export async function resendOrganizationSetup(
     return { error: "Setup links are temporarily unavailable." }
   }
 
-  const auth = await createAuthClient()
+  const auth = createRecoveryEmailClient()
   const { error } = await auth.auth.resetPasswordForEmail(targetUser.user.email, {
-    redirectTo: `${origin}/auth/callback?next=/reset-password`,
+    redirectTo: `${origin}/reset-password?setup=invited`,
   })
   if (error) {
     console.error("Invited-user setup link failed", {
