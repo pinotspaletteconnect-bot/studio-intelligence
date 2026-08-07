@@ -11,6 +11,7 @@ export type TextellentActionState = { complete?: boolean; error?: string } | und
 
 const accountSchema = z.object({
   accountName: z.string().trim().min(2).max(120),
+  description: z.string().trim().max(500),
   senderNumber: z.string().trim().regex(/^\+[1-9][0-9]{7,14}$/),
   authCode: z.string().trim().min(8).max(2048),
   currentPassword: z.string().min(1).max(1024),
@@ -28,6 +29,7 @@ const settingsSchema = z.object({
 
 const senderSchema = z.object({
   accountId: z.coerce.number().int().positive(),
+  description: z.string().trim().max(500),
   senderNumber: z.string().trim().regex(/^\+[1-9][0-9]{7,14}$/),
 })
 
@@ -42,10 +44,12 @@ export async function createTextellentAccount(_state: TextellentActionState, for
   const { error } = await supabase.rpc("create_textellent_account_with_secret", {
     p_organization_id: access.organizationId,
     p_account_name: parsed.data.accountName,
+    p_description: parsed.data.description,
     p_sender_number: parsed.data.senderNumber,
     p_auth_code: parsed.data.authCode,
   })
   if (error) return { error: "The encrypted Textellent account could not be saved." }
+  revalidatePath("/settings")
   revalidatePath("/automation/textellent")
   return { complete: true }
 }
@@ -78,10 +82,11 @@ export async function saveClassAlertSettings(_state: TextellentActionState, form
 export async function updateTextellentSender(_state: TextellentActionState, formData: FormData): Promise<TextellentActionState> {
   const access = await requireDashboardContext()
   if (!["owner", "administrator"].includes(access.role)) return { error: "Only an owner or administrator can change a sending number." }
-  const parsed = senderSchema.safeParse({ accountId: formData.get("accountId"), senderNumber: formData.get("senderNumber") })
+  const parsed = senderSchema.safeParse({ accountId: formData.get("accountId"), description: formData.get("description"), senderNumber: formData.get("senderNumber") })
   if (!parsed.success) return { error: "Enter a valid E.164 sending number." }
-  const { error } = await supabase.from("textellent_accounts").update({ sender_number: parsed.data.senderNumber, updated_at: new Date().toISOString() }).eq("id", parsed.data.accountId).eq("organization_id", access.organizationId)
+  const { error } = await supabase.from("textellent_accounts").update({ description: parsed.data.description || null, sender_number: parsed.data.senderNumber, updated_at: new Date().toISOString() }).eq("id", parsed.data.accountId).eq("organization_id", access.organizationId)
   if (error) return { error: "The sending number could not be updated." }
+  revalidatePath("/settings")
   revalidatePath("/automation/textellent")
   return { complete: true }
 }

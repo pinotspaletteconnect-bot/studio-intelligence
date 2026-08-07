@@ -50,7 +50,7 @@ Confirm exact columns, constraints, and foreign-key behavior in Supabase before 
 | `pts_class_type_sales_daily` | One aggregate per studio/event date/raw PTS class type from a range export | Current; replacement range-load destination |
 | `pts_product_sales_daily` | One aggregate per studio/sale date/category/subcategory/item from Product Sales | Current; replacement range-load destination |
 | `pts_reservation_bookings` | One privacy-safe PTS Reservations grid line per studio, order date, and source row key | Current and loading daily |
-| `textellent_accounts` | One reusable encrypted-secret reference and sender number per Textellent API account | Deployed August 7, 2026 |
+| `textellent_accounts` | One reusable encrypted-secret reference, sender number, and usage description per Textellent API account | Deployed August 7, 2026; description migration `20260807200000` deployed |
 | `textellent_studio_assignments` | One studio-to-Textellent-account assignment; supports shared accounts | Deployed August 7, 2026 |
 | `low_reservation_class_alert_settings` | One privacy-safe automation rule per studio | Deployed August 7, 2026 |
 | `low_reservation_class_alert_deliveries` | One phone-free claim/send audit per studio and PTS class | Deployed August 7, 2026 |

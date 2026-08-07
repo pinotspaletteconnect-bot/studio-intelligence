@@ -6,7 +6,7 @@ export async function getAccountSettings(
   organizationId: number,
   allowedStudioIds: number[]
 ) {
-  const [membershipResult, studioResult, integrationResult, brandResult, ptsAccountResult] =
+  const [membershipResult, studioResult, integrationResult, brandResult, ptsAccountResult, textellentAccountResult] =
     await Promise.all([
       supabase
         .from("organization_memberships")
@@ -38,9 +38,15 @@ export async function getAccountSettings(
         .eq("organization_id", organizationId)
         .eq("is_active", true)
         .order("account_name"),
+      supabase
+        .from("textellent_accounts")
+        .select("id,account_name,description,sender_number,is_active,last_validated_at")
+        .eq("organization_id", organizationId)
+        .eq("is_active", true)
+        .order("account_name"),
     ])
 
-  for (const result of [membershipResult, studioResult, integrationResult, brandResult, ptsAccountResult]) {
+  for (const result of [membershipResult, studioResult, integrationResult, brandResult, ptsAccountResult, textellentAccountResult]) {
     if (result.error) throw result.error
   }
 
@@ -94,5 +100,6 @@ export async function getAccountSettings(
     integrations: integrationResult.data ?? [],
     brands: brandResult.data ?? [],
     ptsAccounts: ptsAccountResult.data ?? [],
+    textellentAccounts: textellentAccountResult.data ?? [],
   }
 }

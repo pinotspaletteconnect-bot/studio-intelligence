@@ -1,6 +1,7 @@
 import { InviteUserForm } from "@/app/(app)/settings/invite-user-form"
 import { AddStudioForm } from "@/app/(app)/settings/add-studio-form"
 import { AuthorizedUsers } from "@/app/(app)/settings/authorized-users"
+import { TextellentConnections } from "@/app/(app)/settings/textellent-connections"
 import Link from "next/link"
 import { buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -40,6 +41,13 @@ export default async function SettingsPage() {
           <Card>
             <CardHeader><CardTitle>Invite a user</CardTitle></CardHeader>
             <CardContent><InviteUserForm studios={settings.studios} /></CardContent>
+          </Card>
+          <Card>
+            <CardHeader><CardTitle>Textellent API connections</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm leading-6 text-muted-foreground">Manage encrypted Textellent credentials and document which studios use each connection. Automation rules select these saved connections separately.</p>
+              <TextellentConnections accounts={settings.textellentAccounts} />
+            </CardContent>
           </Card>
         </>
       ) : null}
