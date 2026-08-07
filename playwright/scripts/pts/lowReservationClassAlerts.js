@@ -52,8 +52,8 @@ async function login(page, credentials) {
 
 async function calendarCandidates(page, studio, targetDate) {
     await page.goto(`${PTS_URL}/Class/CalendarView`, { waitUntil: "domcontentloaded" });
-    await page.locator("#LocationId").selectOption(String(studio.ptsLocationId));
-    await page.getByRole("button", { name: "Search" }).click();
+    await page.locator("#LocationSelect").selectOption(String(studio.ptsLocationId));
+    await page.locator("#searchBtn").click();
     await page.waitForFunction(() => document.querySelectorAll('a[href^="/Class/Edit/"]').length > 0);
     const events = await page.evaluate(() => {
         const jq = window.jQuery;
