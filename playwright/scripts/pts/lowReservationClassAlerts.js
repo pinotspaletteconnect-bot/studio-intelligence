@@ -53,19 +53,37 @@ async function login(page, credentials) {
 async function calendarCandidates(page, studio, targetDate) {
     await page.goto(`${PTS_URL}/Class/CalendarView`, { waitUntil: "domcontentloaded" });
     await page.locator("#LocationSelect").selectOption(String(studio.ptsLocationId));
-    await page.locator("#searchBtn").click();
-    await page.waitForFunction(() => document.querySelectorAll('a[href^="/Class/Edit/"]').length > 0);
+    await Promise.all([
+        page.waitForResponse(response => {
+            const url = new URL(response.url());
+            return url.pathname.replace(/\/$/, "") === "/Class/GetCalendarData" && response.ok();
+        }),
+        page.locator("#searchBtn").click()
+    ]);
+    await page.waitForFunction(() => {
+        const jq = window.jQuery;
+        return Boolean(jq?.fn?.fullCalendar && jq("#calendar").fullCalendar("clientEvents").length);
+    });
     const events = await page.evaluate(() => {
         const jq = window.jQuery;
         if (!jq?.fn?.fullCalendar) throw new Error("PTS class calendar API is unavailable");
-        return jq("#calendar").fullCalendar("clientEvents").map(event => ({
-            classId: String(event.url || "").match(/\/Class\/Edit\/(\d+)/)?.[1] || null,
-            title: String(event.title || ""),
-            startsAt: event.start?.toISOString?.() || null,
-            localDate: event.start?.format?.("YYYY-MM-DD") || null
-        }));
+        return jq("#calendar").fullCalendar("clientEvents").map(event => {
+            const container = document.createElement("div");
+            container.innerHTML = String(event.eventhtml || "");
+            const availability = container.querySelector(".calevent-availability")?.textContent || "";
+            const reservationMatch = availability.match(/Res:(\d+)\//i);
+            return {
+                classId: String(event.url || "").match(/\/Class\/Edit\/(\d+)/)?.[1] || null,
+                title: container.querySelector(".calevent-painting-name")?.textContent?.trim() || container.firstElementChild?.getAttribute("title")?.split("\n")[0]?.trim() || "",
+                reservationCount: reservationMatch ? Number(reservationMatch[1]) : null,
+                startsAt: event.start?.toISOString?.() || null
+            };
+        });
     });
-    return events.filter(event => event.classId && event.startsAt && event.localDate === targetDate);
+    const dateFormatter = new Intl.DateTimeFormat("en-CA", {
+        timeZone: studio.timeZone, year: "numeric", month: "2-digit", day: "2-digit"
+    });
+    return events.filter(event => event.classId && event.startsAt && dateFormatter.format(new Date(event.startsAt)) === targetDate);
 }
 
 async function readClass(page, classId) {
@@ -94,13 +112,17 @@ async function readClass(page, classId) {
 
 async function uniquePurchaserPhones(page, classId) {
     await page.goto(`${PTS_URL}/Class/SeatingChart/${classId}`, { waitUntil: "domcontentloaded" });
-    await page.waitForFunction(() => document.body.innerText.includes("Purchaser Phone"));
+    await page.waitForFunction(() => {
+        const table = Array.from(document.querySelectorAll("table")).find(node => /Purchaser Phone/i.test(node.innerText));
+        const columnCount = table?.querySelectorAll("thead th").length || 0;
+        return Boolean(columnCount && Array.from(table.querySelectorAll("tbody tr")).some(row => row.querySelectorAll(":scope > td").length === columnCount));
+    });
     return page.evaluate(() => {
         const table = Array.from(document.querySelectorAll("table")).find(node => /Purchaser Phone/i.test(node.innerText));
         if (!table) throw new Error("PTS Seating Chart contact table was not found");
         const headers = Array.from(table.querySelectorAll("thead th")).map(node => node.textContent?.trim() || "");
         const phoneIndex = headers.findIndex(value => /Purchaser Phone/i.test(value));
-        return [...new Set(Array.from(table.querySelectorAll("tbody tr")).map(row => row.querySelectorAll("td")[phoneIndex]?.textContent?.trim()).filter(Boolean))];
+        return [...new Set(Array.from(table.querySelectorAll("tbody tr")).map(row => row.querySelectorAll(":scope > td")[phoneIndex]?.textContent?.trim()).filter(Boolean))];
     });
 }
 
@@ -129,8 +151,7 @@ async function runLowReservationClassAlerts({ targetDate, now = new Date(), exec
         for (const studio of studios) {
             const candidates = await calendarCandidates(page, studio, targetDate);
             for (const candidate of candidates) {
-                const countMatch = candidate.title.match(/Res:(\d+)\//i);
-                const count = countMatch ? Number(countMatch[1]) : null;
+                const count = candidate.reservationCount;
                 const excludedTitle = studio.excludedTitlePatterns.some(pattern => candidate.title.toLowerCase().includes(pattern.toLowerCase()));
                 if (!isLowReservation(count, studio.minimumReservations) || excludedTitle) continue;
                 if (execute && !approved.has(candidate.classId)) continue;
