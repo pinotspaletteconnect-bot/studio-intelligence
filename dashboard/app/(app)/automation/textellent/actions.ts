@@ -21,7 +21,7 @@ const settingsSchema = z.object({
   studioId: z.coerce.number().int().positive(),
   textellentAccountId: z.coerce.number().int().positive(),
   enabled: z.boolean(),
-  maximumReservations: z.coerce.number().int().min(1).max(20),
+  minimumReservations: z.coerce.number().int().min(2).max(21),
   leadHours: z.coerce.number().int().min(1).max(48),
   earliestSendTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
   messageTemplate: z.string().trim().min(10).max(1000),
@@ -59,7 +59,7 @@ export async function saveClassAlertSettings(_state: TextellentActionState, form
   if (!user || !["owner", "administrator"].includes(access.role)) return { error: "Only an owner or administrator can change automation settings." }
   const parsed = settingsSchema.safeParse({
     studioId: formData.get("studioId"), textellentAccountId: formData.get("textellentAccountId"),
-    enabled: formData.get("enabled") === "on", maximumReservations: formData.get("maximumReservations"),
+    enabled: formData.get("enabled") === "on", minimumReservations: formData.get("minimumReservations"),
     leadHours: formData.get("leadHours"), earliestSendTime: formData.get("earliestSendTime"), messageTemplate: formData.get("messageTemplate"),
   })
   if (!parsed.success || !access.allowedStudioIds.includes(parsed.data.studioId)) return { error: "The automation settings are invalid." }
@@ -69,7 +69,7 @@ export async function saveClassAlertSettings(_state: TextellentActionState, form
   if (assignment.error) return { error: "The Textellent connection could not be assigned." }
   const settings = await supabase.from("low_reservation_class_alert_settings").upsert({
     organization_id: access.organizationId, studio_id: parsed.data.studioId, enabled: parsed.data.enabled,
-    maximum_reservations: parsed.data.maximumReservations, lead_hours: parsed.data.leadHours,
+    minimum_reservations: parsed.data.minimumReservations, lead_hours: parsed.data.leadHours,
     earliest_send_time: parsed.data.earliestSendTime, message_template: parsed.data.messageTemplate,
     excluded_class_types: ["Private Party", "Mobile Party", "Marketing Event"],
     excluded_title_patterns: ["DIY Pop in and Paint"], updated_by: user.id, updated_at: new Date().toISOString(),

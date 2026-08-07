@@ -8,6 +8,8 @@ This project follows a milestone-based changelog rather than tracking every indi
 
 # Unreleased
 
+- Renamed the Textellent enrollment threshold from inclusive “maximum reservations” to exclusive “minimum reservations.” The default is 3, so classes with 1 or 2 reservations qualify while zero-reservation classes remain excluded.
+
 ## Added
 
 - Moved Textellent API credential management from Automation to Organization Settings, added reusable “Used by” descriptions, and kept the automation page focused on selecting saved connections and editing studio alert rules.

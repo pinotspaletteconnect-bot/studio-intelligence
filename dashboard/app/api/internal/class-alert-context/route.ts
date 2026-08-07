@@ -54,7 +54,7 @@ export async function POST(request: Request) {
       ptsLocationId: target.pts_location_id,
       senderNumber: target.sender_number,
       authCode: authCodes.get(target.textellent_account_id),
-      maximumReservations: target.maximum_reservations,
+      minimumReservations: target.minimum_reservations,
       leadHours: target.lead_hours,
       earliestSendTime: String(target.earliest_send_time).slice(0, 5),
       messageTemplate: target.message_template,

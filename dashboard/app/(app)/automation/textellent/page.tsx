@@ -19,7 +19,7 @@ export default async function TextellentPage() {
       </div>
       <Card>
         <CardHeader className="flex flex-row items-center gap-3"><span className="rounded-lg bg-primary/10 p-2 text-primary"><MessageSquareText className="size-5" /></span><CardTitle>Class alert rules</CardTitle></CardHeader>
-        <CardContent><p className="text-sm leading-6 text-muted-foreground">Classes with one or two reservations are rechecked at send time. Purchaser phone numbers are read transiently from the PTS Seating Chart and are never saved in SASHA.</p></CardContent>
+        <CardContent><p className="text-sm leading-6 text-muted-foreground">Classes below each studio&apos;s minimum reservation setting are rechecked at send time. A minimum of 3 alerts classes with 1 or 2 reservations. Purchaser phone numbers are read transiently from the PTS Seating Chart and are never saved in SASHA.</p></CardContent>
       </Card>
       <Card><CardHeader><CardTitle>Studio automation</CardTitle></CardHeader><CardContent className="space-y-4">{canManage ? data.studios.map(studio => {
         const assignment = data.assignments.find(row => row.studio_id === studio.id)

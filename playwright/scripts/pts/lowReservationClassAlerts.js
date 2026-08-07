@@ -23,6 +23,10 @@ function renderMessage(template, values) {
     return template.replace(/\{(studio|class_name|class_date|class_time|reservations)\}/g, (_, key) => String(values[key] ?? ""));
 }
 
+function isLowReservation(reservationCount, minimumReservations) {
+    return Number.isInteger(reservationCount) && reservationCount > 0 && reservationCount < minimumReservations;
+}
+
 function scheduledAlertAt(classStartsAt, leadHours, earliestSendTime, timeZone) {
     const start = new Date(classStartsAt);
     const lead = new Date(start.getTime() - leadHours * 60 * 60 * 1000);
@@ -128,12 +132,12 @@ async function runLowReservationClassAlerts({ targetDate, now = new Date(), exec
                 const countMatch = candidate.title.match(/Res:(\d+)\//i);
                 const count = countMatch ? Number(countMatch[1]) : null;
                 const excludedTitle = studio.excludedTitlePatterns.some(pattern => candidate.title.toLowerCase().includes(pattern.toLowerCase()));
-                if (!count || count > studio.maximumReservations || excludedTitle) continue;
+                if (!isLowReservation(count, studio.minimumReservations) || excludedTitle) continue;
                 if (execute && !approved.has(candidate.classId)) continue;
                 const dueAt = scheduledAlertAt(candidate.startsAt, studio.leadHours, studio.earliestSendTime, studio.timeZone);
                 if (now < dueAt) continue;
                 const current = await readClass(page, candidate.classId);
-                if (!current.reservationCount || current.reservationCount > studio.maximumReservations || studio.excludedClassTypes.includes(current.classType)) {
+                if (!isLowReservation(current.reservationCount, studio.minimumReservations) || studio.excludedClassTypes.includes(current.classType)) {
                     results.push({ studioId: studio.studioId, classId: candidate.classId, status: "skipped", reservationCount: current.reservationCount, recipientCount: 0, messageIds: [] });
                     continue;
                 }
@@ -150,4 +154,4 @@ async function runLowReservationClassAlerts({ targetDate, now = new Date(), exec
     }
 }
 
-module.exports = { e164, renderMessage, scheduledAlertAt, runLowReservationClassAlerts };
+module.exports = { e164, isLowReservation, renderMessage, scheduledAlertAt, runLowReservationClassAlerts };
