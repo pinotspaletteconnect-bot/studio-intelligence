@@ -14,6 +14,11 @@ export type ExecutiveDashboardData = {
   operations: OperationsDashboardData
   marketing: MarketingDashboard
   marketingComparison: MarketingDashboard
+  yesterdayBookings: {
+    date: string
+    seats: number | null
+    sales: number | null
+  }
   thisWeek: {
     startDate: string
     endDate: string
@@ -213,6 +218,11 @@ export async function getExecutiveDashboard(
     operations,
     marketing,
     marketingComparison,
+    yesterdayBookings: {
+      date: upcoming.bookingDate,
+      seats: upcoming.kpis.bookedSeats,
+      sales: upcoming.kpis.bookedSales,
+    },
     thisWeek: {
       startDate: weekStart,
       endDate: weekEnd,

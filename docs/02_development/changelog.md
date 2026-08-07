@@ -21,6 +21,8 @@ This project follows a milestone-based changelog rather than tracking every indi
 - Stopped the Food & Beverage drill-down from opening Food by default and excluded `Available for...` marketing placeholder classes from completed, upcoming, Executive, Private Party, and Mobile Event reporting.
 - Excluded completed private/mobile rows only when they have no selected painting and both zero seats and zero class-plus-fee revenue; zero-dollar events with a selected painting remain visible as real events.
 - Renamed the user-facing application to SASHA across the authenticated shell, authentication states, security prompts, and browser metadata; reordered primary navigation to Dashboard, Executive, Operations, Marketing, and Settings.
+- Added Executive cards for yesterday's exact booked seats and gross booked sales, expanded the KPI grid to five columns, and added planned Automation pages for Textellent and Seating Charts.
+- Aligned the headline marketing spend KPI with attributed ROAS by limiting both to Meta and Eulerity; MNTN spend and modeled attribution remain separate in the MNTN reporting section.
 
 - Replaced the nested template UI on `/dashboard` with a shell-consistent
   reporting-area landing page. Financial and Customers remain available as

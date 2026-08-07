@@ -784,7 +784,7 @@ export async function getMarketingDashboard(
         ) + 1,
     },
     kpis: {
-      paidSpend: totals.spend,
+      paidSpend: clickPlatformSpend,
       attributedRevenue,
       paidCpc: totals.clicks ? clickPlatformSpend / totals.clicks : 0,
       attributedRoas: clickPlatformSpend

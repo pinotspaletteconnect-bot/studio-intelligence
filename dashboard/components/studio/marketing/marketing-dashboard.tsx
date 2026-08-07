@@ -51,7 +51,7 @@ const compactNumber = new Intl.NumberFormat("en-US", {
 })
 
 const metricCards = [
-  { key: "paidSpend", label: "Marketing spend", icon: CircleDollarSign },
+  { key: "paidSpend", label: "Meta + Eulerity spend", icon: CircleDollarSign },
   { key: "attributedRevenue", label: "Attributed revenue", icon: CircleDollarSign },
   { key: "attributedRoas", label: "Attributed ROAS", icon: Gauge },
   { key: "paidCpc", label: "Paid CPC", icon: MousePointerClick },

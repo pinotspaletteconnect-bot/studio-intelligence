@@ -211,6 +211,13 @@ Implemented foundation:
   6:00 AM America/New_York. Its August 1 production validation loaded all four
   studios: 111 ordered seats, 107 active seats, 2 refunded seats, 2 held seats,
   and $4,166.20 gross booked sales.
+- Executive headline KPIs include exact prior-day gross booked seats and sales
+  from `pts_reservation_booking_daily`; the wide-screen KPI grid uses five
+  columns. An Automation navigation area now reserves pages for Textellent and
+  Seating Charts, both explicitly presented as planned workspaces.
+- Headline marketing spend and attributed ROAS use the same Meta-plus-Eulerity
+  scope. MNTN spend and modeled attribution remain separate because MNTN uses a
+  different view-through attribution model and is not connected by most users.
 
 Known incomplete surfaces:
 

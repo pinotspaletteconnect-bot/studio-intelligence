@@ -55,6 +55,7 @@ type Metric = {
   change: number | null
   detail: string
   icon: typeof CircleDollarSign
+  showChange?: boolean
 }
 
 function percentChange(current: number, previous: number) {
@@ -158,7 +159,7 @@ export function ExecutiveDashboard() {
         icon: Utensils,
       },
       {
-        label: "Marketing spend",
+        label: "Meta + Eulerity spend",
         value: money.format(marketing.paidSpend),
         change: percentChange(marketing.paidSpend, priorMarketing.paidSpend),
         detail: `${marketing.sessions.toLocaleString()} website sessions`,
@@ -189,11 +190,31 @@ export function ExecutiveDashboard() {
         detail: "Seat-weighted booking lead time",
         icon: CalendarClock,
       },
+      {
+        label: "Yesterday's booked seats",
+        value: data.yesterdayBookings.seats === null
+          ? "—"
+          : data.yesterdayBookings.seats.toLocaleString(),
+        change: null,
+        detail: `${dateLabel(data.yesterdayBookings.date)} · gross reservations`,
+        icon: Users,
+        showChange: false,
+      },
+      {
+        label: "Yesterday's booked sales",
+        value: data.yesterdayBookings.sales === null
+          ? "—"
+          : money.format(data.yesterdayBookings.sales),
+        change: null,
+        detail: `${dateLabel(data.yesterdayBookings.date)} · gross bookings`,
+        icon: CircleDollarSign,
+        showChange: false,
+      },
     ]
   }, [data])
 
   if (loading) {
-    return <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{Array.from({ length: 8 }, (_, index) => <Skeleton key={index} className="h-36 rounded-xl" />)}</div>
+    return <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">{Array.from({ length: 10 }, (_, index) => <Skeleton key={index} className="h-36 rounded-xl" />)}</div>
   }
 
   if (error || !data) {
@@ -245,8 +266,8 @@ export function ExecutiveDashboard() {
 
   return (
     <div className="grid gap-6">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {metrics.map(({ label, value, change, detail, icon: Icon }) => (
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        {metrics.map(({ label, value, change, detail, icon: Icon, showChange = true }) => (
           <Card key={label} className="gap-3 py-4">
             <CardHeader className="flex-row items-center justify-between px-4">
               <CardTitle className="text-xs font-medium text-muted-foreground">{label}</CardTitle>
@@ -254,7 +275,7 @@ export function ExecutiveDashboard() {
             </CardHeader>
             <CardContent className="px-4">
               <p className="text-2xl font-semibold tabular-nums">{value}</p>
-              <p className="mt-1 text-xs"><Change value={change} /> <span className="text-muted-foreground">vs {comparisonLabel}</span></p>
+              {showChange ? <p className="mt-1 text-xs"><Change value={change} /> <span className="text-muted-foreground">vs {comparisonLabel}</span></p> : null}
               <p className="mt-2 text-xs text-muted-foreground">{detail}</p>
             </CardContent>
           </Card>
