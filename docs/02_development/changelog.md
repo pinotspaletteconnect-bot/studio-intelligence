@@ -10,7 +10,7 @@ This project follows a milestone-based changelog rather than tracking every indi
 
 ## Added
 
-- Built the disabled-by-default Textellent low-reservation class-alert foundation: reusable encrypted API accounts, studio assignments (including shared St. Matthews/Jeffersonville routing), editable messages and send rules, PTS Seating Chart contact retrieval, purchaser deduplication, database claims, and phone-free delivery audits. The PTS Vault prerequisite and Textellent schema migrations were applied August 7, 2026; dashboard/Railway deployment, n8n scheduling, and live-send validation remain pending.
+- Built the disabled-by-default Textellent low-reservation class-alert foundation: reusable encrypted API accounts, studio assignments (including shared St. Matthews/Jeffersonville routing), editable messages and send rules, PTS Seating Chart contact retrieval, purchaser deduplication, database claims, and phone-free delivery audits. The PTS Vault prerequisite, Textellent schema, and SASHA dashboard were deployed August 7, 2026; collector deployment, n8n scheduling, and live-send validation remain pending.
 
 - Displayed the exact selected and comparison date ranges together in shared comparison-enabled dashboard toolbars.
 
