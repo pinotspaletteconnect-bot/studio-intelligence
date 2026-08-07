@@ -99,7 +99,12 @@ export async function getAccountSettings(
     studios: studioResult.data ?? [],
     integrations: integrationResult.data ?? [],
     brands: brandResult.data ?? [],
-    ptsAccounts: ptsAccountResult.data ?? [],
+    ptsAccounts: (ptsAccountResult.data ?? []).map((account) => ({
+      id: account.id,
+      account_name: account.account_name,
+      has_credentials: /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(account.secret_reference),
+      last_validated_at: account.last_validated_at,
+    })),
     textellentAccounts: textellentAccountResult.data ?? [],
   }
 }

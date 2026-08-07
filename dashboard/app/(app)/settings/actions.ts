@@ -36,6 +36,44 @@ const ptsAccountSchema = z.object({
   currentPassword: z.string().min(1).max(1024),
 })
 
+const replacePtsCredentialsSchema = z.object({
+  accountId: z.coerce.number().int().positive(),
+  ptsUsername: z.string().trim().min(2).max(254),
+  ptsPassword: z.string().min(1).max(1024),
+  currentPassword: z.string().min(1).max(1024),
+})
+
+export async function replacePtsCredentials(
+  _previousState: PtsAccountState,
+  formData: FormData
+): Promise<PtsAccountState> {
+  const [access, actor] = await Promise.all([requireDashboardContext(), getAuthenticatedUser()])
+  if (!actor?.email || !["owner", "administrator"].includes(access.role)) {
+    return { error: "Only an owner or administrator can replace PTS credentials." }
+  }
+  const parsed = replacePtsCredentialsSchema.safeParse(Object.fromEntries(formData))
+  if (!parsed.success) return { error: "Complete every credential and security field." }
+
+  const auth = await createAuthClient()
+  const { error: authenticationError } = await auth.auth.signInWithPassword({
+    email: actor.email,
+    password: parsed.data.currentPassword,
+  })
+  if (authenticationError) return { error: "Your SASHA password is incorrect." }
+
+  const { error } = await supabase.rpc("replace_pts_account_secret", {
+    p_organization_id: access.organizationId,
+    p_account_id: parsed.data.accountId,
+    p_username: parsed.data.ptsUsername,
+    p_password: parsed.data.ptsPassword,
+  })
+  if (error) return { error: "The encrypted PTS credentials could not be saved." }
+
+  revalidatePath("/settings")
+  revalidatePath("/settings/onboarding")
+  return { complete: true }
+}
+
 export async function createPtsAccount(
   _previousState: PtsAccountState,
   formData: FormData

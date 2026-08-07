@@ -8,6 +8,7 @@ This project follows a milestone-based changelog rather than tracking every indi
 
 # Unreleased
 
+- Added PTS credential management directly to Organization Settings, including encrypted initialization for legacy mapped accounts and protected credential replacement.
 - Renamed the Textellent enrollment threshold from inclusive “maximum reservations” to exclusive “minimum reservations.” The default is 3, so classes with 1 or 2 reservations qualify while zero-reservation classes remain excluded.
 
 ## Added
