@@ -1,6 +1,6 @@
 "use client"
 
-import { useActionState } from "react"
+import { useActionState, useState } from "react"
 import { createTextellentAccount, saveClassAlertSettings, updateTextellentSender } from "./actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -33,12 +33,15 @@ export function TextellentSenderForm({ account }: { account: { id: number; accou
   </form>
 }
 
-export function StudioAlertForm({ studio, accounts, assignment, setting }: { studio: { id: number; studio_name: string; timezone: string }; accounts: Array<{ id: number; account_name: string; sender_number: string }>; assignment?: { textellent_account_id: number }; setting?: { enabled: boolean; maximum_reservations: number; lead_hours: number; earliest_send_time: string; message_template: string } }) {
+export function StudioAlertForm({ studio, accounts, assignment, setting }: { studio: { id: number; studio_name: string; timezone: string }; accounts: Array<{ id: number; account_name: string; sender_number: string }>; assignment?: { textellent_account_id: number }; setting?: { enabled: boolean; maximum_reservations: number; lead_hours: number; earliest_send_time: string; message_template: string; updated_at: string } }) {
   const [state, action, pending] = useActionState(saveClassAlertSettings, undefined)
+  const savedAccountId = assignment?.textellent_account_id.toString() ?? ""
+  const [selectedAccountId, setSelectedAccountId] = useState(savedAccountId)
+
   return <form action={action} className="space-y-4 rounded-lg border p-4">
     <input type="hidden" name="studioId" value={studio.id} />
     <div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-medium">{studio.studio_name}</h3><p className="text-xs text-muted-foreground">{studio.timezone}</p></div><label className="flex items-center gap-2 text-sm"><input name="enabled" type="checkbox" defaultChecked={setting?.enabled ?? false} /> Enabled</label></div>
-    <label className="block space-y-1 text-sm"><span>Textellent connection and sending number</span><select name="textellentAccountId" defaultValue={assignment?.textellent_account_id ?? ""} required className="h-9 w-full rounded-md border bg-background px-3"><option value="" disabled>Select a connection</option>{accounts.map(account => <option key={account.id} value={account.id}>{account.account_name} · {account.sender_number}</option>)}</select></label>
+    <label className="block space-y-1 text-sm"><span>Textellent connection and sending number</span><select name="textellentAccountId" value={selectedAccountId} onChange={(event) => setSelectedAccountId(event.target.value)} required className="h-9 w-full rounded-md border bg-background px-3"><option value="" disabled>Select a connection</option>{accounts.map(account => <option key={account.id} value={account.id}>{account.account_name} · {account.sender_number}</option>)}</select></label>
     <div className="grid gap-4 sm:grid-cols-3"><label className="space-y-1 text-sm"><span>Maximum reservations</span><Input name="maximumReservations" type="number" min={1} max={20} defaultValue={setting?.maximum_reservations ?? 2} /></label><label className="space-y-1 text-sm"><span>Hours before class</span><Input name="leadHours" type="number" min={1} max={48} defaultValue={setting?.lead_hours ?? 6} /></label><label className="space-y-1 text-sm"><span>Earliest send</span><Input name="earliestSendTime" type="time" defaultValue={(setting?.earliest_send_time ?? "08:00").slice(0, 5)} /></label></div>
     <label className="block space-y-1 text-sm"><span>Message</span><textarea name="messageTemplate" defaultValue={setting?.message_template ?? defaultMessage} maxLength={1000} className="min-h-28 w-full rounded-md border bg-background p-3 text-sm" /></label>
     <p className="text-xs text-muted-foreground">Available fields: {"{studio}"}, {"{class_name}"}, {"{class_date}"}, {"{class_time}"}, {"{reservations}"}. DIY Pop in and Paint, private parties, mobile parties, and marketing events are excluded.</p>
