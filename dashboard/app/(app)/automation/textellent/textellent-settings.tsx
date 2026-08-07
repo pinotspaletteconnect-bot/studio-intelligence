@@ -20,7 +20,7 @@ export function TextellentAccountForm() {
     <label className="space-y-1 text-sm"><span>Sending number</span><Input name="senderNumber" placeholder="+15025551212" required /></label>
     <label className="space-y-1 text-sm"><span>API authentication code</span><Input name="authCode" type="password" autoComplete="off" required /></label>
     <label className="space-y-1 text-sm"><span>Your SASHA password</span><Input name="currentPassword" type="password" autoComplete="current-password" required /></label>
-    <div className="flex items-center gap-3 md:col-span-2"><Button disabled={pending}>{pending ? "Saving…" : "Add secure connection"}</Button><Status state={state} /></div>
+    <div className="flex items-center gap-3 md:col-span-2"><Button type="submit" disabled={pending}>{pending ? "Saving…" : "Add secure connection"}</Button><Status state={state} /></div>
   </form>
 }
 
@@ -29,7 +29,7 @@ export function TextellentSenderForm({ account }: { account: { id: number; accou
   return <form action={action} className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-end">
     <input type="hidden" name="accountId" value={account.id} />
     <label className="flex-1 space-y-1 text-sm"><span>{account.account_name} sending number</span><Input name="senderNumber" defaultValue={account.sender_number} required /></label>
-    <div className="flex items-center gap-3"><Button variant="outline" disabled={pending}>{pending ? "Saving…" : "Update number"}</Button><Status state={state} /></div>
+    <div className="flex items-center gap-3"><Button type="submit" variant="outline" disabled={pending}>{pending ? "Saving…" : "Update number"}</Button><Status state={state} /></div>
   </form>
 }
 
@@ -42,6 +42,6 @@ export function StudioAlertForm({ studio, accounts, assignment, setting }: { stu
     <div className="grid gap-4 sm:grid-cols-3"><label className="space-y-1 text-sm"><span>Maximum reservations</span><Input name="maximumReservations" type="number" min={1} max={20} defaultValue={setting?.maximum_reservations ?? 2} /></label><label className="space-y-1 text-sm"><span>Hours before class</span><Input name="leadHours" type="number" min={1} max={48} defaultValue={setting?.lead_hours ?? 6} /></label><label className="space-y-1 text-sm"><span>Earliest send</span><Input name="earliestSendTime" type="time" defaultValue={(setting?.earliest_send_time ?? "08:00").slice(0, 5)} /></label></div>
     <label className="block space-y-1 text-sm"><span>Message</span><textarea name="messageTemplate" defaultValue={setting?.message_template ?? defaultMessage} maxLength={1000} className="min-h-28 w-full rounded-md border bg-background p-3 text-sm" /></label>
     <p className="text-xs text-muted-foreground">Available fields: {"{studio}"}, {"{class_name}"}, {"{class_date}"}, {"{class_time}"}, {"{reservations}"}. DIY Pop in and Paint, private parties, mobile parties, and marketing events are excluded.</p>
-    <div className="flex items-center gap-3"><Button disabled={pending}>{pending ? "Saving…" : "Save studio settings"}</Button><Status state={state} /></div>
+    <div className="flex items-center gap-3"><Button type="submit" disabled={pending}>{pending ? "Saving…" : "Save studio settings"}</Button><Status state={state} /></div>
   </form>
 }
