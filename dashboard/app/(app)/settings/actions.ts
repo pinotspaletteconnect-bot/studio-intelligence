@@ -227,7 +227,7 @@ export async function resendOrganizationSetup(
 
   const auth = createRecoveryEmailClient()
   const { error } = await auth.auth.resetPasswordForEmail(targetUser.user.email, {
-    redirectTo: `${origin}/reset-password?setup=invited`,
+    redirectTo: `${origin}/reset-password`,
   })
   if (error) {
     console.error("Invited-user setup link failed", {
