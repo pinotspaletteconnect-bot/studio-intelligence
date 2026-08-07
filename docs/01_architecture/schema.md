@@ -50,6 +50,10 @@ Confirm exact columns, constraints, and foreign-key behavior in Supabase before 
 | `pts_class_type_sales_daily` | One aggregate per studio/event date/raw PTS class type from a range export | Current; replacement range-load destination |
 | `pts_product_sales_daily` | One aggregate per studio/sale date/category/subcategory/item from Product Sales | Current; replacement range-load destination |
 | `pts_reservation_bookings` | One privacy-safe PTS Reservations grid line per studio, order date, and source row key | Current and loading daily |
+| `textellent_accounts` | One reusable encrypted-secret reference and sender number per Textellent API account | Deployed August 7, 2026 |
+| `textellent_studio_assignments` | One studio-to-Textellent-account assignment; supports shared accounts | Deployed August 7, 2026 |
+| `low_reservation_class_alert_settings` | One privacy-safe automation rule per studio | Deployed August 7, 2026 |
+| `low_reservation_class_alert_deliveries` | One phone-free claim/send audit per studio and PTS class | Deployed August 7, 2026 |
 
 PTS imports preserve source row hashes for idempotency. Product Sales records
 retain category, subcategory, item, quantity, revenue, tax, and business
@@ -74,6 +78,7 @@ dashboard access are implemented.
 | `pts_upcoming_classes_current` | Latest complete future-class snapshot per studio | Deployed |
 | `pts_reservation_bookings_reporting` | Reservation booking lines joined to studio names | Current |
 | `pts_reservation_booking_daily` | Exact daily gross booked seats and booked sales with active, refunded, and held seat counts | Current |
+| `low_reservation_class_alert_targets` | Service-only joined PTS/Textellent routing and studio rule configuration | Deployed August 7, 2026 |
 
 The reporting views do not join event and product rows directly. Each source is
 aggregated at its own grain before daily metrics are combined, preventing

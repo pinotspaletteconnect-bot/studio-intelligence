@@ -267,6 +267,15 @@ Planned sources include QuickBooks Online, Xero, Stripe or payment systems, payr
 
 Planned sources include reservation/customer systems, CRM, loyalty, email engagement, and marketing attribution.
 
+### Textellent action integration
+
+- **Purpose:** Send low-reservation class warnings using a studio-owned custom message.
+- **API:** Direct `POST /api/v1/messages.json` with backend `authCode` authentication and `ignoreQuietHours: false`.
+- **PTS contact path:** Live class recheck followed by `/Class/SeatingChart/{classId}`; unique purchaser phone numbers exist only in collector memory.
+- **Configuration:** Reusable Textellent accounts are assigned to studios. St. Matthews and Jeffersonville share the St. Matthews account; Short North and Gilbert use their own accounts.
+- **Safety:** Studio rules default disabled, live calls require database-claimed class IDs, and delivery audits prohibit customer contact information.
+- **Status:** Schema deployed August 7, 2026; code remains local. Not production until the dashboard and collector are deployed, secure accounts are configured, the n8n schedule is published, and controlled test sends pass.
+
 ## Integration Standards
 
 Every integration must:

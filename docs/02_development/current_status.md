@@ -213,8 +213,13 @@ Implemented foundation:
   and $4,166.20 gross booked sales.
 - Executive headline KPIs include exact prior-day gross booked seats and sales
   from `pts_reservation_booking_daily`; the wide-screen KPI grid uses five
-  columns. An Automation navigation area now reserves pages for Textellent and
-  Seating Charts, both explicitly presented as planned workspaces.
+  columns. The Textellent Automation page now has a migration-ready,
+  disabled-by-default implementation for per-studio low-reservation class
+  alerts, shared account routing, encrypted API auth codes, custom messages,
+  transient PTS Seating Chart phone access, and phone-free send auditing. The
+  database migration is deployed. Dashboard/Railway deployment, the n8n
+  schedule, production Textellent secrets, and controlled test sends remain
+  pending. Seating Charts remains a planned workspace.
 - Headline marketing spend and attributed ROAS use the same Meta-plus-Eulerity
   scope. MNTN spend and modeled attribution remain separate because MNTN uses a
   different view-through attribution model and is not connected by most users.

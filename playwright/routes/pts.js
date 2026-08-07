@@ -13,6 +13,8 @@ const {
 const {
     runPtsReservationsReport
 } = require("../scripts/pts/reservationsReport");
+const { runLowReservationClassAlerts } = require("../scripts/pts/lowReservationClassAlerts");
+const { resolveClassAlertContext } = require("../services/classAlertContext");
 
 const router = express.Router();
 const { resolvePtsAccount } = require("../services/ptsCredentials");
@@ -232,6 +234,30 @@ router.post("/reservations-report", requireCollectorAuth, async (req, res) => {
         });
     } catch (error) {
         console.error("PTS Reservations Report failed:", error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.post("/low-reservation-class-alerts", requireCollectorAuth, async (req, res) => {
+    try {
+        const context = await resolveClassAlertContext(req.body?.ptsAccountId);
+        const results = await runLowReservationClassAlerts({
+            targetDate: req.body?.targetDate,
+            execute: req.body?.execute === true,
+            approvedClassIds: Array.isArray(req.body?.approvedClassIds) ? req.body.approvedClassIds : [],
+            credentials: context.credentials,
+            studios: context.studios
+        });
+        res.set("Cache-Control", "no-store, private");
+        res.json({
+            success: true,
+            mode: req.body?.execute === true ? "execute" : "preview",
+            targetDate: req.body?.targetDate,
+            resultCount: results.length,
+            results
+        });
+    } catch (error) {
+        console.error("PTS low-reservation class alerts failed:", error.message);
         res.status(500).json({ success: false, error: error.message });
     }
 });
