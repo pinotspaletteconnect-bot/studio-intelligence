@@ -1,5 +1,6 @@
 import { AuthShell } from "@/components/auth/auth-shell"
 import { LoginForm } from "@/app/login/login-form"
+import { InviteLinkBridge } from "@/app/login/invite-link-bridge"
 
 export default async function LoginPage({
   searchParams,
@@ -18,6 +19,7 @@ export default async function LoginPage({
       title="Welcome back"
       description="Sign in to your organization’s private business intelligence workspace."
     >
+      <InviteLinkBridge />
       {timeoutMessage ? (
         <p role="status" className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
           {timeoutMessage}

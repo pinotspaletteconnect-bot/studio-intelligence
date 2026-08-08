@@ -15,9 +15,10 @@ export function ResetPasswordForm() {
   useEffect(() => {
     async function establishRecoverySession() {
       const fragment = new URLSearchParams(window.location.hash.slice(1))
-      const accessToken = fragment.get("access_token")
-      const refreshToken = fragment.get("refresh_token")
-      const linkError = fragment.get("error")
+      const query = new URLSearchParams(window.location.search)
+      const accessToken = fragment.get("access_token") ?? query.get("access_token")
+      const refreshToken = fragment.get("refresh_token") ?? query.get("refresh_token")
+      const linkError = fragment.get("error") ?? query.get("error")
 
       if (!accessToken || !refreshToken) {
         await Promise.resolve()
@@ -30,7 +31,7 @@ export function ResetPasswordForm() {
         access_token: accessToken,
         refresh_token: refreshToken,
       })
-      window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`)
+      window.history.replaceState(null, "", window.location.pathname)
       setLinkState(error ? "invalid" : "recovery")
     }
 
