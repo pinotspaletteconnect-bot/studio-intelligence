@@ -22,6 +22,12 @@ session rather than a server-generated PKCE verifier tied to the administrator's
 browser; the reset page converts that one-time URL fragment into the secure SSR
 cookie session before accepting a new password.
 
+If an owner invites an email whose Auth identity already exists with an invited
+or suspended membership in the same organization, SASHA reactivates that
+membership as invited, replaces its role and studio grants with the submitted
+permissions, and sends a fresh setup link. It never creates a duplicate Auth
+identity or silently attaches an existing identity from another organization.
+
 The dashboard protects data in three layers:
 
 1. Next.js proxy session refresh and route gating.

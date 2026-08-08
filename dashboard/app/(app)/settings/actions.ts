@@ -29,6 +29,26 @@ const memberAccessSchema = z.object({
 
 const memberTargetSchema = z.object({ userId: z.uuid() })
 
+async function findAuthUserByEmail(email: string) {
+  const pageSize = 200
+
+  for (let page = 1; page <= 50; page += 1) {
+    const { data, error } = await supabase.auth.admin.listUsers({
+      page,
+      perPage: pageSize,
+    })
+    if (error) throw error
+
+    const user = data.users.find(
+      (candidate) => candidate.email?.trim().toLowerCase() === email
+    )
+    if (user) return user
+    if (data.users.length < pageSize) return null
+  }
+
+  throw new Error("Auth user lookup exceeded the supported page limit.")
+}
+
 const ptsAccountSchema = z.object({
   accountName: z.string().trim().min(2).max(120),
   ptsUsername: z.string().trim().min(2).max(254),
@@ -454,44 +474,109 @@ export async function inviteOrganizationUser(
       data: { invited_to_organization: access.organizationId },
     }
   )
-  if (inviteError || !data.user) {
-    console.error("Organization invitation failed", {
-      organizationId: access.organizationId,
-      inviterId: inviter.id,
-      message: inviteError?.message,
-    })
-    return { error: "The invitation could not be sent." }
+  let invitedUser = data.user
+  let requiresSetupResend = false
+
+  if (inviteError || !invitedUser) {
+    let existingUser
+    try {
+      existingUser = await findAuthUserByEmail(parsed.data.email)
+    } catch (error) {
+      console.error("Existing invitation lookup failed", {
+        organizationId: access.organizationId,
+        inviterId: inviter.id,
+        error,
+      })
+      return { error: "The invitation could not be sent." }
+    }
+
+    if (!existingUser) {
+      console.error("Organization invitation failed", {
+        organizationId: access.organizationId,
+        inviterId: inviter.id,
+        message: inviteError?.message,
+      })
+      return { error: "The invitation could not be sent." }
+    }
+
+    const { data: existingMembership, error: membershipLookupError } = await supabase
+      .from("organization_memberships")
+      .select("status")
+      .eq("organization_id", access.organizationId)
+      .eq("user_id", existingUser.id)
+      .maybeSingle()
+
+    if (
+      membershipLookupError ||
+      !existingMembership ||
+      !["invited", "suspended"].includes(existingMembership.status)
+    ) {
+      return {
+        error: existingMembership?.status === "active"
+          ? "This user already has active access. Manage them under Authorized Users."
+          : "This email already has an account and cannot be invited from this workspace.",
+      }
+    }
+
+    invitedUser = existingUser
+    requiresSetupResend = true
   }
 
   const { error: membershipError } = await supabase
     .from("organization_memberships")
     .upsert({
       organization_id: access.organizationId,
-      user_id: data.user.id,
+      user_id: invitedUser.id,
       role: parsed.data.role,
       status: "invited",
       invited_by: inviter.id,
+      joined_at: null,
       updated_at: new Date().toISOString(),
     })
   if (membershipError) {
     console.error("Invitation membership assignment failed", {
       organizationId: access.organizationId,
-      invitedUserId: data.user.id,
+      invitedUserId: invitedUser.id,
       message: membershipError.message,
     })
     return { error: "The invitation was sent, but access assignment needs review." }
+  }
+
+  const { error: accessResetError } = await supabase
+    .from("user_studio_access")
+    .delete()
+    .eq("organization_id", access.organizationId)
+    .eq("user_id", invitedUser.id)
+  if (accessResetError) {
+    return { error: "The invitation was sent, but existing studio access could not be reset." }
   }
 
   if (parsed.data.role !== "administrator") {
     const { error: studioError } = await supabase.from("user_studio_access").insert(
       parsed.data.studioIds.map((studioId) => ({
         organization_id: access.organizationId,
-        user_id: data.user.id,
+        user_id: invitedUser.id,
         studio_id: studioId,
         granted_by: inviter.id,
       }))
     )
     if (studioError) return { error: "The invitation was sent, but studio access needs review." }
+  }
+
+  if (requiresSetupResend) {
+    const auth = createRecoveryEmailClient()
+    const { error: setupError } = await auth.auth.resetPasswordForEmail(
+      parsed.data.email,
+      { redirectTo: `${origin}/reset-password` }
+    )
+    if (setupError) {
+      console.error("Re-invited user setup email failed", {
+        organizationId: access.organizationId,
+        invitedUserId: invitedUser.id,
+        code: setupError.code,
+      })
+      return { error: "Access was restored, but the setup email could not be sent. Use Resend setup link." }
+    }
   }
 
   revalidatePath("/settings")
