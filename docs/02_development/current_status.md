@@ -115,6 +115,8 @@ Implemented foundation:
 - Invite-only Supabase Auth foundation with SSR cookie sessions, login,
   password recovery, protected routes, onboarding, logout, owner/admin user
   invitations, recovery-aware setup-link resends for incomplete invited users,
+  login-route forwarding for Supabase invite/recovery credentials so email
+  links always continue to first-password setup,
   owner-protected per-user role and studio-access management,
   reversible membership suspension, a server-enforced 30-minute inactivity
   timeout with a five-minute warning, a 12-hour absolute session limit, and
