@@ -11,7 +11,17 @@ import {
   SESSION_IDLE_LIMIT_MS,
 } from "@/lib/auth/session-policy"
 
-const publicRoutes = ["/login", "/forgot-password", "/reset-password", "/auth", "/api/session/end", "/api/internal/pts-account"]
+const publicRoutes = [
+  "/login",
+  "/forgot-password",
+  "/reset-password",
+  "/auth",
+  "/api/session/end",
+  "/api/internal/pts-account",
+  "/api/internal/class-alert-accounts",
+  "/api/internal/class-alert-audit",
+  "/api/internal/class-alert-context",
+]
 
 function redirectWithCookies(request: NextRequest, response: NextResponse, pathname: string, reason?: string) {
   const url = request.nextUrl.clone()
