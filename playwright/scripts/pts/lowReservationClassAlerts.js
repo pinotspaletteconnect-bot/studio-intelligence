@@ -157,6 +157,7 @@ async function runLowReservationClassAlerts({ targetDate, now = new Date(), exec
                 if (!execute && (!isLowReservation(count, studio.minimumReservations) || excludedTitle)) continue;
                 const dueAt = scheduledAlertAt(candidate.startsAt, studio.leadHours, studio.earliestSendTime, studio.timeZone);
                 if (now < dueAt) continue;
+                if (now >= new Date(candidate.startsAt)) continue;
                 const current = await readClass(page, candidate.classId);
                 if (!isLowReservation(current.reservationCount, studio.minimumReservations) || excludedTitle || studio.excludedClassTypes.includes(current.classType)) {
                     results.push({ studioId: studio.studioId, classId: candidate.classId, status: "skipped", reservationCount: current.reservationCount, recipientCount: 0, messageIds: [] });
