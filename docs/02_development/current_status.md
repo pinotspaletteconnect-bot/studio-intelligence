@@ -111,6 +111,11 @@ The live Supabase schema is authoritative. Update `docs/01_architecture/schema.m
 Implemented foundation:
 
 - Next.js App Router application in `dashboard/`
+- Owner/administrator Settings includes a unified Integration Setup area for
+  PTS, Textellent, GA4, Meta Business, Eulerity, and MNTN. Each guide explains
+  what information is needed and where to find it. PTS and Textellent retain
+  their Vault-backed forms; other sources remain labeled as assisted setup
+  until tenant-safe self-service secret handoffs are implemented.
 - Shared application context for active studio and common dashboard state
 - Invite-only Supabase Auth foundation with SSR cookie sessions, login,
   password recovery, protected routes, onboarding, logout, owner/admin user

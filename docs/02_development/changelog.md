@@ -8,6 +8,10 @@ This project follows a milestone-based changelog rather than tracking every indi
 
 # Unreleased
 
+- Added a unified Settings integration-onboarding area with status-aware,
+  step-by-step guidance for PTS, Textellent, GA4, Meta Business, Eulerity, and
+  MNTN. Existing encrypted PTS and Textellent forms are embedded in their
+  guides; sources without an approved secret handoff are marked assisted setup.
 - Built disabled n8n workflow `14 - Textellent Low Reservation Class Alerts` with configuration-driven PTS account discovery, per-time-zone dates, preview-before-claim execution, duplicate prevention, privacy-safe completion auditing, and no automatic retries around ambiguous live sends. Hardened the collector to return per-class contact/send failures and to skip live sends with no valid recipients.
 - Added a protected one-time Textellent test form to Automation. Test recipient numbers and messages are sent directly to Textellent and are never persisted or logged by SASHA.
 - Added PTS credential management directly to Organization Settings, including encrypted initialization for legacy mapped accounts and protected credential replacement.

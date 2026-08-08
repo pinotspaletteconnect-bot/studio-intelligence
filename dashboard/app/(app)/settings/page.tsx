@@ -1,8 +1,7 @@
 import { InviteUserForm } from "@/app/(app)/settings/invite-user-form"
 import { AddStudioForm } from "@/app/(app)/settings/add-studio-form"
 import { AuthorizedUsers } from "@/app/(app)/settings/authorized-users"
-import { TextellentConnections } from "@/app/(app)/settings/textellent-connections"
-import { PtsConnections } from "@/app/(app)/settings/pts-connections"
+import { IntegrationSetup } from "@/app/(app)/settings/integration-setup"
 import Link from "next/link"
 import { buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -18,7 +17,7 @@ export default async function SettingsPage() {
     <div className="space-y-6 p-4 md:p-6">
       <div>
         <h1 className="text-2xl font-semibold">Organization settings</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Manage authorized users and review secure data connections.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Set up your workspace, connect data sources securely, and manage authorized users.</p>
       </div>
 
       {canAdminister ? (
@@ -43,20 +42,7 @@ export default async function SettingsPage() {
             <CardHeader><CardTitle>Invite a user</CardTitle></CardHeader>
             <CardContent><InviteUserForm studios={settings.studios} /></CardContent>
           </Card>
-          <Card>
-            <CardHeader><CardTitle>PTS connections</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm leading-6 text-muted-foreground">Save or replace the encrypted PTS login used by scheduled collections and automations. Credentials cannot be viewed after saving.</p>
-              <PtsConnections accounts={settings.ptsAccounts} />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader><CardTitle>Textellent API connections</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm leading-6 text-muted-foreground">Manage encrypted Textellent credentials and document which studios use each connection. Automation rules select these saved connections separately.</p>
-              <TextellentConnections accounts={settings.textellentAccounts} />
-            </CardContent>
-          </Card>
+          <IntegrationSetup ptsAccounts={settings.ptsAccounts} textellentAccounts={settings.textellentAccounts} mappedIntegrationTypes={settings.mappedIntegrationTypes} />
         </>
       ) : null}
 
@@ -72,21 +58,6 @@ export default async function SettingsPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader><CardTitle>Location data connections</CardTitle></CardHeader>
-        <CardContent className="space-y-4 text-sm">
-          <p className="leading-6 text-muted-foreground">
-            Login credentials and API tokens use a one-time encrypted server handoff. The database stores only a secret-manager reference, connection status, and non-sensitive account label. Users can never retrieve the original secret.
-          </p>
-          {settings.integrations.length ? settings.integrations.map((integration) => (
-            <div key={integration.id} className="flex items-center justify-between rounded-lg border p-3">
-              <div><div className="font-medium">{integration.account_label}</div><div className="text-muted-foreground">{integration.integration_type} · {integration.secret_provider}</div></div>
-              <span className="capitalize text-muted-foreground">{integration.connection_status}</span>
-            </div>
-          )) : <p className="rounded-lg border border-dashed p-4 text-muted-foreground">No secure connection references have been added yet.</p>}
-          <p className="text-xs leading-5 text-muted-foreground">Credential entry remains disabled until the production secret-provider handoff is configured and tested.</p>
-        </CardContent>
-      </Card>
     </div>
   )
 }

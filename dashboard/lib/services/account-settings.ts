@@ -6,7 +6,7 @@ export async function getAccountSettings(
   organizationId: number,
   allowedStudioIds: number[]
 ) {
-  const [membershipResult, studioResult, integrationResult, brandResult, ptsAccountResult, textellentAccountResult] =
+  const [membershipResult, studioResult, integrationResult, mappingResult, brandResult, ptsAccountResult, textellentAccountResult] =
     await Promise.all([
       supabase
         .from("organization_memberships")
@@ -28,6 +28,12 @@ export async function getAccountSettings(
         .eq("organization_id", organizationId)
         .order("account_label"),
       supabase
+        .from("studio_integrations")
+        .select("integration_type")
+        .eq("organization_id", organizationId)
+        .in("studio_id", allowedStudioIds)
+        .eq("is_active", true),
+      supabase
         .from("brands")
         .select("id,name")
         .eq("organization_id", organizationId)
@@ -46,7 +52,7 @@ export async function getAccountSettings(
         .order("account_name"),
     ])
 
-  for (const result of [membershipResult, studioResult, integrationResult, brandResult, ptsAccountResult, textellentAccountResult]) {
+  for (const result of [membershipResult, studioResult, integrationResult, mappingResult, brandResult, ptsAccountResult, textellentAccountResult]) {
     if (result.error) throw result.error
   }
 
@@ -98,6 +104,7 @@ export async function getAccountSettings(
     })),
     studios: studioResult.data ?? [],
     integrations: integrationResult.data ?? [],
+    mappedIntegrationTypes: [...new Set((mappingResult.data ?? []).map((item) => item.integration_type))],
     brands: brandResult.data ?? [],
     ptsAccounts: (ptsAccountResult.data ?? []).map((account) => ({
       id: account.id,
