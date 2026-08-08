@@ -9,7 +9,8 @@ viewer. Owners and administrators inherit all active studios in their
 organization; managers and viewers receive explicit studio grants.
 
 An accepted invitation opens the protected onboarding form. The invited user
-creates and confirms a password there before their profile is completed and
+first opens the allowlisted password-setup page, establishes the invitation
+session in their own browser, and creates and confirms a password before their profile is completed and
 their membership changes from `invited` to `active`. The password update is a
 server-only mutation scoped to the identity verified by the invitation session;
 password values are never returned, logged, or stored in application tables.

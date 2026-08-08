@@ -34,6 +34,7 @@ This project follows a milestone-based changelog rather than tracking every indi
 - Fixed resent invited-user setup links so the recovery session belongs to the recipient's browser and opens password creation instead of falling back to login.
 - Simplified verified invited-user password setup to show only new-password and confirmation fields; current credentials remain available solely as an expired-session fallback.
 - Added safe re-invitation for existing invited or suspended organization members, restoring selected permissions and sending a fresh setup link without duplicating the Auth identity.
+- Routed brand-new Supabase invitations through the same allowlisted, recipient-side password setup page used by recovery links instead of the server-only callback.
 
 - Replaced the nested template UI on `/dashboard` with a shell-consistent
   reporting-area landing page. Financial and Customers remain available as

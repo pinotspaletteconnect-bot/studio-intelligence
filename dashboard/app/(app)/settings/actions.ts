@@ -470,7 +470,7 @@ export async function inviteOrganizationUser(
   const { data, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
     parsed.data.email,
     {
-      redirectTo: `${origin}/auth/callback?next=/onboarding`,
+      redirectTo: `${origin}/reset-password`,
       data: { invited_to_organization: access.organizationId },
     }
   )
