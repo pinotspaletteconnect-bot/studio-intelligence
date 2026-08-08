@@ -149,6 +149,14 @@ async function runLowReservationClassAlerts({ targetDate, now = new Date(), exec
         await login(page, credentials);
         const results = [];
         for (const studio of studios) {
+            const localTime = Object.fromEntries(new Intl.DateTimeFormat("en-US", {
+                timeZone: studio.timeZone,
+                hour: "2-digit",
+                minute: "2-digit",
+                hourCycle: "h23",
+            }).formatToParts(now).filter(part => part.type !== "literal").map(part => [part.type, part.value]));
+            const localMinutes = Number(localTime.hour) * 60 + Number(localTime.minute);
+            if (localMinutes < 8 * 60 || localMinutes > 16 * 60) continue;
             const candidates = await calendarCandidates(page, studio, targetDate);
             for (const candidate of candidates) {
                 const count = candidate.reservationCount;

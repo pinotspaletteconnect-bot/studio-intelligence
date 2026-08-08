@@ -2,9 +2,9 @@
   "name": "14 - Textellent Low Reservation Class Alerts",
   "nodes": [
     {
-      "parameters": { "rule": { "interval": [{ "field": "minutes", "minutesInterval": 10 }] } },
+      "parameters": { "rule": { "interval": [{ "field": "minutes", "minutesInterval": 30 }] } },
       "id": "schedule",
-      "name": "Every 10 Minutes",
+      "name": "Every 30 Minutes",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [-900, 0]
@@ -28,7 +28,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const output = [];\nfor (const account of ($json.accounts ?? [])) {\n  const dates = new Set();\n  for (const timeZone of account.timeZones ?? []) {\n    const parts = Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date()).filter(part => part.type !== 'literal').map(part => [part.type, part.value]));\n    dates.add(`${parts.year}-${parts.month}-${parts.day}`);\n  }\n  for (const targetDate of dates) output.push({ json: { ptsAccountId: account.ptsAccountId, targetDate } });\n}\nreturn output;"
+        "jsCode": "const output = [];\nconst now = new Date();\nfor (const account of ($json.accounts ?? [])) {\n  const dates = new Set();\n  for (const timeZone of account.timeZones ?? []) {\n    const parts = Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(now).filter(part => part.type !== 'literal').map(part => [part.type, part.value]));\n    const localMinutes = Number(parts.hour) * 60 + Number(parts.minute);\n    if (localMinutes < 8 * 60 || localMinutes > 16 * 60) continue;\n    dates.add(`${parts.year}-${parts.month}-${parts.day}`);\n  }\n  for (const targetDate of dates) output.push({ json: { ptsAccountId: account.ptsAccountId, targetDate } });\n}\nreturn output;"
       },
       "id": "expand-dates",
       "name": "Expand Account Local Dates",
@@ -158,7 +158,7 @@
   ],
   "pinData": {},
   "connections": {
-    "Every 10 Minutes": { "main": [[{ "node": "Get Active PTS Accounts", "type": "main", "index": 0 }]] },
+    "Every 30 Minutes": { "main": [[{ "node": "Get Active PTS Accounts", "type": "main", "index": 0 }]] },
     "Get Active PTS Accounts": { "main": [[{ "node": "Expand Account Local Dates", "type": "main", "index": 0 }]] },
     "Expand Account Local Dates": { "main": [[{ "node": "Preview Due Classes", "type": "main", "index": 0 }]] },
     "Preview Due Classes": { "main": [[{ "node": "Privacy Safe Candidates", "type": "main", "index": 0 }]] },
