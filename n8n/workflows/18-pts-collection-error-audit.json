@@ -1,0 +1,87 @@
+{
+  "name": "18 - PTS Collection Error Audit",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "9973d9c8-046f-4988-a6c0-20246907fb16",
+      "name": "PTS Workflow Error",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        160,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const event = $input.first().json;\nconst execution = event.execution || {};\nconst executionReference = String(execution.id || '').trim();\nif (!executionReference) {\n  throw new Error('PTS error audit requires an execution reference');\n}\nconst message = String(execution.error?.message || event.error?.message || '').toLowerCase();\nlet category = 'unknown';\nif (/auth|credential|login|password/.test(message)) category = 'authentication';\nelse if (/timeout|timed out/.test(message)) category = 'source_timeout';\nelse if (/502|503|504|bad gateway|unavailable/.test(message)) category = 'source_unavailable';\nelse if (/account|studio target|configuration|mapping/.test(message)) category = 'configuration';\nelse if (/supabase|postgres|warehouse|upsert|rpc/.test(message)) category = 'warehouse';\nelse if (/invalid|validation|missing|required|duplicate|mismatch/.test(message)) category = 'validation';\nreturn [{ json: {\n  executionReference,\n  category,\n  body: {\n    p_execution_reference: executionReference,\n    p_status: 'failed',\n    p_rows_processed: 0,\n    p_error_category: category\n  }\n} }];"
+      },
+      "id": "a354de82-86f0-4c6d-98fd-bdcfa55d8be0",
+      "name": "Sanitize PTS Failure",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hsosjnwjangtqtskofag.supabase.co/rest/v1/rpc/complete_pts_collection_run_by_execution",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "id": "83d43d74-e278-4d34-a32f-daa0b7242860",
+      "name": "Close Failed PTS Audit",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        672,
+        240
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "A32h7eKkq8JEdg0k",
+          "name": "Supabase account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "PTS Workflow Error": {
+      "main": [
+        [
+          {
+            "node": "Sanitize PTS Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sanitize PTS Failure": {
+      "main": [
+        [
+          {
+            "node": "Close Failed PTS Audit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "tags": []
+}

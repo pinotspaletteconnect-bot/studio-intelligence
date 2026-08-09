@@ -1,0 +1,91 @@
+{
+  "name": "17 - PTS Collection Audit RPC",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": []
+        }
+      },
+      "id": "d8324091-5ff8-4af2-9a02-1eebc070b574",
+      "name": "Called by PTS Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        160,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst action = String(input.action || '').trim().toLowerCase();\nconst executionReference = String(input.executionReference || '').trim();\nif (!executionReference || executionReference.length > 160) {\n  throw new Error('PTS audit requires a valid execution reference');\n}\n\nlet url;\nlet body;\nif (action === 'start') {\n  const organizationId = Number(input.organizationId);\n  const accountId = Number(input.accountId);\n  const attemptCount = Number(input.attemptCount ?? 1);\n  if (![organizationId, accountId, attemptCount].every(Number.isSafeInteger) || attemptCount < 1) {\n    throw new Error('PTS audit start identifiers are invalid');\n  }\n  url = 'https://hsosjnwjangtqtskofag.supabase.co/rest/v1/rpc/start_pts_collection_run';\n  body = {\n    p_organization_id: organizationId,\n    p_integration_account_id: accountId,\n    p_workflow_name: String(input.workflowName || '').trim(),\n    p_report_type: String(input.reportType || '').trim(),\n    p_requested_from_date: input.requestedFromDate || null,\n    p_requested_to_date: input.requestedToDate || null,\n    p_execution_reference: executionReference,\n    p_attempt_count: attemptCount\n  };\n} else if (action === 'complete') {\n  const status = String(input.status || '').trim().toLowerCase();\n  const rowsProcessed = Number(input.rowsProcessed ?? 0);\n  if (!['succeeded', 'failed'].includes(status) || !Number.isSafeInteger(rowsProcessed) || rowsProcessed < 0) {\n    throw new Error('PTS audit completion outcome is invalid');\n  }\n  url = 'https://hsosjnwjangtqtskofag.supabase.co/rest/v1/rpc/complete_pts_collection_run_by_execution';\n  body = {\n    p_execution_reference: executionReference,\n    p_status: status,\n    p_rows_processed: rowsProcessed,\n    p_error_category: status === 'succeeded' ? null : String(input.errorCategory || 'unknown').trim().toLowerCase()\n  };\n} else {\n  throw new Error('PTS audit action must be start or complete');\n}\n\nreturn [{ json: { auditAction: action, auditUrl: url, auditBody: body } }];"
+      },
+      "id": "ef343923-24f7-43ea-b22f-4951c71f6587",
+      "name": "Validate Privacy-Safe Audit Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.auditUrl }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.auditBody) }}",
+        "options": {}
+      },
+      "id": "ac4145b2-2be1-4d27-83fc-2d2a303edb67",
+      "name": "Record PTS Collection Audit",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        672,
+        240
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "A32h7eKkq8JEdg0k",
+          "name": "Supabase account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Called by PTS Workflow": {
+      "main": [
+        [
+          {
+            "node": "Validate Privacy-Safe Audit Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Privacy-Safe Audit Request": {
+      "main": [
+        [
+          {
+            "node": "Record PTS Collection Audit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "tags": []
+}

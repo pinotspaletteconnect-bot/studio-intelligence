@@ -431,3 +431,10 @@ same-day St. Matthews class no longer returned six hours later. Migration
 audit fields and start/finish RPCs to `integration_runs`. The RPC contract was
 validated in a rolled-back transaction with zero retained test rows. Shadow
 workflow instrumentation is the next gate.
+
+Migration `20260809190000` is deployed and adds unique PTS execution references
+plus a service-role-only completion RPC for shared success/error handlers.
+Unpublished n8n drafts 17 and 18 provide the reusable audit RPC caller and
+sanitized error handler. They are not scheduled or attached to collectors, so
+production behavior is unchanged. Wiring each shadow to these drafts remains
+the next Phase 5 gate.

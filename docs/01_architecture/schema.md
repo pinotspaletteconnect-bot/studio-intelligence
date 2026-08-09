@@ -21,7 +21,7 @@ This document inventories warehouse objects confirmed by current project documen
 | `brands` | Brand within an organization | Current |
 | `studios` | Individual location | Current |
 | `studio_integrations` | Configuration and external-account mapping per studio | Current |
-| `integration_runs` | Privacy-safe integration execution/audit records; PTS runs support organization, opaque account, report/range, attempt, row-count, execution-reference, and sanitized-error metadata through service-role-only RPCs | Current; PTS audit migration `20260809180000` deployed August 9, 2026 |
+| `integration_runs` | Privacy-safe integration execution/audit records; PTS runs support organization, opaque account, report/range, attempt, row-count, unique execution-reference, and sanitized-error metadata through service-role-only RPCs | Current; PTS audit migrations `20260809180000` and `20260809190000` deployed August 9, 2026 |
 | `pts_integration_accounts` | PTS account metadata and encrypted-secret references; never credential values | Current |
 | `pts_collection_targets` | Service-only PTS account-to-studio collection configuration | Deployed and validated in production August 9, 2026 |
 | `user_profiles` | Auth-user profile, terms acceptance, and onboarding completion | Current; migration `20260805110000` deployed August 5, 2026 |

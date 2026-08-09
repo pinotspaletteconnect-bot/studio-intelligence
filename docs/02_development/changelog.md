@@ -21,6 +21,10 @@
   shadow event keys matched, with one legacy-only same-day class no longer
   returned six hours later. Deployed service-role-only PTS collection audit
   fields and validated start/finish RPCs without retaining test data.
+- Added a unique PTS execution-reference constraint and a service-role-only
+  completion RPC for shared audit handlers. Imported unpublished n8n drafts 17
+  and 18 for validated start/completion calls and sanitized failure handling;
+  neither draft is scheduled or attached to a collector.
 - Completed Phase 3 of the PTS multi-account migration with unpublished,
   write-disabled shadows for upcoming classes, reservations, product sales,
   class sales, and daily sales.

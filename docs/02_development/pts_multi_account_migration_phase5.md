@@ -89,6 +89,22 @@ The functions were exercised inside a rolled-back transaction and left zero
 test rows. Workflow instrumentation is still required before the audit gate is
 fully complete.
 
+Migration `20260809190000_pts_audit_execution_completion.sql` is also deployed.
+It makes each PTS execution reference unique and adds the service-role-only
+`complete_pts_collection_run_by_execution` RPC. The RPC lets a shared n8n
+success or error path close exactly one running audit record without receiving
+credentials, contacts, raw payloads, or raw error text. Its status, row-count,
+and sanitized error-category validation was exercised inside a rolled-back
+transaction and left zero test rows.
+
+Reusable n8n drafts `17 - PTS Collection Audit RPC` and
+`18 - PTS Collection Error Audit` were imported on August 9. Workflow 17
+validates start/completion input and calls the protected audit RPCs. Workflow
+18 maps n8n failures to the approved fixed error categories before closing an
+audit by opaque execution reference. Both remain unpublished, have no schedule,
+and are not attached to any production or shadow collector. Importing these
+drafts does not complete the instrumentation gate.
+
 ## Phase 5 gates
 
 - [x] Publish dispatcher and shadow definitions with schedules and writers off.
@@ -99,6 +115,8 @@ fully complete.
   the legacy workflow for the same snapshot date.
 - [x] Deploy and validate the privacy-safe account-level audit schema and RPC
   contract.
+- [x] Import reusable start/completion and sanitized-error audit workflows as
+  unpublished, unattached drafts.
 - [ ] Instrument each shadow's start, success, and sanitized failure paths with
   the audit RPC contract.
 - [ ] Document exact live schedules immediately before each cutover.
