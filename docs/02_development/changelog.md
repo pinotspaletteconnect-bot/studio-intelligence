@@ -8,6 +8,10 @@ This project follows a milestone-based changelog rather than tracking every indi
 
 # Unreleased
 
+- Restored Product Sales collection after multi-account studio validation began
+  requiring a time zone by adding the four legacy pilot studios' canonical time
+  zones to the Product Sales collector defaults and covering them with a
+  regression test.
 - Added a unified Settings integration-onboarding area with status-aware,
   step-by-step guidance for PTS, Textellent, GA4, Meta Business, Eulerity, and
   MNTN. Existing encrypted PTS and Textellent forms are embedded in their

@@ -10,10 +10,34 @@ const { parseNonClassSales } = require("../../services/ptsParser");
 
 const PTS_URL = "https://admin.pinotspalette.com";
 const DEFAULT_STUDIOS = [
-    { studioId: 1, code: "STM", locationId: "19", locationName: "St. Matthews" },
-    { studioId: 2, code: "SN", locationId: "228", locationName: "Short North" },
-    { studioId: 3, code: "GIL", locationId: "198", locationName: "Gilbert" },
-    { studioId: 4, code: "JEF", locationId: "243", locationName: "Jeffersonville" }
+    {
+        studioId: 1,
+        code: "STM",
+        locationId: "19",
+        locationName: "St. Matthews",
+        timeZone: "America/New_York"
+    },
+    {
+        studioId: 2,
+        code: "SN",
+        locationId: "228",
+        locationName: "Short North",
+        timeZone: "America/New_York"
+    },
+    {
+        studioId: 3,
+        code: "GIL",
+        locationId: "198",
+        locationName: "Gilbert",
+        timeZone: "America/Phoenix"
+    },
+    {
+        studioId: 4,
+        code: "JEF",
+        locationId: "243",
+        locationName: "Jeffersonville",
+        timeZone: "America/New_York"
+    }
 ];
 
 function configuredStudios() {
@@ -644,5 +668,6 @@ async function parsePtsProductSalesUpload({ file, studioCode }) {
 module.exports = {
     normalizeProductRows,
     parsePtsProductSalesUpload,
+    requestedStudios,
     runPtsProductSalesReport
 };
