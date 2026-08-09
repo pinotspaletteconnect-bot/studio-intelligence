@@ -57,15 +57,50 @@ Use the lowest-risk validated paths first and Upcoming Classes last:
 Only one workflow may be in supervised cutover at a time. A failure returns the
 system to the unchanged legacy schedule before further work.
 
+## Upcoming Classes reconciliation
+
+The August 9 legacy execution at 5:30 AM was compared with the bounded shadow
+execution at 11:15 AM:
+
+| Studio ID | Legacy rows | Shadow rows | Shadow-only keys | Legacy-only keys |
+| ---: | ---: | ---: | ---: | ---: |
+| 1 | 128 | 128 | 0 | 0 |
+| 2 | 218 | 218 | 0 | 0 |
+| 3 | 225 | 224 | 0 | 1 |
+| 4 | 99 | 99 | 0 | 0 |
+| **Total** | **670** | **669** | **0** | **1** |
+
+All 669 shadow event keys existed in the legacy output. The one legacy-only row
+was St. Matthews' same-day `Country Drive` class, which was no longer returned
+by PTS six hours later. Representative identity, date, painting, room, type,
+and capacity fields matched. Seats and revenue increased on several shared
+events, consistent with legitimate bookings between the two collection times.
+
+## Audit foundation
+
+Migration `20260809180000_pts_collection_run_auditing.sql` is deployed. It
+extends `integration_runs` with organization, opaque PTS account, workflow,
+report, requested-range, attempt, execution-reference, and sanitized error
+category fields. Service-role-only `start_pts_collection_run` and
+`finish_pts_collection_run` functions validate tenant/account ownership and
+never accept credentials, contacts, raw payloads, or raw error text.
+
+The functions were exercised inside a rolled-back transaction and left zero
+test rows. Workflow instrumentation is still required before the audit gate is
+fully complete.
+
 ## Phase 5 gates
 
 - [x] Publish dispatcher and shadow definitions with schedules and writers off.
 - [x] Pass write-disabled parity collection for 05B, 06B, 07B, and 13B.
 - [x] Implement bounded sequential work for 12B without shortening its horizon.
 - [x] Pass 12B with its writer disabled: four studio results in 2m 48s.
-- [ ] Reconcile 12B row counts and representative records against the legacy
-  workflow for the same snapshot date.
-- [ ] Add privacy-safe account-level collection auditing.
+- [x] Reconcile 12B row counts, event keys, and representative records against
+  the legacy workflow for the same snapshot date.
+- [x] Deploy and validate the privacy-safe account-level audit schema and RPC
+  contract.
+- [ ] Instrument each shadow's start, success, and sanitized failure paths with
+  the audit RPC contract.
 - [ ] Document exact live schedules immediately before each cutover.
 - [ ] Cut over each workflow individually with fresh approval and rollback
   verification.

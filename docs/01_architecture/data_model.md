@@ -43,6 +43,11 @@ Current configuration entities:
 
 Expected future configuration may include credential references, feature flags, schedules, permissions, and notification rules. Secret values should remain in the appropriate secret manager/environment rather than ordinary warehouse tables or Git.
 
+PTS collection auditing extends `integration_runs` at the account/report level.
+It stores operational metadata and sanitized outcomes only. PTS usernames and
+passwords remain in Supabase Vault; audit rows must never contain credentials,
+reservation contacts, raw source payloads, or raw error messages.
+
 Dashboard access is invite-only. Membership roles are owner, administrator,
 manager, and viewer. Owners and administrators inherit active organization
 studios; managers and viewers require explicit studio grants. Integration

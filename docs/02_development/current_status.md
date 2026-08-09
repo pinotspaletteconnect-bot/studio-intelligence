@@ -423,3 +423,11 @@ The dispatcher and five shadow definitions are now published in n8n for durable
 versioning. Their inherited schedules and warehouse writers remain deactivated,
 so production workflows and warehouse loading are still unchanged. Phase 5 is
 the controlled reliability and cutover phase.
+
+The August 9 Upcoming Classes reconciliation found 669 shadow rows versus 670
+legacy rows. All shadow keys matched legacy; the sole legacy-only record was a
+same-day St. Matthews class no longer returned six hours later. Migration
+`20260809180000` is deployed and adds service-role-only, privacy-safe PTS run
+audit fields and start/finish RPCs to `integration_runs`. The RPC contract was
+validated in a rolled-back transaction with zero retained test rows. Shadow
+workflow instrumentation is the next gate.

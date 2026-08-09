@@ -17,6 +17,10 @@
   interval. The write-disabled validation returned all four studio results in
   2m 48s, and the validated definition was published with its schedule and
   warehouse writer still deactivated.
+- Reconciled Upcoming Classes against the same-day legacy snapshot: all 669
+  shadow event keys matched, with one legacy-only same-day class no longer
+  returned six hours later. Deployed service-role-only PTS collection audit
+  fields and validated start/finish RPCs without retaining test data.
 - Completed Phase 3 of the PTS multi-account migration with unpublished,
   write-disabled shadows for upcoming classes, reservations, product sales,
   class sales, and daily sales.
