@@ -58,6 +58,13 @@ Meta Ads and Page Insights share the authentication and Graph API foundation in 
 | Organic social content/creative ingestion beyond current Page Insights | Planned |
 | MNTN Connected TV | Active for Gilbert, Louisville/St. Matthews, and Short North; published n8n workflow refreshes the prior 35 days daily at 5:15 AM |
 
+The unpublished workflow `15 - PTS Multi-Account Shadow Dispatcher`
+(`m9v7NXpkX9SDulqa`) is the validated Phase 2 foundation for configuration-driven
+PTS collection. Its August 9, 2026 manual test read four active
+`pts_collection_targets` rows and emitted one account job. It has no schedule,
+does not call PTS, does not retrieve secrets, and does not write warehouse data.
+Production workflows 05, 06, 07, 12, and 13 remain unchanged.
+
 ## Warehouse
 
 ### Configuration

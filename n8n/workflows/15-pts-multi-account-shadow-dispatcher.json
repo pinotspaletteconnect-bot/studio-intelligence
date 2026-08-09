@@ -1,0 +1,109 @@
+{
+  "name": "15 - PTS Multi-Account Shadow Dispatcher",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "4952bb7c-4ef4-48c8-a27b-a73bc52a8ce5",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        160,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": []
+        }
+      },
+      "id": "301c8da3-2674-41a7-8789-b8451c5d86ab",
+      "name": "Called by Shadow Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        160,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://hsosjnwjangtqtskofag.supabase.co/rest/v1/pts_collection_targets?select=organization_id,account_id,brand_id,studio_id,studio_code,studio_name,timezone,pts_location_id,reports&order=account_id.asc,studio_id.asc",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "options": {}
+      },
+      "id": "1e938903-a95b-451b-b5fe-62c420a7faf0",
+      "name": "Get Active PTS Collection Targets",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        416,
+        240
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "A32h7eKkq8JEdg0k",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const targets = $input.all().map(item => item.json);\n\nif (targets.length === 0) {\n  throw new Error('No active PTS collection targets were returned');\n}\n\nconst required = ['organization_id', 'account_id', 'brand_id', 'studio_id', 'studio_code', 'studio_name', 'timezone', 'pts_location_id'];\nconst grouped = new Map();\nconst seenStudios = new Set();\n\nfor (const target of targets) {\n  const missing = required.filter(field => target[field] === null || target[field] === undefined || String(target[field]).trim() === '');\n  if (missing.length) {\n    throw new Error(`Incomplete PTS collection target for studio ${target.studio_id ?? 'unknown'}: ${missing.join(', ')}`);\n  }\n\n  const accountId = Number(target.account_id);\n  const organizationId = Number(target.organization_id);\n  const brandId = Number(target.brand_id);\n  const studioId = Number(target.studio_id);\n  if (![accountId, organizationId, brandId, studioId].every(Number.isSafeInteger)) {\n    throw new Error(`Invalid numeric PTS target identifiers for studio ${target.studio_id}`);\n  }\n\n  const studioKey = `${organizationId}:${studioId}`;\n  if (seenStudios.has(studioKey)) {\n    throw new Error(`Studio ${studioId} is mapped to more than one active PTS account`);\n  }\n  seenStudios.add(studioKey);\n\n  const existing = grouped.get(accountId);\n  if (existing && existing.organizationId !== organizationId) {\n    throw new Error(`PTS account ${accountId} crosses organization boundaries`);\n  }\n\n  const job = existing ?? {\n    dispatcherVersion: 1,\n    organizationId,\n    accountId,\n    studioTargets: []\n  };\n\n  job.studioTargets.push({\n    studioId,\n    brandId,\n    studioCode: String(target.studio_code),\n    studioName: String(target.studio_name),\n    timezone: String(target.timezone),\n    ptsLocationId: String(target.pts_location_id),\n    reports: target.reports && typeof target.reports === 'object' ? target.reports : {}\n  });\n  grouped.set(accountId, job);\n}\n\nreturn [...grouped.values()]\n  .sort((a, b) => a.accountId - b.accountId)\n  .map(job => ({\n    json: {\n      ...job,\n      studioTargets: job.studioTargets.sort((a, b) => a.studioId - b.studioId),\n      studioCount: job.studioTargets.length\n    }\n  }));"
+      },
+      "id": "b22d96c9-bbe3-413e-a9fb-37e2c66f802a",
+      "name": "Validate and Group by PTS Account",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        240
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Active PTS Collection Targets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Called by Shadow Workflow": {
+      "main": [
+        [
+          {
+            "node": "Get Active PTS Collection Targets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Active PTS Collection Targets": {
+      "main": [
+        [
+          {
+            "node": "Validate and Group by PTS Account",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "tags": []
+}

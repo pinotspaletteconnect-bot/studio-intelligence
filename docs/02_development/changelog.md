@@ -1,5 +1,14 @@
 # Studio Intelligence Changelog
 
+## August 9, 2026
+
+- Added unpublished n8n workflow `15 - PTS Multi-Account Shadow Dispatcher`
+  (`m9v7NXpkX9SDulqa`). It reads the service-only
+  `pts_collection_targets` view, validates tenant/account/studio mappings, and
+  emits one secret-free job per PTS account. A manual read-only validation
+  grouped four active studio targets into one account job. No production PTS
+  workflow, schedule, collector request, or warehouse write was changed.
+
 All notable changes to Studio Intelligence will be documented in this file.
 
 This project follows a milestone-based changelog rather than tracking every individual commit.
