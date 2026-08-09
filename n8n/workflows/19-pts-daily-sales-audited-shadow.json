@@ -1,0 +1,152 @@
+{
+  "name": "19 - PTS Daily Sales Audited Shadow",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "8cd2f698-0f9a-4499-b590-b8e7a64e18c2",
+      "name": "Called by Shadow Dispatcher",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [160, 240]
+    },
+    {
+      "parameters": {
+        "jsCode": "const job = $input.first().json;\nconst organizationId = Number(job.organizationId);\nconst accountId = Number(job.accountId);\nif (![organizationId, accountId].every(Number.isSafeInteger)) {\n  throw new Error('Daily Sales audit job identifiers are invalid');\n}\nif (!Array.isArray(job.studioTargets) || job.studioTargets.length === 0) {\n  throw new Error('Daily Sales audit job has no studio targets');\n}\nlet reportDate = String(job.reportDate || '').trim();\nif (!/^\\d{4}-\\d{2}-\\d{2}$/.test(reportDate)) {\n  const d = new Date();\n  d.setUTCDate(d.getUTCDate() - 1);\n  reportDate = d.toISOString().slice(0, 10);\n}\nreturn [{ json: {\n  action: 'start',\n  organizationId,\n  accountId,\n  workflowName: '05B - PTS Daily Sales Multi-Account',\n  reportType: 'daily_sales',\n  requestedFromDate: reportDate,\n  requestedToDate: reportDate,\n  executionReference: String($execution.id),\n  attemptCount: 1,\n  collectorJob: { ...job, reportDate }\n} }];"
+      },
+      "id": "23017e33-244b-4f6f-9bca-9bb945f95d66",
+      "name": "Prepare Audit Start",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [400, 240]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "Q7LOZMpNaukLKPWR",
+          "mode": "list",
+          "cachedResultName": "17 - PTS Collection Audit RPC"
+        },
+        "workflowInputs": {
+          "mappingMode": "passThrough",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "ec0e6a69-fc72-4cdb-bb24-a97430d3f99e",
+      "name": "Start Collection Audit",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [640, 240]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: $('Prepare Audit Start').first().json.collectorJob }];"
+      },
+      "id": "a7d1d0c1-22a6-4d93-8920-dcc1d6f8f177",
+      "name": "Restore Collector Job",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 240]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "qavPSqIYA8fxlVyO",
+          "mode": "list",
+          "cachedResultName": "05B - PTS Daily Sales Multi-Account"
+        },
+        "workflowInputs": {
+          "mappingMode": "passThrough",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "605f33dc-25f6-43d7-bbe0-5fcc6242ca1c",
+      "name": "Run 05B Daily Sales",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [1120, 240]
+    },
+    {
+      "parameters": {
+        "jsCode": "const output = $input.all();\nlet rowsProcessed = 0;\nfor (const item of output) {\n  if (Array.isArray(item.json?.rows)) rowsProcessed += item.json.rows.length;\n  else rowsProcessed += 1;\n}\nreturn [{ json: {\n  action: 'complete',\n  executionReference: String($execution.id),\n  status: 'succeeded',\n  rowsProcessed\n} }];"
+      },
+      "id": "a41f44a7-caa0-418c-9f65-bdf56705adb0",
+      "name": "Prepare Audit Success",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1360, 240]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "Q7LOZMpNaukLKPWR",
+          "mode": "list",
+          "cachedResultName": "17 - PTS Collection Audit RPC"
+        },
+        "workflowInputs": {
+          "mappingMode": "passThrough",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "ecdf2703-6846-448e-9365-17f350981148",
+      "name": "Complete Collection Audit",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [1600, 240]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Called by Shadow Dispatcher": {
+      "main": [[{"node": "Prepare Audit Start", "type": "main", "index": 0}]]
+    },
+    "Prepare Audit Start": {
+      "main": [[{"node": "Start Collection Audit", "type": "main", "index": 0}]]
+    },
+    "Start Collection Audit": {
+      "main": [[{"node": "Restore Collector Job", "type": "main", "index": 0}]]
+    },
+    "Restore Collector Job": {
+      "main": [[{"node": "Run 05B Daily Sales", "type": "main", "index": 0}]]
+    },
+    "Run 05B Daily Sales": {
+      "main": [[{"node": "Prepare Audit Success", "type": "main", "index": 0}]]
+    },
+    "Prepare Audit Success": {
+      "main": [[{"node": "Complete Collection Audit", "type": "main", "index": 0}]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "errorWorkflow": "xg4k06KztnQgqi8F"
+  },
+  "tags": []
+}

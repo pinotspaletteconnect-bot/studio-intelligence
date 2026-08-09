@@ -1,0 +1,45 @@
+{
+  "name": "20 - PTS Daily Sales Audit Validation Runner",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "8956c3fc-b172-453b-8fc2-3e12602e1df1",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [160, 240]
+    },
+    {
+      "parameters": {
+        "workflowId": {"__rl": true, "value": "m9v7NXpkX9SDulqa", "mode": "list", "cachedResultName": "15 - PTS Multi-Account Shadow Dispatcher"},
+        "workflowInputs": {"mappingMode": "passThrough", "value": {}, "matchingColumns": [], "schema": [], "attemptToConvertTypes": false, "convertFieldsToString": true},
+        "options": {"waitForSubWorkflow": true}
+      },
+      "id": "179044e0-db5b-48fa-b428-a65cad157f4f",
+      "name": "Get PTS Account Jobs",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [400, 240]
+    },
+    {
+      "parameters": {
+        "workflowId": {"__rl": true, "value": "BTxGxhZu3K2tUdB3", "mode": "list", "cachedResultName": "19 - PTS Daily Sales Audited Shadow"},
+        "workflowInputs": {"mappingMode": "passThrough", "value": {}, "matchingColumns": [], "schema": [], "attemptToConvertTypes": false, "convertFieldsToString": true},
+        "options": {"waitForSubWorkflow": true}
+      },
+      "id": "4d995e23-8be2-468d-8969-1b515c771fda",
+      "name": "Run Audited Daily Sales Shadow",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [640, 240]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Manual Trigger": {"main": [[{"node": "Get PTS Account Jobs", "type": "main", "index": 0}]]},
+    "Get PTS Account Jobs": {"main": [[{"node": "Run Audited Daily Sales Shadow", "type": "main", "index": 0}]]}
+  },
+  "active": false,
+  "settings": {"executionOrder": "v1", "binaryMode": "separate", "availableInMCP": false},
+  "tags": []
+}

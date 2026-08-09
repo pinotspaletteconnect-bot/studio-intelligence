@@ -25,6 +25,11 @@
   completion RPC for shared audit handlers. Imported unpublished n8n drafts 17
   and 18 for validated start/completion calls and sanitized failure handling;
   neither draft is scheduled or attached to a collector.
+- Published trigger-only audit workflows 17 and 18 without schedules or PTS
+  credential access. Added unpublished workflows 19 and 20 to wrap and manually
+  validate the write-disabled 05B shadow. The first audited run completed for
+  all four studios and persisted a succeeded, privacy-safe execution record;
+  production workflow 05 and all business-table writers remain unchanged.
 - Completed Phase 3 of the PTS multi-account migration with unpublished,
   write-disabled shadows for upcoming classes, reservations, product sales,
   class sales, and daily sales.

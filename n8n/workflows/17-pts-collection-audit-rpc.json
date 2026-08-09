@@ -3,9 +3,7 @@
   "nodes": [
     {
       "parameters": {
-        "workflowInputs": {
-          "values": []
-        }
+        "inputSource": "passthrough"
       },
       "id": "d8324091-5ff8-4af2-9a02-1eebc070b574",
       "name": "Called by PTS Workflow",

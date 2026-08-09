@@ -434,7 +434,10 @@ workflow instrumentation is the next gate.
 
 Migration `20260809190000` is deployed and adds unique PTS execution references
 plus a service-role-only completion RPC for shared success/error handlers.
-Unpublished n8n drafts 17 and 18 provide the reusable audit RPC caller and
-sanitized error handler. They are not scheduled or attached to collectors, so
-production behavior is unchanged. Wiring each shadow to these drafts remains
-the next Phase 5 gate.
+Published trigger-only n8n workflows 17 and 18 now provide the reusable audit
+RPC caller and sanitized error handler. Neither has a schedule or access to PTS
+credentials. Unpublished workflows 19 and 20 wrap and manually validate the
+unchanged, write-disabled 05B shadow. The first audited run succeeded in 51.9
+seconds and persisted a completed, privacy-safe four-studio audit record for
+August 8 without changing business tables. A controlled post-start failure test
+is still required before advancing 05B toward supervised cutover.

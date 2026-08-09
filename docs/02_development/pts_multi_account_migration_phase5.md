@@ -97,13 +97,25 @@ credentials, contacts, raw payloads, or raw error text. Its status, row-count,
 and sanitized error-category validation was exercised inside a rolled-back
 transaction and left zero test rows.
 
-Reusable n8n drafts `17 - PTS Collection Audit RPC` and
+Reusable n8n workflows `17 - PTS Collection Audit RPC` and
 `18 - PTS Collection Error Audit` were imported on August 9. Workflow 17
 validates start/completion input and calls the protected audit RPCs. Workflow
 18 maps n8n failures to the approved fixed error categories before closing an
-audit by opaque execution reference. Both remain unpublished, have no schedule,
-and are not attached to any production or shadow collector. Importing these
-drafts does not complete the instrumentation gate.
+audit by opaque execution reference. Both are published so n8n can call them,
+but neither has a schedule or access to PTS credentials. Workflow 19 is an
+unpublished wrapper around the unchanged, write-disabled 05B shadow; workflow
+20 is its unpublished manual validation runner. The 05B production workflow,
+legacy schedule, and warehouse routing remain unchanged.
+
+The August 9 audited 05B validation completed successfully in 51.9 seconds.
+The dispatcher returned the configured account job, the Vault-backed collector
+returned four studio outputs, and the deactivated 05B writer prevented business
+table changes. `integration_runs` retained one privacy-safe record for account
+1 and organization 1, report date August 8, status `succeeded`, four processed
+studio outputs, one attempt, execution reference `103452`, and no error
+category. Workflow 19 is configured to use workflow 18 for sanitized failures;
+an intentional post-start failure test is still required before the 05B audit
+gate is complete.
 
 ## Phase 5 gates
 
@@ -116,7 +128,11 @@ drafts does not complete the instrumentation gate.
 - [x] Deploy and validate the privacy-safe account-level audit schema and RPC
   contract.
 - [x] Import reusable start/completion and sanitized-error audit workflows as
-  unpublished, unattached drafts.
+  trigger-only workflows without schedules or PTS credential access.
+- [x] Pass one write-disabled 05B audited collection and verify its persisted
+  success record.
+- [ ] Execute a controlled post-start 05B failure and verify workflow 18 closes
+  the running record with only a sanitized error category.
 - [ ] Instrument each shadow's start, success, and sanitized failure paths with
   the audit RPC contract.
 - [ ] Document exact live schedules immediately before each cutover.
