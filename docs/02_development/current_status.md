@@ -464,3 +464,9 @@ unscheduled for rollback. Replacement schedules match the live production
 times: Product Sales and Class Sales at 8:00 AM and 10:30 AM, Reservations at
 6:00 AM, and Upcoming Classes at 7:30 AM. The complete scheduled-run
 observation and downstream reconciliation remain due August 10.
+
+Phase 6 operational validation started August 9. It owns the first complete
+scheduled-run reconciliation, automatic audit verification, downstream
+dashboard checks, and the new-studio tenant-isolation test. The exact run order
+and rollback gates are documented in
+`docs/02_development/pts_multi_account_migration_phase6.md`.

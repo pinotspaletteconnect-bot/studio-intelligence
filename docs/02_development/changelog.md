@@ -10,6 +10,9 @@
 - Published replacement schedules at the exact live times: Product Sales and
   Class Sales at 8:00 AM and 10:30 AM, Reservations at 6:00 AM, and Upcoming
   Classes at 7:30 AM. The first complete scheduled-run review is due August 10.
+- Started Phase 6 operational validation with an ordered August 10 run-review
+  gate, per-feed rollback criteria, automatic audit checks, downstream
+  reconciliation, and a new-studio tenant-isolation test.
 - Started Phase 4 PTS multi-account parity validation: captured current
   production workflow exports and warehouse counts, created unpublished manual
   runner 16, verified the protected broker-token configuration, added the
