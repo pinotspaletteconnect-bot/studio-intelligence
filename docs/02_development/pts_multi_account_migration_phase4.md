@@ -78,7 +78,7 @@ shadow warehouse writer remained deactivated.
 | 05B Daily Sales | Passed | Returned the expected bulk summary payload for all four configured studios. |
 | 06B Product Sales | Passed | Collector and transformation completed with the writer disabled. |
 | 07B Class Sales | Passed | Collector and transformation completed with 151 transformed items. |
-| 12B Upcoming Classes | Blocked | The single 90-day request exceeded the Railway/PTS service window and returned a bad gateway response. It must be split into bounded sequential date slices before parity can pass. |
+| 12B Upcoming Classes | Passed after revision | The original four-studio request exceeded the service window. Phase 5 changed it to preserve the same 90-day horizon while requesting one studio at a time with a two-second batch interval. The write-disabled rerun returned all four studio results in 2m 48s. |
 | 13B Reservations | Passed | The manual runner completed with four transformed items and the warehouse writer disabled. |
 
 The 12B result is a collection-window problem, not a Vault or credential-broker
@@ -96,7 +96,7 @@ the current sequential account execution model and add bounded date slicing.
 - [x] Validate the Vault credential contract for account 1.
 - [x] Run Daily Sales, Product Sales, and Class Sales sequentially with all
   warehouse writers disabled.
-- [ ] Split Upcoming Classes into bounded sequential date slices and rerun it.
+- [x] Split Upcoming Classes into bounded sequential studio work units and rerun it.
 - [x] Run Reservations with its warehouse writer disabled.
 - [ ] Add durable account-level collection audit records and bounded retry
   behavior after parity is proven.

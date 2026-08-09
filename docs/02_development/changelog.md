@@ -12,6 +12,11 @@
   with four transformed items. The dispatcher and five shadow definitions were
   published for durable versioning while every shadow schedule and warehouse
   writer remained deactivated. Production workflows remain unchanged.
+- Started Phase 5 reliability work by revising Upcoming Classes to preserve its
+  90-day horizon while collecting one studio at a time with a two-second batch
+  interval. The write-disabled validation returned all four studio results in
+  2m 48s, and the validated definition was published with its schedule and
+  warehouse writer still deactivated.
 - Completed Phase 3 of the PTS multi-account migration with unpublished,
   write-disabled shadows for upcoming classes, reservations, product sales,
   class sales, and daily sales.

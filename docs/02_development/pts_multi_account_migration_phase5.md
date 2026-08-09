@@ -17,7 +17,9 @@ gate is satisfied.
 
 1. Divide Upcoming Classes' 90-day, multi-studio workload into bounded,
    sequential units so no PTS downloads overlap and no individual Railway
-   request approaches the gateway limit.
+   request approaches the gateway limit. **Completed:** 12B now emits one work
+   item per configured studio and its HTTP node processes one item per batch
+   with a two-second interval.
 2. Preserve the complete 90-day horizon and merge results before the existing
    replace-style snapshot write.
 3. Add bounded retries only for failures proven safe to repeat. Never retry an
@@ -59,8 +61,10 @@ system to the unchanged legacy schedule before further work.
 
 - [x] Publish dispatcher and shadow definitions with schedules and writers off.
 - [x] Pass write-disabled parity collection for 05B, 06B, 07B, and 13B.
-- [ ] Implement bounded sequential work for 12B without shortening its horizon.
-- [ ] Pass and reconcile 12B with its writer disabled.
+- [x] Implement bounded sequential work for 12B without shortening its horizon.
+- [x] Pass 12B with its writer disabled: four studio results in 2m 48s.
+- [ ] Reconcile 12B row counts and representative records against the legacy
+  workflow for the same snapshot date.
 - [ ] Add privacy-safe account-level collection auditing.
 - [ ] Document exact live schedules immediately before each cutover.
 - [ ] Cut over each workflow individually with fresh approval and rollback

@@ -414,7 +414,10 @@ With every shadow writer disabled, 05B Daily Sales, 06B Product Sales, and 07B
 Class Sales passed sequential parity collection. 13B Reservations also passed
 with four transformed items. 12B Upcoming Classes exposed a bounded-workload
 issue: its 90-day, four-studio request exceeded the Railway/PTS service window.
-It must be divided into smaller sequential work units before rerunning.
+It was revised to emit one work item per configured studio and process one HTTP
+request per batch with a two-second interval. The write-disabled rerun preserved
+the full 90-day horizon, returned all four studio results, and completed in 2m
+48s.
 
 The dispatcher and five shadow definitions are now published in n8n for durable
 versioning. Their inherited schedules and warehouse writers remain deactivated,
