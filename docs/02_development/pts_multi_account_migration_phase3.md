@@ -63,8 +63,7 @@ not a runnable multi-account schedule.
 - [x] Convert 05B to the account-job contract without production writes.
 - [x] Establish the one-account/one-shadow-execution orchestration boundary.
 - [x] Keep all shadows unpublished and disconnected from a live parent schedule.
-- [ ] Capture current workflow JSON exports and point-in-time warehouse totals
+- [x] Capture current workflow JSON exports and point-in-time warehouse totals
   immediately before the first PTS shadow execution.
 
-The remaining unchecked item is the entry gate for Phase 4, not unfinished
-Phase 3 work.
+The entry gate was completed at the start of Phase 4 on August 9, 2026.

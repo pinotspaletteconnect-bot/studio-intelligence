@@ -402,3 +402,21 @@ remain unchanged.
 Do not execute or publish the shadows until Phase 4 begins with current workflow
 exports and a point-in-time warehouse baseline. Phase 4 owns collector parity
 tests, per-account audit persistence, retry behavior, and controlled cutover.
+
+Phase 4 began August 9, 2026. Production workflow exports and warehouse counts
+were captured, and unpublished workflow 16 was created as a manual single-
+account parity runner. After approval, matching protected broker tokens were
+verified on the dashboard and collector, the missing broker URL was added to
+the collector, and Railway redeployed successfully. PTS credentials remain in
+Supabase Vault; n8n receives only account IDs and studio mappings.
+
+With every shadow writer disabled, 05B Daily Sales, 06B Product Sales, and 07B
+Class Sales passed sequential parity collection. 13B Reservations also passed
+with four transformed items. 12B Upcoming Classes exposed a bounded-workload
+issue: its 90-day, four-studio request exceeded the Railway/PTS service window.
+It must be divided into smaller sequential work units before rerunning.
+
+The dispatcher and five shadow definitions are now published in n8n for durable
+versioning. Their inherited schedules and warehouse writers remain deactivated,
+so production workflows and warehouse loading are still unchanged. Phase 5 is
+the controlled reliability and cutover phase.

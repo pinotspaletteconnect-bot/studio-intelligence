@@ -2,6 +2,16 @@
 
 ## August 9, 2026
 
+- Started Phase 4 PTS multi-account parity validation: captured current
+  production workflow exports and warehouse counts, created unpublished manual
+  runner 16, verified the protected broker-token configuration, added the
+  collector's broker URL, and redeployed it. With warehouse writers disabled,
+  Daily Sales, Product Sales, and Class Sales passed sequential collection.
+  Upcoming Classes still requires bounded date slicing because its single
+  90-day request exceeded the Railway/PTS service window. Reservations passed
+  with four transformed items. The dispatcher and five shadow definitions were
+  published for durable versioning while every shadow schedule and warehouse
+  writer remained deactivated. Production workflows remain unchanged.
 - Completed Phase 3 of the PTS multi-account migration with unpublished,
   write-disabled shadows for upcoming classes, reservations, product sales,
   class sales, and daily sales.
