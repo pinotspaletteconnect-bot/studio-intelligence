@@ -14,6 +14,27 @@ organization exposes and collects only its assigned studios.
 
 ## August 10 scheduled-run gate
 
+### Preflight correction completed August 9
+
+Manual preflight exposed that the replacement workflows' local schedule and
+manual entry paths reached their report-date nodes without first obtaining the
+Phase 3 account job. Those paths failed closed with a missing `accountId`,
+`organizationId`, or `studioTargets` error before any collector or warehouse
+write ran.
+
+The live definitions for 05B, 06B, 07B, 13B, and 12B now route every local
+schedule/manual start through workflow 15, `PTS Multi-Account Shadow
+Dispatcher`, before collection. Their `When Executed by Another Workflow`
+paths remain direct because the caller already supplies the validated account
+job. Product Sales also preserves its separate specific-date path by routing
+that input through the dispatcher before its collector.
+
+All five corrected definitions were published and passed supervised live runs
+on August 9. The successful runs verified that the dispatcher supplied the
+configured account and all four current studio targets. Writes use their
+existing upsert/replacement behavior, so the validation reruns did not create a
+second ingestion path.
+
 Observe and reconcile every production execution in schedule order:
 
 1. 13B Reservations at 6:00 AM.

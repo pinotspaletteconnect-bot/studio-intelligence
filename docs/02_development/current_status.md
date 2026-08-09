@@ -465,6 +465,16 @@ times: Product Sales and Class Sales at 8:00 AM and 10:30 AM, Reservations at
 6:00 AM, and Upcoming Classes at 7:30 AM. The complete scheduled-run
 observation and downstream reconciliation remain due August 10.
 
+An August 9 manual preflight then found a trigger-routing defect in the
+replacement definitions: local manual and schedule starts bypassed workflow 15
+and therefore lacked the required account and studio context. The failure
+occurred before collection or warehouse writes. Workflows 05B, 06B, 07B, 13B,
+and 12B were corrected and republished so every local start calls the
+multi-account dispatcher first; externally dispatched starts retain their
+existing account-job path. Supervised post-fix runs of all five workflows
+completed successfully. The August 10 scheduled-run observation remains the
+production continuity gate.
+
 Phase 6 operational validation started August 9. It owns the first complete
 scheduled-run reconciliation, automatic audit verification, downstream
 dashboard checks, and the new-studio tenant-isolation test. The exact run order

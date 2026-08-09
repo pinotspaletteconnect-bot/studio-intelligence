@@ -2,6 +2,12 @@
 
 ## August 9, 2026
 
+- Corrected a replacement-workflow trigger defect discovered during manual
+  preflight. Local schedule/manual starts in 05B, 06B, 07B, 13B, and 12B now
+  call the multi-account dispatcher before their report-date and collection
+  nodes. The original error failed before any PTS collection or warehouse
+  write. All five corrected workflows were published and passed supervised
+  live validation runs.
 - Completed the approved same-day PTS multi-account production cutover for
   06B Product Sales, 07B Class Sales, 13B Reservations, and 12B Upcoming
   Classes after successful account-aware supervised warehouse writes.
