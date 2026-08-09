@@ -124,6 +124,24 @@ with zero rows and the fixed category `validation`; no raw error text or secret
 was stored. Automatic Error Trigger invocation remains a supervised
 production-mode cutover check.
 
+## 05B supervised cutover
+
+The user explicitly approved the 05B cutover on August 9. Before the write,
+the August 8 warehouse baseline was four summary rows, $6,797.34 gross sales,
+$5,840.35 net sales, 161 seats, 19 class-detail rows, and 183 non-class rows.
+The 05B writer was enabled while its schedule remained disabled, and audited
+execution `103479` completed successfully with four studio outputs. Every
+baseline count and total remained identical after the upsert, proving the
+supervised repeat did not create duplicates. The
+`pts_daily_operations_reporting` consumer also returned four studios and the
+same sales and seat totals.
+
+Legacy workflow 05's daily 8:00 AM schedule is now deactivated and the workflow
+is preserved for rollback. 05B's writer and daily 8:00 AM, minute-zero schedule
+are published and active. There was no schedule overlap. The final cutover gate
+is observing the first scheduled 05B execution after 8:00 AM on August 10;
+06B must not advance before that check.
+
 ## Phase 5 gates
 
 - [x] Publish dispatcher and shadow definitions with schedules and writers off.
@@ -144,6 +162,7 @@ production-mode cutover check.
   the audit RPC contract.
 - [ ] Document exact live schedules immediately before each cutover.
 - [ ] Cut over each workflow individually with fresh approval and rollback
-  verification.
+  verification. **05B switched August 9; first scheduled-run observation is
+  pending.**
 - [ ] Confirm the new-account onboarding test collects only its assigned studios
   and exposes no cross-organization data.

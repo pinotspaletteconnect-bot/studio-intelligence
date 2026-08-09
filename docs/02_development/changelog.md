@@ -35,6 +35,11 @@
   as `failed` with zero rows and category `validation`, without retaining raw
   error text or credentials. Added unpublished manual validation workflows 21
   and 22; production schedules and writers remain unchanged.
+- Completed the supervised portion of the approved 05B cutover. Execution
+  `103479` wrote four studios idempotently, preserved every August 8 warehouse
+  count and total, and matched the Operations reporting view. Legacy workflow
+  05 is retained with its 8:00 AM schedule disabled; 05B now owns the active
+  8:00 AM schedule and writer. First scheduled-run observation is pending.
 - Completed Phase 3 of the PTS multi-account migration with unpublished,
   write-disabled shadows for upcoming classes, reservations, product sales,
   class sales, and daily sales.

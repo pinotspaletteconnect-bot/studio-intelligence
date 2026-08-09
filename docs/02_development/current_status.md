@@ -448,3 +448,12 @@ status `failed`, zero rows, and category `validation`; no raw error or secret
 was persisted. Because n8n only invokes Error Trigger workflows automatically
 for production-mode executions, automatic handler invocation remains a
 supervised cutover check. No production schedule or business writer changed.
+
+The user approved the 05B production cutover on August 9. A supervised audited
+write (`103479`) upserted August 8 without changing any warehouse count or
+total: four studios, $6,797.34 gross sales, $5,840.35 net sales, 161 seats, 19
+class-detail rows, and 183 non-class rows. The Operations reporting view matches
+those values. Legacy workflow 05 is preserved with its daily 8:00 AM schedule
+deactivated; 05B now has its writer and matching daily 8:00 AM schedule active.
+The first scheduled 05B execution must be observed on August 10 before work
+advances to 06B.
