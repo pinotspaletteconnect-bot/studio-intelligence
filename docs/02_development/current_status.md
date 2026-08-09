@@ -389,3 +389,16 @@ An integration is not production until all applicable stages are complete and va
 ## Next Handoff
 
 The next session should begin by reading `AGENTS.md`, this file, and the relevant architecture document. Confirm the active Git branch and inspect recent commits before selecting work. The preferred next product task is completing the marketing reporting experience rather than adding another infrastructure pattern.
+
+## PTS Multi-Account Migration Checkpoint
+
+Phase 3 completed on August 9, 2026. Workflows 12B, 13B, 06B, 07B, and 05B
+exist in n8n as unpublished multi-account shadows. Each accepts one validated
+account job from workflow 15, passes `accountId` to the collector, retains the
+configured studio targets, has its inherited schedule disabled, and has its
+final warehouse writer disabled. Production workflows 05, 06, 07, 12, and 13
+remain unchanged.
+
+Do not execute or publish the shadows until Phase 4 begins with current workflow
+exports and a point-in-time warehouse baseline. Phase 4 owns collector parity
+tests, per-account audit persistence, retry behavior, and controlled cutover.

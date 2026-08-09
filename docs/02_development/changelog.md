@@ -2,6 +2,13 @@
 
 ## August 9, 2026
 
+- Completed Phase 3 of the PTS multi-account migration with unpublished,
+  write-disabled shadows for upcoming classes, reservations, product sales,
+  class sales, and daily sales.
+- Added the one-account job contract to each shadow collector request while
+  leaving production schedules and warehouse writers unchanged.
+- Documented the Phase 4 baseline and parity-test gate before any PTS shadow is
+  executed or published.
 - Added unpublished n8n workflow `15 - PTS Multi-Account Shadow Dispatcher`
   (`m9v7NXpkX9SDulqa`). It reads the service-only
   `pts_collection_targets` view, validates tenant/account/studio mappings, and
