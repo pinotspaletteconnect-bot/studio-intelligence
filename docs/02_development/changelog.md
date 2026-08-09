@@ -2,6 +2,14 @@
 
 ## August 9, 2026
 
+- Completed the approved same-day PTS multi-account production cutover for
+  06B Product Sales, 07B Class Sales, 13B Reservations, and 12B Upcoming
+  Classes after successful account-aware supervised warehouse writes.
+- Disabled the corresponding legacy schedules without deleting or rewriting
+  the legacy workflows, preserving an immediate rollback path.
+- Published replacement schedules at the exact live times: Product Sales and
+  Class Sales at 8:00 AM and 10:30 AM, Reservations at 6:00 AM, and Upcoming
+  Classes at 7:30 AM. The first complete scheduled-run review is due August 10.
 - Started Phase 4 PTS multi-account parity validation: captured current
   production workflow exports and warehouse counts, created unpublished manual
   runner 16, verified the protected broker-token configuration, added the

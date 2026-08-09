@@ -72,7 +72,7 @@ explicit zero-row tombstones.
 - The controlled all-studio run loaded 700 unique future class rows through
   late October: 146 St. Matthews, 233 Short North, 215 Gilbert, and 106
   Jeffersonville.
-- Workflow `12 - PTS Upcoming Class Snapshots` is published on the daily 5:30
+- Workflow `12B - PTS Upcoming Classes Multi-Account` is published on the daily 7:30
   AM America/New_York schedule.
 - Same-day replacement and consecutive-day pickup should be rechecked after
   two fresh scheduled snapshots.

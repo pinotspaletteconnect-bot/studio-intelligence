@@ -216,7 +216,7 @@ Implemented foundation:
   is designed for a daily 90-day future Class
   Sales snapshot and exposes current capacity/revenue plus consecutive-day net
   seats and revenue pickup. Published workflow `12 - PTS Upcoming Class
-  Snapshots` runs daily at 5:30 AM America/New_York and replaces the current
+  Snapshots` replacement runs daily at 7:30 AM America/New_York and replaces the current
   snapshot by studio. Its July 31, 2026 validation loaded 700 future classes:
   146 St. Matthews, 233 Short North, 215 Gilbert, and 106 Jeffersonville.
   Consecutive snapshots remain available as class-level net pickup. Exact gross
@@ -455,5 +455,12 @@ total: four studios, $6,797.34 gross sales, $5,840.35 net sales, 161 seats, 19
 class-detail rows, and 183 non-class rows. The Operations reporting view matches
 those values. Legacy workflow 05 is preserved with its daily 8:00 AM schedule
 deactivated; 05B now has its writer and matching daily 8:00 AM schedule active.
-The first scheduled 05B execution must be observed on August 10 before work
-advances to 06B.
+The user subsequently approved a same-day cutover of the remaining validated
+PTS feeds so their first scheduled executions can be tested together on August
+10. Account-aware supervised writes succeeded for 06B Product Sales (36.546s),
+07B Class Sales (2m 19.392s), 13B Reservations (23.55s), and 12B Upcoming
+Classes (2m 35.291s). Legacy workflows 06, 07, 13, and 12 remain published but
+unscheduled for rollback. Replacement schedules match the live production
+times: Product Sales and Class Sales at 8:00 AM and 10:30 AM, Reservations at
+6:00 AM, and Upcoming Classes at 7:30 AM. The complete scheduled-run
+observation and downstream reconciliation remain due August 10.

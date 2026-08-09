@@ -140,7 +140,29 @@ Legacy workflow 05's daily 8:00 AM schedule is now deactivated and the workflow
 is preserved for rollback. 05B's writer and daily 8:00 AM, minute-zero schedule
 are published and active. There was no schedule overlap. The final cutover gate
 is observing the first scheduled 05B execution after 8:00 AM on August 10;
-06B must not advance before that check.
+the remaining scheduled executions will be observed together on August 10.
+
+## Same-day remaining-feed cutover
+
+On August 9, the user approved completing the remaining production cutovers
+before end of day so the complete replacement path could be exercised by the
+August 10 schedules. This explicitly replaced the earlier one-day observation
+gap between feeds. Each feed retained the individual safety sequence: writer
+enabled with the replacement schedule off, account-aware supervised run,
+successful warehouse write, legacy schedule disabled, and replacement
+schedule enabled at the exact live time. Legacy definitions remain published
+and unscheduled for rollback.
+
+| Feed | Supervised result | Production schedule | Legacy state |
+| --- | --- | --- | --- |
+| 06B Product Sales | Succeeded in 36.546s; 183 item rows returned by the warehouse upsert | Daily at 8:00 AM and 10:30 AM | Workflow 06 schedule disabled |
+| 07B Class Sales | Succeeded in 2m 19.392s for the rolling class-sales range | Daily at 8:00 AM and 10:30 AM | Workflow 07 schedule disabled |
+| 13B Reservations | Succeeded in 23.55s; four studio replacement outputs | Daily at 6:00 AM | Workflow 13 schedule disabled |
+| 12B Upcoming Classes | Succeeded in 2m 35.291s using bounded sequential collection | Daily at 7:30 AM | Workflow 12 schedule disabled |
+
+The live Upcoming Classes trigger was 7:30 AM, correcting the stale 5:30 AM
+time in the Phase 1 documentation. The first complete scheduled-run review on
+August 10 remains the final production observation gate.
 
 ## Phase 5 gates
 
@@ -160,9 +182,9 @@ is observing the first scheduled 05B execution after 8:00 AM on August 10;
   sanitizer/RPC path closes the running record with only category `validation`.
 - [ ] Instrument each shadow's start, success, and sanitized failure paths with
   the audit RPC contract.
-- [ ] Document exact live schedules immediately before each cutover.
-- [ ] Cut over each workflow individually with fresh approval and rollback
-  verification. **05B switched August 9; first scheduled-run observation is
-  pending.**
+- [x] Document exact live schedules immediately before each cutover.
+- [x] Cut over each workflow individually with approval and rollback
+  preservation. **05B, 06B, 07B, 13B, and 12B switched August 9; the first
+  complete scheduled-run observation is pending August 10.**
 - [ ] Confirm the new-account onboarding test collects only its assigned studios
   and exposes no cross-organization data.
