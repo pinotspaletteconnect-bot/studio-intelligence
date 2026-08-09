@@ -439,5 +439,12 @@ RPC caller and sanitized error handler. Neither has a schedule or access to PTS
 credentials. Unpublished workflows 19 and 20 wrap and manually validate the
 unchanged, write-disabled 05B shadow. The first audited run succeeded in 51.9
 seconds and persisted a completed, privacy-safe four-studio audit record for
-August 8 without changing business tables. A controlled post-start failure test
-is still required before advancing 05B toward supervised cutover.
+August 8 without changing business tables.
+
+The controlled 05B post-start failure gate is now complete. Manual execution
+`103469` intentionally failed after audit creation and was closed through the
+same sanitizer and protected RPC used by workflow 18. Supabase stores only
+status `failed`, zero rows, and category `validation`; no raw error or secret
+was persisted. Because n8n only invokes Error Trigger workflows automatically
+for production-mode executions, automatic handler invocation remains a
+supervised cutover check. No production schedule or business writer changed.

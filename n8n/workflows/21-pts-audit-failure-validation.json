@@ -1,0 +1,54 @@
+{
+  "name": "21 - PTS Audit Failure Validation",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "b223ce72-f65a-4c8a-a0d7-b4e893cc759c",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [160, 240]
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = new Date(); d.setUTCDate(d.getUTCDate() - 1); const reportDate = d.toISOString().slice(0, 10); return [{ json: { action: 'start', organizationId: 1, accountId: 1, workflowName: '05B - PTS Daily Sales Multi-Account', reportType: 'daily_sales_failure_validation', requestedFromDate: reportDate, requestedToDate: reportDate, executionReference: String($execution.id), attemptCount: 1 } }];"
+      },
+      "id": "42ac47cb-32af-49c5-af17-c482093ca1e8",
+      "name": "Prepare Safe Audit Start",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [400, 240]
+    },
+    {
+      "parameters": {
+        "workflowId": {"__rl": true, "value": "Q7LOZMpNaukLKPWR", "mode": "list", "cachedResultName": "17 - PTS Collection Audit RPC"},
+        "workflowInputs": {"mappingMode": "passThrough", "value": {}, "matchingColumns": [], "schema": [], "attemptToConvertTypes": false, "convertFieldsToString": true},
+        "options": {"waitForSubWorkflow": true}
+      },
+      "id": "76410a72-c946-4c0c-bf36-fd21bba069c2",
+      "name": "Start Validation Audit",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [640, 240]
+    },
+    {
+      "parameters": {
+        "jsCode": "throw new Error('Intentional validation failure: required field missing');"
+      },
+      "id": "508376e2-4873-4d34-b84c-0fd0a2745a95",
+      "name": "Raise Controlled Validation Failure",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 240]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Manual Trigger": {"main": [[{"node": "Prepare Safe Audit Start", "type": "main", "index": 0}]]},
+    "Prepare Safe Audit Start": {"main": [[{"node": "Start Validation Audit", "type": "main", "index": 0}]]},
+    "Start Validation Audit": {"main": [[{"node": "Raise Controlled Validation Failure", "type": "main", "index": 0}]]}
+  },
+  "active": false,
+  "settings": {"executionOrder": "v1", "binaryMode": "separate", "availableInMCP": false, "errorWorkflow": "xg4k06KztnQgqi8F"},
+  "tags": []
+}

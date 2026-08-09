@@ -113,9 +113,16 @@ returned four studio outputs, and the deactivated 05B writer prevented business
 table changes. `integration_runs` retained one privacy-safe record for account
 1 and organization 1, report date August 8, status `succeeded`, four processed
 studio outputs, one attempt, execution reference `103452`, and no error
-category. Workflow 19 is configured to use workflow 18 for sanitized failures;
-an intentional post-start failure test is still required before the 05B audit
-gate is complete.
+category. Workflow 19 is configured to use workflow 18 for sanitized failures.
+
+The controlled post-start failure test created audit execution `103469`, then
+raised an intentional validation error without calling PTS or a business-table
+writer. n8n Error Trigger workflows do not auto-run for editor/manual
+executions, so unpublished workflow 22 exercised the identical sanitizer and
+protected completion RPC used by workflow 18. The record closed as `failed`
+with zero rows and the fixed category `validation`; no raw error text or secret
+was stored. Automatic Error Trigger invocation remains a supervised
+production-mode cutover check.
 
 ## Phase 5 gates
 
@@ -131,8 +138,8 @@ gate is complete.
   trigger-only workflows without schedules or PTS credential access.
 - [x] Pass one write-disabled 05B audited collection and verify its persisted
   success record.
-- [ ] Execute a controlled post-start 05B failure and verify workflow 18 closes
-  the running record with only a sanitized error category.
+- [x] Execute a controlled post-start 05B failure and verify the workflow 18
+  sanitizer/RPC path closes the running record with only category `validation`.
 - [ ] Instrument each shadow's start, success, and sanitized failure paths with
   the audit RPC contract.
 - [ ] Document exact live schedules immediately before each cutover.

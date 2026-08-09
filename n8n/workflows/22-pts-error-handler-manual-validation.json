@@ -1,0 +1,30 @@
+{
+  "name": "22 - PTS Error Handler Manual Validation",
+  "nodes": [
+    {"parameters": {}, "id": "1a6f7022-c683-4a6b-ad66-dcc5af1425e6", "name": "Manual Trigger", "type": "n8n-nodes-base.manualTrigger", "typeVersion": 1, "position": [160, 240]},
+    {
+      "parameters": {
+        "jsCode": "const executionReference = '103469'; const message = 'Intentional validation failure: required field missing'.toLowerCase(); let category = 'unknown'; if (/auth|credential|login|password/.test(message)) category = 'authentication'; else if (/timeout|timed out/.test(message)) category = 'source_timeout'; else if (/502|503|504|bad gateway|unavailable/.test(message)) category = 'source_unavailable'; else if (/account|studio target|configuration|mapping/.test(message)) category = 'configuration'; else if (/supabase|postgres|warehouse|upsert|rpc/.test(message)) category = 'warehouse'; else if (/invalid|validation|missing|required|duplicate|mismatch/.test(message)) category = 'validation'; return [{ json: { body: { p_execution_reference: executionReference, p_status: 'failed', p_rows_processed: 0, p_error_category: category } } }];"
+      },
+      "id": "f0eeb339-2fd0-4d87-8a1e-d2f68b4615de",
+      "name": "Apply Production Failure Sanitizer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [400, 240]
+    },
+    {
+      "parameters": {"method": "POST", "url": "https://hsosjnwjangtqtskofag.supabase.co/rest/v1/rpc/complete_pts_collection_run_by_execution", "authentication": "predefinedCredentialType", "nodeCredentialType": "supabaseApi", "sendBody": true, "specifyBody": "json", "jsonBody": "={{ JSON.stringify($json.body) }}", "options": {}},
+      "id": "5dcf5fe0-d155-47fb-a6d0-1018be2358f4",
+      "name": "Close Controlled Failed Audit",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [640, 240],
+      "credentials": {"supabaseApi": {"id": "A32h7eKkq8JEdg0k", "name": "Supabase account"}}
+    }
+  ],
+  "pinData": {},
+  "connections": {"Manual Trigger": {"main": [[{"node": "Apply Production Failure Sanitizer", "type": "main", "index": 0}]]}, "Apply Production Failure Sanitizer": {"main": [[{"node": "Close Controlled Failed Audit", "type": "main", "index": 0}]]}},
+  "active": false,
+  "settings": {"executionOrder": "v1", "binaryMode": "separate", "availableInMCP": false},
+  "tags": []
+}

@@ -30,6 +30,11 @@
   validate the write-disabled 05B shadow. The first audited run completed for
   all four studios and persisted a succeeded, privacy-safe execution record;
   production workflow 05 and all business-table writers remain unchanged.
+- Completed the controlled 05B audit-failure gate. A post-start intentional
+  validation failure was closed through the production sanitizer/RPC contract
+  as `failed` with zero rows and category `validation`, without retaining raw
+  error text or credentials. Added unpublished manual validation workflows 21
+  and 22; production schedules and writers remain unchanged.
 - Completed Phase 3 of the PTS multi-account migration with unpublished,
   write-disabled shadows for upcoming classes, reservations, product sales,
   class sales, and daily sales.
