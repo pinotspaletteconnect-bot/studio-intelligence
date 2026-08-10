@@ -15,8 +15,13 @@
   latest warehouse business date, expected date, receipt time, row count, and
   represented studios for Daily Sales, Product Sales, Class Sales, Upcoming
   Classes, and Reservations. Added links from the main dashboard and Settings
-  navigation. The production build and targeted lint pass; deployment remains
-  approval-gated.
+  navigation. The production build and targeted lint pass, and the page is now
+  deployed in SASHA.
+- Deployed the account-scoped collector queue and non-blocking PTS Run-button
+  handling. Controlled sequential recovery confirmed August 9 Daily Sales was
+  current, loaded 80 Product Sales rows, and loaded 11 completed-class reporting
+  rows (149 warehouse upsert responses). SASHA then reported all five feeds
+  current with all four studios represented.
 
 ## August 9, 2026
 

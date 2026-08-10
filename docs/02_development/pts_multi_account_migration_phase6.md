@@ -51,13 +51,19 @@ The first production schedule exposed a second, independent reliability issue:
   Chromium collectors had started concurrently at 8:00 AM, contrary to the
   Phase 5 bounded-work rule.
 
-A collector patch is prepared but not yet deployed. It makes Run-button clicks
-explicitly non-blocking while separately observing optional page navigation,
-and introduces an account-scoped queue for every browser-based PTS route.
-Requests for one PTS account now serialize; different PTS accounts may still
-run independently. Queue unit tests cover serialization, independent accounts,
-and recovery after a failed task. Production deployment and recovery runs
-remain approval-gated.
+The collector patch was deployed from the production migration branch on
+August 10. It makes Run-button clicks explicitly non-blocking while separately
+observing optional page navigation, and introduces an account-scoped queue for
+every browser-based PTS route. Requests for one PTS account now serialize;
+different PTS accounts may still run independently. Queue unit tests cover
+serialization, independent accounts, and recovery after a failed task.
+
+Controlled recovery then completed in sequence. Daily Sales was already
+current for August 9 across all four studios. Product Sales completed in 41.073
+seconds and loaded 80 rows. Class Sales completed in 1m 55.777s and its final
+warehouse writer returned 149 upserted records; the August 9 reporting slice
+contains 11 completed-class rows. At 9:57 AM EDT, SASHA reported all five feeds
+current with all four studios represented.
 
 Observe and reconcile every production execution in schedule order:
 
@@ -77,9 +83,9 @@ replacement schedule and re-enabling the preserved legacy schedule.
 ## Remaining gates
 
 - [x] Reconcile all first scheduled replacement executions on August 10.
-- [ ] Deploy and validate the account-scoped collector queue and Run-button
+- [x] Deploy and validate the account-scoped collector queue and Run-button
   navigation correction.
-- [ ] Recover August 9 Daily Sales, Product Sales, and Class Sales after the
+- [x] Recover August 9 Daily Sales, Product Sales, and Class Sales after the
   collector deployment, then reconcile SASHA totals.
 - [ ] Confirm automatic success and sanitized-failure auditing for each feed.
 - [ ] Confirm Operations, Executive, and Upcoming Classes consumers remain

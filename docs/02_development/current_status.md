@@ -481,18 +481,16 @@ dashboard checks, and the new-studio tenant-isolation test. The exact run order
 and rollback gates are documented in
 `docs/02_development/pts_multi_account_migration_phase6.md`.
 
-The August 10 first scheduled-run gate is partially failed. Reservations and
-Upcoming Classes completed successfully and are current in SASHA. Daily Sales
-failed on the PTS Run-button navigation wait, while Product Sales and Class
-Sales received Railway 502 responses after their same-account Chromium jobs
-started concurrently at 8:00 AM. None of the three failed executions reached
-its warehouse writer; SASHA therefore shows zero completed sales for August 9.
-A tested collector patch is prepared locally to make Run clicks non-blocking
-and serialize browser-based PTS work per opaque account ID. It is not production
-until the Railway deployment and controlled recovery runs are approved and
-verified.
+The August 10 first scheduled-run gate exposed Run-button navigation waits and
+same-account Chromium concurrency. The tested collector patch is now deployed:
+Run clicks are non-blocking and browser-based PTS work serializes per opaque
+account ID. Controlled recovery left Daily Sales current and successfully
+loaded August 9 Product Sales (80 rows) and Class Sales (11 reporting rows;
+149 upsert responses). At 9:57 AM EDT, SASHA showed every PTS feed current with
+all four studios represented. The next gate is automatic scheduled-run and
+audit validation without manual recovery.
 
-An authenticated SASHA Data Upload Status page is also prepared at
+An authenticated SASHA Data Upload Status page is deployed at
 `/data-status`. It reads the tenant-scoped warehouse tables through the server
 service layer and shows each PTS feed's latest business date, expected date,
 last receipt time, latest-date row count, and authorized-studio coverage. The
@@ -500,5 +498,6 @@ page is linked from the main dashboard and Settings navigation. It deliberately
 labels coverage as studios represented by stored rows because a valid zero-row
 product or reservation slice cannot yet be distinguished from a missing slice
 without the per-studio ingestion manifest planned for a later reliability
-phase. The page has passed targeted lint and the production Next.js build but
-is not deployed until the web publish is approved.
+phase. The page passed targeted lint and the production Next.js build.
+Production validation correctly identified two overdue feeds before recovery
+and reported all feeds current after their warehouse writes.
