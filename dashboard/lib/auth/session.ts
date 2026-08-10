@@ -5,6 +5,7 @@ import { redirect } from "next/navigation"
 
 import { createAuthClient } from "@/lib/supabase/auth-server"
 import { supabase } from "@/lib/supabase/server"
+import { mustChangeTemporaryPassword } from "@/lib/auth/temporary-password"
 
 export type OrganizationRole = "owner" | "administrator" | "manager" | "viewer"
 
@@ -106,6 +107,7 @@ export const getUserAccessContext = cache(async (): Promise<UserAccessContext | 
 export async function requireDashboardContext() {
   const user = await getAuthenticatedUser()
   if (!user) redirect("/login")
+  if (mustChangeTemporaryPassword(user.app_metadata)) redirect("/reset-password")
 
   const context = await getUserAccessContext()
   if (!context) redirect("/access-pending")
@@ -117,6 +119,7 @@ export async function requireDashboardContext() {
 export async function requireOnboardingContext() {
   const user = await getAuthenticatedUser()
   if (!user) redirect("/login")
+  if (mustChangeTemporaryPassword(user.app_metadata)) redirect("/reset-password")
 
   const context = await getUserAccessContext()
   if (!context) redirect("/access-pending")

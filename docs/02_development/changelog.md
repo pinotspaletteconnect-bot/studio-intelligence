@@ -2,6 +2,12 @@
 
 ## August 10, 2026
 
+- Replaced production-blocked setup emails with owner-controlled temporary
+  passwords for invited users. SASHA displays each generated password once,
+  expires it after 24 hours, forces permanent-password creation at first login,
+  and retains invited/RLS isolation until onboarding completes. Roles and
+  selected studio permissions are assigned before credentials are handed off.
+
 - Replaced new-user reliance on Supabase's built-in invitation redirect with a
   single recovery-style password setup email sent only after membership and
   studio grants are assigned. Added reset-page support for both implicit tokens

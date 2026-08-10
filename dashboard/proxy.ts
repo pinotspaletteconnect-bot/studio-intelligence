@@ -10,6 +10,7 @@ import {
   SESSION_ACTIVITY_COOKIE,
   SESSION_IDLE_LIMIT_MS,
 } from "@/lib/auth/session-policy"
+import { mustChangeTemporaryPassword } from "@/lib/auth/temporary-password"
 
 const publicRoutes = [
   "/login",
@@ -76,9 +77,20 @@ export async function proxy(request: NextRequest) {
 
   if (data.user && request.nextUrl.pathname === "/login") {
     const dashboardUrl = request.nextUrl.clone()
-    dashboardUrl.pathname = "/dashboard"
+    dashboardUrl.pathname = mustChangeTemporaryPassword(data.user.app_metadata)
+      ? "/reset-password"
+      : "/dashboard"
     dashboardUrl.search = ""
     return NextResponse.redirect(dashboardUrl)
+  }
+
+  if (
+    data.user &&
+    mustChangeTemporaryPassword(data.user.app_metadata) &&
+    request.nextUrl.pathname !== "/reset-password" &&
+    request.nextUrl.pathname !== "/api/session/end"
+  ) {
+    return redirectWithCookies(request, response, "/reset-password")
   }
 
   return response

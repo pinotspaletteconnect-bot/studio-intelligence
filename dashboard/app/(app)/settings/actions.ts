@@ -1,18 +1,16 @@
 "use server"
 
-import { headers } from "next/headers"
+import { randomBytes } from "node:crypto"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 
-import { getTrustedAppOrigin } from "@/lib/auth/app-origin"
 import { getAuthenticatedUser, requireDashboardContext } from "@/lib/auth/session"
 import { supabase } from "@/lib/supabase/server"
 import { createAuthClient } from "@/lib/supabase/auth-server"
-import { createRecoveryEmailClient } from "@/lib/supabase/recovery-server"
 
-export type InviteState = { complete?: boolean; error?: string } | undefined
+export type InviteState = { complete?: boolean; error?: string; temporaryPassword?: string } | undefined
 export type AddStudioState = { complete?: boolean; error?: string } | undefined
-export type MemberAccessState = { complete?: boolean; error?: string } | undefined
+export type MemberAccessState = { complete?: boolean; error?: string; temporaryPassword?: string } | undefined
 export type PtsAccountState = { complete?: boolean; error?: string } | undefined
 export type PtsReportState = { complete?: boolean; error?: string } | undefined
 
@@ -29,6 +27,24 @@ const memberAccessSchema = z.object({
 })
 
 const memberTargetSchema = z.object({ userId: z.uuid() })
+
+const TEMPORARY_PASSWORD_LIFETIME_MS = 24 * 60 * 60 * 1000
+
+function createTemporaryPassword() {
+  return `Sasha-${randomBytes(12).toString("base64url")}!7`
+}
+
+function temporaryPasswordMetadata(existing: Record<string, unknown> | undefined) {
+  const issuedAt = new Date()
+  return {
+    ...existing,
+    temporary_password_must_change: true,
+    temporary_password_issued_at: issuedAt.toISOString(),
+    temporary_password_expires_at: new Date(
+      issuedAt.getTime() + TEMPORARY_PASSWORD_LIFETIME_MS
+    ).toISOString(),
+  }
+}
 
 async function findAuthUserByEmail(email: string) {
   const pageSize = 200
@@ -327,28 +343,21 @@ export async function resendOrganizationSetup(
   const { data: targetUser, error: targetError } = await supabase.auth.admin.getUserById(target.user_id)
   if (targetError || !targetUser.user?.email) return { error: "The invited email address is unavailable." }
 
-  let origin: string
-  try {
-    origin = getTrustedAppOrigin((await headers()).get("origin"))
-  } catch (error) {
-    console.error("Setup-link origin is not configured", error)
-    return { error: "Setup links are temporarily unavailable." }
-  }
-
-  const auth = createRecoveryEmailClient()
-  const { error } = await auth.auth.resetPasswordForEmail(targetUser.user.email, {
-    redirectTo: `${origin}/reset-password`,
+  const temporaryPassword = createTemporaryPassword()
+  const { error } = await supabase.auth.admin.updateUserById(target.user_id, {
+    password: temporaryPassword,
+    app_metadata: temporaryPasswordMetadata(targetUser.user.app_metadata),
   })
   if (error) {
-    console.error("Invited-user setup link failed", {
+    console.error("Invited-user temporary password failed", {
       organizationId: access.organizationId,
       actorId: actor.id,
       targetId: target.user_id,
       code: error.code,
     })
-    return { error: "The setup email could not be sent." }
+    return { error: "A temporary password could not be issued." }
   }
-  return { complete: true }
+  return { complete: true, temporaryPassword }
 }
 
 const addStudioSchema = z.object({
@@ -511,22 +520,19 @@ export async function inviteOrganizationUser(
     return { error: "One or more studios are outside your access." }
   }
 
-  let origin: string
-  try {
-    origin = getTrustedAppOrigin((await headers()).get("origin"))
-  } catch (error) {
-    console.error("Invitation origin is not configured", error)
-    return { error: "Invitations are temporarily unavailable." }
-  }
+  const temporaryPassword = createTemporaryPassword()
+  const temporaryMetadata = temporaryPasswordMetadata({
+    invited_to_organization: access.organizationId,
+  })
 
-  // Provision the identity without relying on Supabase's built-in invite
-  // redirect. The user receives a single recovery-style setup email only after
-  // membership and studio grants are safely in place, and chooses their own
-  // password from that verified email session.
+  // Provision the identity with an owner-delivered, short-lived temporary
+  // password. The readable value is returned once and is never stored by SASHA.
   const { data, error: inviteError } = await supabase.auth.admin.createUser({
     email: parsed.data.email,
     email_confirm: true,
+    password: temporaryPassword,
     user_metadata: { invited_to_organization: access.organizationId },
+    app_metadata: temporaryMetadata,
   })
   let invitedUser = data.user
 
@@ -572,6 +578,17 @@ export async function inviteOrganizationUser(
     }
 
     invitedUser = existingUser
+
+    const { error: passwordError } = await supabase.auth.admin.updateUserById(
+      invitedUser.id,
+      {
+        password: temporaryPassword,
+        app_metadata: temporaryPasswordMetadata(invitedUser.app_metadata),
+      }
+    )
+    if (passwordError) {
+      return { error: "The existing invited account could not receive a temporary password." }
+    }
   }
 
   const { error: membershipError } = await supabase
@@ -615,20 +632,6 @@ export async function inviteOrganizationUser(
     if (studioError) return { error: "The invitation was sent, but studio access needs review." }
   }
 
-  const auth = createRecoveryEmailClient()
-  const { error: setupError } = await auth.auth.resetPasswordForEmail(
-    parsed.data.email,
-    { redirectTo: `${origin}/reset-password` }
-  )
-  if (setupError) {
-    console.error("Invited user setup email failed", {
-      organizationId: access.organizationId,
-      invitedUserId: invitedUser.id,
-      code: setupError.code,
-    })
-    return { error: "Access was assigned, but the setup email could not be sent. Use Resend setup link." }
-  }
-
   revalidatePath("/settings")
-  return { complete: true }
+  return { complete: true, temporaryPassword }
 }

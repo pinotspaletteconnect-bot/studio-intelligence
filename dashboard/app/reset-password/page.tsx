@@ -3,7 +3,7 @@ import { AuthShell } from "@/components/auth/auth-shell"
 
 export default function ResetPasswordPage() {
   return (
-    <AuthShell title="Choose a new password" description="Your new password must be unique and at least 12 characters long.">
+    <AuthShell title="Create your permanent password" description="Replace your temporary password with a unique password of at least 12 characters.">
       <ResetPasswordForm />
     </AuthShell>
   )

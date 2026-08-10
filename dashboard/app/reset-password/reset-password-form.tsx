@@ -31,8 +31,8 @@ export function ResetPasswordForm() {
       }
 
       if (!accessToken || !refreshToken) {
-        await Promise.resolve()
-        setLinkState(linkError ? "invalid" : "fallback")
+        const { data } = await auth.auth.getUser()
+        setLinkState(linkError ? "invalid" : data.user ? "recovery" : "fallback")
         return
       }
 
@@ -56,7 +56,7 @@ export function ResetPasswordForm() {
         <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">This setup link is invalid or has expired. Ask your administrator to resend it.</p>
       ) : null}
       {linkState === "recovery" ? (
-        <p className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">Your secure setup link is verified. Create your first password below.</p>
+        <p className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">Your account is verified. Create your permanent password below.</p>
       ) : null}
       {linkState === "fallback" ? (
         <>

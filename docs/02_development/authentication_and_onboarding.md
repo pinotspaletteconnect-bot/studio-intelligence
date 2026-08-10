@@ -8,27 +8,23 @@ assigned to an organization with one role: owner, administrator, manager, or
 viewer. Owners and administrators inherit all active studios in their
 organization; managers and viewers receive explicit studio grants.
 
-New invitations provision an inaccessible confirmed identity, assign its
-organization membership and studio grants, and then send one recovery-style
-password setup email. This avoids depending on the provider's built-in invite
-redirect while still requiring control of the recipient's email address. The invited user
-opens the allowlisted password-setup page, establishes the recovery
-session in their own browser, and creates and confirms a password before their profile is completed and
-their membership changes from `invited` to `active`. The password update is a
-server-only mutation scoped to the identity verified by the invitation session;
-password values are never returned, logged, or stored in application tables.
-If the invitation session is lost before completion, an owner or administrator
-can send a new setup link from Authorized Users. The invited user chooses their
-own password through the recovery session and then resumes profile and terms
-setup without a duplicate password prompt. Administrators never generate or
-view that password. Setup emails support both recipient-safe implicit recovery
-tokens and PKCE authorization codes. The reset page converts either one-time
-credential into the secure SSR cookie session before accepting a new password.
+New users receive their organization membership, role, and studio grants before
+credentials are handed off. SASHA generates a strong temporary password,
+displays it once to the owner or administrator, and stores only the Supabase
+Auth hash. It expires after 24 hours and is replaced when the user first signs
+in. The forced-change flag is enforced by login, the route proxy, protected
+server contexts, and the password action; it is not merely a browser redirect.
+The membership stays `invited`, so tenant RLS excludes the account from
+business data until permanent-password creation and onboarding are complete.
+
+Custom transactional SMTP remains required before public onboarding launch for
+password recovery and automated email delivery. Supabase's restricted default
+mailer is not a production delivery mechanism.
 
 If an owner invites an email whose Auth identity already exists with an invited
 or suspended membership in the same organization, SASHA reactivates that
 membership as invited, replaces its role and studio grants with the submitted
-permissions, and sends a fresh setup link. It never creates a duplicate Auth
+permissions, and issues a fresh temporary password. It never creates a duplicate Auth
 identity or silently attaches an existing identity from another organization.
 
 The dashboard protects data in three layers:

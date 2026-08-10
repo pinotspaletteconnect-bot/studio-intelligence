@@ -46,6 +46,8 @@ export async function completeOnboarding(
       app_metadata: {
         ...user.app_metadata,
         onboarding_password_created_at: now,
+        temporary_password_must_change: false,
+        temporary_password_changed_at: now,
       },
     })
     if (passwordError && passwordError.code !== "same_password") {

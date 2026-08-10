@@ -39,7 +39,7 @@ export default async function SettingsPage() {
             </CardContent>
           </Card>
           <Card>
-            <CardHeader><CardTitle>Invite a user</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Create a user</CardTitle></CardHeader>
             <CardContent><InviteUserForm studios={settings.studios} /></CardContent>
           </Card>
           <IntegrationSetup

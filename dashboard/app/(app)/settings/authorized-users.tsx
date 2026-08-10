@@ -54,7 +54,7 @@ function AuthorizedUserRow({
             {member.status === "invited" ? (
               <form action={setupAction}>
                 <input type="hidden" name="userId" value={member.user_id} />
-                <Button type="submit" variant="outline" size="sm" disabled={sendingSetup}>{sendingSetup ? "Sending…" : "Resend setup link"}</Button>
+                <Button type="submit" variant="outline" size="sm" disabled={sendingSetup}>{sendingSetup ? "Issuing…" : "Issue temporary password"}</Button>
               </form>
             ) : null}
             <Button type="button" variant="outline" size="sm" onClick={() => setEditing((value) => !value)}>
@@ -66,7 +66,13 @@ function AuthorizedUserRow({
         )}
       </div>
       {setupState?.error ? <p role="alert" className="mt-3 text-red-700">{setupState.error}</p> : null}
-      {setupState?.complete ? <p role="status" className="mt-3 text-emerald-700">A new password setup link was sent.</p> : null}
+      {setupState?.complete && setupState.temporaryPassword ? (
+        <div role="status" className="mt-3 space-y-2 rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-950">
+          <p className="font-medium">Copy this new temporary password now.</p>
+          <code className="block select-all break-all rounded bg-white p-3 font-mono text-base">{setupState.temporaryPassword}</code>
+          <p>It is shown only once, expires after 24 hours, and replaces the previous temporary password.</p>
+        </div>
+      ) : null}
 
       {editing ? (
         <div className="mt-5 space-y-5 border-t pt-5">

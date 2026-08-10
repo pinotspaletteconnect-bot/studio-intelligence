@@ -245,6 +245,13 @@ Implemented foundation:
 
 Known incomplete surfaces:
 
+- Public onboarding is not launch-ready until production transactional SMTP is
+  configured and recovery delivery is validated. Controlled onboarding uses a
+  one-time-displayed, 24-hour temporary password. Invited memberships remain
+  excluded from tenant RLS, first login is forced through permanent-password
+  creation, and manager/viewer studio grants are assigned before credentials
+  are issued.
+
 - Production authentication activation has the canonical Site URL, Railway
   `APP_URL`, and publishable-key configuration in place. It remains pending
   redirect allow-list and email-template configuration, custom SMTP and abuse

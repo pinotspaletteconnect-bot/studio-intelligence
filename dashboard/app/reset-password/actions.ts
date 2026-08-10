@@ -5,6 +5,7 @@ import { z } from "zod"
 
 import { createAuthClient } from "@/lib/supabase/auth-server"
 import { supabase } from "@/lib/supabase/server"
+import { temporaryPasswordExpired } from "@/lib/auth/temporary-password"
 
 export type UpdatePasswordState = { error?: string } | undefined
 
@@ -57,6 +58,11 @@ export async function updatePassword(
     user = signInData.user
   }
 
+  if (temporaryPasswordExpired(user.app_metadata)) {
+    await auth.auth.signOut()
+    return { error: "This temporary password has expired. Ask your administrator to issue a new one." }
+  }
+
   // The recovery access token can be refreshed or replaced after the user signs
   // in, which makes auth.updateUser() unreliable on this page even though the
   // server can still verify the authenticated user. Use the server-only admin
@@ -66,6 +72,8 @@ export async function updatePassword(
     app_metadata: {
       ...user.app_metadata,
       onboarding_password_created_at: new Date().toISOString(),
+      temporary_password_must_change: false,
+      temporary_password_changed_at: new Date().toISOString(),
     },
   })
   if (error) {
