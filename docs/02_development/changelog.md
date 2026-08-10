@@ -7,6 +7,9 @@
   account-aware collector, privacy-minimized credit table, exact class matching,
   adjusted class/daily reporting, and inactive workflow artifact 23. Customer
   names are discarded and ambiguous credits cannot change dashboard totals.
+  Deployed the migration, collector route, dashboard columns and totals, and a
+  persisted inactive workflow 23. No studio was enabled and no collection run
+  was triggered.
 
 - Reconciled the first scheduled multi-account PTS production runs.
   Reservations and Upcoming Classes succeeded; Daily Sales failed on the PTS

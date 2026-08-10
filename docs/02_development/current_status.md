@@ -312,8 +312,10 @@ Known incomplete surfaces:
   enabled studios collect through the existing Vault account and account queue.
   The privacy-minimized warehouse table excludes customer names, preserves
   applied and original credit amounts, and augments class and daily revenue
-  only for exact, unambiguous class matches. Migration, collector, inactive
-  workflow 23, and UI are prepared but not deployed.
+  only for exact, unambiguous class matches. Migration `20260810120000`, the
+  collector route, dashboard UI, and workflow 23 were deployed August 10,
+  2026. Workflow 23 and every studio toggle remain inactive pending a
+  controlled pilot backfill and reconciliation.
 - The range-export replacement remains implemented in Supabase for controlled
   reconciliation, but its daily production loading is not active. Do not point
   dashboards back to it until an all-studio daily load and reconciliation are

@@ -223,8 +223,9 @@ Planned scope includes profile insights, reviews, search visibility, and custome
   collection is implemented as an opt-in report per studio. The collector
   excludes customer names, treats Applied Amount as recognized revenue, and
   matches credits to exactly one class by tenant, studio, start time, and
-  painting. Schema migration `20260810120000`, inactive workflow artifact 23,
-  and the Settings toggle are implemented; production deployment and pilot
+  painting. Schema migration `20260810120000`, collector route, dashboard
+  reporting, and inactive workflow 23 were deployed August 10, 2026. The
+  per-studio toggle remains off by default; pilot enablement, backfill, and
   reconciliation remain pending.
 
 #### Scalable PTS onboarding

@@ -41,7 +41,8 @@ class revenue plus the class's products and fees.
 
 ## Deployment state
 
-Collector, schema migration, inactive workflow artifact, Settings toggle, and
-tests are implemented on the feature branch. Production migration, workflow
-publication, enabling the pilot studio, backfill, and reconciliation remain
-approval-gated.
+Collector, schema migration, Settings toggle, dashboard reporting, and a
+persisted inactive workflow 23 were deployed August 10, 2026. Every studio
+toggle remains off, so no scheduled collection is active. Enabling the pilot
+studio, running the first backfill, and reconciling matched and unmatched rows
+remain approval-gated.
