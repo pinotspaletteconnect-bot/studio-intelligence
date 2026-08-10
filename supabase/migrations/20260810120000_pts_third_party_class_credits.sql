@@ -88,10 +88,14 @@ select
   class_sales.capacity,
   class_sales.percent_full,
   class_sales.lead_time_average,
-  class_sales.class_sales + coalesce(credit_totals.third_party_sales, 0) as class_sales,
+  (
+    class_sales.class_sales + coalesce(credit_totals.third_party_sales, 0)
+  )::numeric(14, 2) as class_sales,
   class_sales.product_sales,
   class_sales.fee_sales,
-  class_sales.net_sales + coalesce(credit_totals.third_party_sales, 0) as net_sales,
+  (
+    class_sales.net_sales + coalesce(credit_totals.third_party_sales, 0)
+  )::numeric(14, 2) as net_sales,
   class_sales.raw_payload,
   class_sales.retrieved_at,
   class_sales.created_at,
