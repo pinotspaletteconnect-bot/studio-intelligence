@@ -115,9 +115,18 @@ and a service-only target view. The dashboard broker and collector proxy prefer
 a dedicated shared service token and temporarily fall back to the proven PTS
 broker channel when that variable is unavailable in Railway; the proxy adds the API key
 only after accepting an allowlisted API 3 report query. The existing three-node
-production workflow remains unchanged as the rollback path. Application
-deployment, a shadow dispatcher, Jeffersonville validation, and production
-cutover remain pending.
+production workflow remains unchanged as the rollback path. The dashboard and
+collector application changes are deployed. Jeffersonville is saved as a
+pre-launch mapping (advertiser `71260`); an authenticated empty report is a
+valid pre-launch response and must not be treated as a collection failure.
+A shadow dispatcher, live-advertiser reconciliation, and production cutover
+remain pending.
+
+Migration `20260810220000` allows that onboarding RPC to adopt an existing
+legacy MNTN `studio_integrations` row when its studio and advertiser ID match.
+It preserves the mapping identity and reporting history while adding the opaque
+Vault account reference; mismatched or already Vault-backed mappings are still
+rejected.
 
 ### Organic Social and Creative Intelligence
 

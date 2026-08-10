@@ -2,6 +2,17 @@
 
 ## August 10, 2026
 
+- Deployed migration `20260810220000` so existing live MNTN studio/advertiser
+  mappings can be upgraded to Vault-backed accounts in place. This preserves
+  their integration IDs and historical reporting references instead of
+  treating the legacy mapping as a duplicate. The Settings action now reports
+  label, studio, and advertiser conflicts separately.
+
+- Verified the production MNTN routing view contains Jeffersonville mapped to
+  advertiser `71260` with the standard 35-day refresh window. The advertiser is
+  not live yet, so zero report rows are an expected pre-launch result rather
+  than a credential or collector failure.
+
 - Began the MNTN scalable credential migration without changing production.
   Added a tenant-scoped account model, Supabase Vault create/replace/read
   functions, an atomic advertiser-to-studio connection RPC, a service-only

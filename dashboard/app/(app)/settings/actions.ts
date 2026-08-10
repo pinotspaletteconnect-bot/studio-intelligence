@@ -108,6 +108,37 @@ export async function createMntnConnection(
     return { error: "That studio is outside your access." }
   }
 
+  const [{ data: existingAccount }, { data: existingMapping }] = await Promise.all([
+    supabase
+      .from("mntn_integration_accounts")
+      .select("id")
+      .eq("organization_id", access.organizationId)
+      .eq("account_name", parsed.data.accountName)
+      .eq("is_active", true)
+      .maybeSingle(),
+    supabase
+      .from("studio_integrations")
+      .select("studio_id,external_id,configuration")
+      .eq("organization_id", access.organizationId)
+      .eq("integration_type", "mntn")
+      .eq("is_active", true)
+      .or(`studio_id.eq.${parsed.data.studioId},external_id.eq.${parsed.data.advertiserId}`)
+      .maybeSingle(),
+  ])
+  if (existingAccount) {
+    return { error: `The connection label “${parsed.data.accountName}” is already in use. Use a label such as “Short North MNTN”.` }
+  }
+  const existingConfiguration = existingMapping?.configuration as Record<string, unknown> | null
+  if (existingMapping && (
+    existingMapping.studio_id !== parsed.data.studioId
+    || existingMapping.external_id !== parsed.data.advertiserId
+  )) {
+    return { error: "That studio or advertiser ID already has a different active MNTN mapping." }
+  }
+  if (existingConfiguration?.mntn_account_id) {
+    return { error: "That studio and advertiser already have a Vault-backed MNTN connection." }
+  }
+
   const auth = await createAuthClient()
   const { error: authenticationError } = await auth.auth.signInWithPassword({
     email: actor.email,

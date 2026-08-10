@@ -56,7 +56,7 @@ Meta Ads and Page Insights share the authentication and Graph API foundation in 
 | QuickBooks or other financial systems | Planned |
 | Google Ads and Microsoft Ads | Planned |
 | Organic social content/creative ingestion beyond current Page Insights | Planned |
-| MNTN Connected TV | Active for Gilbert, Louisville/St. Matthews, and Short North; published n8n workflow refreshes the prior 35 days daily at 5:15 AM. Vault schema is deployed and self-service/broker/collector code is awaiting application deployment and shadow validation. |
+| MNTN Connected TV | Active for Gilbert, Louisville/St. Matthews, and Short North; published n8n workflow refreshes the prior 35 days daily at 5:15 AM. Vault-backed self-service and collector code are deployed. Jeffersonville is mapped for a future launch and may validly return zero rows until its advertiser is live. Shadow validation and controlled cutover remain pending. |
 
 The unpublished workflow `15 - PTS Multi-Account Shadow Dispatcher`
 (`m9v7NXpkX9SDulqa`) is the validated Phase 2 foundation for configuration-driven

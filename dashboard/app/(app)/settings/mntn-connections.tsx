@@ -40,7 +40,7 @@ export function MntnConnections({ studios, accounts }: { studios: Studio[]; acco
         <h3 className="font-medium">Connect another MNTN advertiser</h3>
         <p className="mt-1 text-xs leading-5 text-muted-foreground">The API key is encrypted in Vault and cannot be viewed after saving. Each advertiser maps to one studio.</p>
       </div>
-      <label className="space-y-1 text-sm"><span>Connection label</span><Input name="accountName" placeholder="Jeffersonville MNTN" required /></label>
+      <label className="space-y-1 text-sm"><span>Connection label</span><Input name="accountName" placeholder="Short North MNTN" autoComplete="off" required /><span className="block text-xs text-muted-foreground">Use a unique label for this studio.</span></label>
       <label className="space-y-1 text-sm"><span>Studio</span><select className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs" name="studioId" required defaultValue=""><option value="" disabled>Select a studio</option>{studios.map(studio => <option key={studio.id} value={studio.id}>{studio.studio_name}</option>)}</select></label>
       <label className="space-y-1 text-sm"><span>Advertiser ID</span><Input name="advertiserId" inputMode="numeric" pattern="[0-9]+" required /></label>
       <label className="space-y-1 text-sm"><span>Reporting API key</span><Input name="apiKey" type="password" autoComplete="new-password" required /></label>
