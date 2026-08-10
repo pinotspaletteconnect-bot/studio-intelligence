@@ -33,6 +33,12 @@ unmatched credits never alter sales totals. Matched applied credits augment
 `class_sales` and `net_sales` in `pts_class_sales_reporting`, and flow into
 `pts_daily_operations_reporting` without changing seats or capacity.
 
+The Daily Operating Detail grid keeps the audit trail visible for every matched
+class: **PTS class sales** shows the original PTS amount, **ClassPop** shows the
+matched applied credit, and **Combined class sales** adds the two. Studio and
+page totals use the same three measures, while net sales includes the combined
+class revenue plus the class's products and fees.
+
 ## Deployment state
 
 Collector, schema migration, inactive workflow artifact, Settings toggle, and

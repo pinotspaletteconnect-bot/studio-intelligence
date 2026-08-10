@@ -145,6 +145,8 @@ type ClassDetailRow = {
   seats_sold: number | string | null
   capacity: number | string | null
   lead_time_average: number | string | null
+  source_class_sales: number | string | null
+  third_party_sales: number | string | null
   class_sales: number | string | null
   product_sales: number | string | null
   fee_sales: number | string | null
@@ -168,6 +170,9 @@ export type DailyOperatingDetailData = {
     averageLeadTime: number | null
     foodBeverageSales: number
     revenuePerSeat: number
+    ptsClassSales: number
+    classpopSales: number
+    classSales: number
     netSales: number
   }
   studios: Array<{
@@ -185,6 +190,8 @@ export type DailyOperatingDetailData = {
       capacity: number
       percentFull: number
       leadTimeAverage: number | null
+      ptsClassSales: number
+      classpopSales: number
       classSales: number
       productSales: number
       feeSales: number
@@ -915,7 +922,7 @@ export async function getDailyOperatingDetail(
   let classesQuery = supabase
     .from("pts_class_sales_reporting")
     .select(
-      "id,studio_id,painting,class_time,room,source_class_type,reporting_class_type,seats_sold,capacity,lead_time_average,class_sales,product_sales,fee_sales,net_sales"
+      "id,studio_id,painting,class_time,room,source_class_type,reporting_class_type,seats_sold,capacity,lead_time_average,source_class_sales,third_party_sales,class_sales,product_sales,fee_sales,net_sales"
     )
     .eq("event_date", date)
     .order("class_time", { ascending: true })
@@ -979,6 +986,8 @@ export async function getDailyOperatingDetail(
       percentFull: capacity ? (seatsSold / capacity) * 100 : 0,
       leadTimeAverage:
         row.lead_time_average === null ? null : numberValue(row.lead_time_average),
+      ptsClassSales: numberValue(row.source_class_sales),
+      classpopSales: numberValue(row.third_party_sales),
       classSales: numberValue(row.class_sales),
       productSales: numberValue(row.product_sales),
       feeSales: numberValue(row.fee_sales),
@@ -996,9 +1005,20 @@ export async function getDailyOperatingDetail(
       classes: sum.classes + 1,
       seatsSold: sum.seatsSold + row.seatsSold,
       capacity: sum.capacity + row.capacity,
+      ptsClassSales: sum.ptsClassSales + row.ptsClassSales,
+      classpopSales: sum.classpopSales + row.classpopSales,
+      classSales: sum.classSales + row.classSales,
       netSales: sum.netSales + row.netSales,
     }),
-    { classes: 0, seatsSold: 0, capacity: 0, netSales: 0 }
+    {
+      classes: 0,
+      seatsSold: 0,
+      capacity: 0,
+      ptsClassSales: 0,
+      classpopSales: 0,
+      classSales: 0,
+      netSales: 0,
+    }
   )
     const leadTime = classes.reduce(
       (sum, row) => {
