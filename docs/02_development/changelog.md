@@ -1,5 +1,17 @@
 # Studio Intelligence Changelog
 
+## August 10, 2026
+
+- Reconciled the first scheduled multi-account PTS production runs.
+  Reservations and Upcoming Classes succeeded; Daily Sales failed on the PTS
+  Run-button navigation wait, and simultaneous Product/Class Sales collectors
+  received Railway 502 responses before warehouse writes.
+- Prepared an approval-gated collector reliability patch. PTS Run clicks no
+  longer implicitly wait for navigation, and all browser-based PTS routes now
+  serialize work per opaque PTS account while allowing different accounts to
+  run independently. Added passing queue tests for same-account ordering,
+  cross-account independence, and failure recovery.
+
 ## August 9, 2026
 
 - Corrected a replacement-workflow trigger defect discovered during manual

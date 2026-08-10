@@ -35,6 +35,30 @@ configured account and all four current studio targets. Writes use their
 existing upsert/replacement behavior, so the validation reruns did not create a
 second ingestion path.
 
+### August 10 first scheduled-run result
+
+The first production schedule exposed a second, independent reliability issue:
+
+- 13B Reservations succeeded at 6:00 AM in 17.91 seconds and replaced four
+  studio slices.
+- 12B Upcoming Classes succeeded at 7:30 AM in 2m 26.919s. SASHA displayed the
+  August 10 snapshot and the August 9 reservation totals.
+- 05B Daily Sales failed at 8:00 AM after the PTS Run button click waited for a
+  navigation that did not settle. No warehouse writer ran, and SASHA displayed
+  an explicit zero row for August 9.
+- 06B Product Sales and 07B Class Sales both reached the account-aware
+  collector at 8:00 AM but received Railway 502 responses. Three same-account
+  Chromium collectors had started concurrently at 8:00 AM, contrary to the
+  Phase 5 bounded-work rule.
+
+A collector patch is prepared but not yet deployed. It makes Run-button clicks
+explicitly non-blocking while separately observing optional page navigation,
+and introduces an account-scoped queue for every browser-based PTS route.
+Requests for one PTS account now serialize; different PTS accounts may still
+run independently. Queue unit tests cover serialization, independent accounts,
+and recovery after a failed task. Production deployment and recovery runs
+remain approval-gated.
+
 Observe and reconcile every production execution in schedule order:
 
 1. 13B Reservations at 6:00 AM.
@@ -52,7 +76,11 @@ replacement schedule and re-enabling the preserved legacy schedule.
 
 ## Remaining gates
 
-- [ ] Reconcile all first scheduled replacement executions on August 10.
+- [x] Reconcile all first scheduled replacement executions on August 10.
+- [ ] Deploy and validate the account-scoped collector queue and Run-button
+  navigation correction.
+- [ ] Recover August 9 Daily Sales, Product Sales, and Class Sales after the
+  collector deployment, then reconcile SASHA totals.
 - [ ] Confirm automatic success and sanitized-failure auditing for each feed.
 - [ ] Confirm Operations, Executive, and Upcoming Classes consumers remain
   consistent with their reporting views after the scheduled loads.

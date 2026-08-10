@@ -197,7 +197,9 @@ async function runReport(page, fromDate, toDate = fromDate) {
             timeout: 10000
         })
         .catch(() => null);
-    await page.getByRole("button", { name: "Run", exact: true }).click();
+    await page
+        .getByRole("button", { name: "Run", exact: true })
+        .click({ noWaitAfter: true });
     await navigation;
     await page.waitForTimeout(4000);
 

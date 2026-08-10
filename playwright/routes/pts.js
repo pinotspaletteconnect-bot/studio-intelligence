@@ -15,6 +15,7 @@ const {
 } = require("../scripts/pts/reservationsReport");
 const { runLowReservationClassAlerts } = require("../scripts/pts/lowReservationClassAlerts");
 const { resolveClassAlertContext } = require("../services/classAlertContext");
+const { runPtsReportQueued } = require("../services/ptsReportQueue");
 
 const router = express.Router();
 const { resolvePtsAccount } = require("../services/ptsCredentials");
@@ -58,12 +59,14 @@ router.get("/health", (req, res) => {
 
 router.post("/sales-report", requireCollectorAuth, async (req, res) => {
     try {
-        const account = await resolvePtsAccount(req.body?.accountId);
-        const results = await runPtsSalesReport({
-            reportDate: req.body?.reportDate,
-            studioCodes: req.body?.studioCodes,
-            credentials: account.credentials,
-            studioTargets: account.studios
+        const results = await runPtsReportQueued(req.body?.accountId, async () => {
+            const account = await resolvePtsAccount(req.body?.accountId);
+            return runPtsSalesReport({
+                reportDate: req.body?.reportDate,
+                studioCodes: req.body?.studioCodes,
+                credentials: account.credentials,
+                studioTargets: account.studios
+            });
         });
 
         res.json({
@@ -83,14 +86,16 @@ router.post("/sales-report", requireCollectorAuth, async (req, res) => {
 
 router.post("/product-sales-report", requireCollectorAuth, async (req, res) => {
     try {
-        const account = await resolvePtsAccount(req.body?.accountId);
-        const results = await runPtsProductSalesReport({
-            reportDate: req.body?.reportDate,
-            fromDate: req.body?.fromDate,
-            toDate: req.body?.toDate,
-            studioCodes: req.body?.studioCodes,
-            credentials: account.credentials,
-            studioTargets: account.studios
+        const results = await runPtsReportQueued(req.body?.accountId, async () => {
+            const account = await resolvePtsAccount(req.body?.accountId);
+            return runPtsProductSalesReport({
+                reportDate: req.body?.reportDate,
+                fromDate: req.body?.fromDate,
+                toDate: req.body?.toDate,
+                studioCodes: req.body?.studioCodes,
+                credentials: account.credentials,
+                studioTargets: account.studios
+            });
         });
 
         res.json({
@@ -121,14 +126,16 @@ router.post("/product-sales-report", requireCollectorAuth, async (req, res) => {
 
 router.post("/class-sales-report", requireCollectorAuth, async (req, res) => {
     try {
-        const account = await resolvePtsAccount(req.body?.accountId);
-        const results = await runPtsClassSalesReport({
-            fromDate: req.body?.fromDate,
-            toDate: req.body?.toDate,
-            studioCodes: req.body?.studioCodes,
-            debug: req.body?.debug === true,
-            credentials: account.credentials,
-            studioTargets: account.studios
+        const results = await runPtsReportQueued(req.body?.accountId, async () => {
+            const account = await resolvePtsAccount(req.body?.accountId);
+            return runPtsClassSalesReport({
+                fromDate: req.body?.fromDate,
+                toDate: req.body?.toDate,
+                studioCodes: req.body?.studioCodes,
+                debug: req.body?.debug === true,
+                credentials: account.credentials,
+                studioTargets: account.studios
+            });
         });
 
         res.json({
@@ -215,14 +222,16 @@ router.post(
 
 router.post("/reservations-report", requireCollectorAuth, async (req, res) => {
     try {
-        const account = await resolvePtsAccount(req.body?.accountId);
-        const results = await runPtsReservationsReport({
-            orderDate: req.body?.orderDate,
-            classFromDate: req.body?.classFromDate,
-            classToDate: req.body?.classToDate,
-            studioCodes: req.body?.studioCodes,
-            credentials: account.credentials,
-            studioTargets: account.studios
+        const results = await runPtsReportQueued(req.body?.accountId, async () => {
+            const account = await resolvePtsAccount(req.body?.accountId);
+            return runPtsReservationsReport({
+                orderDate: req.body?.orderDate,
+                classFromDate: req.body?.classFromDate,
+                classToDate: req.body?.classToDate,
+                studioCodes: req.body?.studioCodes,
+                credentials: account.credentials,
+                studioTargets: account.studios
+            });
         });
 
         res.json({
@@ -240,13 +249,15 @@ router.post("/reservations-report", requireCollectorAuth, async (req, res) => {
 
 router.post("/low-reservation-class-alerts", requireCollectorAuth, async (req, res) => {
     try {
-        const context = await resolveClassAlertContext(req.body?.ptsAccountId);
-        const results = await runLowReservationClassAlerts({
-            targetDate: req.body?.targetDate,
-            execute: req.body?.execute === true,
-            approvedClassIds: Array.isArray(req.body?.approvedClassIds) ? req.body.approvedClassIds : [],
-            credentials: context.credentials,
-            studios: context.studios
+        const results = await runPtsReportQueued(req.body?.ptsAccountId, async () => {
+            const context = await resolveClassAlertContext(req.body?.ptsAccountId);
+            return runLowReservationClassAlerts({
+                targetDate: req.body?.targetDate,
+                execute: req.body?.execute === true,
+                approvedClassIds: Array.isArray(req.body?.approvedClassIds) ? req.body.approvedClassIds : [],
+                credentials: context.credentials,
+                studios: context.studios
+            });
         });
         res.set("Cache-Control", "no-store, private");
         res.json({

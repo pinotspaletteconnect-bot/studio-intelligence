@@ -480,3 +480,14 @@ scheduled-run reconciliation, automatic audit verification, downstream
 dashboard checks, and the new-studio tenant-isolation test. The exact run order
 and rollback gates are documented in
 `docs/02_development/pts_multi_account_migration_phase6.md`.
+
+The August 10 first scheduled-run gate is partially failed. Reservations and
+Upcoming Classes completed successfully and are current in SASHA. Daily Sales
+failed on the PTS Run-button navigation wait, while Product Sales and Class
+Sales received Railway 502 responses after their same-account Chromium jobs
+started concurrently at 8:00 AM. None of the three failed executions reached
+its warehouse writer; SASHA therefore shows zero completed sales for August 9.
+A tested collector patch is prepared locally to make Run clicks non-blocking
+and serialize browser-based PTS work per opaque account ID. It is not production
+until the Railway deployment and controlled recovery runs are approved and
+verified.

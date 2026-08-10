@@ -256,11 +256,15 @@ async function runReport(page, fromDate, toDate) {
     await page.locator("#DateFilter_ToDate").fill(to);
     await page.locator("#DateFilter_ToDate").press("Tab");
 
-    const navigation = page.waitForNavigation({
-        waitUntil: "domcontentloaded",
-        timeout: 60000
-    });
-    await page.getByRole("button", { name: "Run", exact: true }).click();
+    const navigation = page
+        .waitForNavigation({
+            waitUntil: "domcontentloaded",
+            timeout: 60000
+        })
+        .catch(() => null);
+    await page
+        .getByRole("button", { name: "Run", exact: true })
+        .click({ noWaitAfter: true });
     await navigation;
 
     const detailsTab = page.getByRole("tab", {

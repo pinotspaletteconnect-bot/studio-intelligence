@@ -7,6 +7,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
+    "test": "node --test test/*.test.js",
     "export:kids-paintings": "node tools/painting-library-exporter/export-kids-paintings.js"
   },
   "dependencies": {
