@@ -81,8 +81,8 @@ Meta Ads and Meta Page Insights share authentication, token validation, business
 - **Reporting:** `mntn_performance_daily`
 - **Configuration:** advertiser-to-studio mapping through
   `studio_integrations` with `integration_type = 'mntn'`
-- **Credential boundary:** one encrypted n8n Query Auth credential per
-  advertiser; API keys are not stored in Supabase or Git
+- **Current production credential boundary:** one encrypted n8n Query Auth
+  credential per advertiser; API keys are not stored in Git
 - **Status:** Active. API authentication, three advertiser mappings, warehouse
   objects, dashboard reporting, and the published daily 5:15 AM rolling
   35-day production load are implemented.
@@ -108,6 +108,15 @@ workflow:
 
 This design keeps onboarding data-driven and avoids adding a credentialed HTTP
 node to the workflow for every new studio.
+
+Migration `20260810190000` is deployed and establishes tenant-scoped MNTN
+accounts, Vault-only API-key storage, an atomic studio/advertiser mapping RPC,
+and a service-only target view. The dashboard broker and collector proxy are
+implemented with a dedicated shared service token; the proxy adds the API key
+only after accepting an allowlisted API 3 report query. The existing three-node
+production workflow remains unchanged as the rollback path. Application
+deployment, a shadow dispatcher, Jeffersonville validation, and production
+cutover remain pending.
 
 ### Organic Social and Creative Intelligence
 

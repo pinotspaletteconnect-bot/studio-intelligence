@@ -40,6 +40,7 @@ Current configuration entities:
 - `organization_memberships`
 - `user_studio_access`
 - `integration_secret_references` (non-secret metadata and opaque references)
+- `mntn_integration_accounts` (tenant-scoped account labels and Vault references)
 
 Expected future configuration may include credential references, feature flags, schedules, permissions, and notification rules. Secret values should remain in the appropriate secret manager/environment rather than ordinary warehouse tables or Git.
 
@@ -52,6 +53,12 @@ Dashboard access is invite-only. Membership roles are owner, administrator,
 manager, and viewer. Owners and administrators inherit active organization
 studios; managers and viewers require explicit studio grants. Integration
 credentials are represented only by an opaque encrypted-secret reference.
+
+MNTN self-service setup follows the same boundary: the browser submits an API
+key to an owner-authorized server action, a service-role RPC writes the value
+directly to Supabase Vault, and ordinary configuration stores only the opaque
+account ID, advertiser ID, studio mapping, and refresh settings. n8n must never
+receive or emit the decrypted key.
 
 ## Marketing Intelligence
 

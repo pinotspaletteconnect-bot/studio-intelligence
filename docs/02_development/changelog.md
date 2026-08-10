@@ -2,6 +2,21 @@
 
 ## August 10, 2026
 
+- Began the MNTN scalable credential migration without changing production.
+  Added a tenant-scoped account model, Supabase Vault create/replace/read
+  functions, an atomic advertiser-to-studio connection RPC, a service-only
+  collection-target view and broker route, plus an owner-authorized Settings
+  form with MNTN API-key discovery instructions. The existing three-advertiser
+  n8n workflow remains the rollback path during the controlled migration.
+
+- Deployed MNTN migration `20260810190000`, configured a separate shared broker
+  token on the dashboard and collector services, and added an authenticated
+  collector proxy for allowlisted MNTN API 3 report queries. The proxy resolves
+  Vault credentials by opaque account ID and returns source data plus non-secret
+  tenant/studio/advertiser context; n8n never receives the API key. All nine
+  collector tests pass. Application deployment and shadow reconciliation remain
+  pending.
+
 - Corrected Workspace Setup credential readiness for the existing production
   account. A successful audited PTS collection after the most recent credential
   change now counts as credential validation; previously the page depended on a

@@ -45,6 +45,8 @@ export default async function SettingsPage() {
           <IntegrationSetup
             ptsAccounts={settings.ptsAccounts}
             textellentAccounts={settings.textellentAccounts}
+            mntnAccounts={settings.mntnAccounts}
+            studios={settings.studios}
             mappedIntegrationTypes={settings.mappedIntegrationTypes}
             ptsStudioSettings={settings.ptsStudioSettings.map((setting) => ({
               ...setting,

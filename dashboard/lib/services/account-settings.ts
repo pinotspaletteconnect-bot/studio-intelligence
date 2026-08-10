@@ -6,7 +6,7 @@ export async function getAccountSettings(
   organizationId: number,
   allowedStudioIds: number[]
 ) {
-  const [membershipResult, studioResult, integrationResult, mappingResult, brandResult, ptsAccountResult, textellentAccountResult] =
+  const [membershipResult, studioResult, integrationResult, mappingResult, brandResult, ptsAccountResult, textellentAccountResult, mntnAccountResult] =
     await Promise.all([
       supabase
         .from("organization_memberships")
@@ -29,7 +29,7 @@ export async function getAccountSettings(
         .order("account_label"),
       supabase
         .from("studio_integrations")
-        .select("id,studio_id,integration_type,configuration")
+        .select("id,studio_id,integration_type,external_id,configuration")
         .eq("organization_id", organizationId)
         .in("studio_id", allowedStudioIds)
         .eq("is_active", true),
@@ -50,9 +50,15 @@ export async function getAccountSettings(
         .eq("organization_id", organizationId)
         .eq("is_active", true)
         .order("account_name"),
+      supabase
+        .from("mntn_integration_accounts")
+        .select("id,account_name,secret_reference,is_active,last_validated_at")
+        .eq("organization_id", organizationId)
+        .eq("is_active", true)
+        .order("account_name"),
     ])
 
-  for (const result of [membershipResult, studioResult, integrationResult, mappingResult, brandResult, ptsAccountResult, textellentAccountResult]) {
+  for (const result of [membershipResult, studioResult, integrationResult, mappingResult, brandResult, ptsAccountResult, textellentAccountResult, mntnAccountResult]) {
     if (result.error) throw result.error
   }
 
@@ -121,5 +127,20 @@ export async function getAccountSettings(
       last_validated_at: account.last_validated_at,
     })),
     textellentAccounts: textellentAccountResult.data ?? [],
+    mntnAccounts: (mntnAccountResult.data ?? []).map((account) => {
+      const mapping = (mappingResult.data ?? []).find((item) =>
+        item.integration_type === "mntn"
+        && String((item.configuration as { mntn_account_id?: unknown } | null)?.mntn_account_id ?? "") === String(account.id)
+      )
+      const studio = (studioResult.data ?? []).find((item) => item.id === mapping?.studio_id)
+      return {
+        id: account.id,
+        account_name: account.account_name,
+        advertiser_id: mapping?.external_id ?? null,
+        studio_name: studio?.studio_name ?? null,
+        has_credentials: /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(account.secret_reference),
+        last_validated_at: account.last_validated_at,
+      }
+    }),
   }
 }

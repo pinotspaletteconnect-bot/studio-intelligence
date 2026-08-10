@@ -13,6 +13,7 @@ export type AddStudioState = { complete?: boolean; error?: string } | undefined
 export type MemberAccessState = { complete?: boolean; error?: string; temporaryPassword?: string } | undefined
 export type PtsAccountState = { complete?: boolean; error?: string } | undefined
 export type PtsReportState = { complete?: boolean; error?: string } | undefined
+export type MntnConnectionState = { complete?: boolean; error?: string } | undefined
 
 const inviteSchema = z.object({
   email: z.email().max(254).transform((value) => value.trim().toLowerCase()),
@@ -84,6 +85,57 @@ const ptsReportSchema = z.object({
   integrationId: z.coerce.number().int().positive(),
   classpopEnabled: z.boolean(),
 })
+
+const mntnConnectionSchema = z.object({
+  accountName: z.string().trim().min(2).max(120),
+  studioId: z.coerce.number().int().positive(),
+  advertiserId: z.string().trim().regex(/^\d{1,20}$/),
+  apiKey: z.string().trim().min(8).max(2048),
+  currentPassword: z.string().min(1).max(1024),
+})
+
+export async function createMntnConnection(
+  _previousState: MntnConnectionState,
+  formData: FormData
+): Promise<MntnConnectionState> {
+  const [access, actor] = await Promise.all([requireDashboardContext(), getAuthenticatedUser()])
+  if (!actor?.email || !["owner", "administrator"].includes(access.role)) {
+    return { error: "Only an owner or administrator can connect MNTN." }
+  }
+  const parsed = mntnConnectionSchema.safeParse(Object.fromEntries(formData))
+  if (!parsed.success) return { error: "Complete every MNTN connection and security field." }
+  if (!access.allowedStudioIds.includes(parsed.data.studioId)) {
+    return { error: "That studio is outside your access." }
+  }
+
+  const auth = await createAuthClient()
+  const { error: authenticationError } = await auth.auth.signInWithPassword({
+    email: actor.email,
+    password: parsed.data.currentPassword,
+  })
+  if (authenticationError) return { error: "Your SASHA password is incorrect." }
+
+  const { error } = await supabase.rpc("create_mntn_connection_with_secret", {
+    p_organization_id: access.organizationId,
+    p_account_name: parsed.data.accountName,
+    p_api_key: parsed.data.apiKey,
+    p_studio_id: parsed.data.studioId,
+    p_advertiser_id: parsed.data.advertiserId,
+  })
+  if (error) {
+    console.error("MNTN Vault connection creation failed", {
+      organizationId: access.organizationId,
+      actorId: actor.id,
+      studioId: parsed.data.studioId,
+      code: error.code,
+    })
+    return { error: "The encrypted MNTN connection could not be created. Check that the studio and advertiser are not already connected." }
+  }
+
+  revalidatePath("/settings")
+  revalidatePath("/settings/onboarding")
+  return { complete: true }
+}
 
 export async function setClasspopEnabled(
   _previousState: PtsReportState,

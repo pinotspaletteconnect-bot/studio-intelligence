@@ -56,7 +56,7 @@ Meta Ads and Page Insights share the authentication and Graph API foundation in 
 | QuickBooks or other financial systems | Planned |
 | Google Ads and Microsoft Ads | Planned |
 | Organic social content/creative ingestion beyond current Page Insights | Planned |
-| MNTN Connected TV | Active for Gilbert, Louisville/St. Matthews, and Short North; published n8n workflow refreshes the prior 35 days daily at 5:15 AM |
+| MNTN Connected TV | Active for Gilbert, Louisville/St. Matthews, and Short North; published n8n workflow refreshes the prior 35 days daily at 5:15 AM. Vault schema is deployed and self-service/broker/collector code is awaiting application deployment and shadow validation. |
 
 The unpublished workflow `15 - PTS Multi-Account Shadow Dispatcher`
 (`m9v7NXpkX9SDulqa`) is the validated Phase 2 foundation for configuration-driven
@@ -121,8 +121,11 @@ Implemented foundation:
 - Owner/administrator Settings includes a unified Integration Setup area for
   PTS, Textellent, GA4, Meta Business, Eulerity, and MNTN. Each guide explains
   what information is needed and where to find it. PTS and Textellent retain
-  their Vault-backed forms; other sources remain labeled as assisted setup
-  until tenant-safe self-service secret handoffs are implemented.
+  their Vault-backed forms. MNTN now also has a locally implemented
+  owner-authorized Vault form and atomic studio/advertiser mapping. Its schema
+  is deployed; application deployment, shadow workflow, and cutover are still pending. GA4, Meta,
+  and Eulerity remain assisted setup until tenant-safe self-service handoffs are
+  implemented.
 - Shared application context for active studio and common dashboard state
 - Invite-only Supabase Auth foundation with SSR cookie sessions, login,
   password recovery, protected routes, onboarding, logout, owner/admin user

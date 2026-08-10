@@ -26,6 +26,8 @@ This document inventories warehouse objects confirmed by current project documen
 | `pts_third_party_class_credits_reporting` | Exact-match status between third-party credits and completed PTS classes | Deployed August 10, 2026 |
 | `pts_integration_accounts` | PTS account metadata and encrypted-secret references; never credential values | Current |
 | `pts_collection_targets` | Service-only PTS account-to-studio collection configuration | Deployed and validated in production August 9, 2026 |
+| `mntn_integration_accounts` | Tenant-scoped MNTN account metadata and Supabase Vault secret references; never API-key values | Deployed August 10, 2026 through migration `20260810190000` |
+| `mntn_collection_targets` | Service-only MNTN account-to-advertiser/studio collection routing without secrets | Deployed August 10, 2026 through migration `20260810190000` |
 | `user_profiles` | Auth-user profile, terms acceptance, and onboarding completion | Current; migration `20260805110000` deployed August 5, 2026 |
 | `organization_memberships` | Invite-only user role and status by organization | Current; migration `20260805110000` deployed August 5, 2026 |
 | `user_studio_access` | Explicit manager/viewer studio grants | Current; migration `20260805110000` deployed August 5, 2026 |

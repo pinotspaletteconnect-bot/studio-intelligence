@@ -3,11 +3,13 @@ import { BarChart3, CheckCircle2, ChevronDown, KeyRound, LockKeyhole, MessageSqu
 import { PtsConnections } from "@/app/(app)/settings/pts-connections"
 import { TextellentConnections } from "@/app/(app)/settings/textellent-connections"
 import { ClasspopSettings } from "@/app/(app)/settings/classpop-settings"
+import { MntnConnections } from "@/app/(app)/settings/mntn-connections"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 type PtsAccount = { id: number; account_name: string; has_credentials: boolean; last_validated_at: string | null }
 type TextellentAccount = { id: number; account_name: string; description: string | null; sender_number: string }
+type MntnAccount = { id: number; account_name: string; advertiser_id: string | null; studio_name: string | null; has_credentials: boolean; last_validated_at: string | null }
 
 function Guide({ title, description, connected, available, icon, children }: { title: string; description: string; connected: boolean; available?: boolean; icon: React.ReactNode; children: React.ReactNode }) {
   return <details className="group rounded-xl border bg-card open:ring-1 open:ring-foreground/10">
@@ -28,7 +30,7 @@ function SecureHandoff({ gather }: { gather: string }) {
   return <div className="mt-5 flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950"><LockKeyhole className="mt-0.5 size-4 shrink-0" /><p><strong>Secure connection form is next.</strong> Gather {gather}. Do not send passwords, access tokens, or API keys through email or notes.</p></div>
 }
 
-export function IntegrationSetup({ ptsAccounts, textellentAccounts, mappedIntegrationTypes, ptsStudioSettings }: { ptsAccounts: PtsAccount[]; textellentAccounts: TextellentAccount[]; mappedIntegrationTypes: string[]; ptsStudioSettings: Array<{ integrationId: number; studioId: number; studioName: string; classpopEnabled: boolean }> }) {
+export function IntegrationSetup({ ptsAccounts, textellentAccounts, mntnAccounts, studios, mappedIntegrationTypes, ptsStudioSettings }: { ptsAccounts: PtsAccount[]; textellentAccounts: TextellentAccount[]; mntnAccounts: MntnAccount[]; studios: Array<{ id: number; studio_name: string }>; mappedIntegrationTypes: string[]; ptsStudioSettings: Array<{ integrationId: number; studioId: number; studioName: string; classpopEnabled: boolean }> }) {
   const types = new Set(mappedIntegrationTypes.map(value => value.toLowerCase()))
   return <Card id="integrations">
     <CardHeader><CardTitle>Integration setup</CardTitle><CardDescription>Open each system for what to gather, where to find it, and how to connect it safely.</CardDescription></CardHeader>
@@ -44,7 +46,7 @@ export function IntegrationSetup({ ptsAccounts, textellentAccounts, mappedIntegr
       <Guide title="Google Analytics 4" description="Website traffic, conversions, and attribution." connected={types.has("ga4")} icon={<BarChart3 className="size-5" />}><Steps><li>Sign in to Google Analytics and select the correct property.</li><li>Open <strong>Admin → Property details</strong> and copy the numeric Property ID.</li><li>Open <strong>Property access management</strong> and confirm you can add the SASHA reporting identity.</li><li>Note which studio or website the property represents.</li></Steps><SecureHandoff gather="the Property ID and studio mapping" /></Guide>
       <Guide title="Meta Business" description="Facebook and Instagram ads and Page insights." connected={types.has("meta") || types.has("meta_ads") || types.has("meta_page")} icon={<RadioTower className="size-5" />}><Steps><li>Sign in to Meta Business Suite with full control of the business portfolio.</li><li>In Settings, confirm the correct Pages, Instagram accounts, and ad accounts are assigned.</li><li>Record the Business Portfolio ID and each Ad Account ID.</li><li>Map every Page, Instagram account, and ad account to its studio.</li><li>Use Meta&apos;s authorization screen when enabled; never enter a Facebook password in SASHA.</li></Steps><SecureHandoff gather="the portfolio ID, account IDs, and studio mapping" /></Guide>
       <Guide title="Eulerity" description="Managed advertising spend, campaigns, and budgets." connected={types.has("eulerity")} icon={<KeyRound className="size-5" />}><Steps><li>Sign in to Eulerity and confirm reporting access for every studio.</li><li>Open the location selector and record studio names and location IDs.</li><li>If accounts are separate, list each account and the studios it can access.</li><li>Keep the login private for SASHA&apos;s encrypted handoff.</li></Steps><SecureHandoff gather="the account labels and location IDs" /></Guide>
-      <Guide title="MNTN Connected TV" description="CTV spend, visits, conversions, and modeled ROAS." connected={types.has("mntn")} icon={<RadioTower className="size-5" />}><Steps><li>Sign in to MNTN and select the studio&apos;s advertiser.</li><li>Copy the Advertiser ID from the selector or reporting URL.</li><li>Find the reporting API key in API/integration settings, or request access from the MNTN representative.</li><li>Map each advertiser to exactly one studio.</li><li>Keep the API key private; only the Advertiser ID is non-secret.</li></Steps><SecureHandoff gather="each Advertiser ID; keep API keys ready for the encrypted form" /></Guide>
+      <Guide title="MNTN Connected TV" description="CTV spend, visits, conversions, and modeled ROAS." connected={mntnAccounts.some(account => account.has_credentials)} available icon={<RadioTower className="size-5" />}><div className="grid gap-6 lg:grid-cols-[minmax(0,.8fr)_minmax(0,1.2fr)]"><div><h3 className="mb-3 font-medium">Find your MNTN details</h3><Steps><li>Sign in to MNTN and select the studio&apos;s advertiser.</li><li>Copy the Advertiser ID shown beside the account name in the upper-right corner.</li><li>Open <strong>My Account → API</strong> and copy the Reporting API key.</li><li>Map each advertiser to exactly one studio.</li><li>Enter the key only in this form. SASHA encrypts it and never displays it again.</li></Steps></div><MntnConnections studios={studios} accounts={mntnAccounts} /></div></Guide>
     </CardContent>
   </Card>
 }
