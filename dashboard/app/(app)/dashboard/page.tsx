@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ArrowRight, ChartNoAxesCombined, Megaphone, Presentation } from "lucide-react"
+import { Activity, ArrowRight, ChartNoAxesCombined, Megaphone, Presentation } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -22,6 +22,12 @@ const areas = [
     description: "Cross-functional leadership KPIs and business performance overview.",
     icon: Presentation,
   },
+  {
+    href: "/data-status",
+    title: "Data Status",
+    description: "Verify the latest PTS upload date, studio coverage, and warehouse freshness.",
+    icon: Activity,
+  },
 ]
 
 export default function DashboardPage() {
@@ -33,7 +39,7 @@ export default function DashboardPage() {
           Choose a reporting area to review SASHA data.
         </p>
       </div>
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {areas.map(({ href, title, description, icon: Icon }) => (
           <Link key={href} href={href} className="rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             <Card className="h-full transition-colors hover:border-primary/50">

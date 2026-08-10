@@ -11,6 +11,12 @@
   serialize work per opaque PTS account while allowing different accounts to
   run independently. Added passing queue tests for same-account ordering,
   cross-account independence, and failure recovery.
+- Added an authenticated, tenant-scoped Data Upload Status page showing the
+  latest warehouse business date, expected date, receipt time, row count, and
+  represented studios for Daily Sales, Product Sales, Class Sales, Upcoming
+  Classes, and Reservations. Added links from the main dashboard and Settings
+  navigation. The production build and targeted lint pass; deployment remains
+  approval-gated.
 
 ## August 9, 2026
 

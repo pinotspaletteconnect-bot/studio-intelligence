@@ -491,3 +491,14 @@ A tested collector patch is prepared locally to make Run clicks non-blocking
 and serialize browser-based PTS work per opaque account ID. It is not production
 until the Railway deployment and controlled recovery runs are approved and
 verified.
+
+An authenticated SASHA Data Upload Status page is also prepared at
+`/data-status`. It reads the tenant-scoped warehouse tables through the server
+service layer and shows each PTS feed's latest business date, expected date,
+last receipt time, latest-date row count, and authorized-studio coverage. The
+page is linked from the main dashboard and Settings navigation. It deliberately
+labels coverage as studios represented by stored rows because a valid zero-row
+product or reservation slice cannot yet be distinguished from a missing slice
+without the per-studio ingestion manifest planned for a later reliability
+phase. The page has passed targeted lint and the production Next.js build but
+is not deployed until the web publish is approved.
