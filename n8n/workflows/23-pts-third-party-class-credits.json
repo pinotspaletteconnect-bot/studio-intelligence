@@ -1,0 +1,105 @@
+{
+  "name": "23 - PTS Third Party Class Credits",
+  "nodes": [
+    {
+      "parameters": { "rule": { "interval": [{ "field": "cronExpression", "expression": "0 30 8 * * *" }] } },
+      "id": "e53ad09d-a0e6-4ba6-bbb3-329496672301",
+      "name": "Daily 8:30 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [120, 160]
+    },
+    {
+      "parameters": {},
+      "id": "e53ad09d-a0e6-4ba6-bbb3-329496672302",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [120, 300]
+    },
+    {
+      "parameters": {
+        "workflowId": { "__rl": true, "value": "m9v7NXpkX9SDulqa", "mode": "list", "cachedResultName": "15 - PTS Multi-Account Shadow Dispatcher" },
+        "workflowInputs": { "mappingMode": "passThrough", "value": {}, "matchingColumns": [], "schema": [], "attemptToConvertTypes": false, "convertFieldsToString": true },
+        "options": { "waitForSubWorkflow": true }
+      },
+      "id": "e53ad09d-a0e6-4ba6-bbb3-329496672303",
+      "name": "Get PTS Account Jobs",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [360, 230]
+    },
+    {
+      "parameters": {
+        "jsCode": "const jobs = $input.all().map(item => item.json);\nconst today = new Date();\nconst from = new Date(today); from.setUTCDate(from.getUTCDate() - 30);\nconst to = new Date(today); to.setUTCDate(to.getUTCDate() + 90);\nreturn jobs.filter(job => Array.isArray(job.studioTargets) && job.studioTargets.some(studio => Array.isArray(studio.reports) && studio.reports.includes('third_party_class_credits'))).map(job => ({ json: { ...job, fromDate: from.toISOString().slice(0,10), toDate: to.toISOString().slice(0,10) } }));"
+      },
+      "id": "e53ad09d-a0e6-4ba6-bbb3-329496672304",
+      "name": "Keep Enabled Accounts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [600, 230]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://studio-intelligence-production.up.railway.app/pts/third-party-class-credits-report",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ organizationId: $json.organizationId, accountId: $json.accountId, fromDate: $json.fromDate, toDate: $json.toDate }) }}",
+        "options": { "timeout": 600000 }
+      },
+      "id": "e53ad09d-a0e6-4ba6-bbb3-329496672305",
+      "name": "Collect Third Party Credits",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [840, 230],
+      "credentials": { "httpHeaderAuth": { "id": "REPLACE_COLLECTOR_CREDENTIAL_ID", "name": "Studio Intelligence Collector API" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst organizationId = Number(response.organizationId);\nif (!Number.isSafeInteger(organizationId)) throw new Error('Third-party credits response is missing organizationId');\nconst retrievedAt = new Date().toISOString();\nconst rows = [];\nfor (const result of response.results || []) {\n  const studioId = Number(result.studioId);\n  const brandId = Number(result.brandId);\n  if (![studioId, brandId].every(Number.isSafeInteger)) throw new Error('Third-party credit result has invalid tenant identifiers');\n  for (const credit of result.rows || []) rows.push({ json: { organization_id: organizationId, brand_id: brandId, studio_id: studioId, pts_location_id: String(result.locationId), ...credit, retrieved_at: retrievedAt, updated_at: retrievedAt } });\n}\nreturn rows;"
+      },
+      "id": "e53ad09d-a0e6-4ba6-bbb3-329496672306",
+      "name": "Build Credit Upserts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1080, 230]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hsosjnwjangtqtskofag.supabase.co/rest/v1/pts_third_party_class_credits?on_conflict=studio_id,source_credit_key",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "Prefer", "value": "resolution=merge-duplicates,return=representation" }] },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json) }}",
+        "options": { "timeout": 120000 }
+      },
+      "id": "e53ad09d-a0e6-4ba6-bbb3-329496672307",
+      "name": "Upsert Third Party Credits",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1320, 230],
+      "credentials": { "supabaseApi": { "id": "A32h7eKkq8JEdg0k", "name": "Supabase account" } }
+    }
+  ],
+  "connections": {
+    "Daily 8:30 AM": { "main": [[{ "node": "Get PTS Account Jobs", "type": "main", "index": 0 }]] },
+    "Manual Trigger": { "main": [[{ "node": "Get PTS Account Jobs", "type": "main", "index": 0 }]] },
+    "Get PTS Account Jobs": { "main": [[{ "node": "Keep Enabled Accounts", "type": "main", "index": 0 }]] },
+    "Keep Enabled Accounts": { "main": [[{ "node": "Collect Third Party Credits", "type": "main", "index": 0 }]] },
+    "Collect Third Party Credits": { "main": [[{ "node": "Build Credit Upserts", "type": "main", "index": 0 }]] },
+    "Build Credit Upserts": { "main": [[{ "node": "Upsert Third Party Credits", "type": "main", "index": 0 }]] }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": { "executionOrder": "v1", "timezone": "America/New_York", "availableInMCP": false },
+  "tags": []
+}

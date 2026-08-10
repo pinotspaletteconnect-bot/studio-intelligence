@@ -16,6 +16,7 @@ const {
 const { runLowReservationClassAlerts } = require("../scripts/pts/lowReservationClassAlerts");
 const { resolveClassAlertContext } = require("../services/classAlertContext");
 const { runPtsReportQueued } = require("../services/ptsReportQueue");
+const { runPtsThirdPartyClassCreditsReport } = require("../scripts/pts/thirdPartyClassCreditsReport");
 
 const router = express.Router();
 const { resolvePtsAccount } = require("../services/ptsCredentials");
@@ -243,6 +244,32 @@ router.post("/reservations-report", requireCollectorAuth, async (req, res) => {
         });
     } catch (error) {
         console.error("PTS Reservations Report failed:", error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.post("/third-party-class-credits-report", requireCollectorAuth, async (req, res) => {
+    try {
+        const results = await runPtsReportQueued(req.body?.accountId, async () => {
+            const account = await resolvePtsAccount(req.body?.accountId);
+            return runPtsThirdPartyClassCreditsReport({
+                fromDate: req.body?.fromDate,
+                toDate: req.body?.toDate,
+                credentials: account.credentials,
+                studioTargets: account.studios
+            });
+        });
+        res.json({
+            success: true,
+            organizationId: req.body?.organizationId,
+            fromDate: req.body?.fromDate,
+            toDate: req.body?.toDate,
+            studioCount: results.length,
+            rowCount: results.reduce((total, result) => total + result.rowCount, 0),
+            results
+        });
+    } catch (error) {
+        console.error("PTS Third Party Class Credits failed:", error.message);
         res.status(500).json({ success: false, error: error.message });
     }
 });

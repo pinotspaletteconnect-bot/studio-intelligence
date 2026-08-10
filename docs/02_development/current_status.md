@@ -307,6 +307,13 @@ Known incomplete surfaces:
   produces an empty workbook parse. The August 4 controlled rerun for report
   date August 3 completed after deployment settled, parsed 24 product rows, and
   successfully upserted all 24 rows through workflow 06.
+- Optional ClassPop revenue collection is implemented from PTS's Third Party
+  Class Credits Report. Each studio has an off-by-default Settings toggle;
+  enabled studios collect through the existing Vault account and account queue.
+  The privacy-minimized warehouse table excludes customer names, preserves
+  applied and original credit amounts, and augments class and daily revenue
+  only for exact, unambiguous class matches. Migration, collector, inactive
+  workflow 23, and UI are prepared but not deployed.
 - The range-export replacement remains implemented in Supabase for controlled
   reconciliation, but its daily production loading is not active. Do not point
   dashboards back to it until an all-studio daily load and reconciliation are

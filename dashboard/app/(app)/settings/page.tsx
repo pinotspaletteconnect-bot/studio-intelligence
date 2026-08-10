@@ -42,7 +42,15 @@ export default async function SettingsPage() {
             <CardHeader><CardTitle>Invite a user</CardTitle></CardHeader>
             <CardContent><InviteUserForm studios={settings.studios} /></CardContent>
           </Card>
-          <IntegrationSetup ptsAccounts={settings.ptsAccounts} textellentAccounts={settings.textellentAccounts} mappedIntegrationTypes={settings.mappedIntegrationTypes} />
+          <IntegrationSetup
+            ptsAccounts={settings.ptsAccounts}
+            textellentAccounts={settings.textellentAccounts}
+            mappedIntegrationTypes={settings.mappedIntegrationTypes}
+            ptsStudioSettings={settings.ptsStudioSettings.map((setting) => ({
+              ...setting,
+              studioName: settings.studios.find((studio) => studio.id === setting.studioId)?.studio_name ?? `Studio ${setting.studioId}`,
+            }))}
+          />
         </>
       ) : null}
 

@@ -219,6 +219,13 @@ Planned scope includes profile insights, reviews, search visibility, and custome
   replaces each studio/date slice. The August 1, 2026 production validation
   loaded 111 gross booked seats and $4,166.20 gross booked sales, including 2
   refunded and 2 held seats.
+- **Optional ClassPop credits:** PTS `Third Party Class Credits Report`
+  collection is implemented as an opt-in report per studio. The collector
+  excludes customer names, treats Applied Amount as recognized revenue, and
+  matches credits to exactly one class by tenant, studio, start time, and
+  painting. Schema migration `20260810120000`, inactive workflow artifact 23,
+  and the Settings toggle are implemented; production deployment and pilot
+  reconciliation remain pending.
 
 #### Scalable PTS onboarding
 

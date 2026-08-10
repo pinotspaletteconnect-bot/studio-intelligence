@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     supabase.rpc("get_pts_account_secret", { p_account_id: parsed.data.accountId }),
     supabase
       .from("pts_collection_targets")
-      .select("studio_id,studio_code,studio_name,timezone,pts_location_id")
+      .select("brand_id,studio_id,studio_code,studio_name,timezone,pts_location_id,reports")
       .eq("account_id", parsed.data.accountId),
   ])
   if (credentialError || targetError || !credentials) {
@@ -45,10 +45,12 @@ export async function POST(request: Request) {
       credentials,
       studios: targets.map((target) => ({
         studioId: target.studio_id,
+        brandId: target.brand_id,
         code: target.studio_code,
         locationId: target.pts_location_id,
         locationName: target.studio_name,
         timeZone: target.timezone,
+        reports: Array.isArray(target.reports) ? target.reports : [],
       })),
     },
     { headers: { "Cache-Control": "no-store, private" } }

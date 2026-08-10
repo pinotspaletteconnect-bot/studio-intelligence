@@ -69,7 +69,9 @@ async function resolvePtsAccount(accountId) {
             code: target.code,
             locationId: target.locationId,
             locationName: target.locationName,
-            timeZone: target.timeZone
+            timeZone: target.timeZone,
+            brandId: target.brandId,
+            reports: Array.isArray(target.reports) ? target.reports : []
         }))
     };
 }

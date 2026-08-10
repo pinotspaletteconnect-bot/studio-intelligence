@@ -2,6 +2,7 @@ import { BarChart3, CheckCircle2, ChevronDown, KeyRound, LockKeyhole, MessageSqu
 
 import { PtsConnections } from "@/app/(app)/settings/pts-connections"
 import { TextellentConnections } from "@/app/(app)/settings/textellent-connections"
+import { ClasspopSettings } from "@/app/(app)/settings/classpop-settings"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -27,7 +28,7 @@ function SecureHandoff({ gather }: { gather: string }) {
   return <div className="mt-5 flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950"><LockKeyhole className="mt-0.5 size-4 shrink-0" /><p><strong>Secure connection form is next.</strong> Gather {gather}. Do not send passwords, access tokens, or API keys through email or notes.</p></div>
 }
 
-export function IntegrationSetup({ ptsAccounts, textellentAccounts, mappedIntegrationTypes }: { ptsAccounts: PtsAccount[]; textellentAccounts: TextellentAccount[]; mappedIntegrationTypes: string[] }) {
+export function IntegrationSetup({ ptsAccounts, textellentAccounts, mappedIntegrationTypes, ptsStudioSettings }: { ptsAccounts: PtsAccount[]; textellentAccounts: TextellentAccount[]; mappedIntegrationTypes: string[]; ptsStudioSettings: Array<{ integrationId: number; studioId: number; studioName: string; classpopEnabled: boolean }> }) {
   const types = new Set(mappedIntegrationTypes.map(value => value.toLowerCase()))
   return <Card id="integrations">
     <CardHeader><CardTitle>Integration setup</CardTitle><CardDescription>Open each system for what to gather, where to find it, and how to connect it safely.</CardDescription></CardHeader>
@@ -35,6 +36,7 @@ export function IntegrationSetup({ ptsAccounts, textellentAccounts, mappedIntegr
       <div className="mb-5 grid gap-3 rounded-xl bg-slate-50 p-4 text-sm sm:grid-cols-3"><div><strong>1. Gather</strong><p className="mt-1 text-muted-foreground">Follow the steps for each vendor.</p></div><div><strong>2. Connect</strong><p className="mt-1 text-muted-foreground">Use only SASHA&apos;s secured form.</p></div><div><strong>3. Verify</strong><p className="mt-1 text-muted-foreground">Confirm studios and the first successful import.</p></div></div>
       <Guide title="PTS" description="Classes, reservations, sales, products, attendance, and capacity." connected={ptsAccounts.some(account => account.has_credentials)} available icon={<MonitorCog className="size-5" />}>
         <div className="grid gap-6 lg:grid-cols-[minmax(0,.8fr)_minmax(0,1.2fr)]"><div><h3 className="mb-3 font-medium">Before you connect</h3><Steps><li>Open the PTS administration site in a private browser window.</li><li>Sign in with the account SASHA should use for recurring reports.</li><li>Open the location selector and confirm every expected studio is visible.</li><li>Use a dedicated reporting account when possible.</li><li>Enter that login below, then use your SASHA password to authorize the protected change.</li></Steps><p className="mt-4 rounded-lg bg-slate-50 p-3 text-xs leading-5 text-muted-foreground">PTS has no API key. SASHA encrypts this login in Supabase Vault and never displays it again.</p></div><PtsConnections accounts={ptsAccounts} /></div>
+        <div className="mt-6 border-t pt-5"><h3 className="mb-1 font-medium">Third-party class sales</h3><p className="mb-4 text-sm text-muted-foreground">Enable only studios that sell through ClassPop. SASHA will collect the PTS Third Party Class Credits Report and add recognized credits to the matching class date and time.</p><ClasspopSettings settings={ptsStudioSettings} /></div>
       </Guide>
       <Guide title="Textellent" description="Text automation and studio sending numbers." connected={textellentAccounts.length > 0} available icon={<MessageSquareText className="size-5" />}>
         <div className="grid gap-6 lg:grid-cols-[minmax(0,.8fr)_minmax(0,1.2fr)]"><div><h3 className="mb-3 font-medium">Find your connection details</h3><Steps><li>Sign in to the studio&apos;s Textellent account.</li><li>Open account or API settings and locate the API authentication code.</li><li>Copy the full sending number including country code.</li><li>Note which studios share this account; add separate connections for separate accounts.</li><li>Enter the authentication code only in the secured form.</li></Steps></div><TextellentConnections accounts={textellentAccounts} /></div>

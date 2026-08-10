@@ -14,6 +14,7 @@ export type InviteState = { complete?: boolean; error?: string } | undefined
 export type AddStudioState = { complete?: boolean; error?: string } | undefined
 export type MemberAccessState = { complete?: boolean; error?: string } | undefined
 export type PtsAccountState = { complete?: boolean; error?: string } | undefined
+export type PtsReportState = { complete?: boolean; error?: string } | undefined
 
 const inviteSchema = z.object({
   email: z.email().max(254).transform((value) => value.trim().toLowerCase()),
@@ -62,6 +63,57 @@ const replacePtsCredentialsSchema = z.object({
   ptsPassword: z.string().min(1).max(1024),
   currentPassword: z.string().min(1).max(1024),
 })
+
+const ptsReportSchema = z.object({
+  integrationId: z.coerce.number().int().positive(),
+  classpopEnabled: z.boolean(),
+})
+
+export async function setClasspopEnabled(
+  _previousState: PtsReportState,
+  formData: FormData
+): Promise<PtsReportState> {
+  const access = await requireDashboardContext()
+  if (!["owner", "administrator"].includes(access.role)) {
+    return { error: "Only an owner or administrator can change PTS reports." }
+  }
+  const parsed = ptsReportSchema.safeParse({
+    integrationId: formData.get("integrationId"),
+    classpopEnabled: formData.get("classpopEnabled") === "on",
+  })
+  if (!parsed.success) return { error: "The ClassPop setting is invalid." }
+
+  const { data: mapping, error } = await supabase
+    .from("studio_integrations")
+    .select("id,configuration")
+    .eq("id", parsed.data.integrationId)
+    .eq("organization_id", access.organizationId)
+    .eq("integration_type", "pts")
+    .eq("is_active", true)
+    .maybeSingle()
+  if (error || !mapping) return { error: "The PTS studio mapping is unavailable." }
+
+  const configuration = mapping.configuration && typeof mapping.configuration === "object"
+    ? { ...mapping.configuration as Record<string, unknown> }
+    : {}
+  const existingReports = Array.isArray(configuration.reports)
+    ? configuration.reports.filter((value): value is string => typeof value === "string")
+    : []
+  const reports = new Set(existingReports)
+  if (parsed.data.classpopEnabled) reports.add("third_party_class_credits")
+  else reports.delete("third_party_class_credits")
+
+  const { error: updateError } = await supabase
+    .from("studio_integrations")
+    .update({ configuration: { ...configuration, reports: [...reports] } })
+    .eq("id", mapping.id)
+    .eq("organization_id", access.organizationId)
+  if (updateError) return { error: "The ClassPop setting could not be saved." }
+
+  revalidatePath("/settings")
+  revalidatePath("/settings/onboarding")
+  return { complete: true }
+}
 
 export async function replacePtsCredentials(
   _previousState: PtsAccountState,

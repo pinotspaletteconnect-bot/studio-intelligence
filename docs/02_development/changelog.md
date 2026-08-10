@@ -2,6 +2,12 @@
 
 ## August 10, 2026
 
+- Implemented the approval-gated ClassPop foundation using PTS's Third Party
+  Class Credits Report. Added a per-studio `Uses ClassPop` toggle, queued
+  account-aware collector, privacy-minimized credit table, exact class matching,
+  adjusted class/daily reporting, and inactive workflow artifact 23. Customer
+  names are discarded and ambiguous credits cannot change dashboard totals.
+
 - Reconciled the first scheduled multi-account PTS production runs.
   Reservations and Upcoming Classes succeeded; Daily Sales failed on the PTS
   Run-button navigation wait, and simultaneous Product/Class Sales collectors

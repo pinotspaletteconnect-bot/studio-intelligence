@@ -29,7 +29,7 @@ export async function getAccountSettings(
         .order("account_label"),
       supabase
         .from("studio_integrations")
-        .select("integration_type")
+        .select("id,studio_id,integration_type,configuration")
         .eq("organization_id", organizationId)
         .in("studio_id", allowedStudioIds)
         .eq("is_active", true),
@@ -105,6 +105,14 @@ export async function getAccountSettings(
     studios: studioResult.data ?? [],
     integrations: integrationResult.data ?? [],
     mappedIntegrationTypes: [...new Set((mappingResult.data ?? []).map((item) => item.integration_type))],
+    ptsStudioSettings: (mappingResult.data ?? [])
+      .filter((item) => item.integration_type === "pts")
+      .map((item) => ({
+        integrationId: item.id,
+        studioId: item.studio_id,
+        classpopEnabled: Array.isArray((item.configuration as { reports?: unknown } | null)?.reports)
+          && ((item.configuration as { reports: unknown[] }).reports).includes("third_party_class_credits"),
+      })),
     brands: brandResult.data ?? [],
     ptsAccounts: (ptsAccountResult.data ?? []).map((account) => ({
       id: account.id,
