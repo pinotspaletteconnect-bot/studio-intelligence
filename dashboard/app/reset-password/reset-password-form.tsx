@@ -18,7 +18,17 @@ export function ResetPasswordForm() {
       const query = new URLSearchParams(window.location.search)
       const accessToken = fragment.get("access_token") ?? query.get("access_token")
       const refreshToken = fragment.get("refresh_token") ?? query.get("refresh_token")
+      const authorizationCode = query.get("code")
       const linkError = fragment.get("error") ?? query.get("error")
+
+      const auth = createAuthBrowserClient()
+
+      if (authorizationCode) {
+        const { error } = await auth.auth.exchangeCodeForSession(authorizationCode)
+        window.history.replaceState(null, "", window.location.pathname)
+        setLinkState(error ? "invalid" : "recovery")
+        return
+      }
 
       if (!accessToken || !refreshToken) {
         await Promise.resolve()
@@ -26,7 +36,6 @@ export function ResetPasswordForm() {
         return
       }
 
-      const auth = createAuthBrowserClient()
       const { error } = await auth.auth.setSession({
         access_token: accessToken,
         refresh_token: refreshToken,

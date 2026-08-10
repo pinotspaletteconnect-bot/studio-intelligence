@@ -8,8 +8,11 @@ assigned to an organization with one role: owner, administrator, manager, or
 viewer. Owners and administrators inherit all active studios in their
 organization; managers and viewers receive explicit studio grants.
 
-An accepted invitation opens the protected onboarding form. The invited user
-first opens the allowlisted password-setup page, establishes the invitation
+New invitations provision an inaccessible confirmed identity, assign its
+organization membership and studio grants, and then send one recovery-style
+password setup email. This avoids depending on the provider's built-in invite
+redirect while still requiring control of the recipient's email address. The invited user
+opens the allowlisted password-setup page, establishes the recovery
 session in their own browser, and creates and confirms a password before their profile is completed and
 their membership changes from `invited` to `active`. The password update is a
 server-only mutation scoped to the identity verified by the invitation session;
@@ -18,10 +21,9 @@ If the invitation session is lost before completion, an owner or administrator
 can send a new setup link from Authorized Users. The invited user chooses their
 own password through the recovery session and then resumes profile and terms
 setup without a duplicate password prompt. Administrators never generate or
-view that password. Resent setup emails use a recipient-safe implicit recovery
-session rather than a server-generated PKCE verifier tied to the administrator's
-browser; the reset page converts that one-time URL fragment into the secure SSR
-cookie session before accepting a new password.
+view that password. Setup emails support both recipient-safe implicit recovery
+tokens and PKCE authorization codes. The reset page converts either one-time
+credential into the secure SSR cookie session before accepting a new password.
 
 If an owner invites an email whose Auth identity already exists with an invited
 or suspended membership in the same organization, SASHA reactivates that

@@ -2,6 +2,11 @@
 
 ## August 10, 2026
 
+- Replaced new-user reliance on Supabase's built-in invitation redirect with a
+  single recovery-style password setup email sent only after membership and
+  studio grants are assigned. Added reset-page support for both implicit tokens
+  and PKCE authorization codes so invitees always choose their own password.
+
 - Implemented the approval-gated ClassPop foundation using PTS's Third Party
   Class Credits Report. Added a per-studio `Uses ClassPop` toggle, queued
   account-aware collector, privacy-minimized credit table, exact class matching,

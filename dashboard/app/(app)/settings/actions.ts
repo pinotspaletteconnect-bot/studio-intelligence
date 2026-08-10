@@ -519,15 +519,16 @@ export async function inviteOrganizationUser(
     return { error: "Invitations are temporarily unavailable." }
   }
 
-  const { data, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
-    parsed.data.email,
-    {
-      redirectTo: `${origin}/reset-password`,
-      data: { invited_to_organization: access.organizationId },
-    }
-  )
+  // Provision the identity without relying on Supabase's built-in invite
+  // redirect. The user receives a single recovery-style setup email only after
+  // membership and studio grants are safely in place, and chooses their own
+  // password from that verified email session.
+  const { data, error: inviteError } = await supabase.auth.admin.createUser({
+    email: parsed.data.email,
+    email_confirm: true,
+    user_metadata: { invited_to_organization: access.organizationId },
+  })
   let invitedUser = data.user
-  let requiresSetupResend = false
 
   if (inviteError || !invitedUser) {
     let existingUser
@@ -571,7 +572,6 @@ export async function inviteOrganizationUser(
     }
 
     invitedUser = existingUser
-    requiresSetupResend = true
   }
 
   const { error: membershipError } = await supabase
@@ -615,20 +615,18 @@ export async function inviteOrganizationUser(
     if (studioError) return { error: "The invitation was sent, but studio access needs review." }
   }
 
-  if (requiresSetupResend) {
-    const auth = createRecoveryEmailClient()
-    const { error: setupError } = await auth.auth.resetPasswordForEmail(
-      parsed.data.email,
-      { redirectTo: `${origin}/reset-password` }
-    )
-    if (setupError) {
-      console.error("Re-invited user setup email failed", {
-        organizationId: access.organizationId,
-        invitedUserId: invitedUser.id,
-        code: setupError.code,
-      })
-      return { error: "Access was restored, but the setup email could not be sent. Use Resend setup link." }
-    }
+  const auth = createRecoveryEmailClient()
+  const { error: setupError } = await auth.auth.resetPasswordForEmail(
+    parsed.data.email,
+    { redirectTo: `${origin}/reset-password` }
+  )
+  if (setupError) {
+    console.error("Invited user setup email failed", {
+      organizationId: access.organizationId,
+      invitedUserId: invitedUser.id,
+      code: setupError.code,
+    })
+    return { error: "Access was assigned, but the setup email could not be sent. Use Resend setup link." }
   }
 
   revalidatePath("/settings")
