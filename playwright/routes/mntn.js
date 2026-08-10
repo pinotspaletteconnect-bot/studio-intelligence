@@ -19,7 +19,15 @@ function requireCollectorAuth(req, res, next) {
 }
 
 router.get("/health", (_req, res) => {
-    res.json({ success: true, service: "MNTN", brokerConfigured: Boolean(process.env.MNTN_SECRET_BROKER_URL && process.env.MNTN_SECRET_BROKER_TOKEN) });
+    const brokerUrlConfigured = Boolean(process.env.MNTN_SECRET_BROKER_URL);
+    const brokerTokenConfigured = Boolean(process.env.MNTN_SECRET_BROKER_TOKEN);
+    res.json({
+        success: true,
+        service: "MNTN",
+        brokerConfigured: brokerUrlConfigured && brokerTokenConfigured,
+        brokerUrlConfigured,
+        brokerTokenConfigured
+    });
 });
 
 router.post("/report", requireCollectorAuth, async (req, res) => {
