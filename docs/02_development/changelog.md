@@ -8,6 +8,10 @@
   Vault timestamp that the broker path never wrote, causing working mappings to
   appear incomplete.
 
+- Fixed the per-studio mapping gate to use the same computed credential
+  validation result as the account card. The four existing mappings were
+  present and correct but still referenced the legacy empty timestamp.
+
 - Finished the Workspace Setup readiness experience. It now distinguishes
   controlled-workspace readiness from the public email launch gate, requires
   validated Vault credentials and account-backed studio mappings, reports

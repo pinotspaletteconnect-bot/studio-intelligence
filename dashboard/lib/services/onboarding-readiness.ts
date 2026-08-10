@@ -98,7 +98,7 @@ export async function getOnboardingReadiness(organizationId: number, allowedStud
       ready: feedReadyForStudio(feed, studio.id),
     }))
     const hasPtsMapping = Boolean(mapping && account)
-    const credentialsValidated = Boolean(account?.last_validated_at)
+    const credentialsValidated = Boolean(account?.validated)
 
     return {
       ...studio,
