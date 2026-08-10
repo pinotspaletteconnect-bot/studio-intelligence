@@ -2,6 +2,14 @@
 
 ## August 10, 2026
 
+- Completed the MNTN Vault cutover. Published configuration-driven n8n
+  workflow `16 - MNTN Vault Daily Import` (`QVxPXBbcDOWihWF0`) on the existing
+  daily 5:15 AM schedule and unpublished legacy workflow
+  `W44B3WmHeUkcvQla`. The cutover run resolved four Vault accounts and UPSERTed
+  105 rows: 35 days each for Gilbert, St. Matthews, and Short North, with the
+  expected zero pre-launch rows for Jeffersonville. No MNTN API key remains in
+  the active workflow.
+
 - Deployed migration `20260810220000` so existing live MNTN studio/advertiser
   mappings can be upgraded to Vault-backed accounts in place. This preserves
   their integration IDs and historical reporting references instead of

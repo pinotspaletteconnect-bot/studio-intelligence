@@ -119,8 +119,14 @@ production workflow remains unchanged as the rollback path. The dashboard and
 collector application changes are deployed. Jeffersonville is saved as a
 pre-launch mapping (advertiser `71260`); an authenticated empty report is a
 valid pre-launch response and must not be treated as a collection failure.
-A shadow dispatcher, live-advertiser reconciliation, and production cutover
-remain pending.
+A configuration-driven n8n workflow now reads this view, calls the collector by
+opaque account ID, and UPSERTs the normalized facts. Workflow
+`16 - MNTN Vault Daily Import` (`QVxPXBbcDOWihWF0`) is published on the daily
+5:15 AM schedule. Its August 10 cutover run read four targets, authenticated all
+four Vault accounts, and wrote 105 rows: 35 days for each of the three live
+advertisers and zero expected pre-launch rows for Jeffersonville. The former
+credentialed workflow `W44B3WmHeUkcvQla` is unpublished and retained only as a
+rollback artifact.
 
 Migration `20260810220000` allows that onboarding RPC to adopt an existing
 legacy MNTN `studio_integrations` row when its studio and advertiser ID match.
