@@ -224,9 +224,11 @@ Planned scope includes profile insights, reviews, search visibility, and custome
   excludes customer names, treats Applied Amount as recognized revenue, and
   matches credits to exactly one class by tenant, studio, start time, and
   painting. Schema migration `20260810120000`, collector route, dashboard
-  reporting, and inactive workflow 23 were deployed August 10, 2026. The
-  per-studio toggle remains off by default; pilot enablement, backfill, and
-  reconciliation remain pending.
+  reporting, and workflow 23 were deployed August 10, 2026. Gilbert is the
+  enabled production pilot; the other studios remain off. The first controlled
+  30-day-past/90-day-future run loaded 21 credits, matched 18, excluded 3
+  unmatched rows, and applied $542.08 across 6 completed classes. Workflow 23
+  is published for its daily 8:30 AM America/New_York schedule.
 
 #### Scalable PTS onboarding
 

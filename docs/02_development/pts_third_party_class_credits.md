@@ -42,7 +42,8 @@ class revenue plus the class's products and fees.
 ## Deployment state
 
 Collector, schema migration, Settings toggle, dashboard reporting, and a
-persisted inactive workflow 23 were deployed August 10, 2026. Every studio
-toggle remains off, so no scheduled collection is active. Enabling the pilot
-studio, running the first backfill, and reconciling matched and unmatched rows
-remain approval-gated.
+workflow 23 were deployed August 10, 2026. Gilbert is the only enabled studio,
+and workflow 23 is published for 8:30 AM America/New_York. The first controlled
+run loaded 21 rows, matched 18, excluded 3 unmatched rows, and applied $542.08
+to 6 completed classes. The remaining studios stay off until separately
+approved and validated.

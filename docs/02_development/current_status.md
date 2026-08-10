@@ -314,8 +314,10 @@ Known incomplete surfaces:
   applied and original credit amounts, and augments class and daily revenue
   only for exact, unambiguous class matches. Migration `20260810120000`, the
   collector route, dashboard UI, and workflow 23 were deployed August 10,
-  2026. Workflow 23 and every studio toggle remain inactive pending a
-  controlled pilot backfill and reconciliation.
+  2026. Gilbert is enabled and workflow 23 is published at 8:30 AM daily. Its
+  controlled validation loaded 21 rows: 18 matched, 3 remained excluded as
+  unmatched, and $542.08 was applied to 6 completed classes. All other studio
+  toggles remain off.
 - The range-export replacement remains implemented in Supabase for controlled
   reconciliation, but its daily production loading is not active. Do not point
   dashboards back to it until an all-studio daily load and reconciliation are
