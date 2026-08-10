@@ -111,8 +111,9 @@ node to the workflow for every new studio.
 
 Migration `20260810190000` is deployed and establishes tenant-scoped MNTN
 accounts, Vault-only API-key storage, an atomic studio/advertiser mapping RPC,
-and a service-only target view. The dashboard broker and collector proxy are
-implemented with a dedicated shared service token; the proxy adds the API key
+and a service-only target view. The dashboard broker and collector proxy prefer
+a dedicated shared service token and temporarily fall back to the proven PTS
+broker channel when that variable is unavailable in Railway; the proxy adds the API key
 only after accepting an allowlisted API 3 report query. The existing three-node
 production workflow remains unchanged as the rollback path. Application
 deployment, a shadow dispatcher, Jeffersonville validation, and production

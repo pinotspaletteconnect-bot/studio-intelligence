@@ -19,8 +19,12 @@ function requireCollectorAuth(req, res, next) {
 }
 
 router.get("/health", (_req, res) => {
-    const brokerUrlConfigured = Boolean(process.env.MNTN_SECRET_BROKER_URL);
-    const brokerTokenConfigured = Boolean(process.env.MNTN_SECRET_BROKER_TOKEN);
+    const brokerUrlConfigured = Boolean(
+        process.env.MNTN_SECRET_BROKER_URL || process.env.PTS_SECRET_BROKER_URL
+    );
+    const brokerTokenConfigured = Boolean(
+        process.env.MNTN_SECRET_BROKER_TOKEN || process.env.PTS_SECRET_BROKER_TOKEN
+    );
     res.json({
         success: true,
         service: "MNTN",

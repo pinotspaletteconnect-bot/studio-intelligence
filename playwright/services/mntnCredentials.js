@@ -1,6 +1,7 @@
 function brokerConfiguration() {
-    const url = process.env.MNTN_SECRET_BROKER_URL;
-    const token = process.env.MNTN_SECRET_BROKER_TOKEN;
+    const url = process.env.MNTN_SECRET_BROKER_URL ||
+        process.env.PTS_SECRET_BROKER_URL?.replace(/\/pts-account\/?$/, "/mntn-account");
+    const token = process.env.MNTN_SECRET_BROKER_TOKEN || process.env.PTS_SECRET_BROKER_TOKEN;
     if (!url || !token) throw new Error("MNTN credential broker is not configured");
     return { url, token };
 }

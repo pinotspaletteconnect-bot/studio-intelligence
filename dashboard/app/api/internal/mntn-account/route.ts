@@ -9,7 +9,7 @@ export const runtime = "nodejs"
 const requestSchema = z.object({ accountId: z.number().int().positive() })
 
 function authorized(request: Request) {
-  const configuredToken = process.env.MNTN_SECRET_BROKER_TOKEN
+  const configuredToken = process.env.MNTN_SECRET_BROKER_TOKEN ?? process.env.PTS_SECRET_BROKER_TOKEN
   const suppliedToken = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? ""
   if (!configuredToken) return false
   const configured = Buffer.from(configuredToken)

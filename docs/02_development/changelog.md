@@ -17,6 +17,12 @@
   collector tests pass. Application deployment and shadow reconciliation remain
   pending.
 
+- Added a controlled MNTN broker fallback after Railway retained the new MNTN
+  variables in its configuration UI but did not inject them into the collector
+  process. The MNTN endpoint and Vault account remain separate; only the proven
+  internal PTS service-authentication channel is reused until the dedicated
+  Railway variables are available at runtime.
+
 - Corrected Workspace Setup credential readiness for the existing production
   account. A successful audited PTS collection after the most recent credential
   change now counts as credential validation; previously the page depended on a
