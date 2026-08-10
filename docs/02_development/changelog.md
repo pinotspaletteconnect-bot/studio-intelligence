@@ -2,6 +2,13 @@
 
 ## August 10, 2026
 
+- Finished the Workspace Setup readiness experience. It now distinguishes
+  controlled-workspace readiness from the public email launch gate, requires
+  validated Vault credentials and account-backed studio mappings, reports
+  active versus invited users, and reuses current Data Upload Status freshness
+  for per-studio five-feed first-run verification instead of accepting any
+  historical row as complete.
+
 - Replaced production-blocked setup emails with owner-controlled temporary
   passwords for invited users. SASHA displays each generated password once,
   expires it after 24 hours, forces permanent-password creation at first login,

@@ -250,7 +250,11 @@ Known incomplete surfaces:
   one-time-displayed, 24-hour temporary password. Invited memberships remain
   excluded from tenant RLS, first login is forced through permanent-password
   creation, and manager/viewer studio grants are assigned before credentials
-  are issued.
+  are issued. Workspace Setup now exposes actionable controlled-readiness
+  checks for business structure, validated Vault credentials, studio/account
+  mappings, active users, and current five-feed first-run coverage. Its public
+  launch gate remains incomplete until custom SMTP is validated and
+  `AUTH_CUSTOM_SMTP_CONFIGURED=true` is deliberately set in production.
 
 - Production authentication activation has the canonical Site URL, Railway
   `APP_URL`, and publishable-key configuration in place. It remains pending

@@ -53,6 +53,9 @@ The V1 production dashboard is deployed at
 - `SUPABASE_SERVER_SECRET` (server only)
 - Dashboard production URL in Supabase Auth Site URL and redirect allow list
 - Custom SMTP for production invitations and password recovery
+- `AUTH_CUSTOM_SMTP_CONFIGURED=true` only after custom SMTP and recovery delivery
+  have passed production validation; this controls the public-launch readiness
+  gate and must not be used to claim readiness before testing
 - Strong password policy, leaked-password protection when available, CAPTCHA,
   and appropriate Supabase Auth rate limits
 - Password-change and other security-notification emails enabled
@@ -111,11 +114,14 @@ a different login still requires the encrypted one-time secret handoff above.
 Owners and administrators have a Workspace Setup checklist under Settings. It
 derives readiness from existing organization, brand, studio, PTS mapping,
 secured account-reference, membership, and warehouse fact records; it does not
-duplicate that state in a separate onboarding table. The per-studio grid shows
-the latest Daily Sales, Product Sales, completed Class Sales, Upcoming Classes,
-and Reservations dates so missing feeds are visible before a studio is treated
-as ready. New credential entry remains unavailable in production until the
-encrypted one-time handoff below is migrated, configured, and validated.
+duplicate that state in a separate onboarding table. Credential readiness
+requires a successful Vault/broker validation timestamp. Mapping readiness
+requires every active studio to resolve to a validated account. First-run
+readiness reuses the production Data Upload Status freshness contract and
+requires current Daily Sales, Product Sales, completed Class Sales, Upcoming
+Classes, and Reservations coverage for each studio; merely having an old row no
+longer marks a studio ready. The page separately reports controlled-workspace
+readiness and the custom-SMTP gate required for public onboarding.
 
 The implemented next-stage handoff uses Supabase Vault and a dedicated
 server-to-server broker token. The dashboard alone holds the Supabase
