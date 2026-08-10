@@ -2,6 +2,12 @@
 
 ## August 10, 2026
 
+- Corrected Workspace Setup credential readiness for the existing production
+  account. A successful audited PTS collection after the most recent credential
+  change now counts as credential validation; previously the page depended on a
+  Vault timestamp that the broker path never wrote, causing working mappings to
+  appear incomplete.
+
 - Finished the Workspace Setup readiness experience. It now distinguishes
   controlled-workspace readiness from the public email launch gate, requires
   validated Vault credentials and account-backed studio mappings, reports

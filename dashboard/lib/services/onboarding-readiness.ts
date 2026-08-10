@@ -37,22 +37,50 @@ export type OnboardingStudioFeedStatus = {
 }
 
 export async function getOnboardingReadiness(organizationId: number, allowedStudioIds: number[]) {
-  const [organizationResult, brandsResult, studiosResult, mappingsResult, accountsResult, membersResult, uploadStatus] =
+  const [organizationResult, brandsResult, studiosResult, mappingsResult, accountsResult, membersResult, successfulRunsResult, uploadStatus] =
     await Promise.all([
       supabase.from("organizations").select("id,name").eq("id", organizationId).single(),
       supabase.from("brands").select("id,name").eq("organization_id", organizationId).order("name"),
       supabase.from("studios").select("id,studio_name,studio_code,city,state,timezone,active").eq("organization_id", organizationId).in("id", allowedStudioIds).eq("active", true).order("studio_name"),
       supabase.from("studio_integrations").select("studio_id,external_id,is_active,configuration").eq("organization_id", organizationId).eq("integration_type", "pts").eq("is_active", true),
-      supabase.from("pts_integration_accounts").select("id,account_name,is_active,last_validated_at").eq("organization_id", organizationId).eq("is_active", true).order("account_name"),
+      supabase.from("pts_integration_accounts").select("id,account_name,is_active,last_validated_at,updated_at").eq("organization_id", organizationId).eq("is_active", true).order("account_name"),
       supabase.from("organization_memberships").select("user_id,status").eq("organization_id", organizationId).in("status", ["invited", "active"]),
+      supabase.from("integration_runs").select("integration_account_id,completed_at").eq("organization_id", organizationId).eq("integration_type", "pts").eq("status", "succeeded").not("integration_account_id", "is", null).not("completed_at", "is", null).order("completed_at", { ascending: false }).limit(500),
       getDataUploadStatus(organizationId, allowedStudioIds),
     ])
 
-  for (const result of [organizationResult, brandsResult, studiosResult, mappingsResult, accountsResult, membersResult]) {
+  for (const result of [organizationResult, brandsResult, studiosResult, mappingsResult, accountsResult, membersResult, successfulRunsResult]) {
     if (result.error) throw result.error
   }
 
-  const accountsById = new Map((accountsResult.data ?? []).map(account => [account.id, account]))
+  const latestSuccessfulRunByAccount = new Map<number, string>()
+  for (const run of successfulRunsResult.data ?? []) {
+    if (
+      typeof run.integration_account_id === "number" &&
+      typeof run.completed_at === "string" &&
+      !latestSuccessfulRunByAccount.has(run.integration_account_id)
+    ) {
+      latestSuccessfulRunByAccount.set(run.integration_account_id, run.completed_at)
+    }
+  }
+  const accounts = (accountsResult.data ?? []).map(account => {
+    const successfulRunAt = latestSuccessfulRunByAccount.get(account.id) ?? null
+    const successfulAfterCredentialChange = Boolean(
+      successfulRunAt && successfulRunAt >= account.updated_at
+    )
+    const validatedAt = account.last_validated_at ?? (successfulAfterCredentialChange ? successfulRunAt : null)
+    return {
+      ...account,
+      validated: Boolean(validatedAt),
+      validatedAt,
+      validationSource: account.last_validated_at
+        ? "credential_check" as const
+        : successfulAfterCredentialChange
+          ? "successful_collection" as const
+          : null,
+    }
+  })
+  const accountsById = new Map(accounts.map(account => [account.id, account]))
   const mappingsByStudio = new Map((mappingsResult.data ?? []).map(mapping => [mapping.studio_id, mapping]))
   const mappedStudioCounts = new Map<number, number>()
 
@@ -84,9 +112,8 @@ export async function getOnboardingReadiness(organizationId: number, allowedStud
     }
   })
 
-  const accounts = (accountsResult.data ?? []).map(account => ({
+  const accountsWithMappings = accounts.map(account => ({
     ...account,
-    validated: Boolean(account.last_validated_at),
     mappedStudioCount: mappedStudioCounts.get(account.id) ?? 0,
   }))
   const activeMembers = (membersResult.data ?? []).filter(member => member.status === "active").length
@@ -105,7 +132,7 @@ export async function getOnboardingReadiness(organizationId: number, allowedStud
 
   const checks = {
     businessStructure: (brandsResult.data?.length ?? 0) > 0 && totalStudios > 0,
-    credentials: accounts.length > 0 && accounts.some(account => account.validated),
+    credentials: accountsWithMappings.length > 0 && accountsWithMappings.some(account => account.validated),
     mappings: totalStudios > 0 && mappedStudios === totalStudios && validatedStudios === totalStudios,
     users: activeMembers > 0,
     firstCollection: totalStudios > 0 && dataReadyStudios === totalStudios,
@@ -115,7 +142,7 @@ export async function getOnboardingReadiness(organizationId: number, allowedStud
     organization: organizationResult.data!,
     brands: brandsResult.data ?? [],
     studios,
-    accounts,
+    accounts: accountsWithMappings,
     members: { active: activeMembers, invited: invitedMembers, total: activeMembers + invitedMembers },
     feeds: feedStatuses,
     checks,

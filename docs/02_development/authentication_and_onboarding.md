@@ -115,7 +115,10 @@ Owners and administrators have a Workspace Setup checklist under Settings. It
 derives readiness from existing organization, brand, studio, PTS mapping,
 secured account-reference, membership, and warehouse fact records; it does not
 duplicate that state in a separate onboarding table. Credential readiness
-requires a successful Vault/broker validation timestamp. Mapping readiness
+requires either a successful Vault/broker validation timestamp or a successful
+audited PTS collection completed after the most recent credential change. A
+secret retrieval by itself is not treated as proof, while normal production
+collectors establish readiness automatically. Mapping readiness
 requires every active studio to resolve to a validated account. First-run
 readiness reuses the production Data Upload Status freshness contract and
 requires current Daily Sales, Product Sales, completed Class Sales, Upcoming

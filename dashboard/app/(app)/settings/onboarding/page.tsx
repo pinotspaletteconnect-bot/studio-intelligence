@@ -104,7 +104,7 @@ export default async function WorkspaceOnboardingPage() {
           {readiness.accounts.length ? readiness.accounts.map(account => (
             <div key={account.id} className="rounded-lg border p-4 text-sm">
               <div className="flex items-start justify-between gap-3"><div><p className="font-medium">{account.account_name}</p><p className="mt-1 text-xs text-muted-foreground">{account.mappedStudioCount} mapped studio{account.mappedStudioCount === 1 ? "" : "s"}</p></div><Status complete={account.validated} label={account.validated ? "Validated" : "Not validated"} /></div>
-              <p className="mt-3 text-xs text-muted-foreground">Last validated: {formatDateTime(account.last_validated_at)}</p>
+              <p className="mt-3 text-xs text-muted-foreground">{account.validationSource === "successful_collection" ? "Last successful credential-backed collection" : "Last credential validation"}: {formatDateTime(account.validatedAt)}</p>
             </div>
           )) : <p className="text-sm text-muted-foreground">No encrypted PTS account has been created.</p>}
         </CardContent>
