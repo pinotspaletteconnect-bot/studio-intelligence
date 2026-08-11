@@ -2,6 +2,9 @@
 
 ## August 11, 2026
 
+- Fixed the updated-policy acceptance form so its primary button explicitly
+  submits the server action; previously clicking `Accept and continue` did not
+  record consent or navigate to the dashboard.
 - Replaced direct n8n backfill links with a deployed administrator-only SASHA
   upload experience for PTS Product Sales and Class Sales. The browser receives
   only a processing state and sanitized success/failure result; n8n URLs and
