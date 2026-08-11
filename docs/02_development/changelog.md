@@ -10,6 +10,11 @@
   authenticated collector report execution, and tenant-scoped collection views.
   Existing OAuth workflows remain production until a service account is added
   and the replacement shadows pass.
+- Deployed migration `20260811130000`, SASHA GA4 settings, the authenticated
+  collector, and workflow-compatible report routing. Created unpublished
+  aggregate and source/medium Vault shadows. Google Cloud blocks creation of
+  the required reporting service account until MFA is enabled on the signed-in
+  administrator account; no GA4 production workflow was cut over.
 
 ## August 10, 2026
 

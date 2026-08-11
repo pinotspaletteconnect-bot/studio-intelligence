@@ -36,7 +36,7 @@ No integration should bypass this lifecycle without an explicit architectural de
 - **Capability:** web traffic, audience analytics, and session source/medium attribution
 - **Collection:** API/n8n
 - **Warehouse:** `ga4_daily_metrics`; `marketing_attribution_daily` is provisioned for source/medium facts
-- **Status:** Production on the existing n8n OAuth workflows. A Vault-backed service-account replacement is implemented with automatic property discovery and SASHA studio mapping; the legacy workflows remain active until a service-account key is connected and both shadows validate.
+- **Status:** Production on the existing n8n OAuth workflows. The Vault-backed service-account schema, SASHA setup, collector, and two unpublished shadows are deployed. Google Cloud currently blocks service-account creation until MFA is enabled on the administrator account; legacy workflows remain active until a key is connected and both shadows validate.
 
 ### Eulerity
 
