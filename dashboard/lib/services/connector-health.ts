@@ -3,7 +3,7 @@ import "server-only"
 import { supabase } from "@/lib/supabase/server"
 
 export type ConnectorHealthState = "connected" | "attention" | "not_connected"
-export type ConnectorHealthItem = { key: "pts" | "textellent" | "ga4" | "meta" | "eulerity" | "mntn"; name: string; state: ConnectorHealthState; label: string; settingsHref: string }
+export type ConnectorHealthItem = { key: "pts" | "textellent" | "ga4" | "meta" | "eulerity" | "mntn" | "homebase"; name: string; state: ConnectorHealthState; label: string; settingsHref: string }
 
 const vaultReference = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
@@ -14,7 +14,7 @@ function configuredState(hasCredentials: boolean, hasMapping: boolean) {
 }
 
 export async function getConnectorHealth(organizationId: number, allowedStudioIds: number[]): Promise<ConnectorHealthItem[]> {
-  const [mappingResult, ptsResult, textellentResult, textellentAssignmentResult, ga4Result, metaResult, eulerityResult, mntnResult] = await Promise.all([
+  const [mappingResult, ptsResult, textellentResult, textellentAssignmentResult, ga4Result, metaResult, eulerityResult, mntnResult, homebaseResult] = await Promise.all([
     supabase.from("studio_integrations").select("integration_type").eq("organization_id", organizationId).in("studio_id", allowedStudioIds).eq("is_active", true),
     supabase.from("pts_integration_accounts").select("secret_reference").eq("organization_id", organizationId).eq("is_active", true),
     supabase.from("textellent_accounts").select("id").eq("organization_id", organizationId).eq("is_active", true),
@@ -23,8 +23,9 @@ export async function getConnectorHealth(organizationId: number, allowedStudioId
     supabase.from("meta_integration_accounts").select("secret_reference,connection_status,token_expires_at").eq("organization_id", organizationId).eq("is_active", true),
     supabase.from("eulerity_integration_accounts").select("secret_reference").eq("organization_id", organizationId).eq("is_active", true),
     supabase.from("mntn_integration_accounts").select("secret_reference").eq("organization_id", organizationId).eq("is_active", true),
+    supabase.from("homebase_integration_accounts").select("secret_reference,last_validated_at").eq("organization_id", organizationId).eq("is_active", true),
   ])
-  for (const result of [mappingResult, ptsResult, textellentResult, textellentAssignmentResult, ga4Result, metaResult, eulerityResult, mntnResult]) if (result.error) throw result.error
+  for (const result of [mappingResult, ptsResult, textellentResult, textellentAssignmentResult, ga4Result, metaResult, eulerityResult, mntnResult, homebaseResult]) if (result.error) throw result.error
 
   const mappedTypes = new Set((mappingResult.data ?? []).map((mapping) => mapping.integration_type.toLowerCase()))
   const hasMapping = (...types: string[]) => types.some((type) => mappedTypes.has(type))
@@ -34,6 +35,10 @@ export async function getConnectorHealth(organizationId: number, allowedStudioId
   const ga4 = configuredState(hasVaultCredential(ga4Result.data ?? []), hasMapping("ga4"))
   const eulerity = configuredState(hasVaultCredential(eulerityResult.data ?? []), hasMapping("eulerity"))
   const mntn = configuredState(hasVaultCredential(mntnResult.data ?? []), hasMapping("mntn"))
+  const homebaseCredentials = hasVaultCredential(homebaseResult.data ?? [])
+  const homebase = homebaseCredentials && (homebaseResult.data ?? []).some(account => !account.last_validated_at)
+    ? { state: "attention" as const, label: "Needs validation" }
+    : configuredState(homebaseCredentials, hasMapping("homebase"))
   const metaAccounts = metaResult.data ?? []
   const metaCredential = hasVaultCredential(metaAccounts)
   const metaMapping = hasMapping("meta", "meta_ads", "meta_page", "meta_instagram")
@@ -48,5 +53,6 @@ export async function getConnectorHealth(organizationId: number, allowedStudioId
     { key: "meta", name: "Meta", ...meta, settingsHref: "/settings#meta-connections" },
     { key: "eulerity", name: "Eulerity", ...eulerity, settingsHref: "/settings#eulerity-connections" },
     { key: "mntn", name: "MNTN", ...mntn, settingsHref: "/settings#mntn-connections" },
+    { key: "homebase", name: "Homebase", ...homebase, settingsHref: "/settings#homebase-connections" },
   ]
 }

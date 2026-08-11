@@ -1,7 +1,7 @@
 const crypto = require("crypto");
 const express = require("express");
 const { resolveHomebaseAccount } = require("../services/homebaseCredentials");
-const { discoverLocation } = require("../services/homebaseApi");
+const { collectLabor, discoverLocation } = require("../services/homebaseApi");
 
 const router = express.Router();
 function requireCollectorAuth(req, res, next) {
@@ -20,6 +20,23 @@ router.post("/discover", requireCollectorAuth, async (req, res) => {
         res.json({ success: true, target: account.target, location });
     } catch (error) {
         console.error("Homebase discovery failed:", error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.post("/labor", requireCollectorAuth, async (req, res) => {
+    try {
+        const account = await resolveHomebaseAccount(req.body?.accountId);
+        if (!account.target.location_uuid) throw new Error("Homebase account location has not been validated");
+        const source = await collectLabor(account.apiKey, {
+            locationUuid: account.target.location_uuid,
+            startDate: req.body?.startDate,
+            endDate: req.body?.endDate,
+            timeZone: account.target.timezone || "America/New_York"
+        });
+        res.json({ success: true, target: account.target, source });
+    } catch (error) {
+        console.error("Homebase labor collection failed:", error.message);
         res.status(500).json({ success: false, error: error.message });
     }
 });

@@ -7,6 +7,7 @@ import {
   Armchair,
   CalendarClock,
   CalendarRange,
+  Clock3,
   Flame,
   ChartNoAxesCombined,
   ChevronDown,
@@ -232,6 +233,10 @@ export function OperationsDashboard() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap justify-end gap-2">
+        <Link href="/operations/labor" className={buttonVariants({ variant: "outline" })}>
+          <Clock3 />
+          View labor
+        </Link>
         <Link
           href="/operations/upcoming"
           className={buttonVariants({ variant: "outline" })}
