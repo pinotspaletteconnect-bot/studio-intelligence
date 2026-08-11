@@ -47,6 +47,7 @@ export default async function SettingsPage() {
             textellentAccounts={settings.textellentAccounts}
             mntnAccounts={settings.mntnAccounts}
             eulerityAccounts={settings.eulerityAccounts}
+            ga4Accounts={settings.ga4Accounts}
             studios={settings.studios}
             mappedIntegrationTypes={settings.mappedIntegrationTypes}
             ptsStudioSettings={settings.ptsStudioSettings.map((setting) => ({

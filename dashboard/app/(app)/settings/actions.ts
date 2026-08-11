@@ -15,6 +15,7 @@ export type PtsAccountState = { complete?: boolean; error?: string } | undefined
 export type PtsReportState = { complete?: boolean; error?: string } | undefined
 export type MntnConnectionState = { complete?: boolean; error?: string } | undefined
 export type EulerityConnectionState = { complete?: boolean; error?: string } | undefined
+export type Ga4ConnectionState = { complete?: boolean; error?: string } | undefined
 
 const inviteSchema = z.object({
   email: z.email().max(254).transform((value) => value.trim().toLowerCase()),
@@ -108,6 +109,42 @@ const eulerityMappingSchema = z.object({
   sourceKey: z.string().trim().min(1).max(500),
   studioId: z.coerce.number().int().positive(),
 })
+
+const ga4ConnectionSchema = z.object({
+  accountName: z.string().trim().min(2).max(120),
+  serviceAccountJson: z.string().min(50).max(20000),
+  currentPassword: z.string().min(1).max(1024),
+})
+const ga4MappingSchema = z.object({ accountId: z.coerce.number().int().positive(), propertyId: z.string().regex(/^\d{1,30}$/), studioId: z.coerce.number().int().positive() })
+
+export async function createGa4Connection(_state: Ga4ConnectionState, formData: FormData): Promise<Ga4ConnectionState> {
+  const [access, actor] = await Promise.all([requireDashboardContext(), getAuthenticatedUser()])
+  if (!actor?.email || !["owner", "administrator"].includes(access.role)) return { error: "Only an owner or administrator can connect GA4." }
+  const parsed = ga4ConnectionSchema.safeParse(Object.fromEntries(formData))
+  if (!parsed.success) return { error: "Complete every GA4 connection and security field." }
+  let serviceAccount: unknown
+  try { serviceAccount = JSON.parse(parsed.data.serviceAccountJson) } catch { return { error: "The Google service-account JSON is invalid." } }
+  const credential = z.object({ type: z.literal("service_account"), client_email: z.email(), private_key: z.string().includes("PRIVATE KEY"), token_uri: z.url().optional() }).safeParse(serviceAccount)
+  if (!credential.success) return { error: "Use a complete Google service-account JSON key." }
+  const auth = await createAuthClient()
+  const { error: authError } = await auth.auth.signInWithPassword({ email: actor.email, password: parsed.data.currentPassword })
+  if (authError) return { error: "Your SASHA password is incorrect." }
+  const { error } = await supabase.rpc("create_ga4_account_with_secret", { p_organization_id: access.organizationId, p_account_name: parsed.data.accountName, p_service_account: credential.data })
+  if (error) return { error: "The encrypted GA4 account could not be created. Use a unique connection label." }
+  revalidatePath("/settings")
+  return { complete: true }
+}
+
+export async function mapGa4Property(_state: Ga4ConnectionState, formData: FormData): Promise<Ga4ConnectionState> {
+  const access = await requireDashboardContext()
+  if (!["owner", "administrator"].includes(access.role)) return { error: "Only an owner or administrator can map GA4 properties." }
+  const parsed = ga4MappingSchema.safeParse(Object.fromEntries(formData))
+  if (!parsed.success || !access.allowedStudioIds.includes(parsed.data.studioId)) return { error: "Choose an available SASHA studio." }
+  const { error } = await supabase.rpc("map_ga4_property", { p_organization_id: access.organizationId, p_account_id: parsed.data.accountId, p_property_id: parsed.data.propertyId, p_studio_id: parsed.data.studioId })
+  if (error) return { error: "The GA4 property could not be mapped." }
+  revalidatePath("/settings")
+  return { complete: true }
+}
 
 export async function createEulerityConnection(
   _previousState: EulerityConnectionState,

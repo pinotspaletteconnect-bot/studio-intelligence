@@ -36,7 +36,7 @@ No integration should bypass this lifecycle without an explicit architectural de
 - **Capability:** web traffic, audience analytics, and session source/medium attribution
 - **Collection:** API/n8n
 - **Warehouse:** `ga4_daily_metrics`; `marketing_attribution_daily` is provisioned for source/medium facts
-- **Status:** Production. Daily aggregate metrics and source/medium ingestion are published; Studio 1 was validated on July 28, 2026, and the all-studio schedule is active.
+- **Status:** Production on the existing n8n OAuth workflows. A Vault-backed service-account replacement is implemented with automatic property discovery and SASHA studio mapping; the legacy workflows remain active until a service-account key is connected and both shadows validate.
 
 ### Eulerity
 

@@ -1,5 +1,16 @@
 # Studio Intelligence Changelog
 
+## August 11, 2026
+
+- Removed a visible GA4 OAuth client-secret note from the aggregate workflow and
+  created unpublished legacy backups for both aggregate and source/medium GA4
+  imports.
+- Implemented the GA4 Vault replacement: encrypted Google service-account JSON,
+  automatic accessible-property discovery, SASHA property-to-studio mapping,
+  authenticated collector report execution, and tenant-scoped collection views.
+  Existing OAuth workflows remain production until a service account is added
+  and the replacement shadows pass.
+
 ## August 10, 2026
 
 - Staged the configuration-driven Eulerity replacement: Vault-backed account
