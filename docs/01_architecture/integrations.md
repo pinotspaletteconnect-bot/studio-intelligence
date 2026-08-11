@@ -59,7 +59,7 @@ No integration should bypass this lifecycle without an explicit architectural de
 - **Warehouse:** `meta_ads_daily`
 - **Current metrics:** campaign/date, spend, impressions, reach, clicks, CTR, CPC, and CPM
 - **Configuration:** ad account mapping through `studio_integrations`
-- **Status:** Production
+- **Status:** Existing global-token workflow remains Production. A tenant-scoped owner OAuth and Vault foundation is implemented locally but not deployed; see `docs/02_development/meta_multi_account_migration_phase1.md`.
 
 ### Meta Page Insights
 
@@ -69,7 +69,7 @@ No integration should bypass this lifecycle without an explicit architectural de
 - **Warehouse:** `meta_page_insights_daily`
 - **Current verified metric:** Page media views, with day/week/rolling-period dimensions
 - **Configuration:** Page mapping and friendly names through `studio_integrations` using the Meta Page integration type
-- **Status:** Production
+- **Status:** Existing global-token workflow remains Production. The local multi-account OAuth foundation discovers Pages and linked Instagram professional accounts but remains shadow-only until deployment and reconciliation.
 
 Meta Ads and Meta Page Insights share authentication, token validation, business discovery, account discovery, and Page discovery code under `playwright/services/meta/`.
 

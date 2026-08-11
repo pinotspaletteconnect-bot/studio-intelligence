@@ -6,7 +6,7 @@ export async function getAccountSettings(
   organizationId: number,
   allowedStudioIds: number[]
 ) {
-  const [membershipResult, studioResult, integrationResult, mappingResult, brandResult, ptsAccountResult, textellentAccountResult, mntnAccountResult, eulerityAccountResult, eulerityLocationResult, ga4AccountResult, ga4PropertyResult] =
+  const [membershipResult, studioResult, integrationResult, mappingResult, brandResult, ptsAccountResult, textellentAccountResult, mntnAccountResult, eulerityAccountResult, eulerityLocationResult, ga4AccountResult, ga4PropertyResult, metaAccountResult, metaAssetResult] =
     await Promise.all([
       supabase
         .from("organization_memberships")
@@ -60,9 +60,11 @@ export async function getAccountSettings(
       supabase.from("eulerity_source_locations").select("account_id,source_key,display_name").eq("organization_id", organizationId).eq("is_active", true).order("display_name"),
       supabase.from("ga4_integration_accounts").select("id,account_name,authentication_type,google_account_email,secret_reference,last_discovered_at,last_validated_at").eq("organization_id", organizationId).eq("is_active", true).order("account_name"),
       supabase.from("ga4_source_properties").select("account_id,property_id,display_name,account_display_name").eq("organization_id", organizationId).eq("is_active", true).order("display_name"),
+      supabase.from("meta_integration_accounts").select("id,account_name,meta_user_name,secret_reference,connection_status,token_expires_at,last_discovered_at,last_validated_at").eq("organization_id", organizationId).eq("is_active", true).order("account_name"),
+      supabase.from("meta_source_assets").select("account_id,asset_type,asset_id,display_name").eq("organization_id", organizationId).eq("is_active", true).order("display_name"),
     ])
 
-  for (const result of [membershipResult, studioResult, integrationResult, mappingResult, brandResult, ptsAccountResult, textellentAccountResult, mntnAccountResult, eulerityAccountResult, eulerityLocationResult, ga4AccountResult, ga4PropertyResult]) {
+  for (const result of [membershipResult, studioResult, integrationResult, mappingResult, brandResult, ptsAccountResult, textellentAccountResult, mntnAccountResult, eulerityAccountResult, eulerityLocationResult, ga4AccountResult, ga4PropertyResult, metaAccountResult, metaAssetResult]) {
     if (result.error) throw result.error
   }
 
@@ -160,6 +162,15 @@ export async function getAccountSettings(
       properties: (ga4PropertyResult.data ?? []).filter(property => property.account_id === account.id).map(property => {
         const mapping = (mappingResult.data ?? []).find(item => item.integration_type === "ga4" && item.external_id === property.property_id && String((item.configuration as { ga4_account_id?: unknown } | null)?.ga4_account_id ?? "") === String(account.id))
         return { ...property, studio_id: mapping?.studio_id ?? null, studio_name: (studioResult.data ?? []).find(studio => studio.id === mapping?.studio_id)?.studio_name ?? null }
+      }),
+    })),
+    metaAccounts: (metaAccountResult.data ?? []).map(account => ({
+      ...account,
+      has_credentials: /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(account.secret_reference),
+      assets: (metaAssetResult.data ?? []).filter(asset => asset.account_id === account.id).map(asset => {
+        const integrationType = asset.asset_type === "ad_account" ? "meta_ads" : asset.asset_type === "page" ? "meta_page" : asset.asset_type === "instagram_account" ? "meta_instagram" : null
+        const mapping = integrationType ? (mappingResult.data ?? []).find(item => item.integration_type === integrationType && item.external_id === asset.asset_id && String((item.configuration as { meta_account_id?: unknown } | null)?.meta_account_id ?? "") === String(account.id)) : null
+        return { ...asset, studio_id: mapping?.studio_id ?? null, studio_name: (studioResult.data ?? []).find(studio => studio.id === mapping?.studio_id)?.studio_name ?? null }
       }),
     })),
   }

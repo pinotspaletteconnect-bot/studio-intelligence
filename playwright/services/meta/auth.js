@@ -218,9 +218,13 @@ async graphRequestWithToken(endpoint, accessToken, params = {}) {
      * Returns every Ad Account
      * available to this user.
      */
-    async getAdAccounts() {
+    async getAdAccounts(accessToken) {
 
-        const result = await this.graphRequest(
+        const result = accessToken ? await this.graphRequestWithToken(
+            "/me/adaccounts",
+            accessToken,
+            { fields: "id,name,account_status,currency,timezone_name" }
+        ) : await this.graphRequest(
             "/me/adaccounts",
             {
                 fields:
@@ -244,9 +248,13 @@ async graphRequestWithToken(endpoint, accessToken, params = {}) {
      * Returns every Facebook Page
      * managed by this user.
      */
-    async getPages() {
+    async getPages(accessToken) {
 
-        const result = await this.graphRequest(
+        const result = accessToken ? await this.graphRequestWithToken(
+            "/me/accounts",
+            accessToken,
+            { fields: "id,name,access_token" }
+        ) : await this.graphRequest(
             "/me/accounts",
             {
                 fields: "id,name,access_token"

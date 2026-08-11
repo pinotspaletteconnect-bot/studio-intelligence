@@ -104,6 +104,8 @@ total sales as class sales plus class fees plus Product Sales net sales.
 | `eulerity_daily_budget_allocation` | Daily allocated budget by studio/date | Current |
 | `meta_ads_daily` | Meta campaign insights by account/campaign/date with studio mapping | Current |
 | `meta_page_insights_daily` | Facebook Page insights by page/date/period with studio mapping | Current |
+| `meta_integration_accounts` | Tenant-scoped Meta owner OAuth connections with Vault secret references and token-health timestamps | Migration prepared; not deployed |
+| `meta_source_assets` | Meta portfolios, ad accounts, Pages, and Instagram professional accounts discovered per connection | Migration prepared; not deployed |
 | `mntn_daily_metrics` | MNTN delivery and modeled/last-touch attribution by studio, advertiser, and date | Current |
 | `weather_daily` | Historical/contextual weather by location/date | Needs verification |
 

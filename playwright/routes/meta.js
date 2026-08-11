@@ -230,7 +230,7 @@ router.post("/page-insights/download", async (req, res) => {
 
     try {
 
-        const result = await pageInsights.download();
+        const result = await pageInsights.download(req.body || {});
 
         res.json({
             success: true,

@@ -1,9 +1,9 @@
 const auth = require("./auth");
 const config = require("./config");
 
-async function download() {
+async function download(options = {}) {
 
-    const pages = await auth.getPages();
+    const pages = await auth.getPages(options.accessToken);
 
     const records = [];
 

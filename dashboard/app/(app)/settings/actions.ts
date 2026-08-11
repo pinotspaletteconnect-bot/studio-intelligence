@@ -16,6 +16,7 @@ export type PtsReportState = { complete?: boolean; error?: string } | undefined
 export type MntnConnectionState = { complete?: boolean; error?: string } | undefined
 export type EulerityConnectionState = { complete?: boolean; error?: string } | undefined
 export type Ga4ConnectionState = { complete?: boolean; error?: string } | undefined
+export type MetaConnectionState = { complete?: boolean; error?: string } | undefined
 
 const inviteSchema = z.object({
   email: z.email().max(254).transform((value) => value.trim().toLowerCase()),
@@ -111,6 +112,18 @@ const eulerityMappingSchema = z.object({
 })
 
 const ga4MappingSchema = z.object({ accountId: z.coerce.number().int().positive(), propertyId: z.string().regex(/^\d{1,30}$/), studioId: z.coerce.number().int().positive() })
+const metaMappingSchema = z.object({ accountId: z.coerce.number().int().positive(), assetType: z.enum(["ad_account", "page", "instagram_account"]), assetId: z.string().regex(/^(act_)?\d{1,50}$/), studioId: z.coerce.number().int().positive() })
+
+export async function mapMetaAsset(_state: MetaConnectionState, formData: FormData): Promise<MetaConnectionState> {
+  const access = await requireDashboardContext()
+  if (!["owner", "administrator"].includes(access.role)) return { error: "Only an owner or administrator can map Meta assets." }
+  const parsed = metaMappingSchema.safeParse(Object.fromEntries(formData))
+  if (!parsed.success || !access.allowedStudioIds.includes(parsed.data.studioId)) return { error: "Choose an available SASHA studio." }
+  const { error } = await supabase.rpc("map_meta_asset", { p_organization_id: access.organizationId, p_account_id: parsed.data.accountId, p_asset_type: parsed.data.assetType, p_asset_id: parsed.data.assetId, p_studio_id: parsed.data.studioId })
+  if (error) return { error: "The Meta asset could not be mapped." }
+  revalidatePath("/settings")
+  return { complete: true }
+}
 
 export async function mapGa4Property(_state: Ga4ConnectionState, formData: FormData): Promise<Ga4ConnectionState> {
   const access = await requireDashboardContext()

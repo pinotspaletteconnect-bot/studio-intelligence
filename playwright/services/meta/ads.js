@@ -3,7 +3,7 @@ const auth = require("./auth");
 /**
  * Downloads Meta Ads insights for a single ad account.
  */
-async function getInsights(adAccountId, options = {}) {
+async function getInsights(adAccountId, options = {}, accessToken) {
 
     const params = {
         fields: [
@@ -43,10 +43,9 @@ async function getInsights(adAccountId, options = {}) {
 
     }
 
-    const response = await auth.graphRequest(
-        `/${adAccountId}/insights`,
-        params
-    );
+    const response = accessToken
+        ? await auth.graphRequestWithToken(`/${adAccountId}/insights`, accessToken, params)
+        : await auth.graphRequest(`/${adAccountId}/insights`, params);
 
     return response.data || [];
 
@@ -57,7 +56,8 @@ async function getInsights(adAccountId, options = {}) {
  */
 async function download(options = {}) {
 
-    const accounts = await auth.getAdAccounts();
+    const accessToken = options.accessToken;
+    const accounts = await auth.getAdAccounts(accessToken);
 
     console.log(`Found ${accounts.length} Meta ad account(s).`);
 
@@ -69,7 +69,7 @@ async function download(options = {}) {
 
         try {
 
-            const insights = await getInsights(account.id, options);
+            const insights = await getInsights(account.id, options, accessToken);
 
             console.log(`✓ ${account.name}: ${insights.length} row(s)`);
 

@@ -2,6 +2,7 @@
 
 ## August 11, 2026
 
+- Added a local tenant-scoped Meta owner OAuth foundation with automatic long-lived-token exchange, Vault-only credential storage, business/ad/Page/Instagram discovery, studio mapping controls, and a service-only n8n secret broker. The collector can now use a per-account credential while retaining the production global-token fallback. No production Meta workflow or application configuration was changed.
 - Completed the GA4 owner-OAuth cutover. The Duff Google connection is encrypted
   in Vault, seven accessible properties were discovered, and the four intended
   studio properties were adopted automatically while three unrelated properties
