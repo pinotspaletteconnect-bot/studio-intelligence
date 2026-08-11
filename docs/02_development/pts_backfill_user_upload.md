@@ -32,12 +32,12 @@ array response or a `rowCount` property when present.
 Any failure response is converted to a generic user-facing error. Raw workflow
 errors and source payloads must remain in protected operational logs.
 
-## Required n8n change
+## Deployed n8n configuration
 
 Convert workflows 10 and 11 in place to published, header-authenticated webhook
 endpoints while retaining their existing validation, normalization, grouping,
 and idempotent warehouse upsert nodes. The webhooks must never accept an
 organization or Supabase identifier from the browser.
 
-The current n8n editor links and temporary test forms remain the rollback path
-until the SASHA gateway completes controlled uploads for both report types.
+The unused workflow 29 copy is retained only until the SASHA gateway completes
+controlled uploads for both report types, then it should be archived.

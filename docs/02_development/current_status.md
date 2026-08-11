@@ -285,23 +285,20 @@ Known incomplete surfaces:
   identity backed by `studios_id_seq`; existing IDs 1-4 remain unchanged and
   the next studio will receive ID 5. Production deployment remains pending.
 
-- Manual Product Sales history can now be loaded through workflow
-  `10 - PTS Product Sales Backfill` by selecting a studio and uploading the PTS
-  Product Sales workbook. The Operations dashboard links to the authenticated
-  workflow editor. A replacement administrator-only SASHA upload page and
-  authenticated server-side webhook gateway are implemented locally. The user
-  receives only a processing state and sanitized success or failure; the n8n
-  webhook and Railway configuration remain pending approval. A July 30 sample parsed 186 detail rows after excluding its
+- Manual Product Sales history is submitted through the administrator-only
+  SASHA backfill page. SASHA calls the published, header-authenticated workflow
+  `10 - PTS Product Sales Backfill`; users receive only a processing state and
+  sanitized success or failure and never see n8n. The production gateway and
+  Railway configuration are deployed. A controlled warehouse-writing upload
+  remains pending a confirmed studio workbook. A July 30 sample parsed 186 detail rows after excluding its
   totals row, representing 232 units and $1,825.07 in net sales; it was not
   warehouse-loaded because the source studio was not confirmed.
 
-- Manual Class Sales history can now be loaded through workflow
-  `11 - PTS Class Sales Backfill` by selecting a studio and uploading the PTS
-  Excel workbook. It uses the existing `pts_class_type_sales_daily` natural
-  keys and dashboard reporting path. The workflow remains unpublished so its
-  upload form is available only during an authenticated test execution. The
-  Operations dashboard will use the shared SASHA backfill page rather than an
-  n8n URL after the private webhook is deployed. An
+- Manual Class Sales history is submitted through the same SASHA page and the
+  published, header-authenticated workflow `11 - PTS Class Sales Backfill`.
+  It uses the existing `pts_class_type_sales_daily` natural keys and dashboard
+  reporting path. Production configuration is deployed; a controlled upload
+  remains pending a confirmed studio workbook. An
   August 3 sample workbook parsed 402 rows spanning January 1 through July 1;
   it was not warehouse-loaded because the source studio was not confirmed.
 

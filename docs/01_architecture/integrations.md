@@ -218,20 +218,19 @@ Planned scope includes profile insights, reviews, search visibility, and custome
   August 4 production validation parsed and upserted 24 product rows for the
   August 3 report date.
 - **Manual Class Sales backfill:** workflow `11 - PTS Class Sales Backfill`
-  accepts one operator-downloaded PTS Excel workbook and studio selection at a
-  time. The authenticated `/pts/class-sales-upload` endpoint reuses the
-  production parser, while the existing n8n mapping, grouping, and
-  `pts_class_type_sales_daily` upsert path remains unchanged. The workflow is
-  intentionally unpublished and uses n8n's temporary test form to avoid a
-  permanent public upload URL.
+  receives one administrator-uploaded PTS Excel workbook from SASHA at a time.
+  Its private webhook uses dedicated header authentication and the authenticated
+  `/pts/class-sales-upload` collector endpoint reuses the production parser;
+  the existing mapping, grouping, and `pts_class_type_sales_daily` upsert path
+  remains unchanged.
 - **Manual Product Sales backfill:** workflow `10 - PTS Product Sales
   Backfill` accepts one operator-downloaded Product Sales workbook and studio
-  selection at a time. The authenticated `/pts/product-sales-upload` endpoint
+  selection through SASHA. The authenticated `/pts/product-sales-upload` endpoint
   removes customer names and reuses production normalization, while the
   existing n8n mapping, grouping, and `pts_product_sales_daily` upsert path is
-  unchanged. An administrator-only SASHA upload page and private server-side
-  webhook gateway are implemented locally to replace the workflow-editor link;
-  the authenticated n8n webhook and production configuration remain pending.
+  unchanged. The administrator-only SASHA upload page and private server-side
+  webhook gateway are deployed. Controlled warehouse-writing validation remains
+  pending a workbook with a confirmed source studio.
 - **Upcoming Classes foundation:** the existing Class Sales endpoint can collect
   a rolling 90-day future range. A daily event-grain snapshot migration,
   reporting views, dashboard, and workflow contract are implemented. The
