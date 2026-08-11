@@ -7,6 +7,7 @@
 - Corrected Meta asset mapping so an existing external-ID mapping is preferred before a studio fallback, preventing an unrelated row from being selected when adopting legacy production mappings.
 - Deployed Meta Vault broker resolution to the collector, allowed the service-only broker route through the dashboard proxy, and added explicit Railway broker configuration. Unpublished Meta Ads and Page Insights shadows now pass non-writing collection and mapping validation; production workflows and warehouse writes remain unchanged.
 - Completed controlled Meta shadow warehouse reconciliation: 12 ad rows across four mapped ad accounts and 24 Page Insight rows across four mapped Pages were upserted and verified in Supabase. Both shadows remain unpublished pending production cutover approval.
+- Completed the Meta production cutover. Published Vault-backed workflows `27 - Meta Paid Vault Daily Import` and `28 - Meta Pages Vault Daily Import`, and unpublished the legacy global-token Ads and Pages workflows while retaining them for rollback.
 - Completed the GA4 owner-OAuth cutover. The Duff Google connection is encrypted
   in Vault, seven accessible properties were discovered, and the four intended
   studio properties were adopted automatically while three unrelated properties

@@ -59,7 +59,7 @@ No integration should bypass this lifecycle without an explicit architectural de
 - **Warehouse:** `meta_ads_daily`
 - **Current metrics:** campaign/date, spend, impressions, reach, clicks, CTR, CPC, and CPM
 - **Configuration:** ad account mapping through `studio_integrations`
-- **Status:** Existing global-token workflow remains Production. The tenant-scoped owner OAuth and Vault foundation is deployed, the current owner connection is healthy, and the four intended studio ad accounts are mapped. The unpublished Vault-backed shadow passed collection, mapping, and warehouse-writing reconciliation; publication is pending. See `docs/02_development/meta_multi_account_migration_phase1.md`.
+- **Status:** Production on Vault-backed workflow `27 - Meta Paid Vault Daily Import` (`z5Mww3blBHS89UYu`). Owner OAuth, Vault credential resolution, studio mapping, and warehouse reconciliation are verified. Legacy workflow `05 - Meta Paid` is unpublished and retained for rollback.
 
 ### Meta Page Insights
 
@@ -69,7 +69,7 @@ No integration should bypass this lifecycle without an explicit architectural de
 - **Warehouse:** `meta_page_insights_daily`
 - **Current verified metric:** Page media views, with day/week/rolling-period dimensions
 - **Configuration:** Page mapping and friendly names through `studio_integrations` using the Meta Page integration type
-- **Status:** Existing global-token workflow remains Production. The deployed multi-account OAuth foundation discovers Pages and linked Instagram professional accounts, and the four intended studio Pages are mapped. The unpublished Vault-backed shadow passed collection, mapping, and warehouse-writing reconciliation; publication is pending.
+- **Status:** Production on Vault-backed workflow `28 - Meta Pages Vault Daily Import` (`7OMm5L5fprv3Lh5o`). Owner OAuth, Vault credential resolution, studio mapping, and warehouse reconciliation are verified. Legacy workflow `06 - Meta Pages` is unpublished and retained for rollback.
 
 Meta Ads and Meta Page Insights share authentication, token validation, business discovery, account discovery, and Page discovery code under `playwright/services/meta/`.
 

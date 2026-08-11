@@ -1,6 +1,6 @@
 # Meta Multi-Account OAuth Migration — Phase 1
 
-**Status:** Foundation deployed; owner connection, four-studio mapping, and unpublished shadow collection, mapping, and warehouse reconciliation verified; publication pending
+**Status:** Production cutover complete
 **Date:** August 11, 2026
 
 ## Objective
@@ -35,10 +35,10 @@ Replace the single global Meta token with owner-authorized, tenant-scoped OAuth 
 3. **Complete:** Deployed the dashboard and confirmed the Meta Settings section without affecting existing production collectors.
 4. **Complete:** Connected the current owner account, stored its credential in Vault, and discovered 22 accessible assets.
 5. **Complete:** Mapped the intended ad account and Facebook Page for Gilbert, Jeffersonville, Short North, and St. Matthews. Unrelated discovered assets remain unmapped.
-6. **Complete:** Built unpublished workflows `27 - Meta Paid Vault Shadow` (`z5Mww3blBHS89UYu`) and `28 - Meta Pages Vault Shadow` (`7OMm5L5fprv3Lh5o`). The collector resolves the selected account through `/api/internal/meta-account`, so n8n passes only the non-secret SASHA account ID.
+6. **Complete:** Built workflows `27 - Meta Paid Vault Daily Import` (`z5Mww3blBHS89UYu`) and `28 - Meta Pages Vault Daily Import` (`7OMm5L5fprv3Lh5o`). The collector resolves the selected account through `/api/internal/meta-account`, so n8n passes only the non-secret SASHA account ID.
 7. **Complete:** Controlled non-writing tests collected five ad accounts with zero failures and prepared mapped ad records. Page Insights collected 12 accessible Pages and 72 raw records, then prepared 24 records for the four mapped studio Pages. Unrelated assets were excluded by configuration mapping.
 8. **Complete:** Controlled warehouse-writing reconciliation persisted exactly 12 ad rows across four mapped ad accounts and 24 Page Insight rows across four mapped Pages. The rows covered all four studios, retained the expected source dates, and introduced no extra records beyond the prepared shadow output.
-9. **Next:** Publish the Vault-backed workflows and retain unpublished legacy backups for rollback.
+9. **Complete:** Published both Vault-backed workflows and unpublished the legacy global-token workflows `05 - Meta Paid` (`EE5slmP6uSImQr1M`) and `06 - Meta Pages` (`ilZLXGAZVrpqAk4M`). The legacy workflows remain available for rollback.
 
 ## Token Lifecycle
 
@@ -46,4 +46,4 @@ SASHA performs the short-to-long-lived token exchange automatically and records 
 
 ## Production Guardrail
 
-The migration, dashboard environment changes, Meta application changes, and n8n workflow changes each require explicit approval. The existing global-token workflows remain production until the controlled reconciliation is complete.
+The Vault-backed workflows are now production. The former global-token workflows are retained unpublished for rollback and must not be republished unless the Vault-backed cutover is intentionally reversed.
