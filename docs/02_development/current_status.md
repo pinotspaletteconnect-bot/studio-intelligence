@@ -46,7 +46,7 @@ The collection, ETL, warehouse, and frontend layers are considered stable patter
 
 Meta Ads and Page Insights share the authentication and Graph API foundation in `playwright/services/meta/`. Studio and account assignment remains configuration-driven through `studio_integrations`; source account IDs must not be hardcoded.
 
-A Meta multi-account OAuth foundation is implemented locally and awaiting a controlled deployment. It replaces manual global-token onboarding with owner/admin Meta authorization, automatic long-lived-token exchange, Vault-only credential storage, asset discovery, and explicit studio mapping. Production Meta workflows are unchanged. Follow `docs/02_development/meta_multi_account_migration_phase1.md` for deployment and shadow reconciliation.
+A Meta multi-account OAuth foundation is deployed. It replaces manual global-token onboarding with owner/admin Meta authorization, automatic long-lived-token exchange, Vault-only credential storage, asset discovery, and explicit studio mapping. The current owner connection discovered 22 accessible assets; the intended ad account and Page for each of the four studios are mapped, while unrelated assets remain unmapped. Production Meta workflows are unchanged pending Vault-backed shadow-workflow reconciliation. Follow `docs/02_development/meta_multi_account_migration_phase1.md` for the controlled cutover.
 
 ## Planned or Incomplete Integrations
 
@@ -125,7 +125,7 @@ Implemented foundation:
   what information is needed and where to find it. PTS and Textellent retain
   their Vault-backed forms. MNTN now also has a locally implemented
   owner-authorized Vault form and atomic studio/advertiser mapping. Its schema
-  is deployed; application deployment, shadow workflow, and cutover are still pending. GA4 now has a locally implemented owner-authorized OAuth flow: one Google connection can expose one or many properties, refresh credentials are encrypted in Vault, and discovered properties map explicitly to studios. Meta remains assisted setup.
+  is deployed; application deployment, shadow workflow, and cutover are still pending. GA4 has a deployed owner-authorized OAuth flow: one Google connection can expose one or many properties, refresh credentials are encrypted in Vault, and discovered properties map explicitly to studios. Meta now has a deployed owner OAuth and Vault connection with explicit ad-account and Page mapping; its production workflow cutover remains pending shadow reconciliation.
 - Shared application context for active studio and common dashboard state
 - Invite-only Supabase Auth foundation with SSR cookie sessions, login,
   password recovery, protected routes, onboarding, logout, owner/admin user

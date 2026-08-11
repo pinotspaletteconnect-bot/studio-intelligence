@@ -1,6 +1,6 @@
 # Meta Multi-Account OAuth Migration — Phase 1
 
-**Status:** Implemented locally; not deployed
+**Status:** Foundation deployed; owner connection and four-studio asset mapping verified; shadow workflows pending
 **Date:** August 11, 2026
 
 ## Objective
@@ -30,13 +30,14 @@ Replace the single global Meta token with owner-authorized, tenant-scoped OAuth 
 
 ## Controlled Cutover Sequence
 
-1. Review and deploy migration `20260811200000_meta_multi_account_oauth.sql`.
-2. Configure dashboard environment variables and the exact redirect URI in the Meta developer application.
-3. Deploy the dashboard and confirm the Meta Settings section renders with no effect on existing production collectors.
-4. Connect the current owner account and verify discovered assets without changing existing mappings.
-5. Build unpublished Meta Ads and Page Insights shadow workflows that resolve one account through `/api/internal/meta-account` and pass its credential only to the collector request.
-6. Map the four current studios and execute controlled, non-writing discovery tests, followed by warehouse-writing reconciliation tests.
-7. Publish the Vault-backed workflows only after counts and metrics reconcile; retain unpublished legacy backups for rollback.
+1. **Complete:** Deployed migrations `20260811200000_meta_multi_account_oauth.sql` and `20260811210000_fix_meta_asset_mapping_selection.sql`.
+2. **Complete:** Configured dashboard environment variables and the exact redirect URI in the Meta developer application.
+3. **Complete:** Deployed the dashboard and confirmed the Meta Settings section without affecting existing production collectors.
+4. **Complete:** Connected the current owner account, stored its credential in Vault, and discovered 22 accessible assets.
+5. **Complete:** Mapped the intended ad account and Facebook Page for Gilbert, Jeffersonville, Short North, and St. Matthews. Unrelated discovered assets remain unmapped.
+6. **Next:** Build unpublished Meta Ads and Page Insights shadow workflows that resolve one account through `/api/internal/meta-account` and pass its credential only to the collector request.
+7. Execute controlled, non-writing discovery tests, followed by warehouse-writing reconciliation tests.
+8. Publish the Vault-backed workflows only after counts and metrics reconcile; retain unpublished legacy backups for rollback.
 
 ## Token Lifecycle
 
