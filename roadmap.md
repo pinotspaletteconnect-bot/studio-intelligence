@@ -1,7 +1,7 @@
 # Studio Intelligence Roadmap
 
-**Version:** 4.1  
-**Last updated:** July 23, 2026
+**Version:** 4.2
+**Last updated:** August 11, 2026
 
 ## Purpose
 
@@ -42,6 +42,12 @@ Production sources:
 - Meta Page Insights
 
 The standardized path from collection through n8n and Supabase is validated. Additional integrations should reuse it.
+
+GA4 scaling prerequisite:
+
+- Move the external Google OAuth app from Testing to In production and complete brand and `analytics.readonly` sensitive-scope verification before broad self-service onboarding or growth toward hundreds of users.
+- Prepare the stable custom domain, public homepage, privacy and deletion disclosures, scope justification, and end-to-end verification video required for submission.
+- Retain the owner-access-set model: one OAuth grant can supply one or many explicitly mapped studio properties.
 
 Remaining platform work is operational hardening—monitoring, auditing, credential lifecycle, backfills, and repeatable tests—not a new collection architecture.
 

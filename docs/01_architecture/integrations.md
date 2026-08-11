@@ -38,6 +38,7 @@ No integration should bypass this lifecycle without an explicit architectural de
 - **Warehouse:** `ga4_daily_metrics`; `marketing_attribution_daily` is provisioned for source/medium facts
 - **Authentication model:** one Google OAuth connection per owner access set. A connection may expose one property for a single-location owner or many properties for a multi-unit owner; every discovered property is explicitly mapped to a SASHA studio. Refresh credentials are encrypted in Supabase Vault.
 - **Status:** Production on Vault-backed owner OAuth workflows `25 - GA4 Source Medium Vault Shadow` (`mK8hKmfMPPiLghPk`) and `26 - GA4 Daily Metrics Vault Shadow` (`wslKYa086WXmayGw`). Despite their retained validation-era names, both are the active production schedules. The Duff connection discovered seven accessible properties; the four intended studio properties are mapped and the three unrelated properties remain unmapped. Both former credentialed workflows are unpublished, and separate legacy backups remain available for rollback.
+- **Scaling prerequisite:** the Google OAuth app is still in Testing and the present connection is authorized as a test user. Before broad owner onboarding, publish the app to production and complete Google brand and `analytics.readonly` sensitive-scope verification. Track the required domain, public policy/disclosure pages, demonstration video, token-lifecycle validation, and post-approval onboarding checks in `docs/02_development/current_status.md`.
 
 ### Eulerity
 

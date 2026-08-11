@@ -340,6 +340,7 @@ Known incomplete surfaces:
 - Several domain pages are placeholders
 - Marketing source drill-down charts and tables are incomplete
 - GA4 source/medium mapping coverage requires ongoing curation; unmapped traffic remains explicitly labeled
+- GA4 owner OAuth is operational for the current authorized account, but the Google OAuth app remains in Testing. Before broad owner onboarding, move the app to In production and complete Google's brand and `analytics.readonly` sensitive-scope verification. Until then, access is limited to configured test users, the unverified-app lifetime user cap applies, and testing-mode refresh tokens may expire after seven days.
 - Comparison-period behavior needs end-to-end completion
 - The legacy `marketing_daily_summary` view is driven by GA4 dates. The Marketing Performance service now builds a complete source-date timeline from GA4, Meta Ads, Eulerity, and Meta Page Insights so source-only dates are retained; this should eventually move into a unified reporting view.
 - Executive, financial, customer, and settings experiences are not production
@@ -358,6 +359,25 @@ Do not infer feature completeness from the presence of an empty route file.
 5. Establish repeatable dashboard verification and end-to-end testing.
 6. Prepare AI-ready reporting views and insight contracts after metrics are trusted.
 7. Begin financial, operations, and customer dashboards only when their source data is available.
+
+## GA4 OAuth Production-Readiness Checkpoint
+
+Complete this checkpoint before GA4 onboarding is offered broadly or the platform
+is scaled toward hundreds of owner accounts:
+
+1. Establish a stable SASHA custom domain and verify its ownership in Google Search Console.
+2. Publish an accessible product homepage, privacy policy, and Google-data deletion/revocation instructions on that domain.
+3. Confirm the OAuth consent screen, support contacts, production redirect URI, and Google branding are accurate.
+4. Keep requested permissions to the minimum required identity scopes plus `analytics.readonly`.
+5. Record an end-to-end demonstration of owner sign-in, consent, property discovery, explicit studio mapping, and resulting GA4 reporting.
+6. Change the Google OAuth audience from Testing to In production and submit the brand and sensitive-scope verification request.
+7. Validate token renewal, reconnect, revoke, deletion, tenant isolation, quota monitoring, and audit behavior after approval.
+
+The current architecture remains one OAuth connection per owner access set, not
+one connection per studio. One owner connection may map one or many accessible
+GA4 properties. Verification removes the unverified-app onboarding ceiling for
+approved scopes and is required before a target such as 400 platform users can
+be treated as supported self-service onboarding.
 
 ## Sign-In and Onboarding Checkpoint
 
