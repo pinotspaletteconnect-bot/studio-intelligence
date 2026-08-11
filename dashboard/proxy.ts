@@ -20,6 +20,7 @@ const publicRoutes = [
   "/api/session/end",
   "/api/internal/pts-account",
   "/api/internal/mntn-account",
+  "/api/internal/eulerity-account",
   "/api/internal/class-alert-accounts",
   "/api/internal/class-alert-audit",
   "/api/internal/class-alert-context",

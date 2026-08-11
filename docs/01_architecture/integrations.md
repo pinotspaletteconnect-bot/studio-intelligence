@@ -47,7 +47,7 @@ No integration should bypass this lifecycle without an explicit architectural de
   - `eulerity_daily_metrics`
   - `eulerity_daily_spend`
   - `eulerity_daily_budget_allocation`
-- **Status:** Production
+- **Status:** Production on the legacy workflow. A replacement is staged with Vault-backed per-account credentials, automatic source-location discovery, and configuration-driven studio mappings. The legacy workflow remains the production fallback until migration, collector deployment, and shadow validation are approved and completed.
 
 ### Meta Business Ads
 

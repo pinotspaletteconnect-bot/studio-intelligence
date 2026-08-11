@@ -14,6 +14,7 @@ export type MemberAccessState = { complete?: boolean; error?: string; temporaryP
 export type PtsAccountState = { complete?: boolean; error?: string } | undefined
 export type PtsReportState = { complete?: boolean; error?: string } | undefined
 export type MntnConnectionState = { complete?: boolean; error?: string } | undefined
+export type EulerityConnectionState = { complete?: boolean; error?: string } | undefined
 
 const inviteSchema = z.object({
   email: z.email().max(254).transform((value) => value.trim().toLowerCase()),
@@ -93,6 +94,65 @@ const mntnConnectionSchema = z.object({
   apiKey: z.string().trim().min(8).max(2048),
   currentPassword: z.string().min(1).max(1024),
 })
+
+const eulerityConnectionSchema = z.object({
+  accountName: z.string().trim().min(2).max(120),
+  email: z.email().max(254).transform(value => value.trim().toLowerCase()),
+  password: z.string().min(1).max(1024),
+  singleStudioId: z.preprocess(value => value === "" ? null : value, z.coerce.number().int().positive().nullable()),
+  currentPassword: z.string().min(1).max(1024),
+})
+
+const eulerityMappingSchema = z.object({
+  accountId: z.coerce.number().int().positive(),
+  sourceKey: z.string().trim().min(1).max(500),
+  studioId: z.coerce.number().int().positive(),
+})
+
+export async function createEulerityConnection(
+  _previousState: EulerityConnectionState,
+  formData: FormData
+): Promise<EulerityConnectionState> {
+  const [access, actor] = await Promise.all([requireDashboardContext(), getAuthenticatedUser()])
+  if (!actor?.email || !["owner", "administrator"].includes(access.role)) return { error: "Only an owner or administrator can connect Eulerity." }
+  const parsed = eulerityConnectionSchema.safeParse(Object.fromEntries(formData))
+  if (!parsed.success) return { error: "Complete every Eulerity connection and security field." }
+  if (parsed.data.singleStudioId && !access.allowedStudioIds.includes(parsed.data.singleStudioId)) return { error: "That studio is outside your access." }
+
+  const auth = await createAuthClient()
+  const { error: authenticationError } = await auth.auth.signInWithPassword({ email: actor.email, password: parsed.data.currentPassword })
+  if (authenticationError) return { error: "Your SASHA password is incorrect." }
+
+  const { error } = await supabase.rpc("create_eulerity_account_with_secret", {
+    p_organization_id: access.organizationId,
+    p_account_name: parsed.data.accountName,
+    p_email: parsed.data.email,
+    p_password: parsed.data.password,
+    p_single_studio_id: parsed.data.singleStudioId,
+  })
+  if (error) return { error: "The encrypted Eulerity connection could not be created. Use a unique connection label." }
+  revalidatePath("/settings")
+  return { complete: true }
+}
+
+export async function mapEulerityLocation(
+  _previousState: EulerityConnectionState,
+  formData: FormData
+): Promise<EulerityConnectionState> {
+  const access = await requireDashboardContext()
+  if (!["owner", "administrator"].includes(access.role)) return { error: "Only an owner or administrator can map Eulerity studios." }
+  const parsed = eulerityMappingSchema.safeParse(Object.fromEntries(formData))
+  if (!parsed.success || !access.allowedStudioIds.includes(parsed.data.studioId)) return { error: "Choose an available SASHA studio." }
+  const { error } = await supabase.rpc("map_eulerity_location", {
+    p_organization_id: access.organizationId,
+    p_account_id: parsed.data.accountId,
+    p_source_key: parsed.data.sourceKey,
+    p_studio_id: parsed.data.studioId,
+  })
+  if (error) return { error: "The Eulerity location could not be mapped." }
+  revalidatePath("/settings")
+  return { complete: true }
+}
 
 export async function createMntnConnection(
   _previousState: MntnConnectionState,

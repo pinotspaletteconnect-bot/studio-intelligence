@@ -2,6 +2,12 @@
 
 ## August 10, 2026
 
+- Staged the configuration-driven Eulerity replacement: Vault-backed account
+  credentials, automatic single- and multi-location discovery, SASHA mapping
+  controls, and authenticated collector routes. The replacement has no
+  hardcoded studio list and retains the current workflow as the production
+  fallback until database, Railway, and n8n shadow validation are approved.
+
 - Completed the MNTN Vault cutover. Published configuration-driven n8n
   workflow `16 - MNTN Vault Daily Import` (`QVxPXBbcDOWihWF0`) on the existing
   daily 5:15 AM schedule and unpublished legacy workflow
