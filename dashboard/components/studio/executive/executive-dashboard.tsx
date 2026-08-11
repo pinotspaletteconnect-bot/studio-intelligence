@@ -377,12 +377,12 @@ export function ExecutiveDashboard() {
               <p className="mt-1 text-xs text-muted-foreground">{data.thisWeek.futureBookedSeats.toLocaleString()} seats · {data.thisWeek.futureClasses} classes</p>
               <p className="mt-2">{comparisonLine(data.thisWeek.futureBookedRevenue, weekComparison.futureBookedRevenue, money.format)}</p>
             </div>
-            <div className="rounded-lg border p-4 sm:col-span-2">
+            <Link href="/operations/weekly-parties" className="rounded-lg border p-4 transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:col-span-2">
               <div className="flex items-center justify-between gap-4">
                 <div><p className="text-xs font-medium text-muted-foreground">Parties scheduled this week</p><p className="mt-2 text-2xl font-semibold tabular-nums">{partyTotal.toLocaleString()}</p><p className="mt-2">{comparisonLine(partyTotal, comparisonPartyTotal, (value) => `${value.toLocaleString()} parties`)}</p></div>
                 <div className="text-right text-sm text-muted-foreground"><p><strong className="text-foreground">{data.thisWeek.privateParties}</strong> private parties</p><p><strong className="text-foreground">{data.thisWeek.mobileEvents}</strong> mobile events</p></div>
               </div>
-            </div>
+            </Link>
             <Link href="/operations/upcoming" className="flex items-center justify-end gap-1 text-sm font-medium text-primary sm:col-span-2">View upcoming classes <ArrowRight className="size-4" /></Link>
           </CardContent>
         </Card>

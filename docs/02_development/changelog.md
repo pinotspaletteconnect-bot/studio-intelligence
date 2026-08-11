@@ -2,6 +2,10 @@
 
 ## August 11, 2026
 
+- Added a current-week party drill-down from the Executive dashboard. The
+  clickable party card now opens a studio-grouped list that reconciles completed
+  private/mobile events through yesterday with upcoming events through Sunday,
+  including schedule, seats, capacity, status, and revenue.
 - Fixed the updated-policy acceptance form so its primary button explicitly
   submits the server action; previously clicking `Accept and continue` did not
   record consent or navigate to the dashboard.
