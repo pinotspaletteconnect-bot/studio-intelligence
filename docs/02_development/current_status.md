@@ -138,8 +138,8 @@ Implemented foundation:
   security headers. A versioned Terms and Privacy foundation is implemented locally. It includes
   public draft policy pages, separate required acknowledgements, a current-version
   access gate for pages and APIs, append-only acceptance evidence, and an
-  owner/administrator acceptance-status view. Migration `20260811220000` is
-  deployed; the matching dashboard release is in progress. The policy language
+  owner/administrator acceptance-status view. Migration `20260811220000` and
+  the matching dashboard release are deployed. The policy language
   requires attorney review before broad commercial release. Owners and administrators also have a persistent Workspace
   Setup checklist that derives studio, PTS mapping, user, and five-feed data
   readiness from live configuration and warehouse records. Every dashboard API now authenticates the

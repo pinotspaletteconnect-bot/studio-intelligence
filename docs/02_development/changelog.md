@@ -7,7 +7,8 @@
   gate, exact document hashes, append-only acceptance evidence with request
   metadata, and an administrator acceptance-status view. Migration
   `20260811220000` is deployed and verified with both current document hashes;
-  the matching application release is in progress. The draft policy language
+  the matching application release is live, and both public policy routes were
+  validated in production. The draft policy language
   requires attorney review.
 - Added a compact connector-health bar to the Executive dashboard. PTS,
   Textellent, GA4, Meta, Eulerity, and MNTN now show connected, attention, or
