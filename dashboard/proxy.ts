@@ -22,6 +22,7 @@ const publicRoutes = [
   "/api/internal/mntn-account",
   "/api/internal/eulerity-account",
   "/api/internal/ga4-account",
+  "/api/internal/meta-account",
   "/api/internal/class-alert-accounts",
   "/api/internal/class-alert-audit",
   "/api/internal/class-alert-context",
