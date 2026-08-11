@@ -248,13 +248,18 @@ declare
   target_brand_id bigint;
   mapping_id bigint;
 begin
-  select location, account.account_name into location_record, account_name
+  select location.* into location_record
   from public.eulerity_source_locations location
   join public.eulerity_integration_accounts account on account.id = location.account_id
   where location.account_id = p_account_id and location.source_key = trim(p_source_key)
     and location.organization_id = p_organization_id and location.is_active = true
     and account.is_active = true;
   if location_record.id is null then raise exception 'Eulerity location not found'; end if;
+
+  select account.account_name into account_name
+  from public.eulerity_integration_accounts account
+  where account.id = p_account_id and account.organization_id = p_organization_id
+    and account.is_active = true;
 
   select brand_id into target_brand_id from public.studios
   where id = p_studio_id and organization_id = p_organization_id and active = true;
