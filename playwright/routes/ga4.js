@@ -44,4 +44,18 @@ router.post("/report", requireCollectorAuth, async (req, res) => {
     }
 });
 
+router.post("/report/:accountId/:propertyId", requireCollectorAuth, async (req, res) => {
+    try {
+        const account = await resolveGa4Account(req.params.accountId);
+        const propertyId = String(req.params.propertyId);
+        const target = account.targets.find(candidate => String(candidate.property_id) === propertyId);
+        if (!target) return res.status(409).json({ success: false, error: "GA4 property is not mapped to this account" });
+        const source = await runGa4Report(account.credentials, propertyId, req.body);
+        res.json(source);
+    } catch (error) {
+        console.error("GA4 compatible report failed:", error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 module.exports = router;
