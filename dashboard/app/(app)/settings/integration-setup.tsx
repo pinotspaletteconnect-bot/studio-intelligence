@@ -18,7 +18,8 @@ type Ga4Account = { id: number; account_name: string; authentication_type: strin
 type MetaAccount = { id: number; account_name: string; meta_user_name: string | null; connection_status: string; token_expires_at: string | null; has_credentials: boolean; assets: Array<{ account_id: number; asset_type: string; asset_id: string; display_name: string; studio_id: number | null; studio_name: string | null }> }
 
 function Guide({ title, description, connected, available, icon, children }: { title: string; description: string; connected: boolean; available?: boolean; icon: React.ReactNode; children: React.ReactNode }) {
-  return <details className="group rounded-xl border bg-card open:ring-1 open:ring-foreground/10">
+  const id = `${title.toLowerCase().replace("google analytics 4", "ga4").replace("meta business", "meta").replace("mntn connected tv", "mntn").replaceAll(" ", "-")}-connections`
+  return <details id={id} className="group scroll-mt-4 rounded-xl border bg-card open:ring-1 open:ring-foreground/10">
     <summary className="flex cursor-pointer list-none items-center gap-4 p-4 sm:p-5 [&::-webkit-details-marker]:hidden">
       <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">{icon}</span>
       <span className="min-w-0 flex-1"><span className="flex flex-wrap items-center gap-2"><span className="font-heading text-base font-medium">{title}</span>{connected ? <Badge className="bg-emerald-100 text-emerald-800"><CheckCircle2 />Connected</Badge> : available ? <Badge variant="outline" className="border-amber-300 text-amber-800">Ready to set up</Badge> : <Badge variant="secondary">Assisted setup</Badge>}</span><span className="mt-1 block text-sm text-muted-foreground">{description}</span></span>

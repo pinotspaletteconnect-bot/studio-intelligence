@@ -2,6 +2,10 @@
 
 ## August 11, 2026
 
+- Added a compact connector-health bar to the Executive dashboard. PTS,
+  Textellent, GA4, Meta, Eulerity, and MNTN now show connected, attention, or
+  not-connected status from live configuration records, with direct links to
+  the relevant Settings sections and a 30-day Meta token-expiration warning.
 - Added a local tenant-scoped Meta owner OAuth foundation with automatic long-lived-token exchange, Vault-only credential storage, business/ad/Page/Instagram discovery, studio mapping controls, and a service-only n8n secret broker. The collector can now use a per-account credential while retaining the production global-token fallback. No production Meta workflow or application configuration was changed.
 - Removed the incompatible `instagram_basic` scope from the Facebook Login for Business authorization request after the controlled production test rejected it; linked Instagram professional accounts remain discoverable through accessible Page assets.
 - Corrected Meta asset mapping so an existing external-ID mapping is preferred before a studio fallback, preventing an unrelated row from being selected when adopting legacy production mappings.

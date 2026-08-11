@@ -230,7 +230,10 @@ Implemented foundation:
   and $4,166.20 gross booked sales.
 - Executive headline KPIs include exact prior-day gross booked seats and sales
   from `pts_reservation_booking_daily`; the wide-screen KPI grid uses five
-  columns. The Textellent Automation page now has a migration-ready,
+  columns. A compact connector-health bar on the Executive page derives PTS,
+  Textellent, GA4, Meta, Eulerity, and MNTN status from tenant-scoped credential
+  and studio-mapping records, flags incomplete or expiring connections, and
+  links directly to each connector's Settings section. The Textellent Automation page now has a migration-ready,
   disabled-by-default implementation for per-studio low-reservation class
   alerts, shared account routing, encrypted API auth codes, custom messages,
   transient PTS Seating Chart phone access, and phone-free send auditing. The

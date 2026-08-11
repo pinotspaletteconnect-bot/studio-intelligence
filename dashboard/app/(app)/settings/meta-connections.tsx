@@ -26,7 +26,7 @@ function AssetMapping({ asset, studios }: { asset: Asset; studios: Studio[] }) {
 export function MetaConnections({ studios, accounts }: { studios: Studio[]; accounts: Account[] }) {
   const [accountName, setAccountName] = useState("")
   const connectHref = accountName.trim().length >= 2 ? `/api/integrations/meta/connect?accountName=${encodeURIComponent(accountName.trim())}` : null
-  return <div id="meta-connections" className="space-y-5">
+  return <div className="space-y-5">
     {accounts.map(account => <div className="space-y-2 rounded-lg border p-3" key={account.id}>
       <div className="flex flex-wrap justify-between gap-2 text-sm"><div><strong>{account.account_name}</strong><p className="text-xs text-muted-foreground">{account.meta_user_name ?? "Meta account"} · {account.assets.length} assets</p></div><span className={account.connection_status === "connected" ? "text-emerald-700" : "text-amber-700"}>{account.has_credentials ? account.connection_status.replaceAll("_", " ") : "Credentials unavailable"}</span></div>
       {account.assets.length ? account.assets.map(asset => <AssetMapping key={`${asset.asset_type}-${asset.asset_id}`} asset={asset} studios={studios} />) : <p className="text-xs text-amber-700">No Meta business assets were visible to this account.</p>}
