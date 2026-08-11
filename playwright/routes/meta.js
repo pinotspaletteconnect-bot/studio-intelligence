@@ -6,6 +6,13 @@ const router = express.Router();
 const ads = require("../services/meta/ads");
 const pageInsights = require("../services/meta/pageInsights");
 const auth = require("../services/meta/auth");
+const { resolveMetaAccount } = require("../services/metaCredentials");
+
+async function withVaultCredential(body = {}) {
+    if (body.accessToken || !body.accountId) return body;
+    const account = await resolveMetaAccount(body.accountId);
+    return { ...body, accessToken: account.accessToken };
+}
 /**
  * Health Check
  */
@@ -26,7 +33,7 @@ router.post("/download", async (req, res) => {
 
         console.log("📥 Meta download requested");
 
-        const data = await ads.download(req.body || {});
+        const data = await ads.download(await withVaultCredential(req.body || {}));
 
         res.json({
             success: true,
@@ -230,7 +237,7 @@ router.post("/page-insights/download", async (req, res) => {
 
     try {
 
-        const result = await pageInsights.download(req.body || {});
+        const result = await pageInsights.download(await withVaultCredential(req.body || {}));
 
         res.json({
             success: true,
