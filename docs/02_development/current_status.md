@@ -135,7 +135,12 @@ Implemented foundation:
   owner-protected per-user role and studio-access management,
   reversible membership suspension, a server-enforced 30-minute inactivity
   timeout with a five-minute warning, a 12-hour absolute session limit, and
-  security headers. Owners and administrators also have a persistent Workspace
+  security headers. A versioned Terms and Privacy foundation is implemented locally. It includes
+  public draft policy pages, separate required acknowledgements, a current-version
+  access gate for pages and APIs, append-only acceptance evidence, and an
+  owner/administrator acceptance-status view. Migration `20260811220000` and
+  the dashboard changes are prepared but not deployed; the policy language
+  requires attorney review before broad commercial release. Owners and administrators also have a persistent Workspace
   Setup checklist that derives studio, PTS mapping, user, and five-feed data
   readiness from live configuration and warehouse records. Every dashboard API now authenticates the
   caller, rejects unauthorized studio IDs, and scopes portfolio queries to the

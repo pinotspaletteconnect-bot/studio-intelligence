@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import Link from "next/link"
 
 export function OnboardingForm({
   initialName,
@@ -44,7 +45,12 @@ export function OnboardingForm({
 
       <label className="flex items-start gap-3 rounded-xl border p-4 text-sm leading-6">
         <Checkbox name="acceptTerms" required />
-        <span>I accept the platform terms and acknowledge that access is limited to authorized business use.</span>
+        <span>I accept the <Link className="font-medium text-primary underline" href="/terms" target="_blank">Terms of Service</Link>.</span>
+      </label>
+
+      <label className="flex items-start gap-3 rounded-xl border p-4 text-sm leading-6">
+        <Checkbox name="acceptPrivacy" required />
+        <span>I acknowledge the <Link className="font-medium text-primary underline" href="/privacy" target="_blank">Privacy Policy</Link>.</span>
       </label>
 
       {canManageConsent ? (

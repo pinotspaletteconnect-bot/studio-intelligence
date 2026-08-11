@@ -1,10 +1,13 @@
 "use server"
 
 import { redirect } from "next/navigation"
+import { headers } from "next/headers"
 import { z } from "zod"
 
 import { getAuthenticatedUser, getUserAccessContext } from "@/lib/auth/session"
 import { supabase } from "@/lib/supabase/server"
+import { CURRENT_TERMS } from "@/lib/legal/documents"
+import { recordCurrentLegalAcceptance } from "@/lib/services/legal-consent"
 
 export type OnboardingState = { error?: string } | undefined
 
@@ -13,6 +16,7 @@ const onboardingSchema = z.object({
   password: z.string().max(72),
   confirmation: z.string().max(72),
   acceptTerms: z.literal("on"),
+  acceptPrivacy: z.literal("on"),
   benchmarkConsent: z.enum(["on"]).optional(),
 })
 
@@ -31,6 +35,7 @@ export async function completeOnboarding(
     password: String(formData.get("password") ?? ""),
     confirmation: String(formData.get("confirmation") ?? ""),
     acceptTerms: formData.get("acceptTerms"),
+    acceptPrivacy: formData.get("acceptPrivacy"),
     benchmarkConsent: formData.get("benchmarkConsent") ?? undefined,
   })
   if (!parsed.success) return { error: "Complete the required account information." }
@@ -63,7 +68,7 @@ export async function completeOnboarding(
   const { error: profileError } = await supabase.from("user_profiles").upsert({
     user_id: user.id,
     full_name: parsed.data.fullName,
-    terms_version: "1.0",
+    terms_version: CURRENT_TERMS.version,
     terms_accepted_at: now,
     onboarding_completed_at: now,
     updated_at: now,
@@ -76,6 +81,20 @@ export async function completeOnboarding(
     .eq("organization_id", context.organizationId)
     .eq("user_id", user.id)
   if (membershipError) return { error: "Your organization access could not be activated." }
+
+  const requestHeaders = await headers()
+  try {
+    await recordCurrentLegalAcceptance({
+      userId: user.id,
+      organizationId: context.organizationId,
+      method: "onboarding",
+      ipAddress: requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() || requestHeaders.get("x-real-ip"),
+      userAgent: requestHeaders.get("user-agent"),
+    })
+  } catch (error) {
+    console.error("Legal acceptance could not be recorded", { error, userId: user.id })
+    return { error: "Your legal acceptance could not be recorded. Please try again." }
+  }
 
   if (["owner", "administrator"].includes(context.role)) {
     const optedIn = parsed.data.benchmarkConsent === "on"

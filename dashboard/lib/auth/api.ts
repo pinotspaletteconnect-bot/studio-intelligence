@@ -17,6 +17,7 @@ export async function requireApiAccess(): Promise<UserAccessContext> {
   const context = await getUserAccessContext()
   if (!context) throw new ApiAccessError(401, "Authentication required.")
   if (!context.onboardingComplete) throw new ApiAccessError(403, "Onboarding required.")
+  if (!context.legalAccepted) throw new ApiAccessError(403, "Current legal terms must be accepted.")
   return context
 }
 

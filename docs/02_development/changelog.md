@@ -2,6 +2,12 @@
 
 ## August 11, 2026
 
+- Built the versioned legal-consent foundation: public draft Terms and Privacy
+  pages, separate onboarding acknowledgements, a current-version dashboard/API
+  gate, exact document hashes, append-only acceptance evidence with request
+  metadata, and an administrator acceptance-status view. Migration
+  `20260811220000` and application deployment remain pending approval, and the
+  draft policy language requires attorney review.
 - Added a compact connector-health bar to the Executive dashboard. PTS,
   Textellent, GA4, Meta, Eulerity, and MNTN now show connected, attention, or
   not-connected status from live configuration records, with direct links to

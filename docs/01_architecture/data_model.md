@@ -37,6 +37,8 @@ Current configuration entities:
 - `studio_integrations`
 - `integration_runs`
 - `user_profiles`
+- `legal_documents` (version and immutable content-hash metadata)
+- `legal_acceptances` (append-only user acceptance evidence)
 - `organization_memberships`
 - `user_studio_access`
 - `integration_secret_references` (non-secret metadata and opaque references)
@@ -55,6 +57,13 @@ Dashboard access is invite-only. Membership roles are owner, administrator,
 manager, and viewer. Owners and administrators inherit active organization
 studios; managers and viewers require explicit studio grants. Integration
 credentials are represented only by an opaque encrypted-secret reference.
+
+Legal acceptance is separate from the mutable user profile. `legal_documents`
+identifies the current Terms and Privacy versions and their exact content
+hashes. `legal_acceptances` preserves each user's organization, document
+versions and hashes, timestamp, acceptance path, IP address, and user agent.
+Acceptance rows are append-only; a new policy version creates a new row rather
+than changing prior evidence.
 
 MNTN self-service setup follows the same boundary: the browser submits an API
 key to an owner-authorized server action, a service-role RPC writes the value

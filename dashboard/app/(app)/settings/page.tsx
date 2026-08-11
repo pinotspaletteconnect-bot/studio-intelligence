@@ -2,16 +2,19 @@ import { InviteUserForm } from "@/app/(app)/settings/invite-user-form"
 import { AddStudioForm } from "@/app/(app)/settings/add-studio-form"
 import { AuthorizedUsers } from "@/app/(app)/settings/authorized-users"
 import { IntegrationSetup } from "@/app/(app)/settings/integration-setup"
+import { LegalAcceptanceStatus } from "@/app/(app)/settings/legal-acceptance-status"
 import Link from "next/link"
 import { buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { requireDashboardContext } from "@/lib/auth/session"
 import { getAccountSettings } from "@/lib/services/account-settings"
+import { getOrganizationLegalAcceptanceStatus } from "@/lib/services/legal-consent"
 
 export default async function SettingsPage() {
   const access = await requireDashboardContext()
   const settings = await getAccountSettings(access.organizationId, access.allowedStudioIds)
   const canAdminister = ["owner", "administrator"].includes(access.role)
+  const legalAcceptances = canAdminister ? await getOrganizationLegalAcceptanceStatus(access.organizationId) : []
 
   return (
     <div className="space-y-6 p-4 md:p-6">
@@ -56,6 +59,10 @@ export default async function SettingsPage() {
               studioName: settings.studios.find((studio) => studio.id === setting.studioId)?.studio_name ?? `Studio ${setting.studioId}`,
             }))}
           />
+          <Card>
+            <CardHeader><CardTitle>Legal acceptance</CardTitle></CardHeader>
+            <CardContent><LegalAcceptanceStatus members={settings.members} acceptances={legalAcceptances} /></CardContent>
+          </Card>
         </>
       ) : null}
 

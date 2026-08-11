@@ -6,6 +6,7 @@ import { redirect } from "next/navigation"
 import { createAuthClient } from "@/lib/supabase/auth-server"
 import { supabase } from "@/lib/supabase/server"
 import { mustChangeTemporaryPassword } from "@/lib/auth/temporary-password"
+import { hasCurrentLegalAcceptance } from "@/lib/services/legal-consent"
 
 export type OrganizationRole = "owner" | "administrator" | "manager" | "viewer"
 
@@ -14,6 +15,7 @@ export type UserAccessContext = {
   email: string
   fullName: string | null
   onboardingComplete: boolean
+  legalAccepted: boolean
   organizationId: number
   role: OrganizationRole
   allowedStudioIds: number[]
@@ -59,6 +61,8 @@ export const getUserAccessContext = cache(async (): Promise<UserAccessContext | 
   const membership = memberships?.[0]
   if (!membership) return null
 
+  const legalAccepted = await hasCurrentLegalAcceptance(user.id, membership.organization_id)
+
   let studioQuery = supabase
     .from("studios")
     .select("id")
@@ -81,6 +85,7 @@ export const getUserAccessContext = cache(async (): Promise<UserAccessContext | 
         fullName: profile?.full_name ?? null,
         onboardingComplete:
           membership.status === "active" && Boolean(profile?.onboarding_completed_at),
+        legalAccepted,
         organizationId: membership.organization_id,
         role: membership.role as OrganizationRole,
         allowedStudioIds: [],
@@ -98,6 +103,7 @@ export const getUserAccessContext = cache(async (): Promise<UserAccessContext | 
     fullName: profile?.full_name ?? null,
     onboardingComplete:
       membership.status === "active" && Boolean(profile?.onboarding_completed_at),
+    legalAccepted,
     organizationId: membership.organization_id,
     role: membership.role as OrganizationRole,
     allowedStudioIds: (studios ?? []).map((studio) => studio.id),
@@ -112,6 +118,7 @@ export async function requireDashboardContext() {
   const context = await getUserAccessContext()
   if (!context) redirect("/access-pending")
   if (!context.onboardingComplete) redirect("/onboarding")
+  if (!context.legalAccepted) redirect("/legal/accept")
 
   return context
 }
@@ -123,7 +130,18 @@ export async function requireOnboardingContext() {
 
   const context = await getUserAccessContext()
   if (!context) redirect("/access-pending")
-  if (context.onboardingComplete) redirect("/dashboard")
+  if (context.onboardingComplete) redirect(context.legalAccepted ? "/dashboard" : "/legal/accept")
 
+  return context
+}
+
+export async function requireLegalAcceptanceContext() {
+  const user = await getAuthenticatedUser()
+  if (!user) redirect("/login")
+  if (mustChangeTemporaryPassword(user.app_metadata)) redirect("/reset-password")
+  const context = await getUserAccessContext()
+  if (!context) redirect("/access-pending")
+  if (!context.onboardingComplete) redirect("/onboarding")
+  if (context.legalAccepted) redirect("/dashboard")
   return context
 }

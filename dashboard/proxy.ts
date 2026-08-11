@@ -16,6 +16,8 @@ const publicRoutes = [
   "/login",
   "/forgot-password",
   "/reset-password",
+  "/terms",
+  "/privacy",
   "/auth",
   "/api/session/end",
   "/api/internal/pts-account",

@@ -29,6 +29,8 @@ This document inventories warehouse objects confirmed by current project documen
 | `mntn_integration_accounts` | Tenant-scoped MNTN account metadata and Supabase Vault secret references; never API-key values | Deployed August 10, 2026 through migration `20260810190000` |
 | `mntn_collection_targets` | Service-only MNTN account-to-advertiser/studio collection routing without secrets | Deployed August 10, 2026 through migration `20260810190000` |
 | `user_profiles` | Auth-user profile, terms acceptance, and onboarding completion | Current; migration `20260805110000` deployed August 5, 2026 |
+| `legal_documents` | Versioned Terms and Privacy metadata with exact content hashes | Migration `20260811220000` prepared; not deployed |
+| `legal_acceptances` | Append-only per-user acceptance evidence for exact Terms and Privacy versions | Migration `20260811220000` prepared; not deployed |
 | `organization_memberships` | Invite-only user role and status by organization | Current; migration `20260805110000` deployed August 5, 2026 |
 | `user_studio_access` | Explicit manager/viewer studio grants | Current; migration `20260805110000` deployed August 5, 2026 |
 | `integration_secret_references` | Non-secret integration metadata and external encrypted-secret references | Current; migration `20260805110000` deployed August 5, 2026 |

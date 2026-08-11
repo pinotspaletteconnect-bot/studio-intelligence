@@ -1,4 +1,5 @@
 import type { ReactNode } from "react"
+import Link from "next/link"
 
 export function AuthShell({
   title,
@@ -20,6 +21,7 @@ export function AuthShell({
           <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
         </div>
         {children}
+        <footer className="mt-8 flex justify-center gap-4 border-t pt-5 text-xs text-slate-500"><Link className="hover:text-slate-900" href="/terms">Terms</Link><Link className="hover:text-slate-900" href="/privacy">Privacy</Link></footer>
       </section>
     </main>
   )
