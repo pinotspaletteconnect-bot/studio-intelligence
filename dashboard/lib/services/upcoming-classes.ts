@@ -6,6 +6,7 @@ type UpcomingClassRow = {
   snapshot_date: string
   event_date: string
   source_event_key: string
+  display_name: string | null
   painting: string | null
   class_time: string | null
   room: string | null
@@ -55,6 +56,7 @@ export type UpcomingClassesData = {
       eventKey: string
       eventDate: string
       classTime: string | null
+      displayName: string | null
       painting: string
       room: string
       classType: string
@@ -102,7 +104,7 @@ export async function getUpcomingClasses(
   let query = supabase
     .from("pts_upcoming_classes_current")
     .select(
-      "studio_id,snapshot_date,event_date,source_event_key,painting,class_time,room,source_class_type,reporting_class_type,seats_sold,capacity,seats_remaining,capacity_percent,lead_time_average,class_sales,fee_sales,seats_pickup,revenue_pickup"
+      "studio_id,snapshot_date,event_date,source_event_key,display_name,painting,class_time,room,source_class_type,reporting_class_type,seats_sold,capacity,seats_remaining,capacity_percent,lead_time_average,class_sales,fee_sales,seats_pickup,revenue_pickup"
     )
     .order("class_time", { ascending: true })
     .range(0, 4999)
@@ -152,6 +154,7 @@ export async function getUpcomingClasses(
     eventKey: row.source_event_key,
     eventDate: row.event_date,
     classTime: row.class_time,
+    displayName: row.display_name?.trim() || null,
     painting: row.painting || "Untitled class",
     room: row.room || "—",
     classType: row.reporting_class_type || row.source_class_type || "Unspecified",

@@ -12,6 +12,7 @@ export type WeeklyPartiesData = {
       id: string
       date: string
       classTime: string | null
+      displayName: string | null
       name: string
       type: "Private Party" | "Mobile Events"
       status: "Completed" | "Upcoming"
@@ -65,6 +66,7 @@ export async function getWeeklyParties(studioId?: string, allowedStudioIds?: num
         id: `completed-${type}-${event.id}`,
         date: event.date,
         classTime: event.classTime,
+        displayName: null,
         name: event.painting,
         type,
         status: "Completed",
@@ -82,6 +84,7 @@ export async function getWeeklyParties(studioId?: string, allowedStudioIds?: num
         id: `upcoming-${event.eventKey}`,
         date: event.eventDate,
         classTime: event.classTime,
+        displayName: event.displayName,
         name: event.painting,
         type: event.classType as "Private Party" | "Mobile Events",
         status: "Upcoming",

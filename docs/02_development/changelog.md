@@ -2,6 +2,10 @@
 
 ## August 11, 2026
 
+- Added PTS calendar Display Name to the upcoming-class collector contract,
+  snapshot warehouse model, reporting service, and current-week party table.
+  Display Name appears as Title separately from Event/painting; historical
+  snapshots remain nullable and are not backfilled with guessed values.
 - Kept `Coming Soon` and zero-seat `No Painting Selected` party records in
   upcoming reporting because they can be legitimate bookings that have not yet
   selected art or sold seats. Only event titles beginning with `Available for`

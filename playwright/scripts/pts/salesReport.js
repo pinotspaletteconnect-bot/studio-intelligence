@@ -319,10 +319,14 @@ async function readClassGrid(page, { timeZone }) {
                 )
             )
             .filter(row => row.some(Boolean));
+        const modelRows = (kendoGrid?.dataSource?.view?.() ?? []).map(item =>
+            typeof item?.toJSON === "function" ? item.toJSON() : item
+        );
 
         return {
             headers,
             rows,
+            modelRows,
             total: kendoGrid?.dataSource?.total?.() ?? null
         };
     });
@@ -332,14 +336,19 @@ async function readClassGrid(page, { timeZone }) {
     }
 
     const headers = result.headers.map(snakeCase);
-    const rawRows = result.rows.map(values =>
-        Object.fromEntries(
+    const rawRows = result.rows.map((values, rowIndex) => ({
+        ...Object.fromEntries(
+            Object.entries(result.modelRows[rowIndex] ?? {}).map(([key, value]) => [
+                snakeCase(key), value
+            ])
+        ),
+        ...Object.fromEntries(
             headers.map((header, index) => [
                 header || `column_${index + 1}`,
                 values[index] ?? null
             ])
         )
-    );
+    }));
     const rows = normalizeClassSalesRows(rawRows, { timeZone });
 
     if (result.total > 0 && rows.length === 0) {

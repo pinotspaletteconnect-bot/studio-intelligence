@@ -24,13 +24,17 @@ the active `studio_integrations` PTS mapping and write:
 
 - `snapshot_date`
 - `source_event_key`
-- `event_date`, painting, class time, room, and source class type
+- `event_date`, PTS Display Name, painting, class time, room, and source class type
 - seats, capacity, source percent full, and average lead time
 - class, product, fee, and net sales
 - source retrieval timestamp
 
 The workflow must not treat Product Sales from this report as authoritative
 product revenue. It is retained only as source context.
+
+Display Name is the customer-facing title shown on the PTS calendar and is
+stored separately from the selected painting. It is nullable because older
+snapshots predate collection of this field.
 
 ## Replacement and retry behavior
 

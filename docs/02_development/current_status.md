@@ -233,6 +233,10 @@ Implemented foundation:
   6:00 AM America/New_York. Its August 1 production validation loaded all four
   studios: 111 ordered seats, 107 active seats, 2 refunded seats, 2 held seats,
   and $4,166.20 gross booked sales.
+- The upcoming-class ingestion contract now preserves the nullable PTS calendar
+  Display Name separately from the painting. The current-week party drill-down
+  presents it as Title between Date and time and Event; snapshots collected
+  before this addition display a dash rather than an inferred title.
 - Executive headline KPIs include exact prior-day gross booked seats and sales
   from `pts_reservation_booking_daily`; the wide-screen KPI grid uses five
   columns. A compact connector-health bar on the Executive page derives PTS,

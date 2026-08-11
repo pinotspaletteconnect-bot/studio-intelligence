@@ -203,6 +203,13 @@ function normalizeClassSalesRows(
                 source_event_key: rowHash(eventIdentity),
                 source_row_hash: rowHash(row),
                 event_date: dateKey(wallClockParts(row.time)),
+                display_name:
+                    row.display_name ??
+                    row.class_display_name ??
+                    row.event_display_name ??
+                    row.class_name ??
+                    row.title ??
+                    null,
                 painting: row.painting,
                 class_time: zonedWallClockToIso(row.time, timeZone),
                 room: row.room ?? null,

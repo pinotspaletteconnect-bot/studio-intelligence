@@ -79,7 +79,7 @@ dashboard access are implemented.
 | `pts_class_type_sales_daily_reporting` | Daily class-type aggregates with governed reporting types | Current |
 | `pts_product_sales_daily_reporting` | Daily product/item aggregates with governed product groups and departments | Current |
 | `pts_operations_daily` | One studio/date derived from class revenue, fees, and authoritative Product Sales detail | Current replacement reporting view |
-| `pts_upcoming_class_snapshots` | One future class event per studio, snapshot date, and stable source event key | Current and loading daily |
+| `pts_upcoming_class_snapshots` | One future class event per studio, snapshot date, and stable source event key; preserves nullable calendar `display_name` separately from painting | Current and loading daily |
 | `pts_upcoming_class_snapshots_reporting` | Snapshot history with governed class types and consecutive-day seats/revenue pickup | Deployed |
 | `pts_upcoming_classes_current` | Latest complete future-class snapshot per studio | Deployed |
 | `pts_reservation_bookings_reporting` | Reservation booking lines joined to studio names | Current |
