@@ -1,8 +1,5 @@
 import { supabase } from "@/lib/supabase/server"
-import {
-  isMarketingPlaceholderClass,
-  isZeroActivityPartyEvent,
-} from "@/lib/services/pts-class-filters"
+import { isMarketingPlaceholderClass } from "@/lib/services/pts-class-filters"
 
 type DailyOperationsRow = {
   studio_id: number
@@ -487,15 +484,7 @@ export async function getOperationsDashboard(
     allCurrentClassTypeRows.map((row) => `${row.studio_id}:${row.event_date}`)
   )
   const currentClassTypeRows = allCurrentClassTypeRows.filter(
-    (row) =>
-      !isMarketingPlaceholderClass(row.painting) &&
-      !isZeroActivityPartyEvent({
-        classType: row.reporting_class_type,
-        painting: row.painting,
-        seatsSold: row.seats_sold,
-        classSales: row.class_sales,
-        feeSales: row.fee_sales,
-      })
+    (row) => !isMarketingPlaceholderClass(row.painting)
   )
   const classTypeRows = [
     ...((historicalClassTypesResult.data ?? []) as ClassTypeRow[]).filter(
@@ -957,17 +946,7 @@ export async function getDailyOperatingDetail(
   if (operationsResult.error) throw operationsResult.error
 
   const rows = ((classesResult.data ?? []) as ClassDetailRow[])
-    .filter(
-      (row) =>
-        !isMarketingPlaceholderClass(row.painting) &&
-        !isZeroActivityPartyEvent({
-          classType: row.reporting_class_type,
-          painting: row.painting,
-          seatsSold: row.seats_sold,
-          classSales: row.class_sales,
-          feeSales: row.fee_sales,
-        })
-    )
+    .filter((row) => !isMarketingPlaceholderClass(row.painting))
     .map((row) => {
     const seatsSold = numberValue(row.seats_sold)
     const capacity = numberValue(row.capacity)
@@ -1227,17 +1206,7 @@ export async function getClassEventSalesDetail(
   if (studiosResult.error) throw studiosResult.error
 
   const rows = ((classesResult.data ?? []) as ClassEventDetailRow[])
-    .filter(
-      (row) =>
-        !isMarketingPlaceholderClass(row.painting) &&
-        !isZeroActivityPartyEvent({
-          classType: reportingClassType,
-          painting: row.painting,
-          seatsSold: row.seats_sold,
-          classSales: row.class_sales,
-          feeSales: row.fee_sales,
-        })
-    )
+    .filter((row) => !isMarketingPlaceholderClass(row.painting))
   const studios = (studiosResult.data ?? []).map((studio) => {
     const classes = rows
       .filter((row) => row.studio_id === studio.id)

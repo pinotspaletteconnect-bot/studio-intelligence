@@ -2,10 +2,10 @@
 
 ## August 11, 2026
 
-- Extended the shared PTS marketing-placeholder filter to remove `Coming Soon`
-  party slots and applied the zero-activity party rule to upcoming snapshots.
-  Executive weekly-party counts and their drill-down now exclude the same empty
-  `No Painting Selected`, `Coming Soon`, and `Available for...` inventory.
+- Kept `Coming Soon` and zero-seat `No Painting Selected` party records in
+  upcoming reporting because they can be legitimate bookings that have not yet
+  selected art or sold seats. Only event titles beginning with `Available for`
+  are treated as marketing availability inventory.
 - Added a current-week party drill-down from the Executive dashboard. The
   clickable party card now opens a studio-grouped list that reconciles completed
   private/mobile events through yesterday with upcoming events through Sunday,
