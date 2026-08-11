@@ -107,8 +107,12 @@ async function selectLocation(page, target) {
         throw new Error(`Eulerity location is no longer available: ${target.selector_label}`);
     }
     const exact = page.getByRole("option", { name: matched.displayName, exact: true });
-    if (await exact.count()) await exact.first().click();
-    else await page.getByText(matched.displayName, { exact: true }).last().click();
+    if (await exact.count()) await exact.first().click({ force: true });
+    else {
+        const optionContainer = page.locator('[id*="-option-"]').filter({ hasText: matched.displayName }).first();
+        if (await optionContainer.count()) await optionContainer.click({ force: true });
+        else await page.getByText(matched.displayName, { exact: true }).last().click({ force: true });
+    }
     await page.waitForTimeout(1200);
     const selected = normalizeLocationLabel(await control.textContent().catch(() => ""));
     if (selected && !selected.includes(normalizeLocationLabel(matched.displayName))) {
