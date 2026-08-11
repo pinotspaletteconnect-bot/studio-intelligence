@@ -2,6 +2,11 @@
 
 ## August 11, 2026
 
+- Replaced direct n8n backfill links locally with an administrator-only SASHA
+  upload experience for PTS Product Sales and Class Sales. The browser receives
+  only a processing state and sanitized success/failure result; n8n URLs and
+  execution details remain behind a private authenticated gateway. The n8n
+  webhook and production environment configuration remain pending approval.
 - Built the versioned legal-consent foundation: public draft Terms and Privacy
   pages, separate onboarding acknowledgements, a current-version dashboard/API
   gate, exact document hashes, append-only acceptance evidence with request

@@ -229,7 +229,9 @@ Planned scope includes profile insights, reviews, search visibility, and custome
   selection at a time. The authenticated `/pts/product-sales-upload` endpoint
   removes customer names and reuses production normalization, while the
   existing n8n mapping, grouping, and `pts_product_sales_daily` upsert path is
-  unchanged. The Operations dashboard links to the authenticated workflow.
+  unchanged. An administrator-only SASHA upload page and private server-side
+  webhook gateway are implemented locally to replace the workflow-editor link;
+  the authenticated n8n webhook and production configuration remain pending.
 - **Upcoming Classes foundation:** the existing Class Sales endpoint can collect
   a rolling 90-day future range. A daily event-grain snapshot migration,
   reporting views, dashboard, and workflow contract are implemented. The
