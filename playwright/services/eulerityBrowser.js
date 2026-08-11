@@ -16,6 +16,13 @@ function sourceKeyForOption(option) {
         fallbackSourceKey(option.displayName);
 }
 
+function bestLocationLabel(record) {
+    const candidates = (record.candidates || [])
+        .map(normalizeLocationLabel)
+        .filter((value) => value.length >= 3 && !value.includes("@") && !value.includes(",") && !/^\d/.test(value));
+    return candidates.sort((left, right) => right.length - left.length)[0] || normalizeLocationLabel(record.displayName);
+}
+
 async function loginEulerity({ email, password }) {
     const browser = await chromium.launch({ headless: true });
     try {
@@ -59,12 +66,15 @@ async function discoverOpenMenuOptions(page) {
         if (!await option.isVisible().catch(() => false)) continue;
         const record = await option.evaluate((element) => ({
             displayName: element.textContent || "",
+            candidates: [...element.querySelectorAll("*")]
+                .filter((child) => child.children.length === 0)
+                .map((child) => child.textContent || ""),
             dataValue: element.getAttribute("data-value") || "",
             value: element.getAttribute("value") || "",
             id: element.getAttribute("id") || "",
             href: element.closest("a")?.getAttribute("href") || element.querySelector("a")?.getAttribute("href") || ""
         }));
-        const displayName = normalizeLocationLabel(record.displayName);
+        const displayName = bestLocationLabel(record);
         if (!displayName) continue;
         records.push({ sourceKey: sourceKeyForOption({ ...record, displayName }), displayName });
     }
@@ -171,5 +181,6 @@ module.exports = {
     discoverEulerityAccount,
     fallbackSourceKey,
     normalizeLocationLabel,
-    sourceKeyForOption
+    sourceKeyForOption,
+    bestLocationLabel
 };
