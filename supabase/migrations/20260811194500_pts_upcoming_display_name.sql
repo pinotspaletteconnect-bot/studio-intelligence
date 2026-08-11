@@ -64,6 +64,9 @@ $$;
 
 -- Both reporting views select the snapshot row, so replacing them preserves
 -- all existing pickup logic while exposing the new nullable column.
+drop view if exists public.pts_upcoming_classes_current;
+drop view if exists public.pts_upcoming_class_snapshots_reporting;
+
 create or replace view public.pts_upcoming_class_snapshots_reporting
 with (security_invoker = true)
 as
