@@ -2,6 +2,16 @@
 
 ## August 11, 2026
 
+- Completed the GA4 owner-OAuth cutover. The Duff Google connection is encrypted
+  in Vault, seven accessible properties were discovered, and the four intended
+  studio properties were adopted automatically while three unrelated properties
+  remain unmapped. Controlled daily and source/medium runs succeeded and wrote
+  fresh rows for all four studios. Published workflows `25` and `26` now own the
+  production schedules; both former credentialed workflows are unpublished and
+  the dedicated legacy backups remain available for rollback.
+- Corrected the Railway `APP_URL`, registered the exact production Google OAuth
+  callback, and confirmed `jeff.duff@pinotspalette.com` as the controlled OAuth
+  test user. SASHA requests only identity/email and read-only Analytics access.
 - Replaced the blocked GA4 service-account onboarding plan with owner-authorized
   multi-account OAuth. One Google connection now supports every property visible
   to that owner, including multi-unit accounts, while single-location owners use

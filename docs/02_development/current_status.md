@@ -39,7 +39,7 @@ The collection, ETL, warehouse, and frontend layers are considered stable patter
 
 | Integration | Collection path | Warehouse state | Status |
 | --- | --- | --- | --- |
-| Google Analytics 4 | API/n8n | `ga4_daily_metrics` | Production OAuth workflows; owner-based multi-account OAuth replacement in controlled validation |
+| Google Analytics 4 | API/n8n | `ga4_daily_metrics`, `marketing_attribution_daily` | Production Vault-backed owner OAuth workflows |
 | Eulerity | Playwright/Express/n8n | `eulerity_daily_metrics`, `eulerity_daily_spend`, `eulerity_daily_budget_allocation` | Production Vault-backed workflow |
 | Meta Business Ads | Meta Graph API/Express/n8n | `meta_ads_daily` | Production |
 | Meta Page Insights | Meta Graph API/Express/n8n | `meta_page_insights_daily` | Production |
