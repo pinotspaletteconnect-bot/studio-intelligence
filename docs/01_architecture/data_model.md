@@ -118,6 +118,12 @@ tax, and source transaction context while deliberately excluding customer
 names. Planned extensions include staffing, labor, inventory, products, and
 studio hours.
 
+Homebase labor is modeled separately from PTS operations. Each studio has its
+own Vault-backed read-only API connection. Daily facts preserve scheduled and
+actual hours/costs; shift facts deliberately exclude employee identity and can
+later be allocated to overlapping PTS classes through a governed reporting
+view rather than modifying either source fact.
+
 PTS operations reporting preserves these source grains and applies governed
 organization-level mappings downstream:
 

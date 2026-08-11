@@ -49,6 +49,7 @@ export default async function SettingsPage() {
             ptsAccounts={settings.ptsAccounts}
             textellentAccounts={settings.textellentAccounts}
             mntnAccounts={settings.mntnAccounts}
+            homebaseAccounts={settings.homebaseAccounts}
             eulerityAccounts={settings.eulerityAccounts}
             ga4Accounts={settings.ga4Accounts}
             metaAccounts={settings.metaAccounts}

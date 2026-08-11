@@ -81,6 +81,9 @@ dashboard access are implemented.
 | `pts_operations_daily` | One studio/date derived from class revenue, fees, and authoritative Product Sales detail | Current replacement reporting view |
 | `pts_upcoming_class_snapshots` | One future class event per studio, snapshot date, and stable source event key; preserves nullable calendar `display_name` separately from painting | Current and loading daily |
 | `pts_upcoming_class_snapshots_reporting` | Snapshot history with governed class types and consecutive-day seats/revenue pickup | Deployed |
+| `homebase_integration_accounts` | One tenant-scoped, Vault-backed read-only Homebase API key per SASHA studio | Active development |
+| `homebase_labor_daily` | One privacy-minimized scheduled/actual labor summary per studio and date | Active development |
+| `homebase_shift_labor` | One privacy-minimized scheduled/actual labor record per studio and Homebase shift | Active development |
 | `pts_upcoming_classes_current` | Latest complete future-class snapshot per studio | Deployed |
 | `pts_reservation_bookings_reporting` | Reservation booking lines joined to studio names | Current |
 | `pts_reservation_booking_daily` | Exact daily gross booked seats and booked sales with active, refunded, and held seat counts | Current |

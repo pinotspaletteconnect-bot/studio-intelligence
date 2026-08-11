@@ -14,6 +14,7 @@ export type MemberAccessState = { complete?: boolean; error?: string; temporaryP
 export type PtsAccountState = { complete?: boolean; error?: string } | undefined
 export type PtsReportState = { complete?: boolean; error?: string } | undefined
 export type MntnConnectionState = { complete?: boolean; error?: string } | undefined
+export type HomebaseConnectionState = { complete?: boolean; error?: string } | undefined
 export type EulerityConnectionState = { complete?: boolean; error?: string } | undefined
 export type Ga4ConnectionState = { complete?: boolean; error?: string } | undefined
 export type MetaConnectionState = { complete?: boolean; error?: string } | undefined
@@ -96,6 +97,34 @@ const mntnConnectionSchema = z.object({
   apiKey: z.string().trim().min(8).max(2048),
   currentPassword: z.string().min(1).max(1024),
 })
+
+const homebaseConnectionSchema = z.object({
+  accountName: z.string().trim().min(2).max(120),
+  studioId: z.coerce.number().int().positive(),
+  apiKey: z.string().trim().min(16).max(4096),
+  currentPassword: z.string().min(1).max(1024),
+})
+
+export async function createHomebaseConnection(
+  _previousState: HomebaseConnectionState,
+  formData: FormData
+): Promise<HomebaseConnectionState> {
+  const [access, actor] = await Promise.all([requireDashboardContext(), getAuthenticatedUser()])
+  if (!actor?.email || !["owner", "administrator"].includes(access.role)) return { error: "Only an owner or administrator can connect Homebase." }
+  const parsed = homebaseConnectionSchema.safeParse(Object.fromEntries(formData))
+  if (!parsed.success) return { error: "Complete every Homebase connection and security field." }
+  if (!access.allowedStudioIds.includes(parsed.data.studioId)) return { error: "That studio is outside your access." }
+  const auth = await createAuthClient()
+  const { error: authenticationError } = await auth.auth.signInWithPassword({ email: actor.email, password: parsed.data.currentPassword })
+  if (authenticationError) return { error: "Your SASHA password is incorrect." }
+  const { error } = await supabase.rpc("create_homebase_connection_with_secret", {
+    p_organization_id: access.organizationId, p_account_name: parsed.data.accountName,
+    p_api_key: parsed.data.apiKey, p_studio_id: parsed.data.studioId,
+  })
+  if (error) return { error: "The encrypted Homebase connection could not be created. That studio may already be connected." }
+  revalidatePath("/settings")
+  return { complete: true }
+}
 
 const eulerityConnectionSchema = z.object({
   accountName: z.string().trim().min(2).max(120),

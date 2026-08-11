@@ -73,6 +73,16 @@ No integration should bypass this lifecycle without an explicit architectural de
 
 Meta Ads and Meta Page Insights share authentication, token validation, business discovery, account discovery, and Page discovery code under `playwright/services/meta/`.
 
+## Labor Intelligence
+
+### Homebase
+
+- **Capability:** scheduled shifts, actual timecards, hours, and labor cost
+- **Authentication:** one read-only API key per Homebase location, encrypted in Supabase Vault
+- **Mapping:** each key maps explicitly to one SASHA studio; the source location UUID is discovered and validated
+- **Privacy:** warehouse shift facts exclude employee names, email addresses, phone numbers, and employee-level wage rates
+- **Status:** Active development. Vault schema, read-only discovery collector, and secured Settings entry are implemented; production scheduling and first-key validation remain pending.
+
 ### MNTN Connected TV
 
 - **Capability:** connected-TV delivery, household reach, verified visits,

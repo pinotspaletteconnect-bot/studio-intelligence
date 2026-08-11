@@ -9,6 +9,7 @@ const metaRoutes = require("./routes/meta");
 const ptsRoutes = require("./routes/pts");
 const mntnRoutes = require("./routes/mntn");
 const ga4Routes = require("./routes/ga4");
+const homebaseRoutes = require("./routes/homebase");
 
 const app = express();
 
@@ -29,6 +30,7 @@ app.use("/meta", metaRoutes);
 app.use("/pts", ptsRoutes);
 app.use("/mntn", mntnRoutes);
 app.use("/ga4", ga4Routes);
+app.use("/homebase", homebaseRoutes);
 
 app.listen(PORT, () => {
     console.log(`🚀 Browser Automation Service listening on port ${PORT}`);

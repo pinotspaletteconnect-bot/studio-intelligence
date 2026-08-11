@@ -2,6 +2,12 @@
 
 ## August 11, 2026
 
+- Added the Homebase labor integration foundation: one Vault-encrypted
+  read-only API key per studio, source-location discovery, explicit studio
+  routing, and privacy-minimized daily and shift labor tables. The SASHA
+  Settings form never redisplays keys, and shift facts exclude employee
+  identity. Production collection remains disabled pending controlled key
+  validation.
 - Added PTS calendar Display Name to the upcoming-class collector contract,
   snapshot warehouse model, reporting service, and current-week party table.
   Display Name appears as Title separately from Event/painting; historical

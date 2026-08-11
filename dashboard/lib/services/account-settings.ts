@@ -6,7 +6,7 @@ export async function getAccountSettings(
   organizationId: number,
   allowedStudioIds: number[]
 ) {
-  const [membershipResult, studioResult, integrationResult, mappingResult, brandResult, ptsAccountResult, textellentAccountResult, mntnAccountResult, eulerityAccountResult, eulerityLocationResult, ga4AccountResult, ga4PropertyResult, metaAccountResult, metaAssetResult] =
+  const [membershipResult, studioResult, integrationResult, mappingResult, brandResult, ptsAccountResult, textellentAccountResult, mntnAccountResult, homebaseAccountResult, eulerityAccountResult, eulerityLocationResult, ga4AccountResult, ga4PropertyResult, metaAccountResult, metaAssetResult] =
     await Promise.all([
       supabase
         .from("organization_memberships")
@@ -56,6 +56,7 @@ export async function getAccountSettings(
         .eq("organization_id", organizationId)
         .eq("is_active", true)
         .order("account_name"),
+      supabase.from("homebase_integration_accounts").select("id,studio_id,account_name,location_name,secret_reference,last_validated_at").eq("organization_id", organizationId).eq("is_active", true).order("account_name"),
       supabase.from("eulerity_integration_accounts").select("id,account_name,secret_reference,single_studio_id,last_discovered_at,last_validated_at").eq("organization_id", organizationId).eq("is_active", true).order("account_name"),
       supabase.from("eulerity_source_locations").select("account_id,source_key,display_name").eq("organization_id", organizationId).eq("is_active", true).order("display_name"),
       supabase.from("ga4_integration_accounts").select("id,account_name,authentication_type,google_account_email,secret_reference,last_discovered_at,last_validated_at").eq("organization_id", organizationId).eq("is_active", true).order("account_name"),
@@ -64,7 +65,7 @@ export async function getAccountSettings(
       supabase.from("meta_source_assets").select("account_id,asset_type,asset_id,display_name").eq("organization_id", organizationId).eq("is_active", true).order("display_name"),
     ])
 
-  for (const result of [membershipResult, studioResult, integrationResult, mappingResult, brandResult, ptsAccountResult, textellentAccountResult, mntnAccountResult, eulerityAccountResult, eulerityLocationResult, ga4AccountResult, ga4PropertyResult, metaAccountResult, metaAssetResult]) {
+  for (const result of [membershipResult, studioResult, integrationResult, mappingResult, brandResult, ptsAccountResult, textellentAccountResult, mntnAccountResult, homebaseAccountResult, eulerityAccountResult, eulerityLocationResult, ga4AccountResult, ga4PropertyResult, metaAccountResult, metaAssetResult]) {
     if (result.error) throw result.error
   }
 
@@ -148,6 +149,14 @@ export async function getAccountSettings(
         last_validated_at: account.last_validated_at,
       }
     }),
+    homebaseAccounts: (homebaseAccountResult.data ?? []).map(account => ({
+      id: account.id,
+      account_name: account.account_name,
+      studio_name: (studioResult.data ?? []).find(studio => studio.id === account.studio_id)?.studio_name ?? null,
+      location_name: account.location_name,
+      has_credentials: /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(account.secret_reference),
+      last_validated_at: account.last_validated_at,
+    })),
     eulerityAccounts: (eulerityAccountResult.data ?? []).map(account => ({
       ...account,
       has_credentials: /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(account.secret_reference),
