@@ -110,30 +110,7 @@ const eulerityMappingSchema = z.object({
   studioId: z.coerce.number().int().positive(),
 })
 
-const ga4ConnectionSchema = z.object({
-  accountName: z.string().trim().min(2).max(120),
-  serviceAccountJson: z.string().min(50).max(20000),
-  currentPassword: z.string().min(1).max(1024),
-})
 const ga4MappingSchema = z.object({ accountId: z.coerce.number().int().positive(), propertyId: z.string().regex(/^\d{1,30}$/), studioId: z.coerce.number().int().positive() })
-
-export async function createGa4Connection(_state: Ga4ConnectionState, formData: FormData): Promise<Ga4ConnectionState> {
-  const [access, actor] = await Promise.all([requireDashboardContext(), getAuthenticatedUser()])
-  if (!actor?.email || !["owner", "administrator"].includes(access.role)) return { error: "Only an owner or administrator can connect GA4." }
-  const parsed = ga4ConnectionSchema.safeParse(Object.fromEntries(formData))
-  if (!parsed.success) return { error: "Complete every GA4 connection and security field." }
-  let serviceAccount: unknown
-  try { serviceAccount = JSON.parse(parsed.data.serviceAccountJson) } catch { return { error: "The Google service-account JSON is invalid." } }
-  const credential = z.object({ type: z.literal("service_account"), client_email: z.email(), private_key: z.string().includes("PRIVATE KEY"), token_uri: z.url().optional() }).safeParse(serviceAccount)
-  if (!credential.success) return { error: "Use a complete Google service-account JSON key." }
-  const auth = await createAuthClient()
-  const { error: authError } = await auth.auth.signInWithPassword({ email: actor.email, password: parsed.data.currentPassword })
-  if (authError) return { error: "Your SASHA password is incorrect." }
-  const { error } = await supabase.rpc("create_ga4_account_with_secret", { p_organization_id: access.organizationId, p_account_name: parsed.data.accountName, p_service_account: credential.data })
-  if (error) return { error: "The encrypted GA4 account could not be created. Use a unique connection label." }
-  revalidatePath("/settings")
-  return { complete: true }
-}
 
 export async function mapGa4Property(_state: Ga4ConnectionState, formData: FormData): Promise<Ga4ConnectionState> {
   const access = await requireDashboardContext()

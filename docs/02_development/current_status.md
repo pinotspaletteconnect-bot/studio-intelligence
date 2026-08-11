@@ -39,7 +39,7 @@ The collection, ETL, warehouse, and frontend layers are considered stable patter
 
 | Integration | Collection path | Warehouse state | Status |
 | --- | --- | --- | --- |
-| Google Analytics 4 | API/n8n | `ga4_daily_metrics` | Production OAuth workflows; Vault replacement deployed pending Google MFA/key |
+| Google Analytics 4 | API/n8n | `ga4_daily_metrics` | Production OAuth workflows; owner-based multi-account OAuth replacement in controlled validation |
 | Eulerity | Playwright/Express/n8n | `eulerity_daily_metrics`, `eulerity_daily_spend`, `eulerity_daily_budget_allocation` | Production Vault-backed workflow |
 | Meta Business Ads | Meta Graph API/Express/n8n | `meta_ads_daily` | Production |
 | Meta Page Insights | Meta Graph API/Express/n8n | `meta_page_insights_daily` | Production |
@@ -123,9 +123,7 @@ Implemented foundation:
   what information is needed and where to find it. PTS and Textellent retain
   their Vault-backed forms. MNTN now also has a locally implemented
   owner-authorized Vault form and atomic studio/advertiser mapping. Its schema
-  is deployed; application deployment, shadow workflow, and cutover are still pending. GA4, Meta,
-  and Eulerity remain assisted setup until tenant-safe self-service handoffs are
-  implemented.
+  is deployed; application deployment, shadow workflow, and cutover are still pending. GA4 now has a locally implemented owner-authorized OAuth flow: one Google connection can expose one or many properties, refresh credentials are encrypted in Vault, and discovered properties map explicitly to studios. Meta remains assisted setup.
 - Shared application context for active studio and common dashboard state
 - Invite-only Supabase Auth foundation with SSR cookie sessions, login,
   password recovery, protected routes, onboarding, logout, owner/admin user

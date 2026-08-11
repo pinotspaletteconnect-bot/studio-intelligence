@@ -36,7 +36,8 @@ No integration should bypass this lifecycle without an explicit architectural de
 - **Capability:** web traffic, audience analytics, and session source/medium attribution
 - **Collection:** API/n8n
 - **Warehouse:** `ga4_daily_metrics`; `marketing_attribution_daily` is provisioned for source/medium facts
-- **Status:** Production on the existing n8n OAuth workflows. The Vault-backed service-account schema, SASHA setup, collector, and two unpublished shadows are deployed. Google Cloud currently blocks service-account creation until MFA is enabled on the administrator account; legacy workflows remain active until a key is connected and both shadows validate.
+- **Authentication model:** one Google OAuth connection per owner access set. A connection may expose one property for a single-location owner or many properties for a multi-unit owner; every discovered property is explicitly mapped to a SASHA studio. Refresh credentials are encrypted in Supabase Vault.
+- **Status:** Production remains on the existing n8n OAuth workflows. The multi-account OAuth schema is deployed, the SASHA OAuth client is configured for controlled testing, and collector/dashboard support is implemented. The two unpublished shadows remain the cutover path; the existing workflows stay active until the owner connection and both shadows validate.
 
 ### Eulerity
 

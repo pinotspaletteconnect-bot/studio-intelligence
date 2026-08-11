@@ -2,6 +2,15 @@
 
 ## August 11, 2026
 
+- Replaced the blocked GA4 service-account onboarding plan with owner-authorized
+  multi-account OAuth. One Google connection now supports every property visible
+  to that owner, including multi-unit accounts, while single-location owners use
+  the same flow with one property. OAuth refresh credentials are encrypted in
+  Supabase Vault and property-to-studio routing remains explicit configuration.
+- Added migration `20260811160000`, SASHA connect/callback routes, Google account
+  and property discovery, OAuth-aware collector token refresh, and controlled
+  Google Auth Platform configuration. Existing production GA4 workflows remain
+  unchanged until both replacement shadows pass.
 - Removed a visible GA4 OAuth client-secret note from the aggregate workflow and
   created unpublished legacy backups for both aggregate and source/medium GA4
   imports.

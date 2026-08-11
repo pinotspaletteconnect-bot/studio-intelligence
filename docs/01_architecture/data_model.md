@@ -41,6 +41,8 @@ Current configuration entities:
 - `user_studio_access`
 - `integration_secret_references` (non-secret metadata and opaque references)
 - `mntn_integration_accounts` (tenant-scoped account labels and Vault references)
+- `ga4_integration_accounts` and `ga4_source_properties` (owner Google connections,
+  encrypted OAuth references, discovered properties, and explicit studio routing)
 
 Expected future configuration may include credential references, feature flags, schedules, permissions, and notification rules. Secret values should remain in the appropriate secret manager/environment rather than ordinary warehouse tables or Git.
 

@@ -1,13 +1,13 @@
 "use client"
 
 import { useActionState } from "react"
-import { createGa4Connection, mapGa4Property } from "@/app/(app)/settings/actions"
+import { mapGa4Property } from "@/app/(app)/settings/actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
 type Studio = { id: number; studio_name: string }
 type Property = { account_id: number; property_id: string; display_name: string; account_display_name: string | null; studio_id: number | null; studio_name: string | null }
-type Account = { id: number; account_name: string; has_credentials: boolean; last_discovered_at: string | null; properties: Property[] }
+type Account = { id: number; account_name: string; authentication_type: string; google_account_email: string | null; has_credentials: boolean; last_discovered_at: string | null; properties: Property[] }
 
 function PropertyMapping({ property, studios }: { property: Property; studios: Studio[] }) {
   const [state, action, pending] = useActionState(mapGa4Property, undefined)
@@ -20,15 +20,13 @@ function PropertyMapping({ property, studios }: { property: Property; studios: S
 }
 
 export function Ga4Connections({ studios, accounts }: { studios: Studio[]; accounts: Account[] }) {
-  const [state, action, pending] = useActionState(createGa4Connection, undefined)
+  const oauthAccounts = accounts.filter(account => account.authentication_type === "oauth")
   return <div className="space-y-5">
-    {accounts.map(account => <div className="space-y-2 rounded-lg border p-3" key={account.id}><div className="flex justify-between gap-2 text-sm"><strong>{account.account_name}</strong><span className="text-emerald-700">{account.has_credentials ? "Encrypted in Vault" : "Credentials unavailable"}</span></div>{account.properties.length ? account.properties.map(property => <PropertyMapping key={property.property_id} property={property} studios={studios} />) : <p className="text-xs text-amber-700">Awaiting the first automated GA4 property discovery.</p>}</div>)}
-    <form action={action} className="grid gap-4 rounded-lg border p-4">
-      <div><h3 className="font-medium">Connect a GA4 service account</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">Create a Google Cloud service-account JSON key, grant its client email Viewer access to each GA4 property, then paste the complete JSON here. SASHA encrypts it in Vault.</p></div>
-      <label className="space-y-1 text-sm"><span>Connection label</span><Input name="accountName" placeholder="Primary GA4 reporting" required /></label>
-      <label className="space-y-1 text-sm"><span>Service-account JSON</span><textarea className="min-h-36 w-full rounded-md border bg-transparent p-3 font-mono text-xs" name="serviceAccountJson" autoComplete="off" required /></label>
-      <label className="space-y-1 text-sm"><span>Your SASHA password</span><Input name="currentPassword" type="password" autoComplete="current-password" required /></label>
-      <div className="flex items-center gap-3"><Button disabled={pending}>{pending ? "Encrypting…" : "Save encrypted GA4 account"}</Button>{state?.error ? <p className="text-sm text-destructive">{state.error}</p> : null}{state?.complete ? <p className="text-sm text-emerald-700">GA4 account saved.</p> : null}</div>
+    {oauthAccounts.map(account => <div className="space-y-2 rounded-lg border p-3" key={account.id}><div className="flex flex-wrap justify-between gap-2 text-sm"><div><strong>{account.account_name}</strong><p className="text-xs text-muted-foreground">{account.google_account_email ?? "Google account"} · {account.properties.length} {account.properties.length === 1 ? "property" : "properties"}</p></div><span className="text-emerald-700">{account.has_credentials ? "OAuth encrypted in Vault" : "Credentials unavailable"}</span></div>{account.properties.length ? account.properties.map(property => <PropertyMapping key={property.property_id} property={property} studios={studios} />) : <p className="text-xs text-amber-700">No GA4 properties were visible to this Google account.</p>}</div>)}
+    <form action="/api/integrations/ga4/connect" method="get" className="grid gap-4 rounded-lg border p-4">
+      <div><h3 className="font-medium">Add a Google Analytics connection</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">Sign in with the Google account that can view the owner&apos;s GA4 properties. One connection may cover one studio or many studios. SASHA encrypts the refresh credential in Vault and then lets you map each discovered property.</p></div>
+      <label className="space-y-1 text-sm"><span>Connection label</span><Input name="accountName" placeholder="Duff studios GA4" required /></label>
+      <div><Button type="submit">Continue with Google</Button></div>
     </form>
   </div>
 }

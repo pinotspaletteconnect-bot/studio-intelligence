@@ -20,8 +20,9 @@ async function resolveGa4Account(accountId) {
     if (!response.ok) throw new Error(`GA4 credential broker failed (${response.status})`);
     const body = await response.json();
     const credentials = body?.credentials;
-    if (credentials?.type !== "service_account" || typeof credentials.client_email !== "string" ||
-        typeof credentials.private_key !== "string") throw new Error("GA4 Vault returned an invalid service account");
+    const serviceAccount = credentials?.type === "service_account" && typeof credentials.client_email === "string" && typeof credentials.private_key === "string";
+    const oauthAccount = typeof credentials?.refresh_token === "string" && typeof credentials.client_id === "string" && typeof credentials.client_secret === "string";
+    if (!serviceAccount && !oauthAccount) throw new Error("GA4 Vault returned invalid credentials");
     return { accountId: normalized, credentials, account: body.account, targets: Array.isArray(body.targets) ? body.targets : [] };
 }
 

@@ -21,18 +21,23 @@ function createAssertion(credentials, nowSeconds = Math.floor(Date.now() / 1000)
 }
 
 async function accessToken(credentials) {
-    const cached = tokenCache.get(credentials.client_email);
+    const cacheKey = credentials.client_email || credentials.refresh_token;
+    const cached = tokenCache.get(cacheKey);
     if (cached && cached.expiresAt > Date.now() + 60000) return cached.token;
+    const serviceAccount = credentials.type === "service_account";
+    const tokenParameters = serviceAccount
+        ? new URLSearchParams({ grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", assertion: createAssertion(credentials) })
+        : new URLSearchParams({ grant_type: "refresh_token", refresh_token: credentials.refresh_token, client_id: credentials.client_id, client_secret: credentials.client_secret });
     const response = await fetch(credentials.token_uri || "https://oauth2.googleapis.com/token", {
         method: "POST",
         headers: { "content-type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({ grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", assertion: createAssertion(credentials) }),
+        body: tokenParameters,
         signal: AbortSignal.timeout(15000)
     });
     if (!response.ok) throw new Error(`Google OAuth token request failed (${response.status})`);
-    const body = await response.json();
-    tokenCache.set(credentials.client_email, { token: body.access_token, expiresAt: Date.now() + Number(body.expires_in || 3600) * 1000 });
-    return body.access_token;
+    const tokenBody = await response.json();
+    tokenCache.set(cacheKey, { token: tokenBody.access_token, expiresAt: Date.now() + Number(tokenBody.expires_in || 3600) * 1000 });
+    return tokenBody.access_token;
 }
 
 async function googleJson(credentials, url, options = {}) {
@@ -63,4 +68,4 @@ async function runGa4Report(credentials, propertyId, report) {
     });
 }
 
-module.exports = { createAssertion, discoverGa4Properties, runGa4Report };
+module.exports = { accessToken, createAssertion, discoverGa4Properties, runGa4Report };

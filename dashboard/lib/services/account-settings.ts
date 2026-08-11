@@ -58,7 +58,7 @@ export async function getAccountSettings(
         .order("account_name"),
       supabase.from("eulerity_integration_accounts").select("id,account_name,secret_reference,single_studio_id,last_discovered_at,last_validated_at").eq("organization_id", organizationId).eq("is_active", true).order("account_name"),
       supabase.from("eulerity_source_locations").select("account_id,source_key,display_name").eq("organization_id", organizationId).eq("is_active", true).order("display_name"),
-      supabase.from("ga4_integration_accounts").select("id,account_name,secret_reference,last_discovered_at,last_validated_at").eq("organization_id", organizationId).eq("is_active", true).order("account_name"),
+      supabase.from("ga4_integration_accounts").select("id,account_name,authentication_type,google_account_email,secret_reference,last_discovered_at,last_validated_at").eq("organization_id", organizationId).eq("is_active", true).order("account_name"),
       supabase.from("ga4_source_properties").select("account_id,property_id,display_name,account_display_name").eq("organization_id", organizationId).eq("is_active", true).order("display_name"),
     ])
 
