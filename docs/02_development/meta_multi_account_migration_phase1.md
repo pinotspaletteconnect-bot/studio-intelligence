@@ -17,6 +17,7 @@ Replace the single global Meta token with owner-authorized, tenant-scoped OAuth 
 - Service-only collection account/target views and an authenticated internal secret broker for future n8n shadow workflows.
 - Collector support for a per-request Meta credential while preserving the existing environment-token behavior for production rollback.
 - Expiration and data-access-expiration fields for connection-health monitoring and reconnect warnings.
+- The production authorization request uses only the permissions accepted by Facebook Login for Business: `ads_read`, `business_management`, `pages_show_list`, `pages_read_engagement`, and `read_insights`. Linked Instagram professional accounts are discovered through accessible Page assets rather than requesting the incompatible `instagram_basic` permission.
 
 ## Required Production Configuration
 

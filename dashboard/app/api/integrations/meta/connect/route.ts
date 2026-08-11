@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     client_id: appId,
     redirect_uri: `${appOrigin}/api/integrations/meta/callback`,
     response_type: "code",
-    scope: "ads_read,business_management,pages_show_list,pages_read_engagement,read_insights,instagram_basic",
+    scope: "ads_read,business_management,pages_show_list,pages_read_engagement,read_insights",
     state: createMetaOauthState({ organizationId: access.organizationId, userId: access.userId, accountName: parsed.data }),
   }).toString()
   return NextResponse.redirect(authorize)
