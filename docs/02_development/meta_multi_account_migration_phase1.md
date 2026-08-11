@@ -1,6 +1,6 @@
 # Meta Multi-Account OAuth Migration — Phase 1
 
-**Status:** Foundation deployed; owner connection and four-studio asset mapping verified; shadow workflows pending
+**Status:** Foundation deployed; owner connection, four-studio mapping, and unpublished shadow collection/mapping verified; warehouse reconciliation pending
 **Date:** August 11, 2026
 
 ## Objective
@@ -35,9 +35,10 @@ Replace the single global Meta token with owner-authorized, tenant-scoped OAuth 
 3. **Complete:** Deployed the dashboard and confirmed the Meta Settings section without affecting existing production collectors.
 4. **Complete:** Connected the current owner account, stored its credential in Vault, and discovered 22 accessible assets.
 5. **Complete:** Mapped the intended ad account and Facebook Page for Gilbert, Jeffersonville, Short North, and St. Matthews. Unrelated discovered assets remain unmapped.
-6. **Next:** Build unpublished Meta Ads and Page Insights shadow workflows that resolve one account through `/api/internal/meta-account` and pass its credential only to the collector request.
-7. Execute controlled, non-writing discovery tests, followed by warehouse-writing reconciliation tests.
-8. Publish the Vault-backed workflows only after counts and metrics reconcile; retain unpublished legacy backups for rollback.
+6. **Complete:** Built unpublished workflows `27 - Meta Paid Vault Shadow` (`z5Mww3blBHS89UYu`) and `28 - Meta Pages Vault Shadow` (`7OMm5L5fprv3Lh5o`). The collector resolves the selected account through `/api/internal/meta-account`, so n8n passes only the non-secret SASHA account ID.
+7. **Complete:** Controlled non-writing tests collected five ad accounts with zero failures and prepared mapped ad records. Page Insights collected 12 accessible Pages and 72 raw records, then prepared 24 records for the four mapped studio Pages. Unrelated assets were excluded by configuration mapping.
+8. **Next:** Execute controlled warehouse-writing reconciliation tests and compare the shadow output with the existing production workflows.
+9. Publish the Vault-backed workflows only after counts and metrics reconcile; retain unpublished legacy backups for rollback.
 
 ## Token Lifecycle
 

@@ -46,7 +46,7 @@ The collection, ETL, warehouse, and frontend layers are considered stable patter
 
 Meta Ads and Page Insights share the authentication and Graph API foundation in `playwright/services/meta/`. Studio and account assignment remains configuration-driven through `studio_integrations`; source account IDs must not be hardcoded.
 
-A Meta multi-account OAuth foundation is deployed. It replaces manual global-token onboarding with owner/admin Meta authorization, automatic long-lived-token exchange, Vault-only credential storage, asset discovery, and explicit studio mapping. The current owner connection discovered 22 accessible assets; the intended ad account and Page for each of the four studios are mapped, while unrelated assets remain unmapped. Production Meta workflows are unchanged pending Vault-backed shadow-workflow reconciliation. Follow `docs/02_development/meta_multi_account_migration_phase1.md` for the controlled cutover.
+A Meta multi-account OAuth foundation is deployed. It replaces manual global-token onboarding with owner/admin Meta authorization, automatic long-lived-token exchange, Vault-only credential storage, asset discovery, and explicit studio mapping. The current owner connection discovered 22 accessible assets; the intended ad account and Page for each of the four studios are mapped, while unrelated assets remain unmapped. Unpublished Vault-backed Ads and Page Insights shadows now pass collection and mapping tests without warehouse writes. Production Meta workflows are unchanged pending warehouse reconciliation and controlled cutover. Follow `docs/02_development/meta_multi_account_migration_phase1.md`.
 
 ## Planned or Incomplete Integrations
 

@@ -5,6 +5,7 @@
 - Added a local tenant-scoped Meta owner OAuth foundation with automatic long-lived-token exchange, Vault-only credential storage, business/ad/Page/Instagram discovery, studio mapping controls, and a service-only n8n secret broker. The collector can now use a per-account credential while retaining the production global-token fallback. No production Meta workflow or application configuration was changed.
 - Removed the incompatible `instagram_basic` scope from the Facebook Login for Business authorization request after the controlled production test rejected it; linked Instagram professional accounts remain discoverable through accessible Page assets.
 - Corrected Meta asset mapping so an existing external-ID mapping is preferred before a studio fallback, preventing an unrelated row from being selected when adopting legacy production mappings.
+- Deployed Meta Vault broker resolution to the collector, allowed the service-only broker route through the dashboard proxy, and added explicit Railway broker configuration. Unpublished Meta Ads and Page Insights shadows now pass non-writing collection and mapping validation; production workflows and warehouse writes remain unchanged.
 - Completed the GA4 owner-OAuth cutover. The Duff Google connection is encrypted
   in Vault, seven accessible properties were discovered, and the four intended
   studio properties were adopted automatically while three unrelated properties
