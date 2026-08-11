@@ -48,13 +48,19 @@ async function loginEulerity({ email, password }) {
 }
 
 async function locationControl(page) {
-    const comboboxes = page.getByRole("combobox");
-    for (let index = 0; index < await comboboxes.count(); index += 1) {
-        const candidate = comboboxes.nth(index);
-        if (await candidate.isVisible().catch(() => false)) return candidate;
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+        const comboboxes = page.getByRole("combobox");
+        for (let index = 0; index < await comboboxes.count(); index += 1) {
+            const candidate = comboboxes.nth(index);
+            if (await candidate.isVisible().catch(() => false)) return candidate;
+        }
+        const reactSelect = page.locator('input[id^="react-select-"][id$="-input"]').first();
+        if (await reactSelect.isVisible().catch(() => false)) return reactSelect;
+        const legacy = page.locator(".css-8mmkcg").first();
+        if (await legacy.isVisible().catch(() => false)) return legacy;
+        await page.waitForTimeout(500);
     }
-    const legacy = page.locator(".css-8mmkcg").first();
-    return await legacy.isVisible().catch(() => false) ? legacy : null;
+    return null;
 }
 
 async function discoverOpenMenuOptions(page) {
