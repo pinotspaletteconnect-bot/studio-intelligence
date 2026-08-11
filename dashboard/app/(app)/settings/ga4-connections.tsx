@@ -1,6 +1,6 @@
 "use client"
 
-import { useActionState } from "react"
+import { useActionState, useState } from "react"
 import { mapGa4Property } from "@/app/(app)/settings/actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -21,12 +21,16 @@ function PropertyMapping({ property, studios }: { property: Property; studios: S
 
 export function Ga4Connections({ studios, accounts }: { studios: Studio[]; accounts: Account[] }) {
   const oauthAccounts = accounts.filter(account => account.authentication_type === "oauth")
+  const [accountName, setAccountName] = useState("")
+  const connectHref = accountName.trim().length >= 2
+    ? `/api/integrations/ga4/connect?accountName=${encodeURIComponent(accountName.trim())}`
+    : null
   return <div className="space-y-5">
     {oauthAccounts.map(account => <div className="space-y-2 rounded-lg border p-3" key={account.id}><div className="flex flex-wrap justify-between gap-2 text-sm"><div><strong>{account.account_name}</strong><p className="text-xs text-muted-foreground">{account.google_account_email ?? "Google account"} · {account.properties.length} {account.properties.length === 1 ? "property" : "properties"}</p></div><span className="text-emerald-700">{account.has_credentials ? "OAuth encrypted in Vault" : "Credentials unavailable"}</span></div>{account.properties.length ? account.properties.map(property => <PropertyMapping key={property.property_id} property={property} studios={studios} />) : <p className="text-xs text-amber-700">No GA4 properties were visible to this Google account.</p>}</div>)}
-    <form action="/api/integrations/ga4/connect" method="get" className="grid gap-4 rounded-lg border p-4">
+    <div className="grid gap-4 rounded-lg border p-4">
       <div><h3 className="font-medium">Add a Google Analytics connection</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">Sign in with the Google account that can view the owner&apos;s GA4 properties. One connection may cover one studio or many studios. SASHA encrypts the refresh credential in Vault and then lets you map each discovered property.</p></div>
-      <label className="space-y-1 text-sm"><span>Connection label</span><Input name="accountName" placeholder="Duff studios GA4" required /></label>
-      <div><Button type="submit">Continue with Google</Button></div>
-    </form>
+      <label className="space-y-1 text-sm"><span>Connection label</span><Input name="accountName" placeholder="Duff studios GA4" value={accountName} onChange={event => setAccountName(event.target.value)} required /></label>
+      <div>{connectHref ? <a className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-xs hover:bg-primary/90" href={connectHref}>Continue with Google</a> : <Button type="button" disabled>Continue with Google</Button>}</div>
+    </div>
   </div>
 }
