@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { z } from "zod"
 
 import { requireDashboardContext } from "@/lib/auth/session"
+import { getTrustedAppOrigin } from "@/lib/auth/app-origin"
 import { ga4OauthClient, readGa4OauthState } from "@/lib/integrations/ga4-oauth"
 import { supabase } from "@/lib/supabase/server"
 
@@ -16,17 +17,18 @@ function settingsRedirect(origin: string, result: string) {
 
 export async function GET(request: Request) {
   const url = new URL(request.url)
-  if (url.searchParams.get("error")) return settingsRedirect(url.origin, "cancelled")
+  const appOrigin = getTrustedAppOrigin(url.origin)
+  if (url.searchParams.get("error")) return settingsRedirect(appOrigin, "cancelled")
   try {
     const access = await requireDashboardContext()
     const state = readGa4OauthState(url.searchParams.get("state") ?? "")
     if (state.userId !== access.userId || state.organizationId !== access.organizationId || !["owner", "administrator"].includes(access.role)) {
-      return settingsRedirect(url.origin, "unauthorized")
+      return settingsRedirect(appOrigin, "unauthorized")
     }
     const code = url.searchParams.get("code")
-    if (!code) return settingsRedirect(url.origin, "missing-code")
+    if (!code) return settingsRedirect(appOrigin, "missing-code")
     const { clientId, clientSecret } = ga4OauthClient()
-    const redirectUri = `${url.origin}/api/integrations/ga4/callback`
+    const redirectUri = `${appOrigin}/api/integrations/ga4/callback`
     const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: { "content-type": "application/x-www-form-urlencoded" },
@@ -57,9 +59,9 @@ export async function GET(request: Request) {
     if (createError || !accountId) throw createError ?? new Error("GA4 account creation failed")
     const { error: syncError } = await supabase.rpc("sync_ga4_properties", { p_account_id: accountId, p_properties: properties })
     if (syncError) throw syncError
-    return settingsRedirect(url.origin, "connected")
+    return settingsRedirect(appOrigin, "connected")
   } catch (error) {
     console.error("GA4 OAuth callback failed", { message: error instanceof Error ? error.message : "Unknown error" })
-    return settingsRedirect(url.origin, "failed")
+    return settingsRedirect(appOrigin, "failed")
   }
 }
