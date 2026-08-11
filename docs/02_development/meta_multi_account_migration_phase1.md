@@ -1,6 +1,6 @@
 # Meta Multi-Account OAuth Migration — Phase 1
 
-**Status:** Foundation deployed; owner connection, four-studio mapping, and unpublished shadow collection/mapping verified; warehouse reconciliation pending
+**Status:** Foundation deployed; owner connection, four-studio mapping, and unpublished shadow collection, mapping, and warehouse reconciliation verified; publication pending
 **Date:** August 11, 2026
 
 ## Objective
@@ -37,8 +37,8 @@ Replace the single global Meta token with owner-authorized, tenant-scoped OAuth 
 5. **Complete:** Mapped the intended ad account and Facebook Page for Gilbert, Jeffersonville, Short North, and St. Matthews. Unrelated discovered assets remain unmapped.
 6. **Complete:** Built unpublished workflows `27 - Meta Paid Vault Shadow` (`z5Mww3blBHS89UYu`) and `28 - Meta Pages Vault Shadow` (`7OMm5L5fprv3Lh5o`). The collector resolves the selected account through `/api/internal/meta-account`, so n8n passes only the non-secret SASHA account ID.
 7. **Complete:** Controlled non-writing tests collected five ad accounts with zero failures and prepared mapped ad records. Page Insights collected 12 accessible Pages and 72 raw records, then prepared 24 records for the four mapped studio Pages. Unrelated assets were excluded by configuration mapping.
-8. **Next:** Execute controlled warehouse-writing reconciliation tests and compare the shadow output with the existing production workflows.
-9. Publish the Vault-backed workflows only after counts and metrics reconcile; retain unpublished legacy backups for rollback.
+8. **Complete:** Controlled warehouse-writing reconciliation persisted exactly 12 ad rows across four mapped ad accounts and 24 Page Insight rows across four mapped Pages. The rows covered all four studios, retained the expected source dates, and introduced no extra records beyond the prepared shadow output.
+9. **Next:** Publish the Vault-backed workflows and retain unpublished legacy backups for rollback.
 
 ## Token Lifecycle
 
