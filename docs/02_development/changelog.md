@@ -7,6 +7,12 @@
   controls, and authenticated collector routes. The replacement has no
   hardcoded studio list and retains the current workflow as the production
   fallback until database, Railway, and n8n shadow validation are approved.
+- Completed the Eulerity Vault cutover. Migration `20260810233000` is deployed;
+  the collector and SASHA settings are live; account 1 discovered and mapped
+  all four studios; and a full shadow collection plus warehouse UPSERT
+  succeeded in 51.527 seconds. Published `24 - Eulerity Vault Daily Import`
+  (`P3tQUsAYYpL3eEcD`) and unpublished former workflow `Jm1I9Gl0yqRpKUQQ`.
+  Legacy backup `B0KmoL2VFlKdVzGI` remains unpublished for rollback.
 
 - Completed the MNTN Vault cutover. Published configuration-driven n8n
   workflow `16 - MNTN Vault Daily Import` (`QVxPXBbcDOWihWF0`) on the existing

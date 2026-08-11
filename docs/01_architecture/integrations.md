@@ -47,7 +47,7 @@ No integration should bypass this lifecycle without an explicit architectural de
   - `eulerity_daily_metrics`
   - `eulerity_daily_spend`
   - `eulerity_daily_budget_allocation`
-- **Status:** Production on the legacy workflow. A replacement is staged with Vault-backed per-account credentials, automatic source-location discovery, and configuration-driven studio mappings. The legacy workflow remains the production fallback until migration, collector deployment, and shadow validation are approved and completed.
+- **Status:** Production on Vault-backed workflow `24 - Eulerity Vault Daily Import` (`P3tQUsAYYpL3eEcD`). Per-account credentials are encrypted in Supabase Vault; source locations are discovered automatically and mapped through configuration. The former live workflow is unpublished and the separate legacy backup remains available for rollback.
 
 ### Meta Business Ads
 
