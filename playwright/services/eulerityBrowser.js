@@ -127,9 +127,9 @@ async function selectLocation(page, target) {
 }
 
 async function prepareChannelReport(page) {
-    await page.getByText("Ads Displayed").click();
+    await page.getByText("Ads Displayed", { exact: true }).last().click();
     await page.waitForTimeout(600);
-    await page.getByText("BY CHANNEL").click();
+    await page.getByText("BY CHANNEL", { exact: true }).last().click();
     await page.waitForTimeout(900);
 }
 
@@ -146,10 +146,10 @@ async function collectTarget(page, target, folder) {
     await selectLocation(page, target);
     await prepareChannelReport(page);
     const metricsFile = await downloadCsv(page, folder, `${target.studio_code}_metrics.csv`);
-    await page.getByText("Advertising Budget").click();
+    await page.getByText("Advertising Budget", { exact: true }).last().click();
     await page.waitForTimeout(700);
     const spendFile = await downloadCsv(page, folder, `${target.studio_code}_spend.csv`);
-    await page.getByText("Budget Distribution").click();
+    await page.getByText("Budget Distribution", { exact: true }).last().click();
     await page.waitForTimeout(700);
     const text = await page.locator("body").innerText();
     const extract = (label) => Number(text.match(new RegExp(`(\\d+)\\%\\s+${label}`, "i"))?.[1] ?? 0);
