@@ -56,7 +56,7 @@ Meta Ads and Page Insights now run on production Vault-backed workflows `27 - Me
 | Google Business Profile | Planned |
 | Reservation/POS systems | Planned |
 | QuickBooks or other financial systems | Planned |
-| Homebase labor | Active development: per-location Vault connections, read-only discovery collector, and privacy-minimized daily/shift warehouse schema implemented; controlled key validation and scheduled ETL pending. |
+| Homebase labor | Production foundation complete: per-location Vault connections, automated location validation workflow `28 - Homebase Connection Validation` (`iq0fzVpSKUmVKM7G`), rolling labor workflow `29 - Homebase Labor Daily Import` (`05SBbROT3f8kuYwn`), privacy-minimized daily/shift warehouse facts, estimated class allocation, Settings connector, health status, and Operations labor reporting. Initial studio keys and first controlled import remain pending. |
 | Google Ads and Microsoft Ads | Planned |
 | Organic social content/creative ingestion beyond current Page Insights | Planned |
 | MNTN Connected TV | Vault-backed workflow `16 - MNTN Vault Daily Import` (`QVxPXBbcDOWihWF0`) refreshes all active mappings for the prior 35 days daily at 5:15 AM. Gilbert, St. Matthews, and Short North reconciled at 35 rows each during the August 10 cutover; Jeffersonville is mapped for a future launch and validly returns zero rows until its advertiser is live. The former credentialed workflow is unpublished rollback only. |

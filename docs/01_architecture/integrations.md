@@ -81,7 +81,8 @@ Meta Ads and Meta Page Insights share authentication, token validation, business
 - **Authentication:** one read-only API key per Homebase location, encrypted in Supabase Vault
 - **Mapping:** each key maps explicitly to one SASHA studio; the source location UUID is discovered and validated
 - **Privacy:** warehouse shift facts exclude employee names, email addresses, phone numbers, and employee-level wage rates
-- **Status:** Active development. Vault schema, read-only discovery collector, and secured Settings entry are implemented; production scheduling and first-key validation remain pending.
+- **Orchestration:** workflow `28 - Homebase Connection Validation` (`iq0fzVpSKUmVKM7G`) discovers newly saved location keys hourly during business hours; workflow `29 - Homebase Labor Daily Import` (`05SBbROT3f8kuYwn`) replaces a rolling 14-day window daily at 6:30 AM Eastern.
+- **Status:** Production foundation complete. Vault schema, automated mapping validation, API collector, atomic loading, reporting views, Settings connector, health status, and Operations labor reporting are implemented. Initial studio keys and the first controlled import remain pending.
 
 ### MNTN Connected TV
 
