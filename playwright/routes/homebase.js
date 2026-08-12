@@ -34,7 +34,12 @@ router.post("/labor", requireCollectorAuth, async (req, res) => {
             endDate: req.body?.endDate,
             timeZone: account.target.timezone || "America/New_York"
         });
-        res.json({ success: true, target: account.target, source });
+        res.json({
+            success: true,
+            target: account.target,
+            period: { startDate: req.body.startDate, endDate: req.body.endDate },
+            source
+        });
     } catch (error) {
         console.error("Homebase labor collection failed:", error.message);
         res.status(500).json({ success: false, error: error.message });
