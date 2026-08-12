@@ -5,6 +5,34 @@ const { collectLabor, discoverLocation } = require("../services/homebaseApi");
 const { collectCompanyTimesheets } = require("../services/homebaseBrowser");
 
 const router = express.Router();
+const browserCollections = new Map();
+
+function datesInRange(startDate, endDate) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) throw new Error("Homebase labor dates are invalid");
+    const start = new Date(`${startDate}T00:00:00Z`);
+    const end = new Date(`${endDate}T00:00:00Z`);
+    if (start > end || (end - start) / 86400000 > 30) throw new Error("Homebase labor date range is invalid");
+    const dates = [];
+    for (let current = start; current <= end; current = new Date(current.getTime() + 86400000)) dates.push(current.toISOString().slice(0, 10));
+    return dates;
+}
+
+async function collectBrowserLabor(accountId, startDate, endDate) {
+    const account = await resolveHomebaseBrowserAccount(accountId);
+    const dates = datesInRange(startDate, endDate);
+    const organizationId = Number(account.targets[0]?.organization_id);
+    const key = `${organizationId}:${startDate}:${endDate}`;
+    if (!browserCollections.has(key)) {
+        const promise = collectCompanyTimesheets(account, dates).finally(() => {
+            setTimeout(() => browserCollections.delete(key), 10 * 60 * 1000).unref();
+        });
+        browserCollections.set(key, promise);
+    }
+    const results = await browserCollections.get(key);
+    const selected = results.find(result => Number(result.target.account_id) === Number(accountId));
+    if (!selected) throw new Error("Homebase browser collection did not return the requested studio");
+    return { account, selected };
+}
 function requireCollectorAuth(req, res, next) {
     const configured = process.env.COLLECTOR_API_TOKEN ?? "";
     const supplied = req.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
@@ -31,14 +59,23 @@ router.post("/discover", requireCollectorAuth, async (req, res) => {
 
 router.post("/labor", requireCollectorAuth, async (req, res) => {
     try {
-        const account = await resolveHomebaseAccount(req.body?.accountId);
-        if (!account.target.location_uuid) throw new Error("Homebase account location has not been validated");
-        const source = await collectLabor(account.apiKey, {
-            locationUuid: account.target.location_uuid,
-            startDate: req.body?.startDate,
-            endDate: req.body?.endDate,
-            timeZone: account.target.timezone || "America/New_York"
-        });
+        let account;
+        let source;
+        try {
+            const browserResult = await collectBrowserLabor(req.body?.accountId, req.body?.startDate, req.body?.endDate);
+            account = { target: browserResult.selected.target };
+            source = { daily: browserResult.selected.daily, shifts: browserResult.selected.shifts };
+        } catch (browserError) {
+            if (!/web login is not configured/i.test(browserError.message)) throw browserError;
+            account = await resolveHomebaseAccount(req.body?.accountId);
+            if (!account.target.location_uuid) throw new Error("Homebase account location has not been validated");
+            source = await collectLabor(account.apiKey, {
+                locationUuid: account.target.location_uuid,
+                startDate: req.body?.startDate,
+                endDate: req.body?.endDate,
+                timeZone: account.target.timezone || "America/New_York"
+            });
+        }
         res.json({
             success: true,
             target: account.target,
@@ -64,3 +101,4 @@ router.post("/timesheets", requireCollectorAuth, async (req, res) => {
 });
 
 module.exports = router;
+module.exports.datesInRange = datesInRange;
