@@ -18,7 +18,7 @@ export function HomebaseConnections({ studios, accounts }: { studios: Studio[]; 
       <label className="space-y-1 text-sm"><span>SASHA studio</span><select name="studioId" required defaultValue="" className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"><option value="" disabled>Select a studio</option>{studios.map(studio => <option key={studio.id} value={studio.id}>{studio.studio_name}</option>)}</select></label>
       <label className="space-y-1 text-sm md:col-span-2"><span>Homebase read-only API key</span><Input name="apiKey" type="password" autoComplete="new-password" required /></label>
       <label className="space-y-1 text-sm md:col-span-2"><span>Your SASHA password</span><Input name="currentPassword" type="password" autoComplete="current-password" required /></label>
-      <div className="flex items-center gap-3 md:col-span-2"><Button disabled={pending}>{pending ? "Encrypting…" : "Save encrypted Homebase connection"}</Button>{state?.error ? <p role="alert" className="text-sm text-destructive">{state.error}</p> : null}{state?.complete ? <p role="status" className="text-sm text-emerald-700">Homebase connection saved.</p> : null}</div>
+      <div className="flex items-center gap-3 md:col-span-2"><Button type="submit" disabled={pending}>{pending ? "Encrypting…" : "Save encrypted Homebase connection"}</Button>{state?.error ? <p role="alert" className="text-sm text-destructive">{state.error}</p> : null}{state?.complete ? <p role="status" className="text-sm text-emerald-700">Homebase connection saved.</p> : null}</div>
     </form>
   </div>
 }
