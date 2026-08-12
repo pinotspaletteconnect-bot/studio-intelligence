@@ -1,7 +1,8 @@
 const crypto = require("crypto");
 const express = require("express");
-const { resolveHomebaseAccount } = require("../services/homebaseCredentials");
+const { resolveHomebaseAccount, resolveHomebaseBrowserAccount } = require("../services/homebaseCredentials");
 const { collectLabor, discoverLocation } = require("../services/homebaseApi");
+const { collectCompanyTimesheets } = require("../services/homebaseBrowser");
 
 const router = express.Router();
 function requireCollectorAuth(req, res, next) {
@@ -46,6 +47,18 @@ router.post("/labor", requireCollectorAuth, async (req, res) => {
         });
     } catch (error) {
         console.error("Homebase labor collection failed:", error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.post("/timesheets", requireCollectorAuth, async (req, res) => {
+    try {
+        const account = await resolveHomebaseBrowserAccount(req.body?.accountId);
+        const dates = req.body?.dates;
+        const results = await collectCompanyTimesheets(account, dates);
+        res.json({ success: true, accountId: account.accountId, dates, results });
+    } catch (error) {
+        console.error("Homebase timesheet collection failed:", error.message);
         res.status(500).json({ success: false, error: error.message });
     }
 });

@@ -17,5 +17,12 @@ export async function GET(request:Request){
   query = status === "pending" ? query.is("last_validated_at", null) : query.not("last_validated_at", "is", null)
   const {data,error}=await query
   if(error)return NextResponse.json({error:"Targets unavailable"},{status:500})
-  return NextResponse.json({targets:data??[]},{headers:{"Cache-Control":"no-store, private"}})
+  const browserMode = new URL(request.url).searchParams.get("mode") === "browser"
+  if (!browserMode) return NextResponse.json({targets:data??[]},{headers:{"Cache-Control":"no-store, private"}})
+  const { data: browserAccounts, error: browserError } = await supabase
+    .from("homebase_browser_collection_accounts")
+    .select("account_id,organization_id,account_name")
+    .order("account_id")
+  if (browserError) return NextResponse.json({ error: "Browser accounts unavailable" }, { status: 500 })
+  return NextResponse.json({targets:data??[],browserAccounts:browserAccounts??[]},{headers:{"Cache-Control":"no-store, private"}})
 }

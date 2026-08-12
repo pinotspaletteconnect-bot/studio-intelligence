@@ -1,0 +1,93 @@
+{
+  "name": "29 - Homebase Browser Timesheets Daily",
+  "nodes": [
+    {
+      "parameters": { "rule": { "interval": [{ "field": "cronExpression", "expression": "30 6 * * *" }] } },
+      "id": "f403bd17-3f5c-4fe9-9798-65d941af1f10",
+      "name": "Daily 6:30 AM Eastern",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [160, 240]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.SASHA_DASHBOARD_URL + '/api/internal/homebase-targets?status=validated&mode=browser' }}",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "Authorization", "value": "={{ 'Bearer ' + $env.HOMEBASE_SECRET_BROKER_TOKEN }}" }] },
+        "options": { "timeout": 30000 }
+      },
+      "id": "333fb7dd-22c9-4db6-bdf4-c1faf5d02dad",
+      "name": "Get Browser Accounts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [400, 240]
+    },
+    {
+      "parameters": {
+        "jsCode": "const accounts=$input.first().json.browserAccounts||[];const today=new Date();const fmt=new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'});const base=fmt.format(today);const [y,m,d]=base.split('-').map(Number);const dates=[];for(let offset=14;offset>=0;offset--){const date=new Date(Date.UTC(y,m-1,d-offset));dates.push(date.toISOString().slice(0,10));}return accounts.map(account=>({json:{...account,dates,startDate:dates[0],endDate:dates.at(-1)}}));"
+      },
+      "id": "14b48ba3-e9da-40c2-a694-1046214d847d",
+      "name": "Build Rolling 15 Days",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [640, 240]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.COLLECTOR_BASE_URL + '/homebase/timesheets' }}",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "Authorization", "value": "={{ 'Bearer ' + $env.COLLECTOR_API_TOKEN }}" }] },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ accountId: $json.account_id, dates: $json.dates }) }}",
+        "options": { "timeout": 600000 }
+      },
+      "id": "bad72027-9dd7-4bfe-9763-b157d5914c0d",
+      "name": "Collect Company Timesheets",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [880, 240]
+    },
+    {
+      "parameters": {
+        "jsCode": "const output=[];for(const item of $input.all()){const body=item.json;for(const result of body.results||[]){output.push({json:{accountId:Number(result.target.account_id),startDate:String(body.dates[0]),endDate:String(body.dates.at(-1)),daily:result.daily||[],shifts:[]}});}}return output;"
+      },
+      "id": "ae83af79-7e98-4765-a7c4-f37c0e03609e",
+      "name": "Split Studio Loads",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 240]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SASHA_DASHBOARD_URL + '/api/internal/homebase-load' }}",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "Authorization", "value": "={{ 'Bearer ' + $env.HOMEBASE_SECRET_BROKER_TOKEN }}" }] },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json) }}",
+        "options": { "timeout": 60000 }
+      },
+      "id": "73bd9b03-b78c-4321-b27c-d4d00acfbb6e",
+      "name": "Replace Labor Range",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1360, 240]
+    }
+  ],
+  "connections": {
+    "Daily 6:30 AM Eastern": { "main": [[{ "node": "Get Browser Accounts", "type": "main", "index": 0 }]] },
+    "Get Browser Accounts": { "main": [[{ "node": "Build Rolling 15 Days", "type": "main", "index": 0 }]] },
+    "Build Rolling 15 Days": { "main": [[{ "node": "Collect Company Timesheets", "type": "main", "index": 0 }]] },
+    "Collect Company Timesheets": { "main": [[{ "node": "Split Studio Loads", "type": "main", "index": 0 }]] },
+    "Split Studio Loads": { "main": [[{ "node": "Replace Labor Range", "type": "main", "index": 0 }]] }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": { "executionOrder": "v1", "timezone": "America/New_York", "availableInMCP": false },
+  "tags": []
+}

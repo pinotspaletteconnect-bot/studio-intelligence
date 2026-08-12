@@ -1,5 +1,16 @@
 # Studio Intelligence Changelog
 
+## August 12, 2026
+
+- Implemented the local Homebase browser-collection replacement after the
+  public labor endpoints returned an All-in-One-tier restriction. One
+  Vault-encrypted owner login can collect the Company Timesheets view for all
+  mapped studios. The collector processes today plus the prior 14 days one day
+  at a time, aggregates hours and estimated wages by studio, and discards
+  employee identity before returning data. Added an inactive n8n replacement
+  workflow and retained the existing API workflow pending a controlled
+  production cutover.
+
 ## August 11, 2026
 
 - Added the Homebase labor integration foundation: one Vault-encrypted

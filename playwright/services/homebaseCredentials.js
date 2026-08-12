@@ -25,4 +25,31 @@ async function resolveHomebaseAccount(accountId) {
     return { apiKey: account.credentials.apiKey, target: account.target };
 }
 
-module.exports = { resolveHomebaseAccount };
+async function resolveHomebaseBrowserAccount(accountId) {
+    const id = Number(accountId);
+    if (!Number.isSafeInteger(id) || id <= 0) throw new Error("Homebase account ID is invalid");
+    const { url, token } = brokerConfiguration();
+    const response = await fetch(url, {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({ accountId: id, includeAccountTargets: true }),
+        signal: AbortSignal.timeout(15000)
+    });
+    if (!response.ok) throw new Error(`Homebase credential broker failed (${response.status})`);
+    const account = await response.json();
+    if (typeof account?.credentials?.email !== "string" || !account.credentials.email.includes("@") ||
+        typeof account?.credentials?.password !== "string" || account.credentials.password.length < 1) {
+        throw new Error("Homebase web login is not configured in Vault");
+    }
+    if (!Array.isArray(account.targets) || account.targets.length === 0) {
+        throw new Error("Homebase account has no studio targets");
+    }
+    return {
+        accountId: id,
+        email: account.credentials.email,
+        password: account.credentials.password,
+        targets: account.targets
+    };
+}
+
+module.exports = { resolveHomebaseAccount, resolveHomebaseBrowserAccount };

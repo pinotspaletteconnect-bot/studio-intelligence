@@ -101,6 +101,8 @@ const mntnConnectionSchema = z.object({
 const homebaseConnectionSchema = z.object({
   accountName: z.string().trim().min(2).max(120),
   apiKey: z.string().trim().min(16).max(4096),
+  email: z.email().max(254).transform(value => value.trim().toLowerCase()),
+  password: z.string().min(1).max(1024),
   currentPassword: z.string().min(1).max(1024),
 })
 
@@ -123,7 +125,8 @@ export async function createHomebaseConnection(
   if (authenticationError) return { error: "Your SASHA password is incorrect." }
   const { error } = await supabase.rpc("configure_homebase_account_with_secret", {
     p_organization_id: access.organizationId, p_account_name: parsed.data.accountName,
-    p_api_key: parsed.data.apiKey, p_mappings: mappings,
+    p_api_key: parsed.data.apiKey, p_email: parsed.data.email,
+    p_password: parsed.data.password, p_mappings: mappings,
   })
   if (error) return { error: "The encrypted Homebase connection could not be saved." }
   revalidatePath("/settings")
