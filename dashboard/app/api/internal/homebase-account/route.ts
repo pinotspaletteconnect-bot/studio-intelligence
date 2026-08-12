@@ -23,5 +23,8 @@ export async function POST(request: Request) {
     supabase.from("homebase_collection_targets").select("organization_id,brand_id,studio_id,studio_code,studio_name,timezone,location_uuid,location_name").eq("account_id", parsed.data.accountId),
   ])
   if (secretError || targetError || !credentials || targets?.length !== 1) return NextResponse.json({ error: "Account resolution failed" }, { status: 404 })
-  return NextResponse.json({ credentials, target: targets[0] }, { headers: { "Cache-Control": "no-store, private" } })
+  return NextResponse.json(
+    { credentials, target: { ...targets[0], account_id: parsed.data.accountId } },
+    { headers: { "Cache-Control": "no-store, private" } }
+  )
 }
