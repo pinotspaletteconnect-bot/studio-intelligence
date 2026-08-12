@@ -106,6 +106,35 @@ const homebaseConnectionSchema = z.object({
   currentPassword: z.string().min(1).max(1024),
 })
 
+const homebaseBrowserLoginSchema = z.object({
+  accountId: z.coerce.number().int().positive(),
+  email: z.email().max(254).transform(value => value.trim().toLowerCase()),
+  password: z.string().min(1).max(1024),
+  currentPassword: z.string().min(1).max(1024),
+})
+
+export async function updateHomebaseBrowserLogin(
+  _previousState: HomebaseConnectionState,
+  formData: FormData
+): Promise<HomebaseConnectionState> {
+  const [access, actor] = await Promise.all([requireDashboardContext(), getAuthenticatedUser()])
+  if (!actor?.email || !["owner", "administrator"].includes(access.role)) return { error: "Only an owner or administrator can update Homebase." }
+  const parsed = homebaseBrowserLoginSchema.safeParse(Object.fromEntries(formData))
+  if (!parsed.success) return { error: "Complete the Homebase login and security fields." }
+  const auth = await createAuthClient()
+  const { error: authenticationError } = await auth.auth.signInWithPassword({ email: actor.email, password: parsed.data.currentPassword })
+  if (authenticationError) return { error: "Your SASHA password is incorrect." }
+  const { error } = await supabase.rpc("update_homebase_browser_login", {
+    p_organization_id: access.organizationId,
+    p_account_id: parsed.data.accountId,
+    p_email: parsed.data.email,
+    p_password: parsed.data.password,
+  })
+  if (error) return { error: "The encrypted Homebase web login could not be updated." }
+  revalidatePath("/settings")
+  return { complete: true }
+}
+
 export async function createHomebaseConnection(
   _previousState: HomebaseConnectionState,
   formData: FormData
