@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { accountChoiceKey, normalizeLabel, numberValue, parseCompanyRows } = require("../services/homebaseBrowser");
+const { accountChoiceKey, normalizeLabel, numberValue, parseCompanyRows, safeLoginMessage } = require("../services/homebaseBrowser");
 
 test("normalizes Homebase location labels", () => {
     assert.equal(normalizeLabel("  St.   Matthews "), "st. matthews");
@@ -10,6 +10,12 @@ test("normalizes Homebase location labels", () => {
 test("parses currency and numeric cells", () => {
     assert.equal(numberValue("$1,234.50"), 1234.5);
     assert.equal(numberValue(""), 0);
+});
+
+test("returns only a bounded Homebase login status message", () => {
+    assert.equal(safeLoginMessage(["  Unable   to sign in  "]), "Unable to sign in");
+    assert.equal(safeLoginMessage([]), null);
+    assert.equal(safeLoginMessage(["x".repeat(300)]).length, 240);
 });
 
 test("aggregates company timesheets without retaining employee identity", () => {

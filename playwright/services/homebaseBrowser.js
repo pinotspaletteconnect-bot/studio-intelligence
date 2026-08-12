@@ -51,6 +51,11 @@ function accountChoiceKey(value) {
     return normalizeLabel(value).replace(/[^a-z0-9]/g, "");
 }
 
+function safeLoginMessage(messages) {
+    const message = messages.map(value => String(value).replace(/\s+/g, " ").trim()).find(Boolean);
+    return message ? message.slice(0, 240) : null;
+}
+
 async function selectAccountIfRequired(page, targets = []) {
     const dateInput = page.getByRole("textbox", { name: "Choose a date" });
     if (await dateInput.isVisible().catch(() => false)) return;
@@ -100,16 +105,24 @@ async function login(page, { email, password, targets }) {
         await page.getByRole("button", { name: /^(?:sign in|log in|continue)$/i }).first().click();
     }
 
-    // Homebase's current sign-in UI can complete authentication without changing
-    // the top-level URL. Verify the session by requesting the protected page
-    // instead of relying on a redirect from the login form.
-    await page.waitForTimeout(2500);
+    // Allow the SPA authentication request and session cookie to settle before
+    // checking the protected page. A fixed short delay can interrupt Homebase's
+    // login request on slower production browsers.
+    await page.waitForURL(url => !/\/(?:accounts\/sign[-_]?in|login)(?:[/?#]|$)/i.test(url.pathname), {
+        timeout: 15000,
+        waitUntil: "domcontentloaded"
+    }).catch(() => null);
+    const messages = await page.locator('[role="alert"], [data-testid*="error" i], .alert, .error')
+        .allTextContents().catch(() => []);
+    const loginMessage = safeLoginMessage(messages);
     await page.goto(COMPANY_TIMESHEETS_URL, { waitUntil: "domcontentloaded" });
     const redirectedToLogin = /joinhomebase\.com\/(?:accounts\/(?:sign[-_]?in|login)|login)(?:[/?#]|$)/i.test(page.url());
     const loginFormVisible = await page.locator('input[type="email"], input[name="email"]').first()
         .isVisible().catch(() => false);
     if (redirectedToLogin || loginFormVisible) {
-        throw new Error("Homebase login was not accepted or requires additional verification");
+        throw new Error(loginMessage
+            ? `Homebase login was not accepted: ${loginMessage}`
+            : "Homebase login was not accepted or requires additional verification");
     }
     await selectAccountIfRequired(page, targets);
 }
@@ -194,4 +207,4 @@ async function collectCompanyTimesheets(credentials, dates) {
     }
 }
 
-module.exports = { accountChoiceKey, collectCompanyTimesheets, normalizeLabel, numberValue, parseCompanyRows };
+module.exports = { accountChoiceKey, collectCompanyTimesheets, normalizeLabel, numberValue, parseCompanyRows, safeLoginMessage };
