@@ -66,7 +66,7 @@ async function login(page, { email, password }) {
     // instead of relying on a redirect from the login form.
     await page.waitForTimeout(2500);
     await page.goto(COMPANY_TIMESHEETS_URL, { waitUntil: "domcontentloaded" });
-    const redirectedToLogin = /joinhomebase\.com\/(?:accounts|login)/i.test(page.url());
+    const redirectedToLogin = /joinhomebase\.com\/(?:accounts\/(?:sign_in|login)|login)(?:[/?#]|$)/i.test(page.url());
     const loginFormVisible = await page.locator('input[type="email"], input[name="email"]').first()
         .isVisible().catch(() => false);
     if (redirectedToLogin || loginFormVisible) {
