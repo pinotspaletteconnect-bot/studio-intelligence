@@ -60,8 +60,18 @@ async function login(page, { email, password }) {
     }
     await passwordInput.fill(password);
     await page.getByRole("button", { name: /sign in|log in|continue/i }).last().click();
-    await page.waitForURL(/joinhomebase\.com\/(?!accounts|login)/, { timeout: 30000 });
+
+    // Homebase's current sign-in UI can complete authentication without changing
+    // the top-level URL. Verify the session by requesting the protected page
+    // instead of relying on a redirect from the login form.
+    await page.waitForTimeout(2500);
     await page.goto(COMPANY_TIMESHEETS_URL, { waitUntil: "domcontentloaded" });
+    const redirectedToLogin = /joinhomebase\.com\/(?:accounts|login)/i.test(page.url());
+    const loginFormVisible = await page.locator('input[type="email"], input[name="email"]').first()
+        .isVisible().catch(() => false);
+    if (redirectedToLogin || loginFormVisible) {
+        throw new Error("Homebase login was not accepted or requires additional verification");
+    }
 }
 
 async function selectDay(page, date) {
