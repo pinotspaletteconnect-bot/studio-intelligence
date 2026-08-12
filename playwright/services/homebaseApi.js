@@ -15,7 +15,10 @@ async function homebaseRequest(apiKey, path, params = {}) {
         headers: { authorization: `Bearer ${normalizeApiKey(apiKey)}`, accept: "application/vnd.homebase-v1+json" },
         signal: AbortSignal.timeout(30000)
     });
-    if (!response.ok) throw new Error(`Homebase API request failed (${response.status})`);
+    if (!response.ok) {
+        const detail = (await response.text()).replace(/\s+/g, " ").trim().slice(0, 300);
+        throw new Error(`Homebase API request failed (${response.status})${detail ? `: ${detail}` : ""}`);
+    }
     return response.json();
 }
 
@@ -103,10 +106,10 @@ function normalizeLabor({ shifts, timecards, timeZone, retrievedAt = new Date().
 
 async function collectLabor(apiKey, { locationUuid, startDate, endDate, timeZone }) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) throw new Error("Homebase labor dates are invalid");
-    const params = { start_date: `${startDate}T00:00:00`, end_date: `${endDate}T23:59:59`, date_filter: "start_at" };
+    const params = { start_date: `${startDate}T00:00:00Z`, end_date: `${endDate}T23:59:59Z` };
     const [shifts, timecards] = await Promise.all([
-        paginatedRequest(apiKey, `/locations/${encodeURIComponent(locationUuid)}/shifts`, { ...params, with_note: false }, "shifts"),
-        paginatedRequest(apiKey, `/locations/${encodeURIComponent(locationUuid)}/timecards`, params, "timecards")
+        paginatedRequest(apiKey, `/locations/${encodeURIComponent(locationUuid)}/shifts`, { ...params, date_filter: "start_at", with_note: false }, "shifts"),
+        paginatedRequest(apiKey, `/locations/${encodeURIComponent(locationUuid)}/timecards`, { ...params, date_filter: "clock_in" }, "timecards")
     ]);
     return normalizeLabor({ shifts, timecards, timeZone });
 }
