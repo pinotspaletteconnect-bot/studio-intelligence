@@ -19,11 +19,13 @@ async function homebaseRequest(apiKey, path, params = {}) {
     return response.json();
 }
 
-async function discoverLocation(apiKey) {
+async function discoverLocation(apiKey, locationUuid) {
     const payload = await homebaseRequest(apiKey, "/locations");
     const locations = Array.isArray(payload) ? payload : payload?.data ?? payload?.locations ?? [];
-    if (locations.length !== 1) throw new Error(`Homebase location key returned ${locations.length} locations; expected exactly one`);
-    const location = locations[0];
+    const location = locationUuid
+        ? locations.find(candidate => String(candidate?.uuid) === String(locationUuid))
+        : locations.length === 1 ? locations[0] : null;
+    if (!location) throw new Error(`Homebase location UUID was not available to this account (${locations.length} locations returned)`);
     if (!location?.uuid || !location?.name) throw new Error("Homebase location response is incomplete");
     return { uuid: String(location.uuid), name: String(location.name), timeZone: location.time_zone ?? null };
 }

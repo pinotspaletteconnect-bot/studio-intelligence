@@ -16,7 +16,7 @@ router.get("/health", (_req, res) => res.json({ success: true, service: "Homebas
 router.post("/discover", requireCollectorAuth, async (req, res) => {
     try {
         const account = await resolveHomebaseAccount(req.body?.accountId);
-        const location = await discoverLocation(account.apiKey);
+        const location = await discoverLocation(account.apiKey, account.target.location_uuid);
         res.json({ success: true, target: account.target, location });
     } catch (error) {
         console.error("Homebase discovery failed:", error.message);
