@@ -93,14 +93,19 @@ async function login(page, { email, password, targets }) {
         await passwordInput.waitFor({ state: "visible", timeout: 10000 });
     }
     await passwordInput.fill(password);
-    await page.getByRole("button", { name: /sign in|log in|continue/i }).last().click();
+    const formSubmit = page.locator('button[type="submit"]:visible, input[type="submit"]:visible').first();
+    if (await formSubmit.count()) {
+        await formSubmit.click();
+    } else {
+        await page.getByRole("button", { name: /^(?:sign in|log in|continue)$/i }).first().click();
+    }
 
     // Homebase's current sign-in UI can complete authentication without changing
     // the top-level URL. Verify the session by requesting the protected page
     // instead of relying on a redirect from the login form.
     await page.waitForTimeout(2500);
     await page.goto(COMPANY_TIMESHEETS_URL, { waitUntil: "domcontentloaded" });
-    const redirectedToLogin = /joinhomebase\.com\/(?:accounts\/(?:sign_in|login)|login)(?:[/?#]|$)/i.test(page.url());
+    const redirectedToLogin = /joinhomebase\.com\/(?:accounts\/(?:sign[-_]?in|login)|login)(?:[/?#]|$)/i.test(page.url());
     const loginFormVisible = await page.locator('input[type="email"], input[name="email"]').first()
         .isVisible().catch(() => false);
     if (redirectedToLogin || loginFormVisible) {
