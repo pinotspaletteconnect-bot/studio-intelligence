@@ -17,7 +17,11 @@ router.post("/discover", requireCollectorAuth, async (req, res) => {
     try {
         const account = await resolveHomebaseAccount(req.body?.accountId);
         const location = await discoverLocation(account.apiKey, account.target.location_uuid);
-        res.json({ success: true, target: account.target, location });
+        res.json({
+            success: true,
+            target: { ...account.target, account_id: Number(req.body.accountId) },
+            location
+        });
     } catch (error) {
         console.error("Homebase discovery failed:", error.message);
         res.status(500).json({ success: false, error: error.message });
