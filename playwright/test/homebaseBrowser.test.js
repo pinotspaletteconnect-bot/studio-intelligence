@@ -1,9 +1,10 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { normalizeLabel, numberValue, parseCompanyRows } = require("../services/homebaseBrowser");
+const { accountChoiceKey, normalizeLabel, numberValue, parseCompanyRows } = require("../services/homebaseBrowser");
 
 test("normalizes Homebase location labels", () => {
     assert.equal(normalizeLabel("  St.   Matthews "), "st. matthews");
+    assert.equal(accountChoiceKey("St. Matthews"), accountChoiceKey("St Matthews"));
 });
 
 test("parses currency and numeric cells", () => {

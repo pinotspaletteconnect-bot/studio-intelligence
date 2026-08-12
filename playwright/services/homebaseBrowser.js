@@ -47,9 +47,43 @@ function dateParts(date) {
     return { year, month, day };
 }
 
-async function login(page, { email, password }) {
+function accountChoiceKey(value) {
+    return normalizeLabel(value).replace(/[^a-z0-9]/g, "");
+}
+
+async function selectAccountIfRequired(page, targets = []) {
+    const dateInput = page.getByRole("textbox", { name: "Choose a date" });
+    if (await dateInput.isVisible().catch(() => false)) return;
+
+    const choices = page.locator("a:visible, button:visible, [role='button']:visible");
+    const labels = await choices.allTextContents();
+    const targetKeys = targets
+        .flatMap(target => [target.location_name, target.studio_name])
+        .filter(Boolean)
+        .map(accountChoiceKey);
+    const choiceIndex = labels.findIndex(label => {
+        const key = accountChoiceKey(label);
+        if (!key) return false;
+        return targetKeys.some(targetKey => key.includes(targetKey) || targetKey.includes(key));
+    });
+    if (choiceIndex >= 0) {
+        await choices.nth(choiceIndex).click();
+        await page.waitForTimeout(1500);
+        await page.goto(COMPANY_TIMESHEETS_URL, { waitUntil: "domcontentloaded" });
+    }
+
+    await dateInput.waitFor({ state: "visible", timeout: 30000 }).catch(() => {
+        const pathname = new URL(page.url()).pathname;
+        throw new Error(`Homebase Company Timesheets is unavailable after login (${pathname})`);
+    });
+}
+
+async function login(page, { email, password, targets }) {
     await page.goto(COMPANY_TIMESHEETS_URL, { waitUntil: "domcontentloaded" });
-    if (page.url().includes("company_timesheets")) return;
+    if (page.url().includes("company_timesheets")) {
+        await selectAccountIfRequired(page, targets);
+        return;
+    }
     const emailInput = page.locator('input[type="email"], input[name="email"]').first();
     await emailInput.waitFor({ state: "visible", timeout: 20000 });
     await emailInput.fill(email);
@@ -72,6 +106,7 @@ async function login(page, { email, password }) {
     if (redirectedToLogin || loginFormVisible) {
         throw new Error("Homebase login was not accepted or requires additional verification");
     }
+    await selectAccountIfRequired(page, targets);
 }
 
 async function selectDay(page, date) {
@@ -154,4 +189,4 @@ async function collectCompanyTimesheets(credentials, dates) {
     }
 }
 
-module.exports = { collectCompanyTimesheets, normalizeLabel, numberValue, parseCompanyRows };
+module.exports = { accountChoiceKey, collectCompanyTimesheets, normalizeLabel, numberValue, parseCompanyRows };
