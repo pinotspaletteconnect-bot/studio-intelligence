@@ -1,6 +1,11 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { discoverLocation, normalizeLabor, payloadRows } = require("../services/homebaseApi");
+const { discoverLocation, normalizeApiKey, normalizeLabor, payloadRows } = require("../services/homebaseApi");
+
+test("normalizes copied Homebase bearer credentials", () => {
+    assert.equal(normalizeApiKey('  "Bearer test-key"  '), "test-key");
+    assert.equal(normalizeApiKey("plain-key"), "plain-key");
+});
 
 test("Homebase API module exports location discovery", () => {
     assert.equal(typeof discoverLocation, "function");

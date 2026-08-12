@@ -1,10 +1,18 @@
 const BASE_URL = "https://api.joinhomebase.com";
 
+function normalizeApiKey(value) {
+    return String(value ?? "")
+        .trim()
+        .replace(/^['"]|['"]$/g, "")
+        .replace(/^Bearer\s+/i, "")
+        .trim();
+}
+
 async function homebaseRequest(apiKey, path, params = {}) {
     const url = new URL(path, BASE_URL);
     for (const [key, value] of Object.entries(params)) if (value !== undefined && value !== null) url.searchParams.set(key, String(value));
     const response = await fetch(url, {
-        headers: { authorization: `Bearer ${apiKey}`, accept: "application/vnd.homebase-v1+json" },
+        headers: { authorization: `Bearer ${normalizeApiKey(apiKey)}`, accept: "application/vnd.homebase-v1+json" },
         signal: AbortSignal.timeout(30000)
     });
     if (!response.ok) throw new Error(`Homebase API request failed (${response.status})`);
@@ -101,4 +109,4 @@ async function collectLabor(apiKey, { locationUuid, startDate, endDate, timeZone
     return normalizeLabor({ shifts, timecards, timeZone });
 }
 
-module.exports = { collectLabor, discoverLocation, homebaseRequest, normalizeLabor, payloadRows };
+module.exports = { collectLabor, discoverLocation, homebaseRequest, normalizeApiKey, normalizeLabor, payloadRows };
