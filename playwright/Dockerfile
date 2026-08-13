@@ -4,6 +4,10 @@ WORKDIR /app
 
 COPY package*.json ./
 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends xvfb xauth \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN npm ci
 
 COPY . .
