@@ -1,4 +1,5 @@
 const { chromium } = require("playwright");
+const { storeHomebaseBrowserSession } = require("./homebaseCredentials");
 
 const COMPANY_TIMESHEETS_URL = "https://app.joinhomebase.com/company_timesheets";
 
@@ -190,11 +191,20 @@ async function collectCompanyTimesheets(credentials, dates) {
     if (!Array.isArray(dates) || dates.length < 1 || dates.length > 31 || dates.some(date => !/^\d{4}-\d{2}-\d{2}$/.test(date))) {
         throw new Error("Homebase timesheet dates are invalid");
     }
-    const browser = await chromium.launch({ headless: true });
+    const browser = await chromium.launch({
+        headless: process.env.HOMEBASE_HEADLESS !== "false",
+        args: ["--disable-blink-features=AutomationControlled"]
+    });
     try {
-        const context = await browser.newContext();
+        const context = await browser.newContext({
+            storageState: credentials.storageState,
+            locale: "en-US",
+            timezoneId: "America/New_York"
+        });
         const page = await context.newPage();
         await login(page, credentials);
+        const storageState = await context.storageState();
+        await storeHomebaseBrowserSession(credentials.accountId, storageState);
         const byTarget = new Map(credentials.targets.map(target => [Number(target.account_id), { target, daily: [] }]));
         for (const date of dates) {
             for (const result of await collectDay(page, date, credentials.targets)) {

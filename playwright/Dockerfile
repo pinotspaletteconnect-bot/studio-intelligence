@@ -9,7 +9,8 @@ RUN npm ci
 COPY . .
 
 ENV PORT=8080
+ENV HOMEBASE_HEADLESS=false
 
 EXPOSE 8080
 
-CMD ["npm", "start"]
+CMD ["xvfb-run", "-a", "npm", "start"]

@@ -6,6 +6,11 @@ function brokerConfiguration() {
     return { url, token };
 }
 
+function sessionBrokerConfiguration() {
+    const { url, token } = brokerConfiguration();
+    return { url: process.env.HOMEBASE_SESSION_BROKER_URL || url.replace(/\/homebase-account\/?$/, "/homebase-session"), token };
+}
+
 async function resolveHomebaseAccount(accountId) {
     const id = Number(accountId);
     if (!Number.isSafeInteger(id) || id <= 0) throw new Error("Homebase account ID is invalid");
@@ -48,8 +53,20 @@ async function resolveHomebaseBrowserAccount(accountId) {
         accountId: id,
         email: account.credentials.email,
         password: account.credentials.password,
+        storageState: account.credentials.storageState || undefined,
         targets: account.targets
     };
 }
 
-module.exports = { resolveHomebaseAccount, resolveHomebaseBrowserAccount };
+async function storeHomebaseBrowserSession(accountId, storageState) {
+    const { url, token } = sessionBrokerConfiguration();
+    const response = await fetch(url, {
+        method: "PUT",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({ accountId: Number(accountId), storageState }),
+        signal: AbortSignal.timeout(15000)
+    });
+    if (!response.ok) throw new Error(`Homebase session broker failed (${response.status})`);
+}
+
+module.exports = { resolveHomebaseAccount, resolveHomebaseBrowserAccount, storeHomebaseBrowserSession };

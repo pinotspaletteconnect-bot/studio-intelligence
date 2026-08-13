@@ -79,10 +79,11 @@ Meta Ads and Meta Page Insights share authentication, token validation, business
 
 - **Capability:** company-timesheet scheduled hours, actual hours, overtime, PTO, breaks, and estimated wages by studio/day
 - **Authentication:** one owner web login plus the account read-only API key, encrypted together in Supabase Vault
+- **Session continuity:** successful collection rotates the Vault secret to include a bounded, Homebase-domain-only browser session; later runs reuse it and fall back to the encrypted login only after expiration
 - **Mapping:** one owner account can serve any number of explicitly mapped SASHA studios; Homebase location UUID and source label remain configuration-driven
 - **Privacy:** employee names and individual wage rates are discarded in collector memory; only studio/day totals are returned and warehoused
 - **Orchestration:** the browser replacement workflow requests today plus the previous 14 days once daily, then atomically replaces each studio/date range so corrected timecards do not duplicate labor
-- **Status:** Browser replacement implemented locally after the public labor API returned an All-in-One-tier restriction. Database migration, application deployment, credential upgrade, controlled collection, and production workflow cutover remain pending.
+- **Status:** Browser replacement and encrypted session continuity are implemented locally after the public labor API returned an All-in-One-tier restriction. Production migration, deployment, controlled collection, and workflow publication remain pending.
 
 ### MNTN Connected TV
 
