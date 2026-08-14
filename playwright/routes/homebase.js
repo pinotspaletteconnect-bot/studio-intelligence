@@ -64,7 +64,7 @@ router.post("/labor", requireCollectorAuth, async (req, res) => {
         try {
             const browserResult = await collectBrowserLabor(req.body?.accountId, req.body?.startDate, req.body?.endDate);
             account = { target: browserResult.selected.target };
-            source = { daily: browserResult.selected.daily, shifts: browserResult.selected.shifts };
+            source = { daily: browserResult.selected.daily, roles: browserResult.selected.roles ?? [], shifts: browserResult.selected.shifts };
         } catch (browserError) {
             if (!/web login is not configured/i.test(browserError.message)) throw browserError;
             account = await resolveHomebaseAccount(req.body?.accountId);
