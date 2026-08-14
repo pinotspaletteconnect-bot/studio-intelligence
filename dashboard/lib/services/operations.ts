@@ -109,7 +109,9 @@ export type OperationsDashboardData = {
     foodBeveragePerSeat: number
     laborCost: number | null
     laborPercent: number | null
+    cogsLaborCost: number | null
     cogsLaborPercent: number | null
+    overheadLaborCost: number | null
     overheadLaborPercent: number | null
   }>
   studioSales: Array<{
@@ -543,7 +545,9 @@ export async function getOperationsDashboard(
       foodBeveragePerSeat: 0,
       laborCost: null,
       laborPercent: null,
+      cogsLaborCost: null,
       cogsLaborPercent: null,
+      overheadLaborCost: null,
       overheadLaborPercent: null,
     }
     current.totalSales += numberValue(row.total_sales)
@@ -600,7 +604,9 @@ export async function getOperationsDashboard(
     if (!day) continue
     day.laborCost = labor.total
     day.laborPercent = day.totalSales > 0 ? labor.total / day.totalSales * 100 : null
+    day.cogsLaborCost = labor.cogs
     day.cogsLaborPercent = day.totalSales > 0 ? labor.cogs / day.totalSales * 100 : null
+    day.overheadLaborCost = labor.overhead
     day.overheadLaborPercent = day.totalSales > 0 ? labor.overhead / day.totalSales * 100 : null
   }
 
@@ -728,7 +734,9 @@ export async function getOperationsDashboard(
         : 0,
       laborCost: row.laborCost,
       laborPercent: row.laborPercent,
+      cogsLaborCost: row.cogsLaborCost,
       cogsLaborPercent: row.cogsLaborPercent,
+      overheadLaborCost: row.overheadLaborCost,
       overheadLaborPercent: row.overheadLaborPercent,
     }))
     .sort((a, b) => a.date.localeCompare(b.date))

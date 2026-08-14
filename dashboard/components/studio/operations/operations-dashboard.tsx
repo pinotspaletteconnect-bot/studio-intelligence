@@ -563,13 +563,19 @@ export function OperationsDashboard() {
                         {decimalCurrency.format(day.revenuePerSeat)}
                       </td>
                       <td className="px-2 py-3 text-right tabular-nums">
-                        {day.cogsLaborPercent === null ? "—" : `${day.cogsLaborPercent.toFixed(1)}%`}
+                        {day.cogsLaborPercent === null || day.cogsLaborCost === null
+                          ? "—"
+                          : `${day.cogsLaborPercent.toFixed(1)}% · ${currency.format(day.cogsLaborCost)}`}
                       </td>
                       <td className="px-2 py-3 text-right tabular-nums">
-                        {day.overheadLaborPercent === null ? "—" : `${day.overheadLaborPercent.toFixed(1)}%`}
+                        {day.overheadLaborPercent === null || day.overheadLaborCost === null
+                          ? "—"
+                          : `${day.overheadLaborPercent.toFixed(1)}% · ${currency.format(day.overheadLaborCost)}`}
                       </td>
                       <td className="px-2 py-3 text-right tabular-nums">
-                        {day.laborPercent === null ? "—" : `${day.laborPercent.toFixed(1)}%`}
+                        {day.laborPercent === null || day.laborCost === null
+                          ? "—"
+                          : `${day.laborPercent.toFixed(1)}% · ${currency.format(day.laborCost)}`}
                       </td>
                       <td className="px-2 py-3 text-right">
                         <Link
