@@ -297,8 +297,15 @@ async function collectCompanyTimesheets(credentials, dates) {
         });
         const page = await context.newPage();
         await login(page, credentials);
-        const storageState = await context.storageState();
-        await storeHomebaseBrowserSession(credentials.accountId, storageState);
+        try {
+            const storageState = await context.storageState();
+            await storeHomebaseBrowserSession(credentials.accountId, storageState);
+        } catch (error) {
+            // Third-party origins embedded by Homebase can abort while
+            // Playwright snapshots storage. The authenticated page remains
+            // valid, so do not discard an otherwise successful collection.
+            console.warn("Homebase browser session refresh was skipped:", error.message);
+        }
         const byTarget = new Map(credentials.targets.map(target => [Number(target.account_id), { target, daily: [], roles: [] }]));
         for (const date of dates) {
             for (const result of await collectDay(page, date, credentials.targets)) {
