@@ -561,16 +561,28 @@ async function runPtsProductSalesReport({
         const results = [];
 
         for (const studio of studios) {
-            await page.goto(`${PTS_URL}/Reports/ProductSalesReport`, {
-                waitUntil: "domcontentloaded"
-            });
-            await selectStudio(page, studio);
-            const {
-                gridSelector,
-                hasRows,
-                total,
-                viewCount
-            } = await runReport(page, from, to);
+            let report;
+
+            for (let attempt = 1; attempt <= 2; attempt += 1) {
+                try {
+                    await page.goto(`${PTS_URL}/Reports/ProductSalesReport`, {
+                        waitUntil: "domcontentloaded"
+                    });
+                    await selectStudio(page, studio);
+                    report = await runReport(page, from, to);
+                    break;
+                } catch (error) {
+                    if (attempt === 2) {
+                        throw error;
+                    }
+
+                    console.warn(
+                        `PTS Product Sales ${studio.code} report initialization failed; retrying once: ${error.message}`
+                    );
+                }
+            }
+
+            const { gridSelector, hasRows, total, viewCount } = report;
             let rows = [];
 
             if (hasRows) {
