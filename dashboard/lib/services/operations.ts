@@ -109,6 +109,8 @@ export type OperationsDashboardData = {
     foodBeveragePerSeat: number
     laborCost: number | null
     laborPercent: number | null
+    cogsLaborPercent: number | null
+    overheadLaborPercent: number | null
   }>
   studioSales: Array<{
     studioId: number
@@ -541,6 +543,8 @@ export async function getOperationsDashboard(
       foodBeveragePerSeat: 0,
       laborCost: null,
       laborPercent: null,
+      cogsLaborPercent: null,
+      overheadLaborPercent: null,
     }
     current.totalSales += numberValue(row.total_sales)
     current.classSales += numberValue(row.class_sales)
@@ -583,15 +587,21 @@ export async function getOperationsDashboard(
     )
   }
 
-  const laborByDate = new Map<string, number>()
+  const laborByDate = new Map<string, { total: number; cogs: number; overhead: number }>()
   for (const row of laborResult.daily) {
-    laborByDate.set(row.date, (laborByDate.get(row.date) ?? 0) + row.totalCost)
+    const labor = laborByDate.get(row.date) ?? { total: 0, cogs: 0, overhead: 0 }
+    labor.total += row.totalCost
+    labor.cogs += row.cogsCost
+    labor.overhead += row.overheadCost
+    laborByDate.set(row.date, labor)
   }
-  for (const [reportDate, laborCost] of laborByDate) {
+  for (const [reportDate, labor] of laborByDate) {
     const day = dailyMap.get(reportDate)
     if (!day) continue
-    day.laborCost = laborCost
-    day.laborPercent = day.totalSales > 0 ? laborCost / day.totalSales * 100 : null
+    day.laborCost = labor.total
+    day.laborPercent = day.totalSales > 0 ? labor.total / day.totalSales * 100 : null
+    day.cogsLaborPercent = day.totalSales > 0 ? labor.cogs / day.totalSales * 100 : null
+    day.overheadLaborPercent = day.totalSales > 0 ? labor.overhead / day.totalSales * 100 : null
   }
 
   // Product Sales is the auditable item-level source for F&B. When detail is
@@ -718,6 +728,8 @@ export async function getOperationsDashboard(
         : 0,
       laborCost: row.laborCost,
       laborPercent: row.laborPercent,
+      cogsLaborPercent: row.cogsLaborPercent,
+      overheadLaborPercent: row.overheadLaborPercent,
     }))
     .sort((a, b) => a.date.localeCompare(b.date))
 
