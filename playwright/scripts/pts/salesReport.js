@@ -186,29 +186,50 @@ async function runReport(page, fromDate, toDate = fromDate) {
     const from = displayDate(fromDate);
     const to = displayDate(toDate);
 
-    await page.locator("#DateFilter_FromDate").fill(from);
-    await page.locator("#DateFilter_FromDate").press("Tab");
-    await page.locator("#DateFilter_ToDate").fill(to);
-    await page.locator("#DateFilter_ToDate").press("Tab");
+    for (let attempt = 1; attempt <= 2; attempt += 1) {
+        try {
+            await page.locator("#DateFilter_FromDate").fill(from);
+            await page.locator("#DateFilter_FromDate").press("Tab");
+            await page.locator("#DateFilter_ToDate").fill(to);
+            await page.locator("#DateFilter_ToDate").press("Tab");
 
-    const navigation = page
-        .waitForNavigation({
-            waitUntil: "domcontentloaded",
-            timeout: 10000
-        })
-        .catch(() => null);
-    await page
-        .getByRole("button", { name: "Run", exact: true })
-        .click({ noWaitAfter: true });
-    await navigation;
-    await page.waitForTimeout(4000);
+            const navigation = page
+                .waitForNavigation({
+                    waitUntil: "domcontentloaded",
+                    timeout: 10000
+                })
+                .catch(() => null);
+            await page
+                .getByRole("button", { name: "Run", exact: true })
+                .click({ noWaitAfter: true });
+            await navigation;
+            await page.waitForTimeout(4000);
 
-    // The report heading's date formatting can vary (for example, padded
-    // month/day values), so use the report controls as the readiness signal.
-    // Navigation guarantees these are from the newly requested report.
-    await page.locator("table.SalesSummary").waitFor({ state: "visible" });
-    await page.locator(".k-grid-excel").nth(0).waitFor({ state: "attached" });
-    await page.locator(".k-grid-excel").nth(1).waitFor({ state: "attached" });
+            // The report heading's date formatting can vary (for example,
+            // padded month/day values), so use the report controls as the
+            // readiness signal. PTS occasionally returns the report shell
+            // without initializing its grids, so retry the page once before
+            // failing the full multi-studio collection.
+            await page
+                .locator("table.SalesSummary")
+                .waitFor({ state: "visible", timeout: 45000 });
+            await page
+                .locator(".k-grid-excel")
+                .nth(0)
+                .waitFor({ state: "attached", timeout: 15000 });
+            await page
+                .locator(".k-grid-excel")
+                .nth(1)
+                .waitFor({ state: "attached", timeout: 15000 });
+            return;
+        } catch (error) {
+            if (attempt === 2) {
+                throw error;
+            }
+
+            await page.reload({ waitUntil: "domcontentloaded" });
+        }
+    }
 }
 
 async function downloadClassWorkbook(page, folder, studio, fromDate, toDate) {
