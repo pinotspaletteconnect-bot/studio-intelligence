@@ -84,10 +84,11 @@ async function selectAccountIfRequired(page, targets = []) {
     });
 }
 
-async function login(page, { email, password, targets }) {
+async function login(page, { email, password, targets }, options = {}) {
     await page.goto(COMPANY_TIMESHEETS_URL, { waitUntil: "domcontentloaded" });
     if (page.url().includes("company_timesheets")) {
         await selectAccountIfRequired(page, targets);
+        if (options.capture) await options.capture(page, { status: "authenticated", message: null });
         return;
     }
     const emailInput = page.locator('input[type="email"], input[name="email"]').first();
@@ -116,6 +117,10 @@ async function login(page, { email, password, targets }) {
     const messages = await page.locator('[role="alert"], [data-testid*="error" i], .alert, .error')
         .allTextContents().catch(() => []);
     const loginMessage = safeLoginMessage(messages);
+    if (options.capture) await options.capture(page, {
+        status: /\/(?:accounts\/sign[-_]?in|login)(?:[/?#]|$)/i.test(new URL(page.url()).pathname) ? "sign_in" : "redirected",
+        message: loginMessage
+    });
     await page.goto(COMPANY_TIMESHEETS_URL, { waitUntil: "domcontentloaded" });
     const redirectedToLogin = /joinhomebase\.com\/(?:accounts\/(?:sign[-_]?in|login)|login)(?:[/?#]|$)/i.test(page.url());
     const loginFormVisible = await page.locator('input[type="email"], input[name="email"]').first()
@@ -126,6 +131,41 @@ async function login(page, { email, password, targets }) {
             : "Homebase login was not accepted or requires additional verification");
     }
     await selectAccountIfRequired(page, targets);
+}
+
+async function captureLoginDiagnostic(credentials) {
+    const browser = await chromium.launch({ headless: true });
+    let diagnostic;
+    try {
+        const context = await browser.newContext({ storageState: credentials.storageState, locale: "en-US" });
+        const page = await context.newPage();
+        try {
+            await login(page, credentials, { capture: async (capturedPage, result) => {
+                await capturedPage.locator('input[type="email"], input[name="email"], input[type="password"], input[name="password"]')
+                    .evaluateAll(inputs => inputs.forEach(input => { input.value = ""; input.setAttribute("value", ""); }));
+                diagnostic = {
+                    image: await capturedPage.screenshot({ fullPage: true }),
+                    status: result.status,
+                    message: result.message,
+                    pathname: new URL(capturedPage.url()).pathname
+                };
+            }});
+        } catch (error) {
+            if (!diagnostic) {
+                await page.locator('input[type="email"], input[name="email"], input[type="password"], input[name="password"]')
+                    .evaluateAll(inputs => inputs.forEach(input => { input.value = ""; input.setAttribute("value", ""); }));
+                diagnostic = {
+                    image: await page.screenshot({ fullPage: true }),
+                    status: "error",
+                    message: safeLoginMessage([error.message]),
+                    pathname: new URL(page.url()).pathname
+                };
+            }
+        }
+        return diagnostic;
+    } finally {
+        await browser.close();
+    }
 }
 
 async function selectDay(page, date) {
@@ -217,4 +257,4 @@ async function collectCompanyTimesheets(credentials, dates) {
     }
 }
 
-module.exports = { accountChoiceKey, collectCompanyTimesheets, normalizeLabel, numberValue, parseCompanyRows, safeLoginMessage };
+module.exports = { accountChoiceKey, captureLoginDiagnostic, collectCompanyTimesheets, normalizeLabel, numberValue, parseCompanyRows, safeLoginMessage };

@@ -2,7 +2,7 @@ const crypto = require("crypto");
 const express = require("express");
 const { resolveHomebaseAccount, resolveHomebaseBrowserAccount } = require("../services/homebaseCredentials");
 const { collectLabor, discoverLocation } = require("../services/homebaseApi");
-const { collectCompanyTimesheets } = require("../services/homebaseBrowser");
+const { captureLoginDiagnostic, collectCompanyTimesheets } = require("../services/homebaseBrowser");
 
 const router = express.Router();
 const browserCollections = new Map();
@@ -96,6 +96,25 @@ router.post("/timesheets", requireCollectorAuth, async (req, res) => {
         res.json({ success: true, accountId: account.accountId, dates, results });
     } catch (error) {
         console.error("Homebase timesheet collection failed:", error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.post("/debug-login", requireCollectorAuth, async (req, res) => {
+    try {
+        const account = await resolveHomebaseBrowserAccount(req.body?.accountId);
+        const diagnostic = await captureLoginDiagnostic(account);
+        if (!diagnostic?.image) throw new Error("Homebase diagnostic image was not captured");
+        res.set({
+            "Cache-Control": "no-store, private",
+            "Content-Type": "image/png",
+            "X-Homebase-Path": diagnostic.pathname || "unknown",
+            "X-Homebase-Status": diagnostic.status || "unknown",
+            "X-Homebase-Message": encodeURIComponent(diagnostic.message || "")
+        });
+        res.send(diagnostic.image);
+    } catch (error) {
+        console.error("Homebase login diagnostic failed:", error.message);
         res.status(500).json({ success: false, error: error.message });
     }
 });
