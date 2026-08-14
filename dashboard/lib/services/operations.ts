@@ -178,6 +178,13 @@ export type DailyOperatingDetailData = {
     classpopSales: number
     classSales: number
     netSales: number
+    actualLaborHours: number
+    cogsLaborCost: number
+    cogsLaborPercent: number | null
+    overheadLaborCost: number
+    overheadLaborPercent: number | null
+    totalLaborCost: number
+    totalLaborPercent: number | null
   }
   studios: Array<{
     id: number
@@ -975,10 +982,11 @@ export async function getDailyOperatingDetail(
   if (studioId) operationsQuery = operationsQuery.eq("studio_id", studioId)
   else if (allowedStudioIds) operationsQuery = operationsQuery.in("studio_id", allowedStudioIds)
 
-  const [classesResult, studioResult, operationsResult] = await Promise.all([
+  const [classesResult, studioResult, operationsResult, laborResult] = await Promise.all([
     classesQuery,
     studiosQuery.order("studio_name"),
     operationsQuery.range(0, 999),
+    getHomebaseLabor(studioId?.toString(), date, date, allowedStudioIds ?? []),
   ])
 
   if (classesResult.error) throw classesResult.error
@@ -1017,7 +1025,8 @@ export async function getDailyOperatingDetail(
   const operationsRows = (operationsResult.data ?? []) as DailyDetailOperationsRow[]
   const calculateTotals = (
     classes: DailyOperatingDetailData["studios"][number]["classes"],
-    operationsRowsForStudio: DailyDetailOperationsRow[]
+    operationsRowsForStudio: DailyDetailOperationsRow[],
+    laborRowsForStudio: typeof laborResult.daily
   ) => {
     const totals = classes.reduce(
     (sum, row) => ({
@@ -1059,6 +1068,15 @@ export async function getDailyOperatingDetail(
       }),
       { seatsSold: 0, foodBeverageSales: 0, totalSales: 0 }
     )
+    const labor = laborRowsForStudio.reduce(
+      (sum, row) => ({
+        actualHours: sum.actualHours + row.actualHours,
+        cogsCost: sum.cogsCost + row.cogsCost,
+        overheadCost: sum.overheadCost + row.overheadCost,
+        totalCost: sum.totalCost + row.totalCost,
+      }),
+      { actualHours: 0, cogsCost: 0, overheadCost: 0, totalCost: 0 }
+    )
     return {
       ...totals,
       percentFull: totals.capacity ? (totals.seatsSold / totals.capacity) * 100 : 0,
@@ -1069,6 +1087,19 @@ export async function getDailyOperatingDetail(
       revenuePerSeat: operations.seatsSold
         ? operations.totalSales / operations.seatsSold
         : 0,
+      actualLaborHours: labor.actualHours,
+      cogsLaborCost: labor.cogsCost,
+      cogsLaborPercent: operations.totalSales
+        ? (labor.cogsCost / operations.totalSales) * 100
+        : null,
+      overheadLaborCost: labor.overheadCost,
+      overheadLaborPercent: operations.totalSales
+        ? (labor.overheadCost / operations.totalSales) * 100
+        : null,
+      totalLaborCost: labor.totalCost,
+      totalLaborPercent: operations.totalSales
+        ? (labor.totalCost / operations.totalSales) * 100
+        : null,
     }
   }
   const studios = (studioResult.data ?? []).map((studio) => {
@@ -1080,7 +1111,8 @@ export async function getDailyOperatingDetail(
       name: studio.studio_name,
       totals: calculateTotals(
         classes,
-        operationsRows.filter((row) => row.studio_id === studio.id)
+        operationsRows.filter((row) => row.studio_id === studio.id),
+        laborResult.daily.filter((row) => row.studioId === studio.id)
       ),
       classes,
     }
@@ -1089,7 +1121,7 @@ export async function getDailyOperatingDetail(
 
   return {
     date,
-    totals: calculateTotals(allClasses, operationsRows),
+    totals: calculateTotals(allClasses, operationsRows, laborResult.daily),
     studios,
   }
 }

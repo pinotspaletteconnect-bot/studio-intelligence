@@ -110,6 +110,19 @@ export function DailyOperatingDetail({ initialDate }: { initialDate: string }) {
               ["ClassPop sales", currency.format(data.totals.classpopSales)],
               ["Combined class sales", currency.format(data.totals.classSales)],
               ["Net sales", currency.format(data.totals.netSales)],
+              [
+                "COGS labor",
+                `${currency.format(data.totals.cogsLaborCost)} · ${data.totals.cogsLaborPercent === null ? "—" : `${data.totals.cogsLaborPercent.toFixed(1)}%`}`,
+              ],
+              [
+                "Overhead labor",
+                `${currency.format(data.totals.overheadLaborCost)} · ${data.totals.overheadLaborPercent === null ? "—" : `${data.totals.overheadLaborPercent.toFixed(1)}%`}`,
+              ],
+              [
+                "Total labor",
+                `${currency.format(data.totals.totalLaborCost)} · ${data.totals.totalLaborPercent === null ? "—" : `${data.totals.totalLaborPercent.toFixed(1)}%`}`,
+              ],
+              ["Actual labor hours", data.totals.actualLaborHours.toFixed(1)],
             ].map(([label, value]) => (
               <Card key={label}><CardContent><p className="text-sm text-muted-foreground">{label}</p><p className="mt-2 text-2xl font-semibold tabular-nums">{value}</p></CardContent></Card>
             ))}
@@ -133,6 +146,9 @@ export function DailyOperatingDetail({ initialDate }: { initialDate: string }) {
                       <span><strong>{currency.format(studio.totals.classpopSales)}</strong> ClassPop</span>
                       <span><strong>{currency.format(studio.totals.classSales)}</strong> combined class sales</span>
                       <span><strong>{currency.format(studio.totals.netSales)}</strong> net</span>
+                      <span><strong>{currency.format(studio.totals.cogsLaborCost)}</strong> COGS labor</span>
+                      <span><strong>{currency.format(studio.totals.overheadLaborCost)}</strong> OH labor</span>
+                      <span><strong>{studio.totals.actualLaborHours.toFixed(1)}</strong> labor hours</span>
                     </div>
                   </div>
                 </CardHeader>
