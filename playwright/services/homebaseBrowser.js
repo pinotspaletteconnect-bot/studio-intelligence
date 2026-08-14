@@ -1,4 +1,3 @@
-const { storeHomebaseBrowserSession } = require("./homebaseCredentials");
 const { launchHomebaseBrowser } = require("./homebaseDisplay");
 const csv = require("csv-parser");
 
@@ -297,15 +296,11 @@ async function collectCompanyTimesheets(credentials, dates) {
         });
         const page = await context.newPage();
         await login(page, credentials);
-        try {
-            const storageState = await context.storageState();
-            await storeHomebaseBrowserSession(credentials.accountId, storageState);
-        } catch (error) {
-            // Third-party origins embedded by Homebase can abort while
-            // Playwright snapshots storage. The authenticated page remains
-            // valid, so do not discard an otherwise successful collection.
-            console.warn("Homebase browser session refresh was skipped:", error.message);
-        }
+        // Do not snapshot the browser context during collection. Homebase loads
+        // third-party frames that can keep Playwright's storage-state capture
+        // pending until Railway terminates the request. The encrypted login is
+        // still the source of truth, so collection does not depend on refreshing
+        // a browser session on every run.
         const byTarget = new Map(credentials.targets.map(target => [Number(target.account_id), { target, daily: [], roles: [] }]));
         for (const date of dates) {
             for (const result of await collectDay(page, date, credentials.targets)) {
