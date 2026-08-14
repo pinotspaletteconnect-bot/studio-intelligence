@@ -1,6 +1,6 @@
 "use client"
 
-import { useActionState } from "react"
+import { useActionState, useEffect, useState } from "react"
 import { createHomebaseConnection, updateHomebaseBrowserLogin } from "@/app/(app)/settings/actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,8 +11,12 @@ type Account = { id: number; account_name: string; studio_name: string | null; l
 export function HomebaseConnections({ studios, accounts }: { studios: Studio[]; accounts: Account[] }) {
   const [state, action, pending] = useActionState(createHomebaseConnection, undefined)
   const [loginState, loginAction, loginPending] = useActionState(updateHomebaseBrowserLogin, undefined)
+  const [roles,setRoles]=useState<Array<{role_name:string;labor_category:"cogs"|"overhead"|"unmapped"}>>([])
+  useEffect(()=>{fetch("/api/settings/homebase-roles").then(r=>r.json()).then(r=>setRoles(r.roles??[])).catch(()=>null)},[])
+  async function updateRole(roleName:string,category:"cogs"|"overhead"|"unmapped"){const response=await fetch("/api/settings/homebase-roles",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({roleName,category})});if(response.ok)setRoles(current=>current.map(role=>role.role_name===roleName?{...role,labor_category:category}:role))}
 
   return <div className="space-y-5">
+    {roles.length?<div className="rounded-lg border p-4"><h3 className="font-medium">Labor role categories</h3><p className="mt-1 text-xs text-muted-foreground">COGS supports classes; overhead supports general operations. New roles remain unmapped until reviewed.</p><div className="mt-3 grid gap-2">{roles.map(role=><label key={role.role_name} className="flex items-center justify-between gap-3 text-sm"><span>{role.role_name}</span><select className="h-8 rounded-md border bg-background px-2" value={role.labor_category} onChange={event=>updateRole(role.role_name,event.target.value as "cogs"|"overhead"|"unmapped")}><option value="cogs">COGS</option><option value="overhead">Overhead</option><option value="unmapped">Unmapped</option></select></label>)}</div></div>:null}
     {accounts.map(account => <div key={account.id} className="rounded-lg border p-3 text-sm">
       <div className="flex flex-wrap justify-between gap-2"><strong>{account.account_name}</strong><span className={account.has_credentials ? "text-emerald-700" : "text-amber-700"}>{account.has_credentials ? "Encrypted in Vault" : "Credential unavailable"}</span></div>
       <p className="mt-1 text-muted-foreground">{account.studio_name ?? "Unmapped studio"}{account.location_name ? ` · Homebase ${account.location_name}` : " · Awaiting location verification"}{account.last_validated_at ? ` · Validated ${new Date(account.last_validated_at).toLocaleString()}` : ""}</p>

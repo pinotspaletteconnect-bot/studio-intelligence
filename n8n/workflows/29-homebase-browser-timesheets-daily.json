@@ -52,7 +52,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const output=[];for(const item of $input.all()){const body=item.json;for(const result of body.results||[]){output.push({json:{accountId:Number(result.target.account_id),startDate:String(body.dates[0]),endDate:String(body.dates.at(-1)),daily:result.daily||[],shifts:[]}});}}return output;"
+        "jsCode": "const output=[];for(const item of $input.all()){const body=item.json;for(const result of body.results||[]){output.push({json:{accountId:Number(result.target.account_id),startDate:String(body.dates[0]),endDate:String(body.dates.at(-1)),daily:result.daily||[],roles:result.roles||[],shifts:[]}});}}return output;"
       },
       "id": "ae83af79-7e98-4765-a7c4-f37c0e03609e",
       "name": "Split Studio Loads",

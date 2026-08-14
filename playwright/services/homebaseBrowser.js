@@ -1,5 +1,6 @@
 const { storeHomebaseBrowserSession } = require("./homebaseCredentials");
 const { launchHomebaseBrowser } = require("./homebaseDisplay");
+const csv = require("csv-parser");
 
 const COMPANY_TIMESHEETS_URL = "https://app.joinhomebase.com/company_timesheets";
 
@@ -41,6 +42,51 @@ function parseCompanyRows(rows, retrievedAt = new Date().toISOString()) {
         totals.set(key, current);
     }
     return [...totals.values()];
+}
+
+function parseDetailedRows(rows, retrievedAt = new Date().toISOString()) {
+    const totals = new Map();
+    for (const row of rows) {
+        const location = String(row.Location ?? "").trim();
+        if (!location || normalizeLabel(location) === "totals") continue;
+        const role = String(row.Role ?? "").replace(/\s+/g, " ").trim();
+        const key = `${normalizeLabel(location)}|${normalizeLabel(role)}`;
+        const current = totals.get(key) ?? {
+            location,
+            role: role || null,
+            scheduled_hours: 0,
+            actual_hours: 0,
+            scheduled_cost: 0,
+            actual_cost: 0,
+            retrieved_at: retrievedAt
+        };
+        const scheduledHours = numberValue(row["Scheduled Hours"]);
+        current.scheduled_hours += scheduledHours;
+        current.actual_hours += numberValue(row["Actual Hours"]);
+        current.scheduled_cost += scheduledHours * numberValue(row["Wage Rate"]);
+        current.actual_cost += numberValue(row["Pay Total"]);
+        totals.set(key, current);
+    }
+    return [...totals.values()];
+}
+
+async function exportDetailedRows(page) {
+    await page.getByRole("button", { name: "Export" }).click();
+    const byLocations = page.getByText("By locations", { exact: true });
+    await byLocations.waitFor({ state: "visible", timeout: 10000 });
+    await byLocations.click();
+    const downloadPromise = page.waitForEvent("download", { timeout: 30000 });
+    await page.getByRole("button", { name: /Export timesheets/i }).click();
+    const download = await downloadPromise;
+    const stream = await download.createReadStream();
+    const rows = [];
+    await new Promise((resolve, reject) => {
+        stream.pipe(csv({ skipLines: 1 }))
+            .on("data", row => rows.push(row))
+            .on("end", resolve)
+            .on("error", reject);
+    });
+    return rows;
 }
 
 function dateParts(date) {
@@ -200,6 +246,7 @@ async function collectDay(page, date, targets) {
         elements.map(row => [...row.querySelectorAll("td")].map(cell => cell.textContent?.trim() ?? ""))
     );
     const source = parseCompanyRows(rows);
+    const roleSource = parseDetailedRows(await exportDetailedRows(page));
     const results = [];
     for (const target of targets) {
         const matched = source.find(row =>
@@ -220,7 +267,18 @@ async function collectDay(page, date, targets) {
                 overtime_hours: matched?.overtime_hours ?? 0,
                 double_overtime_hours: 0,
                 retrieved_at: matched?.retrieved_at ?? new Date().toISOString()
-            }
+            },
+            roles: roleSource
+                .filter(row => normalizeLabel(row.location) === normalizeLabel(target.location_name) || normalizeLabel(row.location) === normalizeLabel(target.studio_name))
+                .map(row => ({
+                    labor_date: date,
+                    role: row.role,
+                    scheduled_hours: row.scheduled_hours,
+                    actual_hours: row.actual_hours,
+                    scheduled_cost: Math.round(row.scheduled_cost * 100) / 100,
+                    actual_cost: Math.round(row.actual_cost * 100) / 100,
+                    retrieved_at: row.retrieved_at
+                }))
         });
     }
     return results;
@@ -241,16 +299,17 @@ async function collectCompanyTimesheets(credentials, dates) {
         await login(page, credentials);
         const storageState = await context.storageState();
         await storeHomebaseBrowserSession(credentials.accountId, storageState);
-        const byTarget = new Map(credentials.targets.map(target => [Number(target.account_id), { target, daily: [] }]));
+        const byTarget = new Map(credentials.targets.map(target => [Number(target.account_id), { target, daily: [], roles: [] }]));
         for (const date of dates) {
             for (const result of await collectDay(page, date, credentials.targets)) {
                 byTarget.get(result.accountId).daily.push(result.daily);
+                byTarget.get(result.accountId).roles.push(...result.roles);
             }
         }
-        return [...byTarget.values()].map(({ target, daily }) => ({ target, daily, shifts: [] }));
+        return [...byTarget.values()].map(({ target, daily, roles }) => ({ target, daily, roles, shifts: [] }));
     } finally {
         await browser.close();
     }
 }
 
-module.exports = { accountChoiceKey, captureLoginDiagnostic, collectCompanyTimesheets, normalizeLabel, numberValue, parseCompanyRows, safeLoginMessage };
+module.exports = { accountChoiceKey, captureLoginDiagnostic, collectCompanyTimesheets, normalizeLabel, numberValue, parseCompanyRows, parseDetailedRows, safeLoginMessage };

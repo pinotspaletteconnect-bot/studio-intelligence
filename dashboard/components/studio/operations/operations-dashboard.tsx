@@ -41,6 +41,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart"
 import { Skeleton } from "@/components/ui/skeleton"
+import { LaborSummaryCards } from "@/components/studio/operations/labor-summary-cards"
 
 const currency = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -232,6 +233,7 @@ export function OperationsDashboard() {
 
   return (
     <div className="space-y-6">
+      <LaborSummaryCards />
       <div className="flex flex-wrap justify-end gap-2">
         <Link href="/operations/labor" className={buttonVariants({ variant: "outline" })}>
           <Clock3 />

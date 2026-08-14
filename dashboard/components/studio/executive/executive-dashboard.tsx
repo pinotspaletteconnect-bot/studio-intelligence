@@ -28,6 +28,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton"
 import { useApp } from "@/contexts/app-context"
 import type { ExecutiveDashboardData } from "@/lib/services/executive"
+import { LaborSummaryCards } from "@/components/studio/operations/labor-summary-cards"
 
 const money = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -266,6 +267,7 @@ export function ExecutiveDashboard() {
 
   return (
     <div className="grid gap-6">
+      <LaborSummaryCards />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {metrics.map(({ label, value, change, detail, icon: Icon, showChange = true }) => (
           <Card key={label} className="gap-3 py-4">

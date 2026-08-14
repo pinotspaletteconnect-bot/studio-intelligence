@@ -40,6 +40,12 @@ const schema = z.object({
   endDate: z.string().date(),
   daily: z.array(laborRow).max(63),
   shifts: z.array(shiftRow).max(10000),
+  roles: z.array(z.object({
+    labor_date: z.string().date(), role: z.string().max(300).nullable(),
+    scheduled_hours: z.number().finite().nonnegative(), actual_hours: z.number().finite().nonnegative(),
+    scheduled_cost: z.number().finite().nonnegative(), actual_cost: z.number().finite().nonnegative(),
+    retrieved_at: z.string().datetime(),
+  })).max(10000).default([]),
 })
 
 function authorized(request: Request) {
@@ -62,6 +68,7 @@ export async function POST(request: Request) {
     p_end_date: parsed.data.endDate,
     p_daily: parsed.data.daily,
     p_shifts: parsed.data.shifts,
+    p_roles: parsed.data.roles,
   })
   if (error) return NextResponse.json({ error: "Labor load failed" }, { status: 422 })
   return NextResponse.json({ ok: true, accountId: parsed.data.accountId, result: data })

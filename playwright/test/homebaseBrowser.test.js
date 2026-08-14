@@ -1,10 +1,21 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { accountChoiceKey, normalizeLabel, numberValue, parseCompanyRows, safeLoginMessage } = require("../services/homebaseBrowser");
+const { accountChoiceKey, normalizeLabel, numberValue, parseCompanyRows, parseDetailedRows, safeLoginMessage } = require("../services/homebaseBrowser");
 
 test("normalizes Homebase location labels", () => {
     assert.equal(normalizeLabel("  St.   Matthews "), "st. matthews");
     assert.equal(accountChoiceKey("St. Matthews"), accountChoiceKey("St Matthews"));
+});
+
+test("aggregates detailed roles and discards employee-level columns", () => {
+    const rows = [
+        { "First Name":"Private", "Last Name":"Person", Location:"Gilbert", Role:"Stage Artist", "Scheduled Hours":"4", "Actual Hours":"3.5", "Wage Rate":"$20", "Pay Total":"$70" },
+        { "First Name":"Another", Location:"Gilbert", Role:"Stage Artist", "Scheduled Hours":"2", "Actual Hours":"2", "Wage Rate":"$22", "Pay Total":"$44" },
+        { Location:"TOTALS", Role:"", "Scheduled Hours":"6", "Actual Hours":"5.5", "Wage Rate":"", "Pay Total":"$114" },
+    ];
+    assert.deepEqual(parseDetailedRows(rows,"2026-08-13T12:00:00.000Z"),[{
+        location:"Gilbert",role:"Stage Artist",scheduled_hours:6,actual_hours:5.5,scheduled_cost:124,actual_cost:114,retrieved_at:"2026-08-13T12:00:00.000Z"
+    }]);
 });
 
 test("parses currency and numeric cells", () => {
