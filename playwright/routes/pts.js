@@ -127,12 +127,23 @@ router.post("/product-sales-report", requireCollectorAuth, async (req, res) => {
 
 router.post("/class-sales-report", requireCollectorAuth, async (req, res) => {
     try {
-        const results = await runPtsReportQueued(req.body?.accountId, async () => {
+        const requestedStudioCodes = Array.isArray(req.body?.studioCodes)
+            ? req.body.studioCodes
+                  .map(code => String(code).trim().toUpperCase())
+                  .filter(Boolean)
+                  .sort()
+            : [];
+        const queueScope =
+            requestedStudioCodes.length === 1
+                ? `${req.body?.accountId ?? "legacy-default"}:${requestedStudioCodes[0]}`
+                : req.body?.accountId;
+
+        const results = await runPtsReportQueued(queueScope, async () => {
             const account = await resolvePtsAccount(req.body?.accountId);
             return runPtsClassSalesReport({
                 fromDate: req.body?.fromDate,
                 toDate: req.body?.toDate,
-                studioCodes: req.body?.studioCodes,
+                studioCodes: requestedStudioCodes,
                 debug: req.body?.debug === true,
                 credentials: account.credentials,
                 studioTargets: account.studios
