@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase/server"
 import { isMarketingPlaceholderClass } from "@/lib/services/pts-class-filters"
+import { getHomebaseLabor } from "@/lib/services/homebase-labor"
 
 type DailyOperationsRow = {
   studio_id: number
@@ -106,6 +107,8 @@ export type OperationsDashboardData = {
     seatsSold: number
     revenuePerSeat: number
     foodBeveragePerSeat: number
+    laborCost: number | null
+    laborPercent: number | null
   }>
   studioSales: Array<{
     studioId: number
@@ -385,6 +388,7 @@ export async function getOperationsDashboard(
     classTypesResult,
     historicalClassTypesResult,
     classLeadTimeResult,
+    laborResult,
   ] =
     await Promise.all([
       currentDailyQuery.order("report_date").range(0, 4999),
@@ -406,6 +410,7 @@ export async function getOperationsDashboard(
       classTypesQuery.order("event_date").range(0, 4999),
       historicalClassTypesQuery.order("report_date").range(0, 4999),
       classLeadTimeQuery.range(0, 4999),
+      getHomebaseLabor(studioId, periodStart, periodEnd, allowedStudioIds ?? []),
     ])
 
   if (currentDailyResult.error) throw currentDailyResult.error
@@ -534,6 +539,8 @@ export async function getOperationsDashboard(
       capacity: 0,
       revenuePerSeat: 0,
       foodBeveragePerSeat: 0,
+      laborCost: null,
+      laborPercent: null,
     }
     current.totalSales += numberValue(row.total_sales)
     current.classSales += numberValue(row.class_sales)
@@ -574,6 +581,17 @@ export async function getOperationsDashboard(
       `${row.studio_id}:${row.report_date}`,
       numberValue(row.food_and_beverage_sales)
     )
+  }
+
+  const laborByDate = new Map<string, number>()
+  for (const row of laborResult.daily) {
+    laborByDate.set(row.date, (laborByDate.get(row.date) ?? 0) + row.totalCost)
+  }
+  for (const [reportDate, laborCost] of laborByDate) {
+    const day = dailyMap.get(reportDate)
+    if (!day) continue
+    day.laborCost = laborCost
+    day.laborPercent = day.totalSales > 0 ? laborCost / day.totalSales * 100 : null
   }
 
   // Product Sales is the auditable item-level source for F&B. When detail is
@@ -698,6 +716,8 @@ export async function getOperationsDashboard(
       foodBeveragePerSeat: row.seatsSold
         ? row.foodBeverageSales / row.seatsSold
         : 0,
+      laborCost: row.laborCost,
+      laborPercent: row.laborPercent,
     }))
     .sort((a, b) => a.date.localeCompare(b.date))
 

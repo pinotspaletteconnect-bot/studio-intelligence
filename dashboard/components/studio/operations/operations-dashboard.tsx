@@ -525,7 +525,7 @@ export function OperationsDashboard() {
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[580px] text-sm">
+              <table className="w-full min-w-[660px] text-sm">
                 <thead>
                   <tr className="border-b text-left text-xs text-muted-foreground">
                     <th className="px-2 py-2 font-medium">Date</th>
@@ -533,6 +533,7 @@ export function OperationsDashboard() {
                     <th className="px-2 py-2 text-right font-medium">F&B</th>
                     <th className="px-2 py-2 text-right font-medium">Seats</th>
                     <th className="px-2 py-2 text-right font-medium">Rev/seat</th>
+                    <th className="px-2 py-2 text-right font-medium">Labor %</th>
                     <th className="px-2 py-2 text-right font-medium">Classes</th>
                   </tr>
                 </thead>
@@ -558,6 +559,9 @@ export function OperationsDashboard() {
                       </td>
                       <td className="px-2 py-3 text-right tabular-nums">
                         {decimalCurrency.format(day.revenuePerSeat)}
+                      </td>
+                      <td className="px-2 py-3 text-right tabular-nums">
+                        {day.laborPercent === null ? "—" : `${day.laborPercent.toFixed(1)}%`}
                       </td>
                       <td className="px-2 py-3 text-right">
                         <Link
