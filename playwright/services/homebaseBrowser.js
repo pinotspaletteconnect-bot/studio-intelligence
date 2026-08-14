@@ -172,7 +172,6 @@ async function selectDay(page, date) {
     const { year, month, day } = dateParts(date);
     const dateInput = page.getByRole("textbox", { name: "Choose a date" });
     await dateInput.click();
-    await page.getByText("Custom", { exact: true }).click();
     const targetMonth = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" })
         .format(new Date(Date.UTC(year, month - 1, 1)));
     for (let attempt = 0; attempt < 15; attempt += 1) {
