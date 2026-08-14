@@ -72,7 +72,7 @@ function parseDetailedRows(rows, retrievedAt = new Date().toISOString()) {
 
 async function exportDetailedRows(page) {
     await page.getByRole("button", { name: "Export" }).click();
-    const byLocations = page.getByText("By locations", { exact: true });
+    const byLocations = page.getByRole("radiogroup").getByText("By locations", { exact: true });
     await byLocations.waitFor({ state: "visible", timeout: 10000 });
     await byLocations.click();
     const downloadPromise = page.waitForEvent("download", { timeout: 30000 });
