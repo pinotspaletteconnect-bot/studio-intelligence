@@ -42,6 +42,12 @@ type SourceMediumRow = {
   total_revenue?: number | string | null
 }
 
+type EulerityAttributionRow = {
+  studio_id: number
+  report_date: string
+  total_revenue?: number | string | null
+}
+
 type MetaCampaignRow = {
   account_id: string
   account_name: string
@@ -308,6 +314,17 @@ export async function getMarketingDashboard(
     studioId,
     allowedStudioIds
   )
+  const eulerityAttributionQuery = addStudioFilter(
+    supabase
+      .from("ga4_source_medium_performance")
+      .select("studio_id,report_date,total_revenue")
+      .eq("vendor", "Eulerity")
+      .eq("marketing_type", "Paid")
+      .gte("report_date", periodStart)
+      .lte("report_date", periodEnd),
+    studioId,
+    allowedStudioIds
+  )
   const metaCampaignQuery = addStudioFilter(
     supabase
       .from("meta_ads_daily")
@@ -362,6 +379,7 @@ export async function getMarketingDashboard(
     eulerityResult,
     organicResult,
     { data: sourceMediumData, error: sourceMediumError },
+    { data: eulerityAttributionData, error: eulerityAttributionError },
     { data: metaCampaignData, error: metaCampaignError },
     { data: eulerityChannelData, error: eulerityChannelError },
     { data: mntnData, error: mntnError },
@@ -373,6 +391,7 @@ export async function getMarketingDashboard(
     eulerityQuery.order("report_date"),
     organicQuery.order("insight_date"),
     sourceMediumQuery.range(0, 4999),
+    eulerityAttributionQuery.range(0, 4999),
     metaCampaignQuery.range(0, 4999),
     eulerityChannelQuery.range(0, 4999),
     mntnQuery.range(0, 4999),
@@ -392,6 +411,7 @@ export async function getMarketingDashboard(
   ) {
     throw sourceMediumError
   }
+  if (eulerityAttributionError) throw eulerityAttributionError
   if (metaCampaignError) throw metaCampaignError
   if (eulerityChannelError) throw eulerityChannelError
   if (
@@ -412,6 +432,8 @@ export async function getMarketingDashboard(
   const metaRows = (metaResult.data ?? []) as MetaAdsRow[]
   const eulerityRows = (eulerityResult.data ?? []) as EulerityRow[]
   const sourceRows = (sourceMediumData ?? []) as SourceMediumRow[]
+  const eulerityAttributionRows = (eulerityAttributionData ??
+    []) as EulerityAttributionRow[]
   const metaCampaignRows = (metaCampaignData ?? []) as MetaCampaignRow[]
   const eulerityChannelRows = (eulerityChannelData ??
     []) as EulerityChannelRow[]
@@ -589,7 +611,10 @@ export async function getMarketingDashboard(
     0
   )
   const metaAttributedRevenue = attributedRevenueByVendor("Meta")
-  const eulerityAttributedRevenue = attributedRevenueByVendor("Eulerity")
+  const eulerityAttributedRevenue = eulerityAttributionRows.reduce(
+    (sum, row) => sum + numberValue(row.total_revenue),
+    0
+  )
   const attributedRevenue = metaAttributedRevenue + eulerityAttributedRevenue
   const attributionAvailable = sourceRows.length > 0
   const metaCampaignMap = new Map<
@@ -752,13 +777,7 @@ export async function getMarketingDashboard(
   }
   const eulerityDailyRevenue = new Map<string, number>()
   const eulerityAttributionKeys = new Set<string>()
-  for (const row of sourceRows) {
-    if (
-      row.vendor?.toLowerCase() !== "eulerity" ||
-      row.marketing_type?.toLowerCase() !== "paid"
-    ) {
-      continue
-    }
+  for (const row of eulerityAttributionRows) {
     const key = `${row.report_date}|${row.studio_id}`
     eulerityAttributionKeys.add(key)
     eulerityDailyRevenue.set(

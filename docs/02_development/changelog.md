@@ -5,6 +5,9 @@
 - Added a studio-level Daily Eulerity ROAS chart to Marketing Performance. It
   divides GA4 session-attributed Eulerity revenue by Eulerity spend for each
   studio/day and leaves unsupported dates blank rather than implying zero ROAS.
+- Corrected the chart's attribution query to request Eulerity paid rows
+  directly. The prior all-source response reached Supabase's row limit before
+  Gilbert and Jeffersonville, leaving their otherwise-complete series blank.
 
 ## August 12, 2026
 
