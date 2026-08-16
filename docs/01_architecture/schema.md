@@ -107,6 +107,7 @@ total sales as class sales plus class fees plus Product Sales net sales.
 | `eulerity_daily_metrics` | Eulerity performance metrics at the documented daily grain | Current |
 | `eulerity_daily_spend` | Eulerity spend by studio/date and applicable campaign dimensions | Current |
 | `eulerity_daily_budget_allocation` | Daily allocated budget by studio/date | Current |
+| `marketing_strategy_changes` | Tenant-scoped, dated Eulerity strategy annotations with optional studio scope, category, author, and notes | Deployed August 16, 2026 through migration `20260816120000` |
 | `meta_ads_daily` | Meta campaign insights by account/campaign/date with studio mapping | Current |
 | `meta_page_insights_daily` | Facebook Page insights by page/date/period with studio mapping | Current |
 | `meta_integration_accounts` | Tenant-scoped Meta owner OAuth connections with Vault secret references and token-health timestamps | Migration prepared; not deployed |

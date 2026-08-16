@@ -158,6 +158,11 @@ Implemented foundation:
   cards, separate Meta Ads and Eulerity spend trends, studio-level daily
   Eulerity attributed ROAS, paid-platform share, supported-funnel stages, and
   Meta organic coverage
+- Daily Eulerity ROAS supports dated strategy-change annotations for all studios
+  or one studio. Owners and administrators can record and remove categorized
+  budget, targeting, creative, bidding, structure, offer, or other changes;
+  viewers see the resulting vertical chart markers and supporting notes.
+  Migration `20260816120000` is deployed.
 - GA4 source/medium performance table with curated paid, direct, Google Organic,
   social, tourism, and Constant Contact email reporting; Facebook Organic and
   Instagram Organic remain separate, incidental referrals roll up, and raw

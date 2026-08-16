@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 
 import { getMarketingDashboard } from "@/lib/services/marketing"
+import { getMarketingStrategyChanges } from "@/lib/services/marketing-strategy-changes"
 import { apiAccessResponse, assertStudioAccess, requireApiAccess } from "@/lib/auth/api"
 
 const querySchema = z.object({
@@ -25,14 +26,24 @@ export async function GET(request: NextRequest) {
   try {
     const access = await requireApiAccess()
     assertStudioAccess(access, parsed.data.studioId)
-    return NextResponse.json(
-      await getMarketingDashboard(
-        parsed.data.studioId,
-        parsed.data.startDate,
-        parsed.data.endDate,
-        access.allowedStudioIds
-      )
+    const dashboard = await getMarketingDashboard(
+      parsed.data.studioId,
+      parsed.data.startDate,
+      parsed.data.endDate,
+      access.allowedStudioIds
     )
+    const strategyChanges = await getMarketingStrategyChanges(
+      access.organizationId,
+      access.allowedStudioIds,
+      dashboard.period.startDate,
+      dashboard.period.endDate,
+      parsed.data.studioId
+    )
+    return NextResponse.json({
+      ...dashboard,
+      strategyChanges,
+      canManageStrategyChanges: ["owner", "administrator"].includes(access.role),
+    })
   } catch (error) {
     const accessResponse = apiAccessResponse(error)
     if (accessResponse) return accessResponse

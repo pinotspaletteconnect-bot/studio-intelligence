@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, type FormEvent } from "react"
 import Link from "next/link"
 import {
   Activity,
@@ -11,7 +11,9 @@ import {
   CircleDollarSign,
   Gauge,
   MousePointerClick,
+  Plus,
   Target,
+  Trash2,
 } from "lucide-react"
 import {
   Area,
@@ -22,13 +24,21 @@ import {
   LineChart,
   Pie,
   PieChart,
+  ReferenceLine,
   XAxis,
   YAxis,
 } from "recharts"
 
-import type { MarketingDashboard as DashboardData } from "@/lib/services/marketing"
+import type { MarketingDashboard } from "@/lib/services/marketing"
+import type {
+  MarketingStrategyChange,
+  StrategyChangeType,
+} from "@/lib/services/marketing-strategy-changes"
 import { useApp } from "@/contexts/app-context"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import {
   ChartContainer,
   ChartLegend,
@@ -64,6 +74,21 @@ const studioChartColors = [
   "#ca8a04",
   "#dc2626",
 ]
+
+type DashboardData = MarketingDashboard & {
+  strategyChanges: MarketingStrategyChange[]
+  canManageStrategyChanges: boolean
+}
+
+const strategyChangeLabels: Record<StrategyChangeType, string> = {
+  budget: "Budget",
+  targeting: "Targeting / ZIP codes",
+  creative: "Creative",
+  bidding: "Bidding",
+  campaign_structure: "Campaign structure",
+  offer: "Offer",
+  other: "Other",
+}
 
 function formatChartDate(value: string) {
   return new Intl.DateTimeFormat("en-US", {
@@ -106,10 +131,19 @@ type SourceSortKey =
   | "revenue"
 
 export function MarketingDashboard() {
-  const { selectedStudio, dateRange } = useApp()
+  const { selectedStudio, dateRange, studios } = useApp()
   const [data, setData] = useState<DashboardData | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [strategyFormOpen, setStrategyFormOpen] = useState(false)
+  const [strategyStudioId, setStrategyStudioId] = useState("all")
+  const [strategyDate, setStrategyDate] = useState(dateRange.endDate)
+  const [strategyType, setStrategyType] =
+    useState<StrategyChangeType>("budget")
+  const [strategyTitle, setStrategyTitle] = useState("")
+  const [strategyNotes, setStrategyNotes] = useState("")
+  const [strategySaving, setStrategySaving] = useState(false)
+  const [strategyError, setStrategyError] = useState<string | null>(null)
   const [sourceSort, setSourceSort] = useState<{
     key: SourceSortKey
     direction: "asc" | "desc"
@@ -211,6 +245,90 @@ export function MarketingDashboard() {
       cpc: totals.clicks ? totals.spend / totals.clicks : 0,
     }
   }, [data])
+  const strategyChangesByDate = useMemo(() => {
+    const grouped = new Map<string, MarketingStrategyChange[]>()
+    for (const change of data?.strategyChanges ?? []) {
+      const changes = grouped.get(change.effectiveDate) ?? []
+      changes.push(change)
+      grouped.set(change.effectiveDate, changes)
+    }
+    return [...grouped.entries()].map(([date, changes]) => ({ date, changes }))
+  }, [data])
+
+  const openStrategyForm = () => {
+    setStrategyStudioId(selectedStudio === "all" ? "all" : selectedStudio)
+    setStrategyDate(dateRange.endDate)
+    setStrategyError(null)
+    setStrategyFormOpen(true)
+  }
+
+  const saveStrategyChange = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setStrategySaving(true)
+    setStrategyError(null)
+    try {
+      const response = await fetch("/api/marketing/strategy-changes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          studioId:
+            strategyStudioId === "all" ? null : Number(strategyStudioId),
+          effectiveDate: strategyDate,
+          changeType: strategyType,
+          title: strategyTitle,
+          notes: strategyNotes,
+        }),
+      })
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error)
+      setData((current) =>
+        current
+          ? {
+              ...current,
+              strategyChanges: [...current.strategyChanges, result].sort(
+                (a, b) =>
+                  a.effectiveDate.localeCompare(b.effectiveDate) || a.id - b.id
+              ),
+            }
+          : current
+      )
+      setStrategyTitle("")
+      setStrategyNotes("")
+      setStrategyFormOpen(false)
+    } catch (saveError) {
+      setStrategyError(
+        saveError instanceof Error
+          ? saveError.message
+          : "The strategy change could not be saved."
+      )
+    } finally {
+      setStrategySaving(false)
+    }
+  }
+
+  const removeStrategyChange = async (id: number) => {
+    setStrategyError(null)
+    const response = await fetch("/api/marketing/strategy-changes", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    })
+    const result = await response.json()
+    if (!response.ok) {
+      setStrategyError(result.error ?? "The strategy change could not be removed.")
+      return
+    }
+    setData((current) =>
+      current
+        ? {
+            ...current,
+            strategyChanges: current.strategyChanges.filter(
+              (change) => change.id !== id
+            ),
+          }
+        : current
+    )
+  }
 
   const changeSourceSort = (key: SourceSortKey) => {
     setSourceSort((current) => ({
@@ -903,14 +1021,117 @@ export function MarketingDashboard() {
       ) : null}
 
       <Card>
-        <CardHeader>
-          <CardTitle>Daily Eulerity ROAS</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            GA4 session-attributed Eulerity revenue divided by Eulerity spend
-            for each studio and day.
-          </p>
+        <CardHeader className="flex-row items-start justify-between gap-4">
+          <div>
+            <CardTitle>Daily Eulerity ROAS</CardTitle>
+            <p className="mt-1 text-sm text-muted-foreground">
+              GA4 session-attributed Eulerity revenue divided by Eulerity spend
+              for each studio and day.
+            </p>
+          </div>
+          {data.canManageStrategyChanges ? (
+            <Button size="sm" variant="outline" onClick={openStrategyForm}>
+              <Plus className="size-4" />
+              Add strategy change
+            </Button>
+          ) : null}
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {strategyFormOpen ? (
+            <form
+              onSubmit={saveStrategyChange}
+              className="grid gap-3 rounded-xl border bg-muted/30 p-4 md:grid-cols-2 xl:grid-cols-4"
+            >
+              <div className="space-y-1.5">
+                <Label htmlFor="strategy-date">Effective date</Label>
+                <Input
+                  id="strategy-date"
+                  type="date"
+                  value={strategyDate}
+                  onChange={(event) => setStrategyDate(event.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="strategy-studio">Studio</Label>
+                <select
+                  id="strategy-studio"
+                  value={strategyStudioId}
+                  onChange={(event) => setStrategyStudioId(event.target.value)}
+                  className="h-8 w-full rounded-lg border border-input bg-background px-2.5 text-sm"
+                >
+                  <option value="all">All studios</option>
+                  {studios.map((studio) => (
+                    <option key={studio.id} value={studio.id}>
+                      {studio.studio_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="strategy-type">Change type</Label>
+                <select
+                  id="strategy-type"
+                  value={strategyType}
+                  onChange={(event) =>
+                    setStrategyType(event.target.value as StrategyChangeType)
+                  }
+                  className="h-8 w-full rounded-lg border border-input bg-background px-2.5 text-sm"
+                >
+                  {Object.entries(strategyChangeLabels).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="strategy-title">Short description</Label>
+                <Input
+                  id="strategy-title"
+                  value={strategyTitle}
+                  onChange={(event) => setStrategyTitle(event.target.value)}
+                  placeholder="Increased Search budget 20%"
+                  maxLength={120}
+                  required
+                />
+              </div>
+              <div className="space-y-1.5 md:col-span-2 xl:col-span-4">
+                <Label htmlFor="strategy-notes">Notes (optional)</Label>
+                <textarea
+                  id="strategy-notes"
+                  value={strategyNotes}
+                  onChange={(event) => setStrategyNotes(event.target.value)}
+                  placeholder="What changed, why it changed, and what outcome you expect."
+                  maxLength={1000}
+                  rows={2}
+                  className="w-full rounded-lg border border-input bg-background px-2.5 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                />
+              </div>
+              {strategyError ? (
+                <p className="text-sm text-destructive md:col-span-2 xl:col-span-3">
+                  {strategyError}
+                </p>
+              ) : (
+                <div className="md:col-span-2 xl:col-span-3" />
+              )}
+              <div className="flex justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setStrategyFormOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button disabled={strategySaving}>
+                  {strategySaving ? "Saving…" : "Save change"}
+                </Button>
+              </div>
+            </form>
+          ) : null}
+          {strategyError && !strategyFormOpen ? (
+            <p className="text-sm text-destructive">{strategyError}</p>
+          ) : null}
           {data.eulerityDailyRoas.studios.length &&
           data.eulerityDailyRoas.points.some((point) =>
             data.eulerityDailyRoas.studios.some(
@@ -955,6 +1176,24 @@ export function MarketingDashboard() {
                   }
                 />
                 <ChartLegend content={<ChartLegendContent />} />
+                {strategyChangesByDate.map(({ date, changes }) => (
+                  <ReferenceLine
+                    key={date}
+                    x={date}
+                    stroke="#b45309"
+                    strokeDasharray="5 4"
+                    strokeWidth={1.5}
+                    label={{
+                      value:
+                        changes.length > 1
+                          ? `${changes.length} changes`
+                          : strategyChangeLabels[changes[0].changeType],
+                      position: "insideTopRight",
+                      fill: "#b45309",
+                      fontSize: 11,
+                    }}
+                  />
+                ))}
                 {data.eulerityDailyRoas.studios.map((studio, index) => (
                   <Line
                     key={studio.id}
@@ -976,6 +1215,40 @@ export function MarketingDashboard() {
               attribution are available for the selected period.
             </div>
           )}
+          {data.strategyChanges.length ? (
+            <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+              {data.strategyChanges.map((change) => (
+                <div
+                  key={change.id}
+                  className="flex gap-3 rounded-lg border border-amber-600/20 bg-amber-500/5 p-3"
+                >
+                  <span className="mt-1 h-8 border-l-2 border-dashed border-amber-700" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium text-amber-800 dark:text-amber-300">
+                      {formatChartDate(change.effectiveDate)} ·{" "}
+                      {strategyChangeLabels[change.changeType]}
+                    </p>
+                    <p className="mt-0.5 text-sm font-medium">{change.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {change.studioName ?? "All studios"}
+                      {change.notes ? ` · ${change.notes}` : ""}
+                    </p>
+                  </div>
+                  {data.canManageStrategyChanges ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={`Remove ${change.title}`}
+                      onClick={() => removeStrategyChange(change.id)}
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 

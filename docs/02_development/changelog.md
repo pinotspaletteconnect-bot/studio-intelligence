@@ -2,6 +2,12 @@
 
 ## August 16, 2026
 
+- Added tenant-scoped marketing strategy annotations to Daily Eulerity ROAS.
+  Owners and administrators can record an effective date, studio scope,
+  category, short description, and notes; the chart displays dated vertical
+  markers and a supporting change history. The additive table is protected by
+  RLS and server-side role/studio authorization. Migration `20260816120000`
+  was deployed to production.
 - Added a studio-level Daily Eulerity ROAS chart to Marketing Performance. It
   divides GA4 session-attributed Eulerity revenue by Eulerity spend for each
   studio/day and leaves unsupported dates blank rather than implying zero ROAS.
