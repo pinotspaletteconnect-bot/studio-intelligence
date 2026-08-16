@@ -1,5 +1,11 @@
 # Studio Intelligence Changelog
 
+## August 16, 2026
+
+- Added a studio-level Daily Eulerity ROAS chart to Marketing Performance. It
+  divides GA4 session-attributed Eulerity revenue by Eulerity spend for each
+  studio/day and leaves unsupported dates blank rather than implying zero ROAS.
+
 ## August 12, 2026
 
 - Deployed governed Constant Contact source/medium mappings so tagged campaigns

@@ -16,6 +16,7 @@ type MetaAdsRow = {
 }
 
 type EulerityRow = {
+  studio_id: number
   report_date: string
   spend_total: number | string | null
   clicks_total: number | null
@@ -23,6 +24,8 @@ type EulerityRow = {
 }
 
 type SourceMediumRow = {
+  studio_id: number
+  report_date: string
   source: string
   medium: string
   display_name?: string | null
@@ -178,6 +181,10 @@ export type MarketingDashboard = {
     ctr: number
     cpc: number
   }>
+  eulerityDailyRoas: {
+    studios: Array<{ id: number; name: string; dataKey: string }>
+    points: Array<{ date: string } & Record<string, string | number | null>>
+  }
   mntn: {
     advertisers: Array<{ id: string; name: string }>
     studios: Array<{
@@ -275,7 +282,7 @@ export async function getMarketingDashboard(
   const eulerityQuery = addStudioFilter(
     supabase
       .from("eulerity_daily_metrics")
-      .select("report_date,spend_total,clicks_total,impressions_total")
+      .select("studio_id,report_date,spend_total,clicks_total,impressions_total")
       .gte("report_date", periodStart)
       .lte("report_date", periodEnd),
     studioId,
@@ -294,7 +301,7 @@ export async function getMarketingDashboard(
     supabase
       .from("ga4_source_medium_performance")
       .select(
-        "source,medium,display_name,vendor,marketing_type,traffic_category,reporting_group,visibility,group_label,sort_order,sessions,new_users,key_events,total_revenue"
+        "studio_id,report_date,source,medium,display_name,vendor,marketing_type,traffic_category,reporting_group,visibility,group_label,sort_order,sessions,new_users,key_events,total_revenue"
       )
       .gte("report_date", periodStart)
       .lte("report_date", periodEnd),
@@ -365,7 +372,7 @@ export async function getMarketingDashboard(
     metaQuery.order("integration_date"),
     eulerityQuery.order("report_date"),
     organicQuery.order("insight_date"),
-    sourceMediumQuery,
+    sourceMediumQuery.range(0, 4999),
     metaCampaignQuery.range(0, 4999),
     eulerityChannelQuery.range(0, 4999),
     mntnQuery.range(0, 4999),
@@ -735,6 +742,59 @@ export async function getMarketingDashboard(
       String(studio.studio_name),
     ])
   )
+  const eulerityDailySpend = new Map<string, number>()
+  for (const row of eulerityRows) {
+    const key = `${row.report_date}|${row.studio_id}`
+    eulerityDailySpend.set(
+      key,
+      (eulerityDailySpend.get(key) ?? 0) + numberValue(row.spend_total)
+    )
+  }
+  const eulerityDailyRevenue = new Map<string, number>()
+  const eulerityAttributionKeys = new Set<string>()
+  for (const row of sourceRows) {
+    if (
+      row.vendor?.toLowerCase() !== "eulerity" ||
+      row.marketing_type?.toLowerCase() !== "paid"
+    ) {
+      continue
+    }
+    const key = `${row.report_date}|${row.studio_id}`
+    eulerityAttributionKeys.add(key)
+    eulerityDailyRevenue.set(
+      key,
+      (eulerityDailyRevenue.get(key) ?? 0) + numberValue(row.total_revenue)
+    )
+  }
+  const eulerityStudioIds = [
+    ...new Set(eulerityRows.map((row) => row.studio_id)),
+  ].sort((a, b) =>
+    (studioNames.get(a) ?? `Studio ${a}`).localeCompare(
+      studioNames.get(b) ?? `Studio ${b}`
+    )
+  )
+  const eulerityDailyRoasStudios = eulerityStudioIds.map((id) => ({
+    id,
+    name: studioNames.get(id) ?? `Studio ${id}`,
+    dataKey: `studio_${id}`,
+  }))
+  const eulerityRoasDates = [
+    ...new Set(eulerityRows.map((row) => row.report_date)),
+  ].sort()
+  const eulerityDailyRoasPoints = eulerityRoasDates.map((date) => {
+    const point: { date: string } & Record<string, string | number | null> = {
+      date,
+    }
+    for (const studio of eulerityDailyRoasStudios) {
+      const key = `${date}|${studio.id}`
+      const spend = eulerityDailySpend.get(key) ?? 0
+      point[studio.dataKey] =
+        spend > 0 && eulerityAttributionKeys.has(key)
+          ? Number(((eulerityDailyRevenue.get(key) ?? 0) / spend).toFixed(2))
+          : null
+    }
+    return point
+  })
   const mntnStudioTotals = new Map<
     number,
     { spend: number; orderValue: number }
@@ -872,6 +932,10 @@ export async function getMarketingDashboard(
     ],
     metaCampaigns,
     eulerityChannels,
+    eulerityDailyRoas: {
+      studios: eulerityDailyRoasStudios,
+      points: eulerityDailyRoasPoints,
+    },
     mntn: {
       advertisers: mntnAdvertisers,
       studios: mntnStudios,

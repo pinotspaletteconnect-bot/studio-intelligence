@@ -18,6 +18,8 @@ import {
   AreaChart,
   CartesianGrid,
   Cell,
+  Line,
+  LineChart,
   Pie,
   PieChart,
   XAxis,
@@ -29,6 +31,8 @@ import { useApp } from "@/contexts/app-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
@@ -49,6 +53,25 @@ const compactNumber = new Intl.NumberFormat("en-US", {
   notation: "compact",
   maximumFractionDigits: 1,
 })
+
+const studioChartColors = [
+  "#2563eb",
+  "#7c3aed",
+  "#f97316",
+  "#059669",
+  "#db2777",
+  "#0891b2",
+  "#ca8a04",
+  "#dc2626",
+]
+
+function formatChartDate(value: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${value}T00:00:00Z`))
+}
 
 const metricCards = [
   { key: "paidSpend", label: "Meta + Eulerity spend", icon: CircleDollarSign },
@@ -878,6 +901,83 @@ export function MarketingDashboard() {
           </CardContent>
         </Card>
       ) : null}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Daily Eulerity ROAS</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            GA4 session-attributed Eulerity revenue divided by Eulerity spend
+            for each studio and day.
+          </p>
+        </CardHeader>
+        <CardContent>
+          {data.eulerityDailyRoas.studios.length &&
+          data.eulerityDailyRoas.points.some((point) =>
+            data.eulerityDailyRoas.studios.some(
+              (studio) => point[studio.dataKey] != null
+            )
+          ) ? (
+            <ChartContainer
+              className="h-[340px] w-full"
+              config={Object.fromEntries(
+                data.eulerityDailyRoas.studios.map((studio, index) => [
+                  studio.dataKey,
+                  {
+                    label: studio.name,
+                    color: studioChartColors[index % studioChartColors.length],
+                  },
+                ])
+              )}
+            >
+              <LineChart
+                data={data.eulerityDailyRoas.points}
+                margin={{ left: 4, right: 12, top: 8 }}
+              >
+                <CartesianGrid vertical={false} />
+                <XAxis
+                  dataKey="date"
+                  tickLine={false}
+                  axisLine={false}
+                  minTickGap={24}
+                  tickFormatter={formatChartDate}
+                />
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  width={42}
+                  tickFormatter={(value) => `${Number(value).toFixed(1)}x`}
+                />
+                <ChartTooltip
+                  content={
+                    <ChartTooltipContent
+                      labelFormatter={(value) => formatChartDate(String(value))}
+                    />
+                  }
+                />
+                <ChartLegend content={<ChartLegendContent />} />
+                {data.eulerityDailyRoas.studios.map((studio, index) => (
+                  <Line
+                    key={studio.id}
+                    dataKey={studio.dataKey}
+                    name={studio.dataKey}
+                    type="monotone"
+                    stroke={studioChartColors[index % studioChartColors.length]}
+                    strokeWidth={2}
+                    dot={false}
+                    activeDot={{ r: 4 }}
+                    connectNulls={false}
+                  />
+                ))}
+              </LineChart>
+            </ChartContainer>
+          ) : (
+            <div className="flex h-[260px] items-center justify-center text-center text-sm text-muted-foreground">
+              Daily ROAS will appear when Eulerity spend and matching GA4
+              attribution are available for the selected period.
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>

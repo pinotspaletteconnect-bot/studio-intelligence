@@ -154,7 +154,10 @@ Implemented foundation:
 - Marketing summary API: `/api/marketing/summary`
 - Supabase access isolated behind frontend services
 - Reusable dashboard toolbar, studio selector, and metric cards
-- Marketing Performance overview with paid CPC, attribution-ready revenue/ROAS cards, separate Meta Ads and Eulerity spend trends, paid-platform share, supported-funnel stages, and Meta organic coverage
+- Marketing Performance overview with paid CPC, attribution-ready revenue/ROAS
+  cards, separate Meta Ads and Eulerity spend trends, studio-level daily
+  Eulerity attributed ROAS, paid-platform share, supported-funnel stages, and
+  Meta organic coverage
 - GA4 source/medium performance table with curated paid, direct, Google Organic,
   social, tourism, and Constant Contact email reporting; Facebook Organic and
   Instagram Organic remain separate, incidental referrals roll up, and raw
