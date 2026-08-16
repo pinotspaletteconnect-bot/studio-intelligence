@@ -156,8 +156,10 @@ Implemented foundation:
 - Reusable dashboard toolbar, studio selector, and metric cards
 - Marketing Performance overview with paid CPC, attribution-ready revenue/ROAS cards, separate Meta Ads and Eulerity spend trends, paid-platform share, supported-funnel stages, and Meta organic coverage
 - GA4 source/medium performance table with curated paid, direct, Google Organic,
-  social, and tourism reporting; Facebook Organic and Instagram Organic remain
-  separate, incidental referrals roll up, and raw attribution is preserved
+  social, tourism, and Constant Contact email reporting; Facebook Organic and
+  Instagram Organic remain separate, incidental referrals roll up, and raw
+  attribution is preserved. Dedicated Constant Contact classification migration
+  `20260812210000` was deployed August 12, 2026.
 - Working 7-, 30-, and 90-day marketing filters
 - Permanent drill-down routes for GA4, Meta Ads, Meta Organic, and Eulerity
 - MNTN Connected TV dashboard card with delivery, modeled attribution,

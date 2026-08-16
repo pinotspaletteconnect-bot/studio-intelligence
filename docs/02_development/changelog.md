@@ -2,6 +2,9 @@
 
 ## August 12, 2026
 
+- Deployed governed Constant Contact source/medium mappings so tagged campaigns
+  and recognized Constant Contact redirect referrals appear as a dedicated
+  Email source on the Marketing dashboard without changing raw GA4 facts.
 - Implemented the local Homebase browser-collection replacement after the
   public labor endpoints returned an All-in-One-tier restriction. One
   Vault-encrypted owner login can collect the Company Timesheets view for all
