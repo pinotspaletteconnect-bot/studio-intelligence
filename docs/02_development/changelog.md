@@ -2,6 +2,8 @@
 
 ## August 16, 2026
 
+- Fixed the strategy-change form action by explicitly marking its Base UI save
+  control as a submit button.
 - Added tenant-scoped marketing strategy annotations to Daily Eulerity ROAS.
   Owners and administrators can record an effective date, studio scope,
   category, short description, and notes; the chart displays dated vertical

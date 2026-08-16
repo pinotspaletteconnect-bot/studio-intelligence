@@ -1123,7 +1123,7 @@ export function MarketingDashboard() {
                 >
                   Cancel
                 </Button>
-                <Button disabled={strategySaving}>
+                <Button type="submit" disabled={strategySaving}>
                   {strategySaving ? "Saving…" : "Save change"}
                 </Button>
               </div>
