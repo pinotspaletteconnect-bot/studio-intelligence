@@ -31,7 +31,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const yesterday = new Date(); yesterday.setUTCDate(yesterday.getUTCDate() - 1); const orderDate = yesterday.toISOString().slice(0,10); return $input.all().filter(item => Array.isArray(item.json.studioTargets) && item.json.studioTargets.some(studio => Array.isArray(studio.reports) && studio.reports.includes('reservations'))).map(item => ({ json: { ...item.json, orderDate } }));"
+        "jsCode": "const yesterday = new Date(); yesterday.setUTCDate(yesterday.getUTCDate() - 1); const orderDate = yesterday.toISOString().slice(0,10); return $input.all().filter(item => Array.isArray(item.json.studioTargets) && item.json.studioTargets.length > 0).map(item => ({ json: { ...item.json, orderDate } }));"
       },
       "id": "31a00000-0000-4000-8000-000000000004",
       "name": "Keep Reservation Accounts",

@@ -257,6 +257,8 @@ async function readReservationRows(page) {
 
 async function runPtsReservationsReport({
     orderDate,
+    orderFromDate,
+    orderToDate,
     classFromDate,
     classToDate,
     includeOrderAttributes = false,
@@ -264,9 +266,11 @@ async function runPtsReservationsReport({
     credentials,
     studioTargets
 } = {}) {
-    const targetDate = validateDate(orderDate);
-    const fromDate = validateDate(classFromDate ?? targetDate, "classFromDate");
-    const toDate = validateDate(classToDate ?? isoDateOffset(targetDate, 516), "classToDate");
+    const targetFromDate = validateDate(orderFromDate ?? orderDate, orderFromDate ? "orderFromDate" : "orderDate");
+    const targetToDate = validateDate(orderToDate ?? orderDate ?? targetFromDate, orderToDate ? "orderToDate" : "orderDate");
+    if (targetFromDate > targetToDate) throw new Error("PTS orderFromDate must be on or before orderToDate");
+    const fromDate = validateDate(classFromDate ?? targetFromDate, "classFromDate");
+    const toDate = validateDate(classToDate ?? isoDateOffset(targetToDate, 516), "classToDate");
     if (fromDate > toDate) throw new Error("PTS classFromDate must be on or before classToDate");
 
     const studios = requestedStudios(studioCodes, studioTargets);
@@ -281,7 +285,7 @@ async function runPtsReservationsReport({
         for (const studio of studios) {
             await searchStudio(page, studio, fromDate, toDate);
             const allRows = await readReservationRows(page);
-            const rows = allRows.filter(row => row.order_date === targetDate);
+            const rows = allRows.filter(row => row.order_date >= targetFromDate && row.order_date <= targetToDate);
             const orderRows = includeOrderAttributes ? [...rows.filter(row => row.order_id).reduce((ordersById, row) => {
                 const existing = ordersById.get(row.order_id);
                 ordersById.set(row.order_id, existing
@@ -310,7 +314,9 @@ async function runPtsReservationsReport({
                 locationId: studio.locationId,
                 locationName: studio.locationName,
                 timeZone: studio.timeZone,
-                orderDate: targetDate,
+                orderDate: targetFromDate === targetToDate ? targetFromDate : null,
+                orderFromDate: targetFromDate,
+                orderToDate: targetToDate,
                 classFromDate: fromDate,
                 classToDate: toDate,
                 rowCount: rows.length,
