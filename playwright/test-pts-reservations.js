@@ -1,7 +1,9 @@
 const assert = require("assert");
 
 const {
+    moneyValue,
     normalizeReservationRow,
+    normalizePostalCode,
     parseEventDate,
     parseOrderLocalDate
 } = require("./scripts/pts/reservationsReport");
@@ -28,5 +30,8 @@ assert.strictEqual(row.ordered_seats, 1);
 assert.strictEqual(row.booked_sales, 39);
 assert.match(row.source_row_key, /^[a-f0-9]{64}$/);
 assert.ok(!("purchaser" in row));
+assert.strictEqual(normalizePostalCode("43016-1234"), "43016");
+assert.strictEqual(normalizePostalCode("not available"), null);
+assert.strictEqual(moneyValue("-$12.50"), -12.5);
 
 console.log("PTS Reservations parser tests passed");

@@ -192,7 +192,10 @@ Planned scope includes profile insights, reviews, search visibility, and custome
 - **Configuration:** one `studio_integrations` row per authorized PTS location,
   with `integration_type = 'pts'` and the PTS location ID in `external_id`
 - **Warehouse:** `pts_sales_daily_summary`, `pts_class_sales_daily`,
-  `pts_non_class_sales_items`, and `pts_reservation_bookings`
+  `pts_non_class_sales_items`, and `pts_reservation_bookings`. The additive
+  `pts_order_attributes` design is implemented locally for five-digit billing
+  ZIP and item-level discount totals; migration `20260817160000` is deployed
+  and the independent workflow cutover is pending.
 - **Range-load history:** `pts_class_type_sales_daily` and
   `pts_product_sales_daily`, exposed through `pts_operations_daily`. Operations
   reporting combines this preserved history with the daily production facts;
@@ -202,7 +205,9 @@ Planned scope includes profile insights, reviews, search visibility, and custome
   completed event days. Rows use a stable event key and preserve the source
   `Type` for later reporting groups.
 - **Privacy:** customer names in the Sales Report workbook are discarded by the
-  collector because product and revenue reporting does not require them
+  collector because product and revenue reporting does not require them. Order
+  enrichment retains only five-digit billing ZIP; street address, name, email,
+  and phone are excluded.
 - **Status:** Production for the current four-studio pilot. Daily Sales
   summaries and Product Sales item details are validated through warehouse
   loading for all four studios on July 28, 2026. The Product Sales workflow

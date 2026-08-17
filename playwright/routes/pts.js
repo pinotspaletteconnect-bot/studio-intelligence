@@ -240,6 +240,7 @@ router.post("/reservations-report", requireCollectorAuth, async (req, res) => {
                 orderDate: req.body?.orderDate,
                 classFromDate: req.body?.classFromDate,
                 classToDate: req.body?.classToDate,
+                includeOrderAttributes: req.body?.includeOrderAttributes === true,
                 studioCodes: req.body?.studioCodes,
                 credentials: account.credentials,
                 studioTargets: account.studios
@@ -248,6 +249,7 @@ router.post("/reservations-report", requireCollectorAuth, async (req, res) => {
 
         res.json({
             success: true,
+            organizationId: req.body?.organizationId,
             orderDate: req.body.orderDate,
             studioCount: results.length,
             rowCount: results.reduce((total, result) => total + result.rowCount, 0),

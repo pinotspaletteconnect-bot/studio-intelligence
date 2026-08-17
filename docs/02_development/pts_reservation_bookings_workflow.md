@@ -36,6 +36,14 @@ KPI cards.
   or non-descending results before filtering the target order date.
 - Purchaser names are deliberately excluded. Only confirmation/order
   identifiers, class context, seat status counts, and sales are returned.
+- When `includeOrderAttributes: true` is requested, each newly collected order
+  is opened once to extract the normalized
+  five-digit `BillingZip` and sum the item-table `Discount` column. It also
+  associates the parenthesized promotion code on the purchased item with the
+  description on the zero-dollar `Apply Discount` helper row. That helper row
+  is not counted as a second discount. Gift certificates and refunds are not classified as discounts. The collector
+  returns a separate one-row-per-order collection so multi-class orders do not
+  duplicate ZIP revenue or discount totals.
 
 ## Warehouse replacement
 
@@ -48,6 +56,15 @@ zero-booking day by clearing any prior rows for that slice.
 
 `pts_reservation_booking_daily` provides the studio/date aggregate consumed by
 the Upcoming Classes service.
+
+Migration `20260817160000_pts_order_geography_discounts.sql` adds the separate
+`pts_order_attributes` order grain, the `upsert_pts_order_attributes` loading
+RPC, and `pts_order_geography_daily`. The migration was deployed and verified
+August 17, 2026; production workflow cutover remains pending.
+
+Workflow 13B keeps the option disabled so the established reservation feed is
+unchanged. Unpublished workflow 31 requests enrichment explicitly and loads
+the separate order-grain table, providing an independent rollback boundary.
 
 ## Scheduling and reliability
 
