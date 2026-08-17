@@ -1,5 +1,5 @@
-import { Ga4Dashboard } from "@/components/studio/marketing/ga4-dashboard"
+import { permanentRedirect } from "next/navigation"
 
 export default function GA4Page() {
-  return <Ga4Dashboard />
+  permanentRedirect("/operations/ga4")
 }

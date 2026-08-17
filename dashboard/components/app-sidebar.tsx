@@ -141,7 +141,7 @@ const data = {
   },
   {
     name: "GA4 Analytics",
-    url: "/marketing/ga4",
+    url: "/operations/ga4",
     icon: <FileChartColumnIcon />,
   },
   {

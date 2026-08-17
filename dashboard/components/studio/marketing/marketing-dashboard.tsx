@@ -1313,7 +1313,7 @@ export function MarketingDashboard() {
                 <ArrowRight className="size-4 text-muted-foreground" />
               </Link>
             ))}
-            <Link href="/marketing/ga4" className="grid grid-cols-[1fr_auto] items-center gap-5 rounded-lg px-3 py-3 transition-colors hover:bg-muted">
+            <Link href="/operations/ga4" className="grid grid-cols-[1fr_auto] items-center gap-5 rounded-lg px-3 py-3 transition-colors hover:bg-muted">
               <div>
                 <p className="font-medium">GA4 Analytics</p>
                 <p className="text-xs text-muted-foreground">Traffic, engagement, and key events</p>
