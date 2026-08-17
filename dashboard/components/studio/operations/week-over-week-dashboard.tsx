@@ -90,7 +90,7 @@ function ThreeYearValue({ metric, periods }: { metric: Metric; periods: PeriodRe
   const positive = currentValue >= previousValue
   const Icon = positive ? TrendingUp : TrendingDown
 
-  return <div className="min-w-32 text-right tabular-nums">
+  return <div className="min-w-24 text-right tabular-nums sm:min-w-28">
     <div className="font-semibold text-foreground"><span className="mr-1.5 text-xs font-medium">{current.year}</span>{formatValue(currentValue, metric.format)}</div>
     <div className="mt-1 text-xs text-muted-foreground">{previous.year} {formatValue(previousValue, metric.format)}</div>
     <div className="mt-1 text-xs text-muted-foreground">{older.year} {formatValue(older.data.kpis[metric.key], metric.format)}</div>
@@ -103,12 +103,12 @@ function ThreeYearValue({ metric, periods }: { metric: Metric; periods: PeriodRe
 
 function ComparisonTable({ title, metrics, studios }: { title: string; metrics: Metric[]; studios: StudioResult[] }) {
   return <Card>
-    <CardContent className="pt-6">
+    <CardContent className="px-3 pt-5 sm:px-5 sm:pt-6">
       <h2 className="mb-3 text-lg font-semibold">{title}</h2>
       <div className="overflow-x-auto">
-        <table className="w-full text-sm" style={{ minWidth: `${Math.max(1100, 180 + metrics.length * 150)}px` }}>
-          <thead><tr className="border-b text-xs text-muted-foreground"><th className="sticky left-0 z-10 bg-card px-3 py-3 text-left font-medium">Studio</th>{metrics.map((metric) => <th key={metric.key} className="px-3 py-3 text-right font-medium">{metric.label}</th>)}</tr></thead>
-          <tbody>{studios.map((studio) => <tr key={studio.studioId} className="border-b align-top last:border-0"><td className="sticky left-0 z-10 bg-card px-3 py-4 text-base font-semibold">{studio.studioName}</td>{metrics.map((metric) => <td key={metric.key} className="px-3 py-4"><ThreeYearValue metric={metric} periods={studio.periods} /></td>)}</tr>)}</tbody>
+        <table className="w-max text-sm">
+          <thead><tr className="border-b text-xs text-muted-foreground"><th className="sticky left-0 z-10 min-w-32 bg-card px-2 py-3 text-left font-medium sm:min-w-36">Studio</th>{metrics.map((metric) => <th key={metric.key} className="px-2 py-3 text-right font-medium whitespace-nowrap">{metric.label}</th>)}</tr></thead>
+          <tbody>{studios.map((studio) => <tr key={studio.studioId} className="border-b align-top last:border-0"><td className="sticky left-0 z-10 bg-card px-2 py-4 text-base font-semibold whitespace-nowrap">{studio.studioName}</td>{metrics.map((metric) => <td key={metric.key} className="px-2 py-4"><ThreeYearValue metric={metric} periods={studio.periods} /></td>)}</tr>)}</tbody>
         </table>
       </div>
       <p className="mt-3 text-xs text-muted-foreground">Scroll horizontally to review all categories. The studio name remains pinned.</p>
