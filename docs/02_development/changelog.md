@@ -11,7 +11,8 @@
   events. Every upstream report filters GA4 `country` to the United States,
   Canada, or Mexico. Migration `20260817120000` was deployed August 17 and all
   four tables were verified with RLS enabled. Production workflow 30 completed
-  its first supervised 35-day load successfully; application deployment remains pending.
+  its first supervised 35-day load successfully and was published on a daily
+  6:45 AM Eastern schedule; application deployment remains pending.
 
 ## August 16, 2026
 

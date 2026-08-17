@@ -181,7 +181,8 @@ Implemented foundation:
   only the new North America-filtered facts and deliberately does not fall back
   to global GA4 totals. Migration `20260817120000` is deployed, and production
   workflow 30 completed a supervised 35-day load for the United States, Canada,
-  and Mexico. Workflow publication and application deployment remain pending.
+  and Mexico. Workflow 30 is published on a daily 6:45 AM Eastern schedule;
+  application deployment remains pending.
 - MNTN Connected TV dashboard card with delivery, modeled attribution,
   studio-level modeled ROAS, last-touch attribution, CPM, cost per verified
   visit, and cost per conversion
