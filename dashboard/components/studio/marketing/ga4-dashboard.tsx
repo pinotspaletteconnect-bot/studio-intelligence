@@ -29,7 +29,7 @@ function KpiCard({ label, kpi, format = "number", icon: Icon }: { label: string;
     <CardContent className="px-4">
       <div className="flex items-start justify-between gap-3"><p className="text-xs font-medium text-muted-foreground">{label}</p><Icon className="size-4 text-muted-foreground" /></div>
       <p className="mt-2 text-2xl font-semibold tracking-tight tabular-nums">{formatted}</p>
-      <p className={`mt-1 text-xs font-medium ${kpi.change === null ? "text-muted-foreground" : positive ? "text-emerald-700" : "text-red-700"}`}>{kpi.change === null ? "No prior-period baseline" : `${positive ? "+" : ""}${kpi.change.toFixed(1)}% vs previous period`}</p>
+      <p className={`mt-1 text-xs font-medium ${kpi.change === null ? "text-muted-foreground" : positive ? "text-emerald-700" : "text-red-700"}`}>{kpi.change === null ? "No comparison baseline" : `${positive ? "+" : ""}${kpi.change.toFixed(1)}% vs comparison`}</p>
     </CardContent>
   </Card>
 }
@@ -52,7 +52,7 @@ function DataTable({ title, description, headers, rows }: { title: string; descr
 }
 
 export function Ga4Dashboard() {
-  const { selectedStudio, dateRange } = useApp()
+  const { selectedStudio, dateRange, comparison, comparisonDateRange } = useApp()
   const [data, setData] = useState<Ga4NorthAmericaDashboard | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -63,6 +63,11 @@ export function Ga4Dashboard() {
       setLoading(true); setError(null)
       try {
         const params = new URLSearchParams({ studioId: selectedStudio, startDate: dateRange.startDate, endDate: dateRange.endDate })
+        params.set("comparison", comparison)
+        if (comparison === "custom" && comparisonDateRange) {
+          params.set("comparisonStartDate", comparisonDateRange.startDate)
+          params.set("comparisonEndDate", comparisonDateRange.endDate)
+        }
         const response = await fetch(`/api/marketing/ga4?${params}`, { signal: controller.signal })
         const result = await response.json()
         if (!response.ok) throw new Error(result.error || "GA4 reporting is unavailable.")
@@ -74,10 +79,10 @@ export function Ga4Dashboard() {
     }
     load()
     return () => controller.abort()
-  }, [dateRange.endDate, dateRange.startDate, selectedStudio])
+  }, [comparison, comparisonDateRange, dateRange.endDate, dateRange.startDate, selectedStudio])
 
   return <div className="flex flex-col gap-6 p-4 md:p-6">
-    <DashboardToolbar title="GA4 North America" subtitle="Website audience, acquisition, behavior, and ecommerce—restricted to North American traffic." />
+    <DashboardToolbar title="GA4 North America" subtitle="Website audience, acquisition, behavior, and ecommerce—restricted to North American traffic." showComparison />
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-950">
       <div className="flex items-center gap-2"><Globe2 className="size-4" /><span><strong>Geographic scope:</strong> North America only</span></div>
       <Badge variant="outline" className="border-blue-300 bg-white text-blue-800">Enforced during GA4 collection</Badge>
@@ -86,7 +91,7 @@ export function Ga4Dashboard() {
     {error && <Card><CardContent className="py-16 text-center text-sm text-muted-foreground">{error}</CardContent></Card>}
     {!loading && !error && data && !data.hasData && <Card><CardContent className="flex min-h-72 flex-col items-center justify-center gap-3 text-center"><span className="rounded-full bg-blue-50 p-4 text-blue-700"><Globe2 className="size-7" /></span><div><h2 className="text-lg font-semibold">North America GA4 data is awaiting its first load</h2><p className="mt-1 max-w-xl text-sm text-muted-foreground">The dedicated reporting model is {data.configured ? "ready" : "not deployed yet"}. This page will not substitute global GA4 totals because doing so would violate the selected geographic scope.</p></div></CardContent></Card>}
     {!loading && !error && data?.hasData && <>
-      <section><div className="mb-3"><h2 className="text-lg font-semibold">Performance snapshot</h2><p className="text-sm text-muted-foreground">Current period compared with the immediately preceding period.</p></div><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <section><div className="mb-3"><h2 className="text-lg font-semibold">Performance snapshot</h2><p className="text-sm text-muted-foreground">Current period compared with the selected comparison period.</p></div><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <KpiCard label="Avg. daily active users" kpi={data.kpis.activeUsers} icon={Users} /><KpiCard label="Sessions" kpi={data.kpis.sessions} icon={Activity} /><KpiCard label="New users" kpi={data.kpis.newUsers} icon={Sparkles} /><KpiCard label="Engagement rate" kpi={data.kpis.engagementRate} format="percent" icon={MousePointerClick} /><KpiCard label="Views per daily user" kpi={data.kpis.pageViewsPerUser} format="decimal" icon={Activity} />
         <KpiCard label="Avg. engagement time" kpi={data.kpis.averageEngagementTime} format="duration" icon={Clock3} /><KpiCard label="Key events" kpi={data.kpis.keyEvents} icon={MousePointerClick} /><KpiCard label="Purchases" kpi={data.kpis.purchases} icon={ShoppingCart} /><KpiCard label="Purchase revenue" kpi={data.kpis.purchaseRevenue} format="currency" icon={DollarSign} /><KpiCard label="Purchase conversion" kpi={data.kpis.conversionRate} format="percent" icon={ShoppingCart} />
       </div></section>

@@ -156,10 +156,27 @@ function groupBreakdowns(rows: BreakdownRow[], type: BreakdownRow["breakdown_typ
   return [...grouped.values()].sort((a, b) => b.sessions - a.sessions || b.activeUsers - a.activeUsers).slice(0, limit)
 }
 
-export async function getGa4NorthAmericaDashboard(studioId: string | undefined, startDate: string, endDate: string, allowedStudioIds: number[]): Promise<Ga4NorthAmericaDashboard> {
+export async function getGa4NorthAmericaDashboard(
+  studioId: string | undefined,
+  startDate: string,
+  endDate: string,
+  allowedStudioIds: number[],
+  comparisonMode: "previous" | "priorYearWeek" | "custom" = "previous",
+  customComparisonStart?: string,
+  customComparisonEnd?: string
+): Promise<Ga4NorthAmericaDashboard> {
   const periodDays = Math.round((Date.parse(endDate) - Date.parse(startDate)) / 86_400_000) + 1
-  const comparisonEnd = shiftDate(startDate, -1)
-  const comparisonStart = shiftDate(comparisonEnd, -(periodDays - 1))
+  const useCustomComparison = comparisonMode === "custom" && Boolean(customComparisonStart && customComparisonEnd)
+  const comparisonEnd = useCustomComparison
+    ? customComparisonEnd!
+    : comparisonMode === "priorYearWeek"
+      ? shiftDate(endDate, -364)
+      : shiftDate(startDate, -1)
+  const comparisonStart = useCustomComparison
+    ? customComparisonStart!
+    : comparisonMode === "priorYearWeek"
+      ? shiftDate(startDate, -364)
+      : shiftDate(comparisonEnd, -(periodDays - 1))
   const dailySelect = "report_date,active_users,total_users,new_users,sessions,engaged_sessions,page_views,average_session_duration,key_events,ecommerce_purchases,purchase_revenue"
 
   const currentDailyQuery = addStudioFilter(supabase.from("ga4_north_america_daily_metrics").select(dailySelect).gte("report_date", startDate).lte("report_date", endDate), studioId, allowedStudioIds)
