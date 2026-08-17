@@ -2,6 +2,12 @@
 
 ## August 17, 2026
 
+- Implemented privacy-minimized PTS order enrichment for five-digit billing
+  ZIP and item-level discounts (amount, promotion code, and description), with a separate one-row-per-order warehouse
+  design to avoid duplicate values on multi-line reservations. Added the
+  studio/date-filtered Order Geography dashboard and reporting API. Migration,
+  collector deployment, workflow cutover, backfill, and production validation
+  remain pending.
 - Replaced the GA4 placeholder with a dedicated responsive North America
   dashboard covering audience KPIs and trends, geography, technology,
   source/medium acquisition, content, events, and ecommerce. The authenticated

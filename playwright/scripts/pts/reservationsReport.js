@@ -101,6 +101,75 @@ function normalizeReservationRow(rawRow) {
     };
 }
 
+function normalizePostalCode(value) {
+    const match = String(value ?? "").trim().match(/^(\d{5})(?:-\d{4})?$/);
+    return match?.[1] ?? null;
+}
+
+function moneyValue(value) {
+    const parsed = Number(String(value ?? "").replace(/[^0-9.-]/g, ""));
+    return Number.isFinite(parsed) ? parsed : 0;
+}
+
+async function readOrderAttributes(page, orderId) {
+    await page.goto(`${PTS_URL}/Order/View/${encodeURIComponent(orderId)}`, {
+        waitUntil: "domcontentloaded"
+    });
+    return page.evaluate(() => {
+        const postalMatch = String(document.querySelector("#BillingZip")?.value ?? "")
+            .trim()
+            .match(/^(\d{5})(?:-\d{4})?$/);
+        const itemTable = Array.from(document.querySelectorAll("table")).find(table =>
+            Array.from(table.querySelectorAll("tr")).some(row => {
+                const cells = Array.from(row.querySelectorAll(":scope > th, :scope > td"));
+                return cells.some(cell => cell.textContent?.trim() === "Discount") &&
+                    cells.some(cell => cell.textContent?.trim() === "Gross");
+            })
+        );
+        const rows = itemTable ? Array.from(itemTable.querySelectorAll("tr")) : [];
+        const headerRow = rows.find(row =>
+            Array.from(row.querySelectorAll(":scope > th, :scope > td"))
+                .some(cell => cell.textContent?.trim() === "Discount")
+        );
+        const headers = headerRow
+            ? Array.from(headerRow.querySelectorAll(":scope > th, :scope > td"))
+                .map(cell => cell.textContent?.trim() ?? "")
+            : [];
+        const discountIndex = headers.indexOf("Discount");
+        const typeIndex = headers.indexOf("Type");
+        const itemIndex = headers.indexOf("Item");
+        const detailRows = rows.filter(row => row !== headerRow).map(row => {
+            const cells = row.querySelectorAll(":scope > td");
+            const discountText = cells[discountIndex]?.textContent ?? "";
+            const parsed = Number(discountText.replace(/[^0-9.-]/g, ""));
+            const code = discountText.match(/\(([^)]+)\)/)?.[1]?.trim() ?? null;
+            return {
+                type: cells[typeIndex]?.textContent?.trim() ?? "",
+                item: cells[itemIndex]?.textContent?.trim() ?? "",
+                amount: Number.isFinite(parsed) ? Math.abs(parsed) : 0,
+                code
+            };
+        });
+        const descriptions = new Map(detailRows
+            .filter(row => row.type === "Apply Discount" && row.code)
+            .map(row => [row.code, row.item]));
+        const discounts = detailRows
+            .filter(row => row.amount > 0)
+            .map(row => ({
+                code: row.code,
+                description: row.code ? descriptions.get(row.code) ?? null : null,
+                amount: Math.round(row.amount * 100) / 100
+            }));
+        const discountAmount = discounts.reduce((sum, discount) => sum + discount.amount, 0);
+        return {
+            postal_code: postalMatch?.[1] ?? null,
+            discount_amount: Math.round(discountAmount * 100) / 100,
+            discount_used: discountAmount > 0,
+            discounts
+        };
+    });
+}
+
 async function login(page, credentials = {}) {
     const username = credentials.username ?? process.env.PTS_USERNAME;
     const password = credentials.password ?? process.env.PTS_PASSWORD;
@@ -212,6 +281,27 @@ async function runPtsReservationsReport({
             await searchStudio(page, studio, fromDate, toDate);
             const allRows = await readReservationRows(page);
             const rows = allRows.filter(row => row.order_date === targetDate);
+            const orderRows = [...rows.filter(row => row.order_id).reduce((ordersById, row) => {
+                const existing = ordersById.get(row.order_id);
+                ordersById.set(row.order_id, existing
+                    ? { ...existing, booked_sales: existing.booked_sales + row.booked_sales }
+                    : { ...row });
+                return ordersById;
+            }, new Map()).values()];
+            const orders = [];
+            for (const row of orderRows) {
+                const attributes = await readOrderAttributes(page, row.order_id);
+                orders.push({
+                    order_id: row.order_id,
+                    confirmation: row.confirmation,
+                    order_date: row.order_date,
+                    booked_sales: row.booked_sales,
+                    postal_code: normalizePostalCode(attributes.postal_code),
+                    discount_amount: moneyValue(attributes.discount_amount),
+                    discount_used: attributes.discount_used === true,
+                    discount_details: Array.isArray(attributes.discounts) ? attributes.discounts : []
+                });
+            }
             results.push({
                 studioId: studio.studioId,
                 studioCode: studio.code,
@@ -222,6 +312,7 @@ async function runPtsReservationsReport({
                 classFromDate: fromDate,
                 classToDate: toDate,
                 rowCount: rows.length,
+                orderCount: orders.length,
                 totals: rows.reduce(
                     (sum, row) => ({
                         activeReservations: sum.activeReservations + row.active_reservations,
@@ -232,6 +323,7 @@ async function runPtsReservationsReport({
                     }),
                     { activeReservations: 0, refundedReservations: 0, onHoldReservations: 0, orderedSeats: 0, bookedSales: 0 }
                 ),
+                orders,
                 rows
             });
         }
@@ -243,6 +335,9 @@ async function runPtsReservationsReport({
 
 module.exports = {
     normalizeReservationRow,
+    normalizePostalCode,
+    moneyValue,
+    readOrderAttributes,
     parseEventDate,
     parseOrderLocalDate,
     runPtsReservationsReport
