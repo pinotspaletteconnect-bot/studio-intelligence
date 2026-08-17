@@ -238,6 +238,8 @@ router.post("/reservations-report", requireCollectorAuth, async (req, res) => {
             const account = await resolvePtsAccount(req.body?.accountId);
             return runPtsReservationsReport({
                 orderDate: req.body?.orderDate,
+                orderFromDate: req.body?.orderFromDate,
+                orderToDate: req.body?.orderToDate,
                 classFromDate: req.body?.classFromDate,
                 classToDate: req.body?.classToDate,
                 includeOrderAttributes: req.body?.includeOrderAttributes === true,
@@ -251,6 +253,8 @@ router.post("/reservations-report", requireCollectorAuth, async (req, res) => {
             success: true,
             organizationId: req.body?.organizationId,
             orderDate: req.body.orderDate,
+            orderFromDate: req.body?.orderFromDate,
+            orderToDate: req.body?.orderToDate,
             studioCount: results.length,
             rowCount: results.reduce((total, result) => total + result.rowCount, 0),
             results
