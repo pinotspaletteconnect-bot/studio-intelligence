@@ -104,6 +104,10 @@ total sales as class sales plus class fees plus Product Sales net sales.
 | --- | --- | --- |
 | `ga4_daily_metrics` | GA4 metrics by studio/date and documented analytics dimensions | Current |
 | `marketing_attribution_daily` | GA4 metrics by studio/date/session source/session medium | Current |
+| `ga4_north_america_daily_metrics` | North America-filtered GA4 summary by studio/date | Deployed August 17, 2026; ETL pending |
+| `ga4_north_america_breakdown_daily` | North America-filtered country, city, technology, and source/medium facts kept as explicit breakdown grains | Deployed August 17, 2026; ETL pending |
+| `ga4_north_america_content_daily` | North America-filtered page-path performance by studio/date | Deployed August 17, 2026; ETL pending |
+| `ga4_north_america_event_daily` | North America-filtered event performance by studio/date | Deployed August 17, 2026; ETL pending |
 | `eulerity_daily_metrics` | Eulerity performance metrics at the documented daily grain | Current |
 | `eulerity_daily_spend` | Eulerity spend by studio/date and applicable campaign dimensions | Current |
 | `eulerity_daily_budget_allocation` | Daily allocated budget by studio/date | Current |

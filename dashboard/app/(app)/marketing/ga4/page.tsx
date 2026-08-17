@@ -1,5 +1,5 @@
-import { MarketingSourcePage } from "@/components/studio/marketing/source-page"
+import { Ga4Dashboard } from "@/components/studio/marketing/ga4-dashboard"
 
 export default function GA4Page() {
-  return <MarketingSourcePage title="GA4 Analytics" description="Website traffic, engagement, and key events." />
+  return <Ga4Dashboard />
 }

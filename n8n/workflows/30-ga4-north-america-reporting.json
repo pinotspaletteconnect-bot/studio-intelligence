@@ -1,0 +1,107 @@
+{
+  "name": "30 - GA4 North America Reporting",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "30a00000-0000-4000-8000-000000000001",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [120, 300]
+    },
+    {
+      "parameters": { "rule": { "interval": [{ "field": "cronExpression", "expression": "0 45 6 * * *" }] } },
+      "id": "30a00000-0000-4000-8000-000000000002",
+      "name": "Daily 6:45 AM Eastern",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [120, 160]
+    },
+    {
+      "parameters": {
+        "url": "https://hsosjnwjangtqtskofag.supabase.co/rest/v1/ga4_collection_accounts?select=account_id",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "options": { "timeout": 30000 }
+      },
+      "id": "30a00000-0000-4000-8000-000000000003",
+      "name": "Get Active GA4 Accounts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [360, 230],
+      "credentials": { "supabaseApi": { "id": "A32h7eKkq8JEdg0k", "name": "Supabase account" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "const end=new Date();end.setUTCDate(end.getUTCDate()-1);const start=new Date(end);start.setUTCDate(start.getUTCDate()-34);const dateRanges=[{startDate:start.toISOString().slice(0,10),endDate:end.toISOString().slice(0,10)}];const filter={filter:{fieldName:'country',inListFilter:{values:['United States','Canada','Mexico'],caseSensitive:true}}};const reports=[{dimensions:['date'],metrics:['activeUsers','totalUsers','newUsers','sessions','engagedSessions','screenPageViews','engagementRate','averageSessionDuration','ecommercePurchases','purchaseRevenue']},{dimensions:['date','country'],metrics:['sessions','activeUsers','newUsers','keyEvents','totalRevenue']},{dimensions:['date','city'],metrics:['sessions','activeUsers','newUsers','keyEvents','totalRevenue']},{dimensions:['date','deviceCategory'],metrics:['sessions','activeUsers','newUsers','keyEvents','totalRevenue']},{dimensions:['date','operatingSystem'],metrics:['sessions','activeUsers','newUsers','keyEvents','totalRevenue']},{dimensions:['date','sessionSource','sessionMedium'],metrics:['sessions','activeUsers','newUsers','keyEvents','totalRevenue']},{dimensions:['date','pagePath'],metrics:['screenPageViews','activeUsers','keyEvents','totalRevenue']},{dimensions:['date','eventName'],metrics:['eventCount','activeUsers','totalRevenue']}];return $input.all().flatMap(item=>reports.map(report=>({json:{accountId:Number(item.json.account_id),report:{dateRanges,dimensionFilter:filter,dimensions:report.dimensions.map(name=>({name})),metrics:report.metrics.map(name=>({name})),limit:'100000'}}})));"
+      },
+      "id": "30a00000-0000-4000-8000-000000000004",
+      "name": "Build North America Reports",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [600, 230]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://studio-intelligence-production.up.railway.app/ga4/report",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ accountId: $json.accountId, report: $json.report }) }}",
+        "options": { "timeout": 120000 }
+      },
+      "id": "30a00000-0000-4000-8000-000000000005",
+      "name": "Collect North America GA4",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [840, 230],
+      "credentials": { "httpHeaderAuth": { "name": "Studio Intelligence Collector" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "const groups=new Map();const num=value=>{const parsed=Number(value||0);return Number.isFinite(parsed)?parsed:0};const iso=value=>`${String(value).slice(0,4)}-${String(value).slice(4,6)}-${String(value).slice(6,8)}`;const put=(table,conflict,row)=>{const key=table+'|'+conflict;const group=groups.get(key)||{table,conflict,rows:[]};group.rows.push(row);groups.set(key,group)};for(const item of $input.all()){for(const result of item.json.results||[]){const target=result.target||{};const source=result.source||{};const dimensions=(source.dimensionHeaders||[]).map(header=>header.name);const metrics=(source.metricHeaders||[]).map(header=>header.name);for(const sourceRow of source.rows||[]){const d=Object.fromEntries(dimensions.map((name,index)=>[name,sourceRow.dimensionValues?.[index]?.value||'']));const m=Object.fromEntries(metrics.map((name,index)=>[name,num(sourceRow.metricValues?.[index]?.value)]));const base={organization_id:Number(target.organization_id),brand_id:Number(target.brand_id),studio_id:Number(target.studio_id),report_date:iso(d.date),retrieved_at:new Date().toISOString()};if(![base.organization_id,base.brand_id,base.studio_id].every(Number.isSafeInteger)||!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(base.report_date))throw new Error('Invalid GA4 tenant or date');const second=dimensions[1]||'';if(!second){put('ga4_north_america_daily_metrics','studio_id,report_date',{...base,active_users:m.activeUsers,total_users:m.totalUsers,new_users:m.newUsers,sessions:m.sessions,engaged_sessions:m.engagedSessions,page_views:m.screenPageViews,engagement_rate:m.engagementRate,average_session_duration:m.averageSessionDuration,key_events:m.keyEvents,ecommerce_purchases:m.ecommercePurchases,purchase_revenue:m.purchaseRevenue});continue}if(second==='pagePath'){put('ga4_north_america_content_daily','studio_id,report_date,page_path',{...base,page_path:d.pagePath||'(not set)',page_views:m.screenPageViews,active_users:m.activeUsers,key_events:m.keyEvents,total_revenue:m.totalRevenue});continue}if(second==='eventName'){put('ga4_north_america_event_daily','studio_id,report_date,event_name',{...base,event_name:d.eventName||'(not set)',event_count:m.eventCount,active_users:m.activeUsers,total_revenue:m.totalRevenue});continue}const types={country:'country',city:'city',deviceCategory:'device_category',operatingSystem:'operating_system',sessionSource:'source_medium'};const type=types[second];if(!type)throw new Error('Unsupported GA4 breakdown '+second);put('ga4_north_america_breakdown_daily','studio_id,report_date,breakdown_type,dimension_value,dimension_secondary',{...base,breakdown_type:type,dimension_value:d[second]||'(not set)',dimension_secondary:second==='sessionSource'?(d.sessionMedium||'(not set)'):'',sessions:m.sessions,active_users:m.activeUsers,new_users:m.newUsers,key_events:m.keyEvents,total_revenue:m.totalRevenue});}}}return [...groups.values()].map(group=>({json:group}));"
+      },
+      "id": "30a00000-0000-4000-8000-000000000006",
+      "name": "Normalize Reporting Grains",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1080, 230]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://hsosjnwjangtqtskofag.supabase.co/rest/v1/' + $json.table + '?on_conflict=' + $json.conflict }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "Prefer", "value": "resolution=merge-duplicates,return=representation" }] },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.rows) }}",
+        "options": { "timeout": 120000 }
+      },
+      "id": "30a00000-0000-4000-8000-000000000007",
+      "name": "Upsert Reporting Grains",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1320, 230],
+      "credentials": { "supabaseApi": { "id": "A32h7eKkq8JEdg0k", "name": "Supabase account" } }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": { "main": [[{ "node": "Get Active GA4 Accounts", "type": "main", "index": 0 }]] },
+    "Daily 6:45 AM Eastern": { "main": [[{ "node": "Get Active GA4 Accounts", "type": "main", "index": 0 }]] },
+    "Get Active GA4 Accounts": { "main": [[{ "node": "Build North America Reports", "type": "main", "index": 0 }]] },
+    "Build North America Reports": { "main": [[{ "node": "Collect North America GA4", "type": "main", "index": 0 }]] },
+    "Collect North America GA4": { "main": [[{ "node": "Normalize Reporting Grains", "type": "main", "index": 0 }]] },
+    "Normalize Reporting Grains": { "main": [[{ "node": "Upsert Reporting Grains", "type": "main", "index": 0 }]] }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": { "executionOrder": "v1", "timezone": "America/New_York", "availableInMCP": false },
+  "tags": []
+}

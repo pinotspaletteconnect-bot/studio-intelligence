@@ -83,6 +83,11 @@ Production workflows 05, 06, 07, 12, and 13 remain unchanged.
 - `ga4_daily_metrics`
 - `marketing_attribution_daily` (production source/medium facts; controlled 30-day validation completed for all four active GA4 studios July 28, 2026)
 - `ga4_source_medium_performance` (production classified source/medium reporting view)
+- `ga4_north_america_daily_metrics`, `ga4_north_america_breakdown_daily`,
+  `ga4_north_america_content_daily`, and `ga4_north_america_event_daily`
+  (additive migration deployed August 17 with RLS verified; dashboard is
+  implemented locally, while ETL workflow expansion, first load,
+  reconciliation, and application deployment remain pending)
 - `marketing_reporting_sources` (production directory for scalable global, organization, brand, and studio source presentation)
 - `eulerity_daily_metrics`
 - `eulerity_daily_spend`
@@ -170,6 +175,13 @@ Implemented foundation:
   `20260812210000` was deployed August 12, 2026.
 - Working 7-, 30-, and 90-day marketing filters
 - Permanent drill-down routes for GA4, Meta Ads, Meta Organic, and Eulerity
+- Dedicated GA4 North America dashboard implemented with summary KPIs,
+  daily audience trends, country/city/device/operating-system breakdowns,
+  source/medium acquisition, top pages, events, and ecommerce. Its API reads
+  only the new North America-filtered facts and deliberately does not fall back
+  to global GA4 totals. Migration `20260817120000` is deployed, and production
+  workflow 30 completed a supervised 35-day load for the United States, Canada,
+  and Mexico. Workflow publication and application deployment remain pending.
 - MNTN Connected TV dashboard card with delivery, modeled attribution,
   studio-level modeled ROAS, last-touch attribution, CPM, cost per verified
   visit, and cost per conversion

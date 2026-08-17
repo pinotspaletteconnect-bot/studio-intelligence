@@ -1,5 +1,18 @@
 # Studio Intelligence Changelog
 
+## August 17, 2026
+
+- Replaced the GA4 placeholder with a dedicated responsive North America
+  dashboard covering audience KPIs and trends, geography, technology,
+  source/medium acquisition, content, events, and ecommerce. The authenticated
+  API remains studio-access scoped and never substitutes global GA4 totals.
+- Added an additive four-grain warehouse migration and ETL contract for GA4
+  daily summaries, explicit audience/acquisition breakdowns, page paths, and
+  events. Every upstream report filters GA4 `country` to the United States,
+  Canada, or Mexico. Migration `20260817120000` was deployed August 17 and all
+  four tables were verified with RLS enabled. Production workflow 30 completed
+  its first supervised 35-day load successfully; application deployment remains pending.
+
 ## August 16, 2026
 
 - Fixed the strategy-change form action by explicitly marking its Base UI save
