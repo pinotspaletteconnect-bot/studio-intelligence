@@ -262,8 +262,9 @@ Implemented foundation:
   collector reads five-digit `BillingZip` plus item-level discounts at one row
   per order, and the dashboard exposes on-demand ZIP, booked-sales, average
   order value, revenue-share, and discount-use reporting. Supabase migration
-  `20260817160000`, Railway deployment, workflow 13 order upserts, backfill,
-  and controlled production validation remain pending; the feature must not be
+  `20260817160000` was deployed and its table, reporting view, and RPC were
+  verified August 17. Railway deployment, unpublished workflow 31 credential
+  binding/manual validation, backfill, and controlled production validation remain pending; the feature must not be
   described as production until those steps are complete.
 - The upcoming-class ingestion contract now preserves the nullable PTS calendar
   Display Name separately from the painting. The current-week party drill-down

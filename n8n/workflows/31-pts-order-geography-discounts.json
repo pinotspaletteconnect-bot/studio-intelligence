@@ -1,0 +1,104 @@
+{
+  "name": "31 - PTS Order Geography and Discounts",
+  "nodes": [
+    {
+      "parameters": { "rule": { "interval": [{ "field": "cronExpression", "expression": "0 30 6 * * *" }] } },
+      "id": "31a00000-0000-4000-8000-000000000001",
+      "name": "Daily 6:30 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [120, 160]
+    },
+    {
+      "parameters": {},
+      "id": "31a00000-0000-4000-8000-000000000002",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [120, 300]
+    },
+    {
+      "parameters": {
+        "workflowId": { "__rl": true, "value": "m9v7NXpkX9SDulqa", "mode": "list", "cachedResultName": "15 - PTS Multi-Account Shadow Dispatcher" },
+        "workflowInputs": { "mappingMode": "passThrough", "value": {}, "matchingColumns": [], "schema": [], "attemptToConvertTypes": false, "convertFieldsToString": true },
+        "options": { "waitForSubWorkflow": true }
+      },
+      "id": "31a00000-0000-4000-8000-000000000003",
+      "name": "Get PTS Account Jobs",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [360, 230]
+    },
+    {
+      "parameters": {
+        "jsCode": "const yesterday = new Date(); yesterday.setUTCDate(yesterday.getUTCDate() - 1); const orderDate = yesterday.toISOString().slice(0,10); return $input.all().filter(item => Array.isArray(item.json.studioTargets) && item.json.studioTargets.some(studio => Array.isArray(studio.reports) && studio.reports.includes('reservations'))).map(item => ({ json: { ...item.json, orderDate } }));"
+      },
+      "id": "31a00000-0000-4000-8000-000000000004",
+      "name": "Keep Reservation Accounts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [600, 230]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://studio-intelligence-production.up.railway.app/pts/reservations-report",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ organizationId: $json.organizationId, accountId: $json.accountId, orderDate: $json.orderDate, includeOrderAttributes: true }) }}",
+        "options": { "timeout": 900000 }
+      },
+      "id": "31a00000-0000-4000-8000-000000000005",
+      "name": "Collect Order Attributes",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [840, 230],
+      "credentials": { "httpHeaderAuth": { "id": "REPLACE_COLLECTOR_CREDENTIAL_ID", "name": "Studio Intelligence Collector API" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json; const organizationId = Number(response.organizationId); if (!Number.isSafeInteger(organizationId)) throw new Error('Order enrichment response is missing organizationId'); const retrievedAt = new Date().toISOString(); const rows = []; for (const result of response.results || []) { const studioId = Number(result.studioId); const brandId = Number(result.brandId); if (![studioId, brandId].every(Number.isSafeInteger)) throw new Error('Order enrichment result has invalid tenant identifiers'); for (const order of result.orders || []) rows.push({ organization_id: organizationId, brand_id: brandId, studio_id: studioId, pts_location_id: String(result.locationId), ...order, retrieved_at: retrievedAt, updated_at: retrievedAt }); } return rows.length ? [{ json: { rows, rowCount: rows.length } }] : [];"
+      },
+      "id": "31a00000-0000-4000-8000-000000000006",
+      "name": "Build Order Upserts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1080, 230]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hsosjnwjangtqtskofag.supabase.co/rest/v1/pts_order_attributes?on_conflict=studio_id,order_id",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "Prefer", "value": "resolution=merge-duplicates,return=representation" }] },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.rows) }}",
+        "options": { "timeout": 120000 }
+      },
+      "id": "31a00000-0000-4000-8000-000000000007",
+      "name": "Upsert Order Attributes",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1320, 230],
+      "credentials": { "supabaseApi": { "id": "A32h7eKkq8JEdg0k", "name": "Supabase account" } }
+    }
+  ],
+  "connections": {
+    "Daily 6:30 AM": { "main": [[{ "node": "Get PTS Account Jobs", "type": "main", "index": 0 }]] },
+    "Manual Trigger": { "main": [[{ "node": "Get PTS Account Jobs", "type": "main", "index": 0 }]] },
+    "Get PTS Account Jobs": { "main": [[{ "node": "Keep Reservation Accounts", "type": "main", "index": 0 }]] },
+    "Keep Reservation Accounts": { "main": [[{ "node": "Collect Order Attributes", "type": "main", "index": 0 }]] },
+    "Collect Order Attributes": { "main": [[{ "node": "Build Order Upserts", "type": "main", "index": 0 }]] },
+    "Build Order Upserts": { "main": [[{ "node": "Upsert Order Attributes", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1", "binaryMode": "separate", "availableInMCP": false },
+  "tags": []
+}

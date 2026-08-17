@@ -6,8 +6,9 @@
   ZIP and item-level discounts (amount, promotion code, and description), with a separate one-row-per-order warehouse
   design to avoid duplicate values on multi-line reservations. Added the
   studio/date-filtered Order Geography dashboard and reporting API. Migration,
-  collector deployment, workflow cutover, backfill, and production validation
-  remain pending.
+  `20260817160000` was deployed and verified in production. Collector
+  deployment, unpublished workflow 31 credential binding/manual validation,
+  backfill, and production validation remain pending.
 - Replaced the GA4 placeholder with a dedicated responsive North America
   dashboard covering audience KPIs and trends, geography, technology,
   source/medium acquisition, content, events, and ecommerce. The authenticated

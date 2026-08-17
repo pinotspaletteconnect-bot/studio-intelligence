@@ -194,7 +194,8 @@ Planned scope includes profile insights, reviews, search visibility, and custome
 - **Warehouse:** `pts_sales_daily_summary`, `pts_class_sales_daily`,
   `pts_non_class_sales_items`, and `pts_reservation_bookings`. The additive
   `pts_order_attributes` design is implemented locally for five-digit billing
-  ZIP and item-level discount totals; migration and workflow cutover are pending.
+  ZIP and item-level discount totals; migration `20260817160000` is deployed
+  and the independent workflow cutover is pending.
 - **Range-load history:** `pts_class_type_sales_daily` and
   `pts_product_sales_daily`, exposed through `pts_operations_daily`. Operations
   reporting combines this preserved history with the daily production facts;

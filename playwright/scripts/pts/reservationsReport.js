@@ -259,6 +259,7 @@ async function runPtsReservationsReport({
     orderDate,
     classFromDate,
     classToDate,
+    includeOrderAttributes = false,
     studioCodes,
     credentials,
     studioTargets
@@ -281,13 +282,13 @@ async function runPtsReservationsReport({
             await searchStudio(page, studio, fromDate, toDate);
             const allRows = await readReservationRows(page);
             const rows = allRows.filter(row => row.order_date === targetDate);
-            const orderRows = [...rows.filter(row => row.order_id).reduce((ordersById, row) => {
+            const orderRows = includeOrderAttributes ? [...rows.filter(row => row.order_id).reduce((ordersById, row) => {
                 const existing = ordersById.get(row.order_id);
                 ordersById.set(row.order_id, existing
                     ? { ...existing, booked_sales: existing.booked_sales + row.booked_sales }
                     : { ...row });
                 return ordersById;
-            }, new Map()).values()];
+            }, new Map()).values()] : [];
             const orders = [];
             for (const row of orderRows) {
                 const attributes = await readOrderAttributes(page, row.order_id);
@@ -304,6 +305,7 @@ async function runPtsReservationsReport({
             }
             results.push({
                 studioId: studio.studioId,
+                brandId: studio.brandId,
                 studioCode: studio.code,
                 locationId: studio.locationId,
                 locationName: studio.locationName,
