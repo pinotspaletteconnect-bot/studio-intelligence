@@ -12,7 +12,8 @@
   Canada, or Mexico. Migration `20260817120000` was deployed August 17 and all
   four tables were verified with RLS enabled. Production workflow 30 completed
   its first supervised 35-day load successfully and was published on a daily
-  6:45 AM Eastern schedule; application deployment remains pending.
+  6:45 AM Eastern schedule. The dashboard was deployed through production
+  branch `codex/auth-onboarding`.
 
 ## August 16, 2026
 
