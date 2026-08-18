@@ -1,24 +1,43 @@
 import { supabase } from "@/lib/supabase/server"
 
-type Row = { postal_code: string; order_count: number | string; booked_sales: number | string; discounted_order_count: number | string; discount_amount: number | string }
+type GeographyRow = { studio_id: number | string; postal_code: string; order_count: number | string; booked_sales: number | string }
+type OrderRow = { studio_id: number | string; order_id: string; booked_sales: number | string; discount_amount: number | string; discount_used: boolean; discount_details: unknown }
+type DiscountDetail = { code?: unknown; amount?: unknown; description?: unknown }
 const n = (value: unknown) => Number.isFinite(Number(value)) ? Number(value) : 0
+const clean = (value: unknown) => typeof value === "string" ? value.trim() : ""
 
 export async function getOrderGeography(studioId: string | undefined, startDate: string, endDate: string, allowedStudioIds?: number[]) {
-  let query = supabase.from("pts_order_geography_daily")
-    .select("postal_code,order_count,booked_sales,discounted_order_count,discount_amount")
-    .gte("order_date", startDate).lte("order_date", endDate).range(0, 9999)
-  if (studioId && studioId !== "all") query = query.eq("studio_id", studioId)
-  else if (allowedStudioIds) query = query.in("studio_id", allowedStudioIds)
-  const { data, error } = await query
-  if (error) throw error
-  const byZip = new Map<string, { zipCode: string; orderCount: number; bookedSales: number; discountedOrderCount: number; discountAmount: number }>()
-  for (const row of (data ?? []) as Row[]) {
-    const value = byZip.get(row.postal_code) ?? { zipCode: row.postal_code, orderCount: 0, bookedSales: 0, discountedOrderCount: 0, discountAmount: 0 }
-    value.orderCount += n(row.order_count); value.bookedSales += n(row.booked_sales)
-    value.discountedOrderCount += n(row.discounted_order_count); value.discountAmount += n(row.discount_amount)
-    byZip.set(row.postal_code, value)
+  let geographyQuery = supabase.from("pts_order_geography_daily").select("studio_id,postal_code,order_count,booked_sales").gte("order_date", startDate).lte("order_date", endDate).range(0, 9999)
+  let orderQuery = supabase.from("pts_order_attributes").select("studio_id,order_id,booked_sales,discount_amount,discount_used,discount_details").gte("order_date", startDate).lte("order_date", endDate).range(0, 9999)
+  if (studioId && studioId !== "all") { geographyQuery = geographyQuery.eq("studio_id", studioId); orderQuery = orderQuery.eq("studio_id", studioId) }
+  else if (allowedStudioIds) { geographyQuery = geographyQuery.in("studio_id", allowedStudioIds); orderQuery = orderQuery.in("studio_id", allowedStudioIds) }
+  const [{ data: geographyData, error: geographyError }, { data: orderData, error: orderError }] = await Promise.all([geographyQuery, orderQuery])
+  if (geographyError) throw geographyError
+  if (orderError) throw orderError
+
+  const byZip = new Map<string, { studioId: number; zipCode: string; orderCount: number; bookedSales: number }>()
+  for (const row of (geographyData ?? []) as GeographyRow[]) {
+    const studioId = n(row.studio_id); const key = `${studioId}:${row.postal_code}`
+    const value = byZip.get(key) ?? { studioId, zipCode: row.postal_code, orderCount: 0, bookedSales: 0 }
+    value.orderCount += n(row.order_count); value.bookedSales += n(row.booked_sales); byZip.set(key, value)
   }
-  const rows = [...byZip.values()].map(row => ({ ...row, averageOrderValue: row.orderCount ? row.bookedSales / row.orderCount : 0, discountRate: row.orderCount ? row.discountedOrderCount / row.orderCount * 100 : 0 })).sort((a, b) => b.bookedSales - a.bookedSales)
-  const totals = rows.reduce((sum, row) => ({ orderCount: sum.orderCount + row.orderCount, bookedSales: sum.bookedSales + row.bookedSales, discountedOrderCount: sum.discountedOrderCount + row.discountedOrderCount, discountAmount: sum.discountAmount + row.discountAmount }), { orderCount: 0, bookedSales: 0, discountedOrderCount: 0, discountAmount: 0 })
-  return { startDate, endDate, totals: { ...totals, averageOrderValue: totals.orderCount ? totals.bookedSales / totals.orderCount : 0, discountRate: totals.orderCount ? totals.discountedOrderCount / totals.orderCount * 100 : 0 }, rows: rows.map(row => ({ ...row, revenueShare: totals.bookedSales ? row.bookedSales / totals.bookedSales * 100 : 0 })) }
+  const orders = (orderData ?? []) as OrderRow[]
+  const totals = orders.reduce((sum, row) => ({ orderCount: sum.orderCount + 1, bookedSales: sum.bookedSales + n(row.booked_sales), discountedOrderCount: sum.discountedOrderCount + (row.discount_used ? 1 : 0), discountAmount: sum.discountAmount + n(row.discount_amount) }), { orderCount: 0, bookedSales: 0, discountedOrderCount: 0, discountAmount: 0 })
+  const byCode = new Map<string, { studioId: number; code: string; description: string; orderIds: Set<string>; discountAmount: number }>()
+  for (const order of orders) {
+    if (!order.discount_used) continue
+    const details = Array.isArray(order.discount_details) ? order.discount_details as DiscountDetail[] : []
+    const positiveDetails = details.filter(detail => n(detail.amount) > 0)
+    const effectiveDetails = positiveDetails.length ? positiveDetails : [{ code: "Unidentified", amount: order.discount_amount, description: "Discount code unavailable" }]
+    for (const detail of effectiveDetails) {
+      const studioId = n(order.studio_id); const code = clean(detail.code) || "Unidentified"; const description = clean(detail.description) || code; const key = `${studioId}:${code}`
+      const value = byCode.get(key) ?? { studioId, code, description, orderIds: new Set<string>(), discountAmount: 0 }
+      value.orderIds.add(order.order_id); value.discountAmount += n(detail.amount)
+      if (description.length > value.description.length) value.description = description
+      byCode.set(key, value)
+    }
+  }
+  const rows = [...byZip.values()].map(row => ({ ...row, averageOrderValue: row.orderCount ? row.bookedSales / row.orderCount : 0, revenueShare: totals.bookedSales ? row.bookedSales / totals.bookedSales * 100 : 0 })).sort((a, b) => b.bookedSales - a.bookedSales)
+  const discountCodes = [...byCode.values()].map(value => ({ studioId: value.studioId, code: value.code, description: value.description, orderCount: value.orderIds.size, discountAmount: value.discountAmount, averageDiscount: value.orderIds.size ? value.discountAmount / value.orderIds.size : 0 })).sort((a, b) => b.discountAmount - a.discountAmount)
+  return { startDate, endDate, totals: { ...totals, averageOrderValue: totals.orderCount ? totals.bookedSales / totals.orderCount : 0, discountRate: totals.orderCount ? totals.discountedOrderCount / totals.orderCount * 100 : 0 }, rows, discountCodes }
 }
