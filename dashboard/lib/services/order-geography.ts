@@ -37,7 +37,9 @@ export async function getOrderGeography(studioId: string | undefined, startDate:
       byCode.set(key, value)
     }
   }
-  const rows = [...byZip.values()].map(row => ({ ...row, averageOrderValue: row.orderCount ? row.bookedSales / row.orderCount : 0, revenueShare: totals.bookedSales ? row.bookedSales / totals.bookedSales * 100 : 0 })).sort((a, b) => b.bookedSales - a.bookedSales)
+  const studioSales = new Map<number, number>()
+  for (const row of byZip.values()) studioSales.set(row.studioId, (studioSales.get(row.studioId) ?? 0) + row.bookedSales)
+  const rows = [...byZip.values()].map(row => ({ ...row, averageOrderValue: row.orderCount ? row.bookedSales / row.orderCount : 0, revenueShare: studioSales.get(row.studioId) ? row.bookedSales / (studioSales.get(row.studioId) ?? 1) * 100 : 0 })).sort((a, b) => b.bookedSales - a.bookedSales)
   const discountCodes = [...byCode.values()].map(value => ({ studioId: value.studioId, code: value.code, description: value.description, orderCount: value.orderIds.size, discountAmount: value.discountAmount, averageDiscount: value.orderIds.size ? value.discountAmount / value.orderIds.size : 0 })).sort((a, b) => b.discountAmount - a.discountAmount)
   return { startDate, endDate, totals: { ...totals, averageOrderValue: totals.orderCount ? totals.bookedSales / totals.orderCount : 0, discountRate: totals.orderCount ? totals.discountedOrderCount / totals.orderCount * 100 : 0 }, rows, discountCodes }
 }
