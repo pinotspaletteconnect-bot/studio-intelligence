@@ -15,7 +15,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboardIcon, ListIcon, ChartBarIcon, CameraIcon, FileTextIcon, Settings2Icon, CircleHelpIcon, SearchIcon, FileChartColumnIcon, CommandIcon } from "lucide-react"
+import { LayoutDashboardIcon, ListIcon, ChartBarIcon, CameraIcon, FileTextIcon, Settings2Icon, CircleHelpIcon, SearchIcon, FileChartColumnIcon, CommandIcon, MapPinIcon } from "lucide-react"
 
 const data = {
   user: {
@@ -38,6 +38,11 @@ const data = {
     title: "Operations",
     url: "/operations",
     icon: <ListIcon />,
+  },
+  {
+    title: "Order Geography",
+    url: "/operations/order-geography",
+    icon: <MapPinIcon />,
   },
   {
     title: "Marketing",
