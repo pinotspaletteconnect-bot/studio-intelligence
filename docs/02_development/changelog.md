@@ -1,5 +1,17 @@
 # Studio Intelligence Changelog
 
+## August 20, 2026
+
+- Repaired the GA4 owner OAuth connection after Google's seven-day Testing-mode
+  refresh-token lifetime stopped workflows 25, 26, and 30 after the August 17
+  reporting date. Published the Google OAuth app to Production, deployed
+  migration `20260820120000`, and added an owner/admin Reconnect action that
+  rotates the existing Vault secret without creating a duplicate account or
+  changing property-to-studio mappings. Reauthorized the Duff GA4 connection,
+  successfully reran all three production workflows, and reconciled GA4 daily,
+  source/medium, North America, and Eulerity-attributed reporting through August
+  19. Daily Eulerity ROAS was verified for all four studios on August 18–19.
+
 ## August 17, 2026
 
 - Implemented privacy-minimized PTS order enrichment for five-digit billing

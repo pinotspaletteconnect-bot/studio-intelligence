@@ -44,6 +44,14 @@ The collection, ETL, warehouse, and frontend layers are considered stable patter
 | Meta Business Ads | Meta Graph API/Express/n8n | `meta_ads_daily` | Production |
 | Meta Page Insights | Meta Graph API/Express/n8n | `meta_page_insights_daily` | Production |
 
+The GA4 Google OAuth app is published to Production. Owners and administrators
+can rotate an expired or revoked GA4 refresh credential in place from Settings;
+the reconnect path updates the existing Supabase Vault secret and preserves all
+property-to-studio mappings. Migration `20260820120000` and the dashboard repair
+were deployed August 20, 2026. After reauthorization, workflows 25, 26, and 30
+completed successfully and GA4/Eulerity-attribution facts were reconciled
+through August 19 for all four studios.
+
 Meta Ads and Page Insights share the authentication and Graph API foundation in `playwright/services/meta/`. Studio and account assignment remains configuration-driven through `studio_integrations`; source account IDs must not be hardcoded.
 
 Meta Ads and Page Insights now run on production Vault-backed workflows `27 - Meta Paid Vault Daily Import` (`z5Mww3blBHS89UYu`) and `28 - Meta Pages Vault Daily Import` (`7OMm5L5fprv3Lh5o`). Owner/admin OAuth, automatic long-lived-token exchange, Vault-only credential storage, asset discovery, explicit studio mapping, collection, and warehouse reconciliation are verified across all four studios. The former global-token workflows are unpublished and retained for rollback. Follow `docs/02_development/meta_multi_account_migration_phase1.md` for the cutover record.
