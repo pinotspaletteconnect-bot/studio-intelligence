@@ -50,13 +50,22 @@ export async function GET(request: Request) {
       accountDisplayName: account.displayName ?? "",
     }))).filter(property => /^\d+$/.test(property.propertyId) && property.displayName)
 
-    const { data: accountId, error: createError } = await supabase.rpc("create_ga4_oauth_account_with_secret", {
-      p_organization_id: access.organizationId,
-      p_account_name: state.accountName,
-      p_google_account_email: user.email,
-      p_oauth_credentials: { refresh_token: tokens.refresh_token, client_id: clientId, client_secret: clientSecret, token_uri: "https://oauth2.googleapis.com/token" },
-    })
-    if (createError || !accountId) throw createError ?? new Error("GA4 account creation failed")
+    const oauthCredentials = { refresh_token: tokens.refresh_token, client_id: clientId, client_secret: clientSecret, token_uri: "https://oauth2.googleapis.com/token" }
+    const accountResult = state.accountId
+      ? await supabase.rpc("replace_ga4_oauth_account_secret", {
+          p_organization_id: access.organizationId,
+          p_account_id: state.accountId,
+          p_google_account_email: user.email,
+          p_oauth_credentials: oauthCredentials,
+        })
+      : await supabase.rpc("create_ga4_oauth_account_with_secret", {
+          p_organization_id: access.organizationId,
+          p_account_name: state.accountName,
+          p_google_account_email: user.email,
+          p_oauth_credentials: oauthCredentials,
+        })
+    const accountId = state.accountId ?? accountResult.data
+    if (accountResult.error || !accountId) throw accountResult.error ?? new Error("GA4 account connection failed")
     const { error: syncError } = await supabase.rpc("sync_ga4_properties", { p_account_id: accountId, p_properties: properties })
     if (syncError) throw syncError
     return settingsRedirect(appOrigin, "connected")

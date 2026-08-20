@@ -6,6 +6,7 @@ type Ga4OauthState = {
   organizationId: number
   userId: string
   accountName: string
+  accountId?: number
   expiresAt: number
 }
 
@@ -34,7 +35,8 @@ export function readGa4OauthState(value: string): Ga4OauthState {
   const left = Buffer.from(expectedSignature); const right = Buffer.from(suppliedSignature)
   if (left.length !== right.length || !timingSafeEqual(left, right)) throw new Error("Invalid GA4 OAuth state")
   const parsed = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as Ga4OauthState
-  if (!Number.isSafeInteger(parsed.organizationId) || !parsed.userId || !parsed.accountName || parsed.expiresAt < Date.now()) {
+  if (!Number.isSafeInteger(parsed.organizationId) || !parsed.userId || !parsed.accountName ||
+    (parsed.accountId !== undefined && !Number.isSafeInteger(parsed.accountId)) || parsed.expiresAt < Date.now()) {
     throw new Error("Expired GA4 OAuth state")
   }
   return parsed
