@@ -2,6 +2,12 @@
 
 ## August 20, 2026
 
+- Added an interactive filled-ZCTA map to Order Geography with booked-sales
+  and order-count shading, hover/focus details, a ranked ZIP legend, and studio
+  address markers. The map uses locally hosted, simplified 2020 Census geometry
+  and introduces no paid map or geocoding service. Pending migration
+  `20260820150000` records the four supplied studio map locations in existing
+  PTS integration configuration without adding a table or column.
 - Repaired the GA4 owner OAuth connection after Google's seven-day Testing-mode
   refresh-token lifetime stopped workflows 25, 26, and 30 after the August 17
   reporting date. Published the Google OAuth app to Production, deployed
