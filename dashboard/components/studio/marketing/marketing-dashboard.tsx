@@ -47,6 +47,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart"
 import { Skeleton } from "@/components/ui/skeleton"
+import { KpiHelp } from "@/components/studio/shared/kpi-help"
 
 const currency = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -99,12 +100,12 @@ function formatChartDate(value: string) {
 }
 
 const metricCards = [
-  { key: "paidSpend", label: "Meta + Eulerity spend", icon: CircleDollarSign },
-  { key: "attributedRevenue", label: "Attributed revenue", icon: CircleDollarSign },
-  { key: "attributedRoas", label: "Attributed ROAS", icon: Gauge },
-  { key: "paidCpc", label: "Paid CPC", icon: MousePointerClick },
-  { key: "sessions", label: "Website sessions", icon: Activity },
-  { key: "keyEvents", label: "GA4 key events", icon: Target },
+  { key: "paidSpend", label: "Meta + Eulerity spend", description: "Total advertising spend reported by Meta and Eulerity during the selected period.", icon: CircleDollarSign },
+  { key: "attributedRevenue", label: "Attributed revenue", description: "GA4 purchase revenue credited to paid marketing traffic from the supported platforms.", icon: CircleDollarSign },
+  { key: "attributedRoas", label: "Attributed ROAS", description: "Attributed revenue divided by paid advertising spend. For example, 3.00x means $3 in attributed revenue per $1 spent.", icon: Gauge },
+  { key: "paidCpc", label: "Paid CPC", description: "Average paid cost per click: advertising spend divided by reported paid clicks.", icon: MousePointerClick },
+  { key: "sessions", label: "Website sessions", description: "Visits to the website reported by GA4; one visitor can create more than one session.", icon: Activity },
+  { key: "keyEvents", label: "GA4 key events", description: "Important website actions marked as key events in GA4, such as leads or purchases.", icon: Target },
 ] as const
 
 function formatMetric(
@@ -410,12 +411,10 @@ export function MarketingDashboard() {
   return (
     <div className="grid gap-4">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
-        {metricCards.map(({ key, label, icon: Icon }) => (
+        {metricCards.map(({ key, label, description, icon: Icon }) => (
           <Card key={key} className="gap-3 py-4">
             <CardHeader className="flex-row items-center justify-between px-4">
-              <CardTitle className="text-xs font-medium text-muted-foreground">
-                {label}
-              </CardTitle>
+              <div className="flex items-center gap-1.5"><CardTitle className="text-xs font-medium text-muted-foreground">{label}</CardTitle><KpiHelp description={description} /></div>
               <span className="rounded-lg bg-primary/10 p-2 text-primary">
                 <Icon className="size-4" />
               </span>

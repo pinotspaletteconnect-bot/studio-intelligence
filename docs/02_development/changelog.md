@@ -2,6 +2,9 @@
 
 ## August 21, 2026
 
+- Added accessible hover, focus, and tap explanations to KPI summary tiles on
+  the Executive, Marketing, GA4, Operations, Labor, and dashboard overview
+  surfaces so metric definitions and calculation context are available in place.
 - Changed Textellent low-enrollment eligibility and recipient selection to use
   the live PTS Seating Chart rows. Rescheduled or held seats that remain in a
   broader class reservation total no longer prevent an alert, and only phone

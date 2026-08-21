@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/chart"
 import { Skeleton } from "@/components/ui/skeleton"
 import { LaborSummaryCards } from "@/components/studio/operations/labor-summary-cards"
+import { KpiHelp } from "@/components/studio/shared/kpi-help"
 
 const currency = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -62,20 +63,20 @@ const dayLabel = new Intl.DateTimeFormat("en-US", {
 const studioColors = ["#2563eb", "#7c3aed", "#f97316", "#059669", "#dc2626"]
 
 const cards = [
-  { key: "totalSales", label: "Total sales", icon: CircleDollarSign },
-    { key: "classSales", label: "Class sales", icon: ChartNoAxesCombined },
-      { key: "seatsSold", label: "Seats sold", icon: Armchair },
-  { key: "averageLeadTime", label: "Average lead time", icon: Timer },
-    { key: "foodBeverageSales", label: "F&B sales", icon: Utensils },
-  { key: "foodSales", label: "Food sales", icon: Utensils },
-  { key: "foodBeverageShare", label: "F&B % of sales", icon: Percent },
-    { key: "foodBeveragePerSeat", label: "F&B / seat", icon: GlassWater },
-  { key: "revenuePerSeat", label: "Revenue / seat", icon: ReceiptText },
-  { key: "candleSales", label: "Candle sales", icon: Flame },
-  { key: "artSuppliesSales", label: "Art supplies", icon: Palette },
-  { key: "averageDailySales", label: "Average daily sales", icon: CircleDollarSign },
-  { key: "privatePartyEvents", label: "Private parties", icon: PartyPopper },
-  { key: "mobileEventCount", label: "Mobile events", icon: Truck },
+  { key: "totalSales", label: "Total sales", description: "All recorded class, event, food, beverage, and merchandise sales in the selected period.", icon: CircleDollarSign },
+  { key: "classSales", label: "Class sales", description: "Sales tied to scheduled classes and events in the selected period.", icon: ChartNoAxesCombined },
+  { key: "seatsSold", label: "Seats sold", description: "Total attendee seats sold for classes and events in the selected period.", icon: Armchair },
+  { key: "averageLeadTime", label: "Average lead time", description: "Average days between booking and event date, weighted by the number of seats booked.", icon: Timer },
+  { key: "foodBeverageSales", label: "F&B sales", description: "Combined food and beverage sales in the selected period.", icon: Utensils },
+  { key: "foodSales", label: "Food sales", description: "Sales from products categorized as food, with the reported quantity sold.", icon: Utensils },
+  { key: "foodBeverageShare", label: "F&B % of sales", description: "Food and beverage sales as a percentage of total sales.", icon: Percent },
+  { key: "foodBeveragePerSeat", label: "F&B / seat", description: "Food and beverage sales divided by total seats sold.", icon: GlassWater },
+  { key: "revenuePerSeat", label: "Revenue / seat", description: "Total sales divided by total seats sold.", icon: ReceiptText },
+  { key: "candleSales", label: "Candle sales", description: "Sales from candle products, with the reported quantity sold.", icon: Flame },
+  { key: "artSuppliesSales", label: "Art supplies", description: "Sales from products categorized as art supplies, with the reported quantity sold.", icon: Palette },
+  { key: "averageDailySales", label: "Average daily sales", description: "Total sales divided by the number of calendar days in the selected period.", icon: CircleDollarSign },
+  { key: "privatePartyEvents", label: "Private parties", description: "Count of private-party events, with average seats and revenue per event.", icon: PartyPopper },
+  { key: "mobileEventCount", label: "Mobile events", description: "Count of off-site mobile events, with average seats and revenue per event.", icon: Truck },
 ] as const
 
 function formatCard(
@@ -255,7 +256,7 @@ export function OperationsDashboard() {
         </Link>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {cards.map(({ key, label, icon: Icon }) => {
+        {cards.map(({ key, label, description, icon: Icon }) => {
           const change = data.comparison?.changes[key]
           const ChangeIcon = (change?.absolute ?? 0) >= 0
             ? TrendingUp
@@ -265,7 +266,7 @@ export function OperationsDashboard() {
             <CardContent>
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">{label}</p>
+                  <div className="flex items-center gap-1.5"><p className="text-sm text-muted-foreground">{label}</p><KpiHelp description={description} /></div>
                   <p className="mt-2 flex flex-wrap items-baseline gap-x-2 text-2xl font-semibold tabular-nums">
                     {formatCard(key, data.kpis[key])}
                     {(key === "candleSales" ||

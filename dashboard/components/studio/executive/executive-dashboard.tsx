@@ -29,6 +29,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useApp } from "@/contexts/app-context"
 import type { ExecutiveDashboardData } from "@/lib/services/executive"
 import { LaborSummaryCards } from "@/components/studio/operations/labor-summary-cards"
+import { KpiHelp } from "@/components/studio/shared/kpi-help"
 
 const money = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -55,6 +56,7 @@ type Metric = {
   value: string
   change: number | null
   detail: string
+  description: string
   icon: typeof CircleDollarSign
   showChange?: boolean
 }
@@ -136,6 +138,7 @@ export function ExecutiveDashboard() {
         value: money.format(current.totalSales),
         change: data.comparison?.changes.totalSales?.percent ?? null,
         detail: `${money.format(current.averageDailySales)} average per day`,
+        description: "All recorded sales for the selected studios and date range.",
         icon: CircleDollarSign,
       },
       {
@@ -143,6 +146,7 @@ export function ExecutiveDashboard() {
         value: current.seatsSold.toLocaleString(),
         change: data.comparison?.changes.seatsSold?.percent ?? null,
         detail: `${current.attendancePercent.toFixed(1)}% capacity`,
+        description: "Total seats sold for classes and events in the selected period.",
         icon: Users,
       },
       {
@@ -150,6 +154,7 @@ export function ExecutiveDashboard() {
         value: preciseMoney.format(current.revenuePerSeat),
         change: data.comparison?.changes.revenuePerSeat?.percent ?? null,
         detail: `${preciseMoney.format(current.foodBeveragePerSeat)} F&B per seat`,
+        description: "Total sales divided by seats sold, showing average revenue generated per attendee.",
         icon: Gauge,
       },
       {
@@ -157,6 +162,7 @@ export function ExecutiveDashboard() {
         value: money.format(current.foodBeverageSales),
         change: data.comparison?.changes.foodBeverageSales?.percent ?? null,
         detail: `${current.foodBeverageShare.toFixed(1)}% of sales`,
+        description: "Sales from food and beverage products during the selected period.",
         icon: Utensils,
       },
       {
@@ -164,6 +170,7 @@ export function ExecutiveDashboard() {
         value: money.format(marketing.paidSpend),
         change: percentChange(marketing.paidSpend, priorMarketing.paidSpend),
         detail: `${marketing.sessions.toLocaleString()} website sessions`,
+        description: "Total advertising spend reported by Meta and Eulerity during the selected period.",
         icon: Megaphone,
       },
       {
@@ -175,6 +182,7 @@ export function ExecutiveDashboard() {
         detail: marketing.attributionAvailable
           ? `${marketing.attributedRoas.toFixed(2)}x attributed ROAS`
           : "Awaiting attribution data",
+        description: "GA4 purchase revenue credited to paid marketing traffic from supported platforms.",
         icon: CircleDollarSign,
       },
       {
@@ -182,6 +190,7 @@ export function ExecutiveDashboard() {
         value: marketing.sessions.toLocaleString(),
         change: percentChange(marketing.sessions, priorMarketing.sessions),
         detail: `${marketing.keyEvents.toLocaleString()} key events`,
+        description: "Total website visits reported by GA4; one visitor may create multiple sessions.",
         icon: Users,
       },
       {
@@ -189,6 +198,7 @@ export function ExecutiveDashboard() {
         value: `${current.averageLeadTime.toFixed(1)} days`,
         change: prior ? percentChange(current.averageLeadTime, prior.averageLeadTime) : null,
         detail: "Seat-weighted booking lead time",
+        description: "Average number of days between a reservation and its event date, weighted by seats booked.",
         icon: CalendarClock,
       },
       {
@@ -198,6 +208,7 @@ export function ExecutiveDashboard() {
           : data.yesterdayBookings.seats.toLocaleString(),
         change: null,
         detail: `${dateLabel(data.yesterdayBookings.date)} · gross reservations`,
+        description: "Seats reserved yesterday before refunds or cancellations are deducted.",
         icon: Users,
         showChange: false,
       },
@@ -208,6 +219,7 @@ export function ExecutiveDashboard() {
           : money.format(data.yesterdayBookings.sales),
         change: null,
         detail: `${dateLabel(data.yesterdayBookings.date)} · gross bookings`,
+        description: "Gross reservation-line sales booked yesterday before refunds or cancellations.",
         icon: CircleDollarSign,
         showChange: false,
       },
@@ -269,10 +281,10 @@ export function ExecutiveDashboard() {
     <div className="grid gap-6">
       <LaborSummaryCards />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        {metrics.map(({ label, value, change, detail, icon: Icon, showChange = true }) => (
+        {metrics.map(({ label, value, change, detail, description, icon: Icon, showChange = true }) => (
           <Card key={label} className="gap-3 py-4">
             <CardHeader className="flex-row items-center justify-between px-4">
-              <CardTitle className="text-xs font-medium text-muted-foreground">{label}</CardTitle>
+              <div className="flex items-center gap-1.5"><CardTitle className="text-xs font-medium text-muted-foreground">{label}</CardTitle><KpiHelp description={description} /></div>
               <span className="rounded-lg bg-primary/10 p-2 text-primary"><Icon className="size-4" /></span>
             </CardHeader>
             <CardContent className="px-4">

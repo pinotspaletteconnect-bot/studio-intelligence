@@ -9,6 +9,7 @@ const executiveMetrics = [
     change: "+14.8%",
     trend: "up" as const,
     subtitle: "Compared to last Tuesday",
+    description: "Revenue recorded today across the currently selected business scope.",
   },
   {
     title: "7-Day Revenue",
@@ -16,6 +17,7 @@ const executiveMetrics = [
     change: "+9.3%",
     trend: "up" as const,
     subtitle: "Rolling 7-day performance",
+    description: "Total revenue recorded during the latest rolling seven-day period.",
   },
   {
     title: "Marketing Spend",
@@ -23,6 +25,7 @@ const executiveMetrics = [
     change: "-4.2%",
     trend: "down" as const,
     subtitle: "Meta + Eulerity spend",
+    description: "Advertising spend reported by Meta and Eulerity for the displayed period.",
   },
   {
     title: "Website Sessions",
@@ -30,6 +33,7 @@ const executiveMetrics = [
     change: "+18.1%",
     trend: "up" as const,
     subtitle: "Google Analytics 4",
+    description: "Website sessions reported by Google Analytics 4; one visitor may create multiple sessions.",
   },
 ]
 
@@ -44,6 +48,7 @@ export function SectionCards() {
           change={metric.change}
           trend={metric.trend}
           subtitle={metric.subtitle}
+          description={metric.description}
         />
       ))}
     </div>

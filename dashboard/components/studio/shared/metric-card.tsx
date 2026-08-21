@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card"
 
 import { Badge } from "@/components/ui/badge"
+import { KpiHelp } from "@/components/studio/shared/kpi-help"
 
 import {
   TrendingUpIcon,
@@ -23,6 +24,7 @@ type MetricCardProps = {
   change?: string
   trend?: "up" | "down"
   subtitle?: string
+  description?: string
 }
 
 export function MetricCard({
@@ -31,6 +33,7 @@ export function MetricCard({
   change,
   trend,
   subtitle,
+  description,
 }: MetricCardProps) {
   const TrendingIcon =
     trend === "down"
@@ -40,7 +43,10 @@ export function MetricCard({
   return (
     <Card className="@container/card">
       <CardHeader>
-        <CardDescription>{title}</CardDescription>
+        <div className="flex items-center gap-1.5">
+          <CardDescription>{title}</CardDescription>
+          {description && <KpiHelp description={description} />}
+        </div>
 
         <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
           {value}
