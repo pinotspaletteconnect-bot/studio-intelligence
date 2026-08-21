@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import { geoMercator, geoPath } from "d3-geo"
-import { MapPin } from "lucide-react"
+import { MapPin, RotateCcw, ZoomIn, ZoomOut } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 
 type ZipRow = { studioId: number; zipCode: string; orderCount: number; bookedSales: number }
@@ -24,6 +24,7 @@ function rewindFeature(feature: Feature): Feature {
 function StudioMap({ studio, rows, features, metric, activeZip, setActiveZip }: { studio: StudioLocation; rows: ZipRow[]; features: Feature[]; metric: Metric; activeZip: string | null; setActiveZip: (zip: string | null) => void }) {
   const frameRef = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(560)
+  const [zoom, setZoom] = useState(1)
   useEffect(() => {
     if (!frameRef.current) return
     const observer = new ResizeObserver(entries => setWidth(Math.max(300, Math.floor(entries[0].contentRect.width))))
@@ -33,22 +34,25 @@ function StudioMap({ studio, rows, features, metric, activeZip, setActiveZip }: 
 
   const values = useMemo(() => new Map(rows.map(row => [row.zipCode, row])), [rows])
   const ranked = useMemo(() => [...rows].sort((a, b) => b[metric] - a[metric]), [rows, metric])
+  const topTen = useMemo(() => ranked.slice(0, 10), [ranked])
+  const highlightedZips = useMemo(() => new Set(topTen.map(row => row.zipCode)), [topTen])
   const max = ranked[0]?.[metric] ?? 0
-  const anchor = useMemo(() => {
-    const feature = ranked.map(row => features.find(candidate => candidate.properties?.ZCTA5 === row.zipCode)).find(Boolean)
-    return feature ? { latitude: Number(feature.properties?.CENTLAT), longitude: Number(feature.properties?.CENTLON) } : null
-  }, [features, ranked])
   const region = useMemo(() => {
-    if (!anchor) return []
-    return features.filter(feature => Math.abs(Number(feature.properties?.CENTLAT) - anchor.latitude) < .72 && Math.abs(Number(feature.properties?.CENTLON) - anchor.longitude) < .92)
-  }, [anchor, features])
+    const highlighted = topTen.map(row => features.find(candidate => candidate.properties?.ZCTA5 === row.zipCode)).filter((feature): feature is Feature => Boolean(feature))
+    if (!highlighted.length) return []
+    const latitudes = highlighted.map(feature => Number(feature.properties?.CENTLAT))
+    const longitudes = highlighted.map(feature => Number(feature.properties?.CENTLON))
+    const minLatitude = Math.min(...latitudes) - .16, maxLatitude = Math.max(...latitudes) + .16
+    const minLongitude = Math.min(...longitudes) - .2, maxLongitude = Math.max(...longitudes) + .2
+    return features.filter(feature => { const latitude = Number(feature.properties?.CENTLAT), longitude = Number(feature.properties?.CENTLON); return latitude >= minLatitude && latitude <= maxLatitude && longitude >= minLongitude && longitude <= maxLongitude })
+  }, [features, topTen])
   const height = width < 480 ? 320 : 390
   const projection = useMemo(() => region.length ? geoMercator().fitExtent([[10, 10], [width - 10, height - 10]], { type: "FeatureCollection", features: region } as FeatureCollection) : null, [region, width, height])
   const path = useMemo(() => projection ? geoPath(projection) : null, [projection])
   const selected = activeZip ? values.get(activeZip) : null
   const fill = (zip: string) => {
     const value = values.get(zip)?.[metric] ?? 0
-    if (!value || !max) return "var(--muted)"
+    if (!value || !max || !highlightedZips.has(zip)) return "var(--muted)"
     const level = Math.min(5, Math.max(1, Math.ceil(value / max * 5)))
     return `var(--chart-${6 - level})`
   }
@@ -59,16 +63,24 @@ function StudioMap({ studio, rows, features, metric, activeZip, setActiveZip }: 
     <div className="grid gap-4 md:grid-cols-[minmax(0,3fr)_minmax(180px,2fr)]">
       <div ref={frameRef} className="relative overflow-hidden rounded-lg border bg-muted/20" style={{ minHeight: height }}>
         {path ? <svg viewBox={`0 0 ${width} ${height}`} className="block h-auto w-full" role="img" aria-label={`${studio.name} ZIP areas shaded by ${metric === "bookedSales" ? "booked sales" : "order count"}`}>
+          <g transform={`translate(${width / 2} ${height / 2}) scale(${zoom}) translate(${-width / 2} ${-height / 2})`}>
           {region.map(feature => {
             const zip = feature.properties?.ZCTA5 ?? ""
             const value = values.get(zip)
-            return <path key={zip} d={path(feature) ?? undefined} fill={fill(zip)} stroke="var(--card)" strokeWidth={activeZip === zip ? 2 : .7} className={value ? "cursor-pointer transition-opacity hover:opacity-80" : undefined} onMouseEnter={() => value && setActiveZip(zip)} onMouseLeave={() => setActiveZip(null)} onFocus={() => value && setActiveZip(zip)} onBlur={() => setActiveZip(null)} tabIndex={value ? 0 : undefined}><title>{value ? `${zip}: ${money.format(value.bookedSales)}, ${value.orderCount} orders` : `ZIP ${zip}`}</title></path>
+            return <path key={zip} d={path(feature) ?? undefined} fill={fill(zip)} stroke="var(--card)" strokeWidth={activeZip === zip ? 2 : .7} vectorEffect="non-scaling-stroke" className={value ? "cursor-pointer transition-opacity hover:opacity-80" : undefined} onMouseEnter={() => value && setActiveZip(zip)} onMouseLeave={() => setActiveZip(null)} onFocus={() => value && setActiveZip(zip)} onBlur={() => setActiveZip(null)} tabIndex={value ? 0 : undefined}><title>{value ? `${zip}: ${money.format(value.bookedSales)}, ${value.orderCount} orders` : `ZIP ${zip}`}</title></path>
+          })}
+          {topTen.map(row => {
+            const feature = region.find(candidate => candidate.properties?.ZCTA5 === row.zipCode)
+            const center = feature ? path.centroid(feature) : null
+            return center && Number.isFinite(center[0]) ? <text key={row.zipCode} x={center[0]} y={center[1]} textAnchor="middle" dominantBaseline="central" fill="var(--foreground)" fontSize="9" fontWeight="500" pointerEvents="none">{row.zipCode}</text> : null
           })}
           {marker ? <circle cx={marker[0]} cy={marker[1]} r="6" fill="var(--destructive)" stroke="var(--card)" strokeWidth="2"><title>{studio.name}: {studio.address}</title></circle> : null}
+          </g>
         </svg> : <div className="flex h-full items-center justify-center text-sm text-muted-foreground">No mapped ZIP data for this period.</div>}
+        <div className="absolute right-3 top-3 flex rounded-md border bg-background/95 p-1 shadow-sm" aria-label="Map zoom controls"><button type="button" aria-label="Zoom out" disabled={zoom <= 1} onClick={() => setZoom(current => Math.max(1, current - .5))} className="rounded p-1.5 text-muted-foreground hover:bg-muted disabled:opacity-40"><ZoomOut className="size-4" /></button><button type="button" aria-label="Reset zoom" disabled={zoom === 1} onClick={() => setZoom(1)} className="rounded p-1.5 text-muted-foreground hover:bg-muted disabled:opacity-40"><RotateCcw className="size-4" /></button><button type="button" aria-label="Zoom in" disabled={zoom >= 3} onClick={() => setZoom(current => Math.min(3, current + .5))} className="rounded p-1.5 text-muted-foreground hover:bg-muted disabled:opacity-40"><ZoomIn className="size-4" /></button></div>
         {selected ? <div className="absolute bottom-3 left-3 rounded-md border bg-popover px-3 py-2 text-sm text-popover-foreground shadow-sm"><strong>ZIP {activeZip}</strong><div>{money.format(selected.bookedSales)} · {selected.orderCount.toLocaleString()} orders</div></div> : null}
       </div>
-      <div><h4 className="font-medium">Top ZIP codes</h4><div className="mt-2 space-y-1">{ranked.slice(0, 8).map((row, index) => <button key={row.zipCode} type="button" onMouseEnter={() => setActiveZip(row.zipCode)} onMouseLeave={() => setActiveZip(null)} onFocus={() => setActiveZip(row.zipCode)} onBlur={() => setActiveZip(null)} className="grid w-full grid-cols-[1.5rem_1fr_auto] items-center gap-2 rounded px-1 py-1.5 text-left text-sm hover:bg-muted"><span className="text-muted-foreground">{index + 1}</span><span className="font-medium">{row.zipCode}</span><span>{metric === "bookedSales" ? money.format(row.bookedSales) : row.orderCount.toLocaleString()}</span></button>)}</div></div>
+      <div><h4 className="font-medium">Top 10 ZIP codes</h4><div className="mt-2 space-y-1">{topTen.map((row, index) => <button key={row.zipCode} type="button" onMouseEnter={() => setActiveZip(row.zipCode)} onMouseLeave={() => setActiveZip(null)} onFocus={() => setActiveZip(row.zipCode)} onBlur={() => setActiveZip(null)} className="grid w-full grid-cols-[1rem_1.5rem_1fr_auto] items-center gap-2 rounded px-1 py-1.5 text-left text-sm hover:bg-muted"><span className="size-3 rounded-sm" style={{ backgroundColor: fill(row.zipCode) }} aria-hidden="true" /><span className="text-muted-foreground">{index + 1}</span><span className="font-medium">{row.zipCode}</span><span>{metric === "bookedSales" ? money.format(row.bookedSales) : row.orderCount.toLocaleString()}</span></button>)}</div></div>
     </div>
   </CardContent></Card>
 }

@@ -5,7 +5,9 @@
 - Corrected Census polygon winding that caused the initial ZIP map release to
   render filled world complements instead of local boundaries, and replaced
   the combined cross-country projection with one focused map and ranking per
-  studio.
+  studio. Per-studio maps now emphasize and label the top 10 ZIPs, use matching
+  ranked-list color swatches, open at a tighter local extent, and provide
+  accessible zoom-in, zoom-out, and reset controls.
 - Added an interactive filled-ZCTA map to Order Geography with booked-sales
   and order-count shading, hover/focus details, a ranked ZIP legend, and studio
   address markers. The map uses locally hosted, simplified 2020 Census geometry
