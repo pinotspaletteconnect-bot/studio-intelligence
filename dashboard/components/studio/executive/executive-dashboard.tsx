@@ -154,7 +154,7 @@ export function ExecutiveDashboard() {
         value: preciseMoney.format(current.revenuePerSeat),
         change: data.comparison?.changes.revenuePerSeat?.percent ?? null,
         detail: `${preciseMoney.format(current.foodBeveragePerSeat)} F&B per seat`,
-        description: "Total sales divided by seats sold, showing average revenue generated per attendee.",
+        description: "Total sales divided by seats sold, showing average revenue generated per attendee. This helps distinguish growth from higher attendance versus stronger pricing and guest spending; the F&B-per-seat detail isolates average add-on spending.",
         icon: Gauge,
       },
       {
@@ -162,7 +162,7 @@ export function ExecutiveDashboard() {
         value: money.format(current.foodBeverageSales),
         change: data.comparison?.changes.foodBeverageSales?.percent ?? null,
         detail: `${current.foodBeverageShare.toFixed(1)}% of sales`,
-        description: "Sales from food and beverage products during the selected period.",
+        description: "Sales from food and beverage products during the selected period; the percentage shows their share of total sales. That share reveals the strength of add-on purchasing and helps identify opportunities to improve revenue beyond class tickets.",
         icon: Utensils,
       },
       {

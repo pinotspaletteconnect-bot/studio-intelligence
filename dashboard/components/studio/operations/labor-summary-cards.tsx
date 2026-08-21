@@ -37,9 +37,9 @@ export function LaborSummaryCards() {
   if (!data) return null
 
   const cards = [
-    { label: "Total labor", value: data.totalCost, percent: data.totalPercent, description: "Total actual labor cost, including both class-support and operating-overhead labor." },
-    { label: "COGS labor", value: data.cogsCost, percent: data.cogsPercent, description: "Actual labor cost for roles mapped to direct class and event support." },
-    { label: "Overhead labor", value: data.overheadCost, percent: data.overheadPercent, description: "Actual labor cost for roles mapped to general studio operations rather than direct class support." },
+    { label: "Total labor", value: data.totalCost, percent: data.totalPercent, description: "Total actual labor cost, including both class-support and operating-overhead labor, shown with its percentage of sales. The percentage indicates how much revenue is being consumed by staffing and makes labor efficiency comparable across studios and periods of different sizes." },
+    { label: "COGS labor", value: data.cogsCost, percent: data.cogsPercent, description: "Actual labor cost for roles mapped to direct class and event support, shown with its percentage of sales. Tracking the percentage helps determine whether direct staffing is scaling appropriately with the revenue those classes and events generate." },
+    { label: "Overhead labor", value: data.overheadCost, percent: data.overheadPercent, description: "Actual labor cost for roles mapped to general studio operations, shown with its percentage of sales. This highlights how much revenue is supporting indirect staffing and can reveal overhead that is growing faster than the business." },
   ]
 
   return <div className="grid gap-4 sm:grid-cols-3">
