@@ -2,6 +2,10 @@
 
 ## August 21, 2026
 
+- Changed Textellent low-enrollment eligibility and recipient selection to use
+  the live PTS Seating Chart rows. Rescheduled or held seats that remain in a
+  broader class reservation total no longer prevent an alert, and only phone
+  numbers attached to the active seating-chart rows are used transiently.
 - Moved Order Geography & Discounts from Operations to Marketing navigation,
   page, and API namespaces. The former page redirects to the Marketing route
   and the former API remains a compatibility alias for existing clients.

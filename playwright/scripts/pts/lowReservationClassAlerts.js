@@ -110,20 +110,37 @@ async function readClass(page, classId) {
     });
 }
 
-async function uniquePurchaserPhones(page, classId) {
+function activeReservationContacts(rows) {
+    const activeRows = Array.isArray(rows) ? rows : [];
+    return {
+        reservationCount: activeRows.length,
+        phones: [...new Set(activeRows.map(row => row?.purchaserPhone).filter(Boolean))]
+    };
+}
+
+async function readActiveReservations(page, classId) {
     await page.goto(`${PTS_URL}/Class/SeatingChart/${classId}`, { waitUntil: "domcontentloaded" });
-    await page.waitForFunction(() => {
-        const table = Array.from(document.querySelectorAll("table")).find(node => /Purchaser Phone/i.test(node.innerText));
-        const columnCount = table?.querySelectorAll("thead th").length || 0;
-        return Boolean(columnCount && Array.from(table.querySelectorAll("tbody tr")).some(row => row.querySelectorAll(":scope > td").length === columnCount));
-    });
-    return page.evaluate(() => {
+    await page.waitForFunction(() => Array.from(document.querySelectorAll("table")).some(node => /Purchaser Phone/i.test(node.innerText)));
+    await page.locator(".k-loading-mask").waitFor({ state: "hidden", timeout: 15000 }).catch(() => {});
+    await page.waitForTimeout(500);
+    const rows = await page.evaluate(() => {
         const table = Array.from(document.querySelectorAll("table")).find(node => /Purchaser Phone/i.test(node.innerText));
         if (!table) throw new Error("PTS Seating Chart contact table was not found");
         const headers = Array.from(table.querySelectorAll("thead th")).map(node => node.textContent?.trim() || "");
         const phoneIndex = headers.findIndex(value => /Purchaser Phone/i.test(value));
-        return [...new Set(Array.from(table.querySelectorAll("tbody tr")).map(row => row.querySelectorAll(":scope > td")[phoneIndex]?.textContent?.trim()).filter(Boolean))];
+        const grid = window.jQuery?.(table).closest(".k-grid").data("kendoGrid");
+        const models = grid?.dataSource?.view?.();
+        if (Array.isArray(models) || models?.length >= 0) {
+            return Array.from(models).map(model => ({
+                purchaserPhone: String(model.PurchaserPhone ?? "").trim()
+            }));
+        }
+        const columnCount = headers.length;
+        return Array.from(table.querySelectorAll("tbody tr"))
+            .filter(row => row.querySelectorAll(":scope > td").length === columnCount)
+            .map(row => ({ purchaserPhone: row.querySelectorAll(":scope > td")[phoneIndex]?.textContent?.trim() || "" }));
     });
+    return activeReservationContacts(rows);
 }
 
 async function sendTextellent({ authCode, from, to, text }) {
@@ -162,37 +179,39 @@ async function runLowReservationClassAlerts({ targetDate, now = new Date(), exec
                 const count = candidate.reservationCount;
                 const excludedTitle = studio.excludedTitlePatterns.some(pattern => candidate.title.toLowerCase().includes(pattern.toLowerCase()));
                 if (execute && !approved.has(candidate.classId)) continue;
-                if (!execute && (!isLowReservation(count, studio.minimumReservations) || excludedTitle)) continue;
+                if (!execute && (count === 0 || excludedTitle)) continue;
                 const dueAt = scheduledAlertAt(candidate.startsAt, studio.leadHours, studio.earliestSendTime, studio.timeZone);
                 if (now < dueAt) continue;
                 if (now >= new Date(candidate.startsAt)) continue;
                 const current = await readClass(page, candidate.classId);
-                if (!isLowReservation(current.reservationCount, studio.minimumReservations) || excludedTitle || studio.excludedClassTypes.includes(current.classType)) {
-                    results.push({ studioId: studio.studioId, classId: candidate.classId, status: "skipped", reservationCount: current.reservationCount, recipientCount: 0, messageIds: [] });
-                    continue;
-                }
-                let phones;
+                let activeReservations;
                 try {
-                    phones = [...new Set((await uniquePurchaserPhones(page, candidate.classId)).map(e164).filter(Boolean))];
+                    activeReservations = await readActiveReservations(page, candidate.classId);
                 } catch {
                     results.push({ studioId: studio.studioId, classId: candidate.classId, classStartsAt: candidate.startsAt, scheduledFor: dueAt.toISOString(), status: "failed", reservationCount: current.reservationCount, recipientCount: 0, messageIds: [], errorCode: "PTS_CONTACT_LOOKUP_FAILED" });
                     continue;
                 }
-                const message = renderMessage(studio.messageTemplate, { studio: studio.studioName, class_name: candidate.title.replace(/Res:.*/i, "").trim(), class_date: targetDate, class_time: new Intl.DateTimeFormat("en-US", { timeZone: studio.timeZone, hour: "numeric", minute: "2-digit" }).format(new Date(candidate.startsAt)), reservations: current.reservationCount });
+                const activeCount = activeReservations.reservationCount;
+                if (!isLowReservation(activeCount, studio.minimumReservations) || excludedTitle || studio.excludedClassTypes.includes(current.classType)) {
+                    results.push({ studioId: studio.studioId, classId: candidate.classId, status: "skipped", reservationCount: activeCount, recipientCount: 0, messageIds: [] });
+                    continue;
+                }
+                const phones = [...new Set(activeReservations.phones.map(e164).filter(Boolean))];
+                const message = renderMessage(studio.messageTemplate, { studio: studio.studioName, class_name: candidate.title.replace(/Res:.*/i, "").trim(), class_date: targetDate, class_time: new Intl.DateTimeFormat("en-US", { timeZone: studio.timeZone, hour: "numeric", minute: "2-digit" }).format(new Date(candidate.startsAt)), reservations: activeCount });
                 const messageIds = [];
                 if (execute && phones.length === 0) {
-                    results.push({ studioId: studio.studioId, classId: candidate.classId, classStartsAt: candidate.startsAt, scheduledFor: dueAt.toISOString(), status: "skipped", reservationCount: current.reservationCount, recipientCount: 0, messageIds, errorCode: "NO_VALID_RECIPIENTS" });
+                    results.push({ studioId: studio.studioId, classId: candidate.classId, classStartsAt: candidate.startsAt, scheduledFor: dueAt.toISOString(), status: "skipped", reservationCount: activeCount, recipientCount: 0, messageIds, errorCode: "NO_VALID_RECIPIENTS" });
                     continue;
                 }
                 if (execute) {
                     try {
                         for (const phone of phones) messageIds.push(await sendTextellent({ authCode: studio.authCode, from: studio.senderNumber, to: phone, text: message }));
                     } catch {
-                        results.push({ studioId: studio.studioId, classId: candidate.classId, classStartsAt: candidate.startsAt, scheduledFor: dueAt.toISOString(), status: "failed", reservationCount: current.reservationCount, recipientCount: phones.length, messageIds, errorCode: "TEXTELLENT_SEND_FAILED" });
+                        results.push({ studioId: studio.studioId, classId: candidate.classId, classStartsAt: candidate.startsAt, scheduledFor: dueAt.toISOString(), status: "failed", reservationCount: activeCount, recipientCount: phones.length, messageIds, errorCode: "TEXTELLENT_SEND_FAILED" });
                         continue;
                     }
                 }
-                results.push({ studioId: studio.studioId, classId: candidate.classId, classStartsAt: candidate.startsAt, scheduledFor: dueAt.toISOString(), status: execute ? "sent" : "preview", reservationCount: current.reservationCount, recipientCount: phones.length, messageIds });
+                results.push({ studioId: studio.studioId, classId: candidate.classId, classStartsAt: candidate.startsAt, scheduledFor: dueAt.toISOString(), status: execute ? "sent" : "preview", reservationCount: activeCount, recipientCount: phones.length, messageIds });
             }
         }
         return results;
@@ -201,4 +220,4 @@ async function runLowReservationClassAlerts({ targetDate, now = new Date(), exec
     }
 }
 
-module.exports = { e164, isLowReservation, renderMessage, scheduledAlertAt, runLowReservationClassAlerts };
+module.exports = { activeReservationContacts, e164, isLowReservation, renderMessage, scheduledAlertAt, runLowReservationClassAlerts };

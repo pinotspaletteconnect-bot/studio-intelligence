@@ -293,6 +293,9 @@ Implemented foundation:
   disabled-by-default implementation for per-studio low-reservation class
   alerts, shared account routing, encrypted API auth codes, custom messages,
   transient PTS Seating Chart phone access, and phone-free send auditing. The
+  live Seating Chart row count is the final enrollment authority, so held or
+  rescheduled seats do not inflate eligibility and only active seating-chart
+  purchasers are selected as recipients. The
   database migration and dashboard page are deployed. Vault-backed PTS and
   Textellent credentials, the current PTS CalendarView and Seating Chart parser,
   a six-class preview simulation, and a controlled one-time Textellent send are
