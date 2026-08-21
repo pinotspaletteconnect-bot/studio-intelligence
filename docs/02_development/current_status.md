@@ -273,8 +273,9 @@ Implemented foundation:
   includes a no-recurring-cost filled ZCTA map with sales/order shading, ranked
   ZIP interaction, and configured studio address markers. Regional 2020 Census
   geometry is hosted with the dashboard; studio addresses and coordinates are
-  stored in the existing PTS integration configuration by pending migration
-  `20260820150000`. Supabase migration
+  stored in the existing PTS integration configuration. All four production
+  configurations were populated and verified August 21; migration
+  `20260820150000` remains pending in the remote migration ledger. Supabase migration
   `20260817160000` was deployed and its table, reporting view, and RPC were
   verified August 17. Railway deployment, unpublished workflow 31 credential
   binding/manual validation, backfill, and controlled production validation remain pending; the feature must not be
