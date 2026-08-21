@@ -1,5 +1,13 @@
 # Studio Intelligence Changelog
 
+## August 21, 2026
+
+- Added a theme-aware blue intensity scale and red studio stars to the
+  per-studio ZIP maps. Populated and verified all four production PTS
+  integration configurations with the supplied studio addresses and Census-
+  geocoded coordinates without altering the database schema or migration
+  ledger.
+
 ## August 20, 2026
 
 - Corrected Census polygon winding that caused the initial ZIP map release to
@@ -7,7 +15,9 @@
   the combined cross-country projection with one focused map and ranking per
   studio. Per-studio maps now emphasize and label the top 10 ZIPs, use matching
   ranked-list color swatches, open at a tighter local extent, and provide
-  accessible zoom-in, zoom-out, and reset controls.
+  accessible zoom-in, zoom-out, and reset controls. A theme-aware blue scale
+  replaces the neutral chart palette, and configured studio locations render
+  as red stars.
 - Added an interactive filled-ZCTA map to Order Geography with booked-sales
   and order-count shading, hover/focus details, a ranked ZIP legend, and studio
   address markers. The map uses locally hosted, simplified 2020 Census geometry

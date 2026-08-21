@@ -14,6 +14,14 @@ type Metric = "bookedSales" | "orderCount"
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })
 
+function starPoints(centerX: number, centerY: number, outerRadius = 9, innerRadius = 4.2) {
+  return Array.from({ length: 10 }, (_, index) => {
+    const angle = -Math.PI / 2 + index * Math.PI / 5
+    const radius = index % 2 === 0 ? outerRadius : innerRadius
+    return `${centerX + Math.cos(angle) * radius},${centerY + Math.sin(angle) * radius}`
+  }).join(" ")
+}
+
 function rewindFeature(feature: Feature): Feature {
   const geometry = feature.geometry
   if (geometry.type === "Polygon") return { ...feature, geometry: { ...geometry, coordinates: geometry.coordinates.map(ring => [...ring].reverse()) } }
@@ -54,7 +62,7 @@ function StudioMap({ studio, rows, features, metric, activeZip, setActiveZip }: 
     const value = values.get(zip)?.[metric] ?? 0
     if (!value || !max || !highlightedZips.has(zip)) return "var(--muted)"
     const level = Math.min(5, Math.max(1, Math.ceil(value / max * 5)))
-    return `var(--chart-${6 - level})`
+    return `var(--map-zip-${level})`
   }
   const marker = projection && studio.latitude !== null && studio.longitude !== null ? projection([studio.longitude, studio.latitude]) : null
 
@@ -72,9 +80,9 @@ function StudioMap({ studio, rows, features, metric, activeZip, setActiveZip }: 
           {topTen.map(row => {
             const feature = region.find(candidate => candidate.properties?.ZCTA5 === row.zipCode)
             const center = feature ? path.centroid(feature) : null
-            return center && Number.isFinite(center[0]) ? <text key={row.zipCode} x={center[0]} y={center[1]} textAnchor="middle" dominantBaseline="central" fill="var(--foreground)" fontSize="9" fontWeight="500" pointerEvents="none">{row.zipCode}</text> : null
+            return center && Number.isFinite(center[0]) ? <text key={row.zipCode} x={center[0]} y={center[1]} textAnchor="middle" dominantBaseline="central" fill="var(--foreground)" stroke="var(--card)" strokeWidth="2" paintOrder="stroke" fontSize="9" fontWeight="500" pointerEvents="none">{row.zipCode}</text> : null
           })}
-          {marker ? <circle cx={marker[0]} cy={marker[1]} r="6" fill="var(--destructive)" stroke="var(--card)" strokeWidth="2"><title>{studio.name}: {studio.address}</title></circle> : null}
+          {marker ? <polygon points={starPoints(marker[0], marker[1])} fill="var(--destructive)" stroke="var(--card)" strokeWidth="2" vectorEffect="non-scaling-stroke"><title>{studio.name}: {studio.address}</title></polygon> : null}
           </g>
         </svg> : <div className="flex h-full items-center justify-center text-sm text-muted-foreground">No mapped ZIP data for this period.</div>}
         <div className="absolute right-3 top-3 flex rounded-md border bg-background/95 p-1 shadow-sm" aria-label="Map zoom controls"><button type="button" aria-label="Zoom out" disabled={zoom <= 1} onClick={() => setZoom(current => Math.max(1, current - .5))} className="rounded p-1.5 text-muted-foreground hover:bg-muted disabled:opacity-40"><ZoomOut className="size-4" /></button><button type="button" aria-label="Reset zoom" disabled={zoom === 1} onClick={() => setZoom(1)} className="rounded p-1.5 text-muted-foreground hover:bg-muted disabled:opacity-40"><RotateCcw className="size-4" /></button><button type="button" aria-label="Zoom in" disabled={zoom >= 3} onClick={() => setZoom(current => Math.min(3, current + .5))} className="rounded p-1.5 text-muted-foreground hover:bg-muted disabled:opacity-40"><ZoomIn className="size-4" /></button></div>
