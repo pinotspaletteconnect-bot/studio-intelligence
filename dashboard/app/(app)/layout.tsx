@@ -59,13 +59,6 @@ export default async function AppLayout({
             </Link>
 
             <Link
-              href="/operations/order-geography"
-              className="ml-4 block rounded-lg border-l-2 border-slate-200 px-3 py-2 text-sm text-slate-600 hover:border-slate-400 hover:bg-slate-100 hover:text-slate-900"
-            >
-              Order Geography &amp; Discounts
-            </Link>
-
-            <Link
               href="/operations/week-over-week"
               className="ml-4 block rounded-lg border-l-2 border-slate-200 px-3 py-2 text-sm text-slate-600 hover:border-slate-400 hover:bg-slate-100 hover:text-slate-900"
             >
@@ -84,6 +77,13 @@ export default async function AppLayout({
               className="block rounded-lg px-3 py-2 hover:bg-slate-100"
             >
               Marketing
+            </Link>
+
+            <Link
+              href="/marketing/order-geography"
+              className="ml-4 block rounded-lg border-l-2 border-slate-200 px-3 py-2 text-sm text-slate-600 hover:border-slate-400 hover:bg-slate-100 hover:text-slate-900"
+            >
+              Order Geography &amp; Discounts
             </Link>
 
             <Link

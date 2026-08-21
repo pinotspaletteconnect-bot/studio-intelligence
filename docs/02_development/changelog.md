@@ -2,6 +2,9 @@
 
 ## August 21, 2026
 
+- Moved Order Geography & Discounts from Operations to Marketing navigation,
+  page, and API namespaces. The former page redirects to the Marketing route
+  and the former API remains a compatibility alias for existing clients.
 - Added a theme-aware blue intensity scale and red studio stars to the
   per-studio ZIP maps. Populated and verified all four production PTS
   integration configurations with the supplied studio addresses and Census-

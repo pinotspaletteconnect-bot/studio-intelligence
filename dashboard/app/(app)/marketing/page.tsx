@@ -2,6 +2,9 @@
 
 import { MarketingDashboard } from "@/components/studio/marketing/marketing-dashboard"
 import { DashboardToolbar } from "@/components/studio/shared/dashboard-toolbar"
+import Link from "next/link"
+import { MapPin } from "lucide-react"
+import { buttonVariants } from "@/components/ui/button"
 
 export default function MarketingPage() {
   return (
@@ -10,6 +13,7 @@ export default function MarketingPage() {
         title="Marketing Performance"
         subtitle="Track and compare performance across every connected marketing source."
       />
+      <div className="flex justify-end"><Link href="/marketing/order-geography" className={buttonVariants({ variant: "outline" })}><MapPin />Order geography &amp; discounts</Link></div>
       <MarketingDashboard />
     </div>
   )

@@ -40,11 +40,6 @@ const data = {
     icon: <ListIcon />,
   },
   {
-    title: "Order Geography",
-    url: "/operations/order-geography",
-    icon: <MapPinIcon />,
-  },
-  {
     title: "Marketing",
     url: "/marketing",
     icon: <ChartBarIcon />,
@@ -143,6 +138,11 @@ const data = {
     name: "Marketing Overview",
     url: "/marketing",
     icon: <ChartBarIcon />,
+  },
+  {
+    name: "Order Geography & Discounts",
+    url: "/marketing/order-geography",
+    icon: <MapPinIcon />,
   },
   {
     name: "GA4 Analytics",
