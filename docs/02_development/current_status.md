@@ -249,7 +249,9 @@ Implemented foundation:
   because those can represent real parties that have not selected their art or
   received reservations yet. Classes scheduled before 4:00 AM in the studio's
   configured local timezone are treated as inquiries and excluded from both
-  upcoming and completed party reporting.
+  upcoming and completed party reporting. Completed `No Painting Selected`
+  parties are also excluded when capacity, seats, class sales, and fee sales
+  all remain zero; upcoming rows retain them because they may still convert.
 - Operations product reporting excludes zero-dollar items labeled as preorders
   from displayed quantities because PTS uses them as website placeholders;
   paid preorder sales remain included.

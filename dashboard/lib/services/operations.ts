@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase/server"
-import { isReportablePtsClass } from "@/lib/services/pts-class-filters"
+import { hasHistoricalPartyEvidence, isReportablePtsClass } from "@/lib/services/pts-class-filters"
 import { getHomebaseLabor } from "@/lib/services/homebase-labor"
 
 type DailyOperationsRow = {
@@ -37,6 +37,7 @@ type ClassTypeRow = {
   reporting_class_type: string
   class_event_count?: number | string | null
   seats_sold: number | string | null
+  capacity?: number | string | null
   class_sales: number | string | null
   fee_sales: number | string | null
 }
@@ -352,7 +353,7 @@ export async function getOperationsDashboard(
     supabase
       .from("pts_class_sales_reporting")
       .select(
-        "studio_id,event_date,painting,class_time,reporting_class_type,seats_sold,class_sales,fee_sales"
+        "studio_id,event_date,painting,class_time,reporting_class_type,seats_sold,capacity,class_sales,fee_sales"
       )
       .gte("event_date", periodStart)
       .lte("event_date", periodEnd),
@@ -518,7 +519,8 @@ export async function getOperationsDashboard(
     }
   }
   const currentClassTypeRows = allCurrentClassTypeRows.filter((row) =>
-    isReportablePtsClass(row, studioTimeZones.get(row.studio_id))
+    isReportablePtsClass(row, studioTimeZones.get(row.studio_id)) &&
+    hasHistoricalPartyEvidence(row)
   )
   const classTypeRows = [
     ...((historicalClassTypesResult.data ?? []) as ClassTypeRow[]).filter(
@@ -1000,7 +1002,10 @@ export async function getDailyOperatingDetail(
     (studioResult.data ?? []).map((studio) => [studio.id, studio.timezone])
   )
   const rows = ((classesResult.data ?? []) as ClassDetailRow[])
-    .filter((row) => isReportablePtsClass(row, detailStudioTimeZones.get(row.studio_id)))
+    .filter((row) =>
+      isReportablePtsClass(row, detailStudioTimeZones.get(row.studio_id)) &&
+      hasHistoricalPartyEvidence(row)
+    )
     .map((row) => {
     const seatsSold = numberValue(row.seats_sold)
     const capacity = numberValue(row.capacity)
@@ -1287,7 +1292,10 @@ export async function getClassEventSalesDetail(
     (studiosResult.data ?? []).map((studio) => [studio.id, studio.timezone])
   )
   const rows = ((classesResult.data ?? []) as ClassEventDetailRow[])
-    .filter((row) => isReportablePtsClass(row, studioTimeZones.get(row.studio_id)))
+    .filter((row) =>
+      isReportablePtsClass(row, studioTimeZones.get(row.studio_id)) &&
+      hasHistoricalPartyEvidence({ ...row, reporting_class_type: reportingClassType })
+    )
   const studios = (studiosResult.data ?? []).map((studio) => {
     const classes = rows
       .filter((row) => row.studio_id === studio.id)
