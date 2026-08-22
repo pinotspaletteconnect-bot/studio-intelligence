@@ -247,7 +247,9 @@ Implemented foundation:
   and drill-downs. All other painting values remain included, including
   `No Painting Selected`, `Coming Soon`, and zero-seat or zero-revenue rows,
   because those can represent real parties that have not selected their art or
-  received reservations yet.
+  received reservations yet. Classes scheduled before 4:00 AM in the studio's
+  configured local timezone are treated as inquiries and excluded from both
+  upcoming and completed party reporting.
 - Operations product reporting excludes zero-dollar items labeled as preorders
   from displayed quantities because PTS uses them as website placeholders;
   paid preorder sales remain included.

@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase/server"
-import { isMarketingPlaceholderClass } from "@/lib/services/pts-class-filters"
+import { isReportablePtsClass } from "@/lib/services/pts-class-filters"
 import { getHomebaseLabor } from "@/lib/services/homebase-labor"
 
 type DailyOperationsRow = {
@@ -33,6 +33,7 @@ type ClassTypeRow = {
   event_date?: string
   report_date?: string
   painting?: string | null
+  class_time?: string | null
   reporting_class_type: string
   class_event_count?: number | string | null
   seats_sold: number | string | null
@@ -351,7 +352,7 @@ export async function getOperationsDashboard(
     supabase
       .from("pts_class_sales_reporting")
       .select(
-        "studio_id,event_date,painting,reporting_class_type,seats_sold,class_sales,fee_sales"
+        "studio_id,event_date,painting,class_time,reporting_class_type,seats_sold,class_sales,fee_sales"
       )
       .gte("event_date", periodStart)
       .lte("event_date", periodEnd),
@@ -499,8 +500,25 @@ export async function getOperationsDashboard(
   const currentClassStudioDates = new Set(
     allCurrentClassTypeRows.map((row) => `${row.studio_id}:${row.event_date}`)
   )
-  const currentClassTypeRows = allCurrentClassTypeRows.filter(
-    (row) => !isMarketingPlaceholderClass(row.painting)
+  const classLeadTimeRows = (classLeadTimeResult.data ?? []) as ClassLeadTimeRow[]
+  const studioIds = [...new Set(dailyRows.map((row) => row.studio_id))]
+  const studioNames = new Map<number, string>()
+  const studioTimeZones = new Map<number, string>()
+
+  if (studioIds.length) {
+    const { data: studios, error: studiosError } = await supabase
+      .from("studios")
+      .select("id,studio_name,timezone")
+      .in("id", studioIds)
+
+    if (studiosError) throw studiosError
+    for (const studio of studios ?? []) {
+      studioNames.set(studio.id, studio.studio_name)
+      studioTimeZones.set(studio.id, studio.timezone)
+    }
+  }
+  const currentClassTypeRows = allCurrentClassTypeRows.filter((row) =>
+    isReportablePtsClass(row, studioTimeZones.get(row.studio_id))
   )
   const classTypeRows = [
     ...((historicalClassTypesResult.data ?? []) as ClassTypeRow[]).filter(
@@ -508,21 +526,6 @@ export async function getOperationsDashboard(
     ),
     ...currentClassTypeRows,
   ]
-  const classLeadTimeRows = (classLeadTimeResult.data ?? []) as ClassLeadTimeRow[]
-  const studioIds = [...new Set(dailyRows.map((row) => row.studio_id))]
-  const studioNames = new Map<number, string>()
-
-  if (studioIds.length) {
-    const { data: studios, error: studiosError } = await supabase
-      .from("studios")
-      .select("id,studio_name")
-      .in("id", studioIds)
-
-    if (studiosError) throw studiosError
-    for (const studio of studios ?? []) {
-      studioNames.set(studio.id, studio.studio_name)
-    }
-  }
 
   const dailyMap = new Map<
     string,
@@ -963,7 +966,7 @@ export async function getDailyOperatingDetail(
     .eq("event_date", date)
     .order("class_time", { ascending: true })
     .range(0, 999)
-  let studiosQuery = supabase.from("studios").select("id,studio_name")
+  let studiosQuery = supabase.from("studios").select("id,studio_name,timezone")
 
   if (studioId) {
     classesQuery = classesQuery.eq("studio_id", studioId)
@@ -993,8 +996,11 @@ export async function getDailyOperatingDetail(
   if (studioResult.error) throw studioResult.error
   if (operationsResult.error) throw operationsResult.error
 
+  const detailStudioTimeZones = new Map(
+    (studioResult.data ?? []).map((studio) => [studio.id, studio.timezone])
+  )
   const rows = ((classesResult.data ?? []) as ClassDetailRow[])
-    .filter((row) => !isMarketingPlaceholderClass(row.painting))
+    .filter((row) => isReportablePtsClass(row, detailStudioTimeZones.get(row.studio_id)))
     .map((row) => {
     const seatsSold = numberValue(row.seats_sold)
     const capacity = numberValue(row.capacity)
@@ -1259,7 +1265,7 @@ export async function getClassEventSalesDetail(
     .lte("event_date", endDate)
     .order("event_date", { ascending: false })
     .range(0, 4999)
-  let studiosQuery = supabase.from("studios").select("id,studio_name")
+  let studiosQuery = supabase.from("studios").select("id,studio_name,timezone")
 
   if (studioId) {
     classesQuery = classesQuery.eq("studio_id", studioId)
@@ -1277,8 +1283,11 @@ export async function getClassEventSalesDetail(
   if (classesResult.error) throw classesResult.error
   if (studiosResult.error) throw studiosResult.error
 
+  const studioTimeZones = new Map(
+    (studiosResult.data ?? []).map((studio) => [studio.id, studio.timezone])
+  )
   const rows = ((classesResult.data ?? []) as ClassEventDetailRow[])
-    .filter((row) => !isMarketingPlaceholderClass(row.painting))
+    .filter((row) => isReportablePtsClass(row, studioTimeZones.get(row.studio_id)))
   const studios = (studiosResult.data ?? []).map((studio) => {
     const classes = rows
       .filter((row) => row.studio_id === studio.id)

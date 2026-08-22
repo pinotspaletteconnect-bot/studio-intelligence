@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase/server"
-import { isMarketingPlaceholderClass } from "@/lib/services/pts-class-filters"
+import { isReportablePtsClass } from "@/lib/services/pts-class-filters"
 
 type UpcomingClassRow = {
   studio_id: number
@@ -128,26 +128,30 @@ export async function getUpcomingClasses(
   if (error) throw error
   if (bookingResult.error) throw bookingResult.error
 
-  const rows = ((data ?? []) as UpcomingClassRow[])
-    .filter((row) => !isMarketingPlaceholderClass(row.painting))
+  const unfilteredRows = (data ?? []) as UpcomingClassRow[]
   const bookingRows = (bookingResult.data ?? []) as ReservationBookingDailyRow[]
   const studioIds = [
     ...new Set([
-      ...rows.map((row) => row.studio_id),
+      ...unfilteredRows.map((row) => row.studio_id),
       ...bookingRows.map((row) => row.studio_id),
     ]),
   ]
   const studioNames = new Map<number, string>()
+  const studioTimeZones = new Map<number, string>()
   if (studioIds.length) {
     const studiosResult = await supabase
       .from("studios")
-      .select("id,studio_name")
+      .select("id,studio_name,timezone")
       .in("id", studioIds)
     if (studiosResult.error) throw studiosResult.error
     for (const studio of studiosResult.data ?? []) {
       studioNames.set(studio.id, studio.studio_name)
+      studioTimeZones.set(studio.id, studio.timezone)
     }
   }
+  const rows = unfilteredRows.filter((row) =>
+    isReportablePtsClass(row, studioTimeZones.get(row.studio_id))
+  )
 
   const classes = rows.map((row) => ({
     studioId: row.studio_id,
