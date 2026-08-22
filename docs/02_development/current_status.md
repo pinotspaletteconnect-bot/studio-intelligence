@@ -244,11 +244,10 @@ Implemented foundation:
 - PTS classes whose painting name begins with `Available for` are governed as
   marketing availability placeholders. They are excluded from upcoming-class,
   Executive, Daily Operating Detail, Private Party, and Mobile Event metrics
-  and drill-downs. Completed private/mobile event rows are also omitted when
-  they have no selected painting and both seats and class-plus-fee revenue are
-  zero. A selected painting establishes a real event even when its current
-  seats and revenue are zero; aggregate-only history is preserved when the
-  painting selection is unavailable.
+  and drill-downs. All other painting values remain included, including
+  `No Painting Selected`, `Coming Soon`, and zero-seat or zero-revenue rows,
+  because those can represent real parties that have not selected their art or
+  received reservations yet.
 - Operations product reporting excludes zero-dollar items labeled as preorders
   from displayed quantities because PTS uses them as website placeholders;
   paid preorder sales remain included.

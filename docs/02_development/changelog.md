@@ -1,5 +1,13 @@
 # Studio Intelligence Changelog
 
+## August 22, 2026
+
+- Clarified and verified the party-reporting rule across completed, upcoming,
+  Executive, Private Party, Mobile Event, and Daily Operating Detail paths:
+  only Painting values beginning with `Available for` are excluded as
+  marketing inventory. `No Painting Selected`, `Coming Soon`, genuine
+  paintings, and zero-seat or zero-revenue parties remain included.
+
 ## August 21, 2026
 
 - Added accessible hover, focus, and tap explanations to KPI summary tiles on
@@ -111,8 +119,8 @@
   snapshots remain nullable and are not backfilled with guessed values.
 - Kept `Coming Soon` and zero-seat `No Painting Selected` party records in
   upcoming reporting because they can be legitimate bookings that have not yet
-  selected art or sold seats. Only event titles beginning with `Available for`
-  are treated as marketing availability inventory.
+  selected art or sold seats. Only Painting values beginning with `Available
+  for` are treated as marketing availability inventory.
 - Added a current-week party drill-down from the Executive dashboard. The
   clickable party card now opens a studio-grouped list that reconciles completed
   private/mobile events through yesterday with upcoming events through Sunday,
