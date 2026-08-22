@@ -2,6 +2,9 @@
 
 ## August 22, 2026
 
+- Formatted the Textellent `{class_date}` message field as a customer-friendly
+  month and day (for example, `August 21`) instead of an ISO date.
+
 - Clarified and verified the party-reporting rule across completed, upcoming,
   Executive, Private Party, Mobile Event, and Daily Operating Detail paths:
   only Painting values beginning with `Available for` are excluded as

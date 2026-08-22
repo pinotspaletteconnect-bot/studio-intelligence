@@ -1,5 +1,5 @@
 const assert = require("node:assert/strict");
-const { activeReservationContacts, e164, isLowReservation, renderMessage, scheduledAlertAt } = require("./scripts/pts/lowReservationClassAlerts");
+const { activeReservationContacts, e164, formatClassDate, isLowReservation, renderMessage, scheduledAlertAt } = require("./scripts/pts/lowReservationClassAlerts");
 
 assert.equal(e164("(502) 555-1212"), "+15025551212");
 assert.equal(e164("+1 614 555 1212"), "+16145551212");
@@ -9,6 +9,7 @@ assert.equal(isLowReservation(0, 3), false);
 assert.equal(isLowReservation(1, 3), true);
 assert.equal(isLowReservation(2, 3), true);
 assert.equal(isLowReservation(3, 3), false);
+assert.equal(formatClassDate("2026-08-21"), "August 21");
 
 assert.deepEqual(
     activeReservationContacts([

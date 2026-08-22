@@ -23,6 +23,15 @@ function renderMessage(template, values) {
     return template.replace(/\{(studio|class_name|class_date|class_time|reservations)\}/g, (_, key) => String(values[key] ?? ""));
 }
 
+function formatClassDate(value) {
+    validateIsoDate(value);
+    return new Intl.DateTimeFormat("en-US", {
+        month: "long",
+        day: "numeric",
+        timeZone: "UTC"
+    }).format(new Date(`${value}T12:00:00Z`));
+}
+
 function isLowReservation(reservationCount, minimumReservations) {
     return Number.isInteger(reservationCount) && reservationCount > 0 && reservationCount < minimumReservations;
 }
@@ -197,7 +206,7 @@ async function runLowReservationClassAlerts({ targetDate, now = new Date(), exec
                     continue;
                 }
                 const phones = [...new Set(activeReservations.phones.map(e164).filter(Boolean))];
-                const message = renderMessage(studio.messageTemplate, { studio: studio.studioName, class_name: candidate.title.replace(/Res:.*/i, "").trim(), class_date: targetDate, class_time: new Intl.DateTimeFormat("en-US", { timeZone: studio.timeZone, hour: "numeric", minute: "2-digit" }).format(new Date(candidate.startsAt)), reservations: activeCount });
+                const message = renderMessage(studio.messageTemplate, { studio: studio.studioName, class_name: candidate.title.replace(/Res:.*/i, "").trim(), class_date: formatClassDate(targetDate), class_time: new Intl.DateTimeFormat("en-US", { timeZone: studio.timeZone, hour: "numeric", minute: "2-digit" }).format(new Date(candidate.startsAt)), reservations: activeCount });
                 const messageIds = [];
                 if (execute && phones.length === 0) {
                     results.push({ studioId: studio.studioId, classId: candidate.classId, classStartsAt: candidate.startsAt, scheduledFor: dueAt.toISOString(), status: "skipped", reservationCount: activeCount, recipientCount: 0, messageIds, errorCode: "NO_VALID_RECIPIENTS" });
@@ -220,4 +229,4 @@ async function runLowReservationClassAlerts({ targetDate, now = new Date(), exec
     }
 }
 
-module.exports = { activeReservationContacts, e164, isLowReservation, renderMessage, scheduledAlertAt, runLowReservationClassAlerts };
+module.exports = { activeReservationContacts, e164, formatClassDate, isLowReservation, renderMessage, scheduledAlertAt, runLowReservationClassAlerts };
