@@ -90,7 +90,7 @@ async function getHistoricalUpcomingClasses(
 
   let rowsQuery = supabase
     .from("pts_upcoming_class_snapshots_reporting")
-    .select("studio_id,event_date,painting,reporting_class_type,class_sales,fee_sales,seats_sold")
+    .select("studio_id,event_date,painting,reporting_class_type,class_sales,fee_sales,seats_sold,capacity")
     .eq("snapshot_date", snapshotDate)
     .gt("event_date", eventAfterDate)
     .lte("event_date", eventEndDate)
@@ -241,12 +241,12 @@ export async function getExecutiveDashboard(
       privateParties:
         completedPrivateParties +
         remainingWeekClasses.filter(
-          (classItem) => classItem.classType === "Private Party"
+          (classItem) => classItem.classType === "Private Party" && classItem.capacity > 0
         ).length,
       mobileEvents:
         completedMobileEvents +
         remainingWeekClasses.filter(
-          (classItem) => classItem.classType === "Mobile Events"
+          (classItem) => classItem.classType === "Mobile Events" && classItem.capacity > 0
         ).length,
     },
     thisWeekComparison: {
@@ -264,10 +264,10 @@ export async function getExecutiveDashboard(
         : null,
       futureClasses: historicalUpcoming.snapshotDate ? comparisonFuture.length : null,
       privateParties: historicalUpcoming.snapshotDate
-        ? comparisonCompletedPrivate + comparisonFuture.filter((row) => row.reporting_class_type === "Private Party").length
+        ? comparisonCompletedPrivate + comparisonFuture.filter((row) => row.reporting_class_type === "Private Party" && numberValue(row.capacity) > 0).length
         : null,
       mobileEvents: historicalUpcoming.snapshotDate
-        ? comparisonCompletedMobile + comparisonFuture.filter((row) => row.reporting_class_type === "Mobile Events").length
+        ? comparisonCompletedMobile + comparisonFuture.filter((row) => row.reporting_class_type === "Mobile Events" && numberValue(row.capacity) > 0).length
         : null,
     },
     weeklySales,

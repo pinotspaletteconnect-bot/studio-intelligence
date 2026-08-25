@@ -4,7 +4,7 @@ import { getUpcomingClasses } from "@/lib/services/upcoming-classes"
 export type WeeklyPartiesData = {
   period: { startDate: string; endDate: string; completedThrough: string | null }
   snapshotDate: string | null
-  totals: { events: number; privateParties: number; mobileEvents: number; seatsSold: number; revenue: number }
+  totals: { events: number; leads: number; privateParties: number; mobileEvents: number; seatsSold: number; revenue: number }
   studios: Array<{
     id: number
     name: string
@@ -15,7 +15,7 @@ export type WeeklyPartiesData = {
       displayName: string | null
       name: string
       type: "Private Party" | "Mobile Events"
-      status: "Completed" | "Upcoming"
+      status: "Completed" | "Upcoming" | "Lead"
       room: string
       seatsSold: number
       capacity: number
@@ -69,7 +69,7 @@ export async function getWeeklyParties(studioId?: string, allowedStudioIds?: num
         displayName: null,
         name: event.painting,
         type,
-        status: "Completed",
+        status: event.capacity > 0 ? "Completed" : "Lead",
         room: event.room,
         seatsSold: event.seatsSold,
         capacity: event.capacity,
@@ -87,7 +87,7 @@ export async function getWeeklyParties(studioId?: string, allowedStudioIds?: num
         displayName: event.displayName,
         name: event.painting,
         type: event.classType as "Private Party" | "Mobile Events",
-        status: "Upcoming",
+        status: event.capacity > 0 ? "Upcoming" : "Lead",
         room: event.room,
         seatsSold: event.seatsSold,
         capacity: event.capacity,
@@ -101,15 +101,17 @@ export async function getWeeklyParties(studioId?: string, allowedStudioIds?: num
     events: studio.events.sort((a, b) => (a.classTime ?? a.date).localeCompare(b.classTime ?? b.date)),
   })).filter((studio) => studio.events.length).sort((a, b) => a.name.localeCompare(b.name))
   const events = studios.flatMap((studio) => studio.events)
+  const scheduledEvents = events.filter((event) => event.capacity > 0)
   return {
     period: { startDate: weekStart, endDate: weekEnd, completedThrough },
     snapshotDate: upcoming.snapshotDate,
     totals: {
-      events: events.length,
-      privateParties: events.filter((event) => event.type === "Private Party").length,
-      mobileEvents: events.filter((event) => event.type === "Mobile Events").length,
-      seatsSold: events.reduce((sum, event) => sum + event.seatsSold, 0),
-      revenue: events.reduce((sum, event) => sum + event.revenue, 0),
+      events: scheduledEvents.length,
+      leads: events.length - scheduledEvents.length,
+      privateParties: scheduledEvents.filter((event) => event.type === "Private Party").length,
+      mobileEvents: scheduledEvents.filter((event) => event.type === "Mobile Events").length,
+      seatsSold: scheduledEvents.reduce((sum, event) => sum + event.seatsSold, 0),
+      revenue: scheduledEvents.reduce((sum, event) => sum + event.revenue, 0),
     },
     studios,
   }
