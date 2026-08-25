@@ -188,7 +188,13 @@ export type MarketingDashboard = {
     cpc: number
   }>
   eulerityDailyRoas: {
-    studios: Array<{ id: number; name: string; dataKey: string }>
+    studios: Array<{
+      id: number
+      name: string
+      dataKey: string
+      spendKey: string
+      revenueKey: string
+    }>
     points: Array<{ date: string } & Record<string, string | number | null>>
   }
   mntn: {
@@ -796,6 +802,8 @@ export async function getMarketingDashboard(
     id,
     name: studioNames.get(id) ?? `Studio ${id}`,
     dataKey: `studio_${id}`,
+    spendKey: `studio_${id}_spend`,
+    revenueKey: `studio_${id}_revenue`,
   }))
   const eulerityRoasDates = [
     ...new Set(eulerityRows.map((row) => row.report_date)),
@@ -807,9 +815,12 @@ export async function getMarketingDashboard(
     for (const studio of eulerityDailyRoasStudios) {
       const key = `${date}|${studio.id}`
       const spend = eulerityDailySpend.get(key) ?? 0
+      const revenue = eulerityDailyRevenue.get(key) ?? 0
+      point[studio.spendKey] = spend
+      point[studio.revenueKey] = revenue
       point[studio.dataKey] =
         spend > 0 && eulerityAttributionKeys.has(key)
-          ? Number(((eulerityDailyRevenue.get(key) ?? 0) / spend).toFixed(2))
+          ? Number((revenue / spend).toFixed(2))
           : null
     }
     return point

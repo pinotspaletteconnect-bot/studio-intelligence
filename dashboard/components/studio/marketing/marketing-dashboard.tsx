@@ -99,6 +99,12 @@ function formatChartDate(value: string) {
   }).format(new Date(`${value}T00:00:00Z`))
 }
 
+function previousDate(value: string) {
+  const date = new Date(`${value}T00:00:00Z`)
+  date.setUTCDate(date.getUTCDate() - 1)
+  return date.toISOString().slice(0, 10)
+}
+
 const metricCards = [
   { key: "paidSpend", label: "Meta + Eulerity spend", description: "Total advertising spend reported by Meta and Eulerity during the selected period.", icon: CircleDollarSign },
   { key: "attributedRevenue", label: "Attributed revenue", description: "GA4 purchase revenue credited to paid marketing traffic from the supported platforms.", icon: CircleDollarSign },
@@ -255,6 +261,56 @@ export function MarketingDashboard() {
     }
     return [...grouped.entries()].map(([date, changes]) => ({ date, changes }))
   }, [data])
+  const strategyRoasComparisons = useMemo(() => {
+    const comparisons = new Map<
+      number,
+      {
+        beforeRoas: number | null
+        afterRoas: number | null
+        beforeStart: string
+        beforeEnd: string
+        afterStart: string
+        afterEnd: string
+      }
+    >()
+
+    for (const change of data?.strategyChanges ?? []) {
+      const applicableStudios = (data?.eulerityDailyRoas.studios ?? []).filter(
+        (studio) => change.studioId == null || studio.id === change.studioId
+      )
+      let beforeSpend = 0
+      let beforeRevenue = 0
+      let afterSpend = 0
+      let afterRevenue = 0
+
+      for (const point of data?.eulerityDailyRoas.points ?? []) {
+        const date = String(point.date)
+        for (const studio of applicableStudios) {
+          if (point[studio.dataKey] == null) continue
+          const spend = Number(point[studio.spendKey] ?? 0)
+          const revenue = Number(point[studio.revenueKey] ?? 0)
+          if (date < change.effectiveDate) {
+            beforeSpend += spend
+            beforeRevenue += revenue
+          } else {
+            afterSpend += spend
+            afterRevenue += revenue
+          }
+        }
+      }
+
+      comparisons.set(change.id, {
+        beforeRoas: beforeSpend > 0 ? beforeRevenue / beforeSpend : null,
+        afterRoas: afterSpend > 0 ? afterRevenue / afterSpend : null,
+        beforeStart: dateRange.startDate,
+        beforeEnd: previousDate(change.effectiveDate),
+        afterStart: change.effectiveDate,
+        afterEnd: dateRange.endDate,
+      })
+    }
+
+    return comparisons
+  }, [data, dateRange.endDate, dateRange.startDate])
 
   const openStrategyForm = () => {
     setStrategyStudioId(selectedStudio === "all" ? "all" : selectedStudio)
@@ -1130,6 +1186,71 @@ export function MarketingDashboard() {
           ) : null}
           {strategyError && !strategyFormOpen ? (
             <p className="text-sm text-destructive">{strategyError}</p>
+          ) : null}
+          {data.strategyChanges.length ? (
+            <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+              {data.strategyChanges.map((change) => {
+                const comparison = strategyRoasComparisons.get(change.id)
+                const difference =
+                  comparison?.beforeRoas != null && comparison.afterRoas != null
+                    ? comparison.afterRoas - comparison.beforeRoas
+                    : null
+                const percentDifference =
+                  difference != null && comparison?.beforeRoas
+                    ? (difference / comparison.beforeRoas) * 100
+                    : null
+
+                return (
+                  <div
+                    key={`comparison-${change.id}`}
+                    className="rounded-lg border bg-muted/20 p-3"
+                  >
+                    <p className="truncate text-xs font-medium text-muted-foreground">
+                      {change.studioName ?? "All studios"} · {change.title}
+                    </p>
+                    <div className="mt-2 flex items-end gap-2 tabular-nums">
+                      <div>
+                        <p className="text-[11px] text-muted-foreground">Before</p>
+                        <p className="text-xl font-semibold">
+                          {comparison?.beforeRoas == null
+                            ? "—"
+                            : `${comparison.beforeRoas.toFixed(2)}x`}
+                        </p>
+                      </div>
+                      <ArrowRight className="mb-1.5 size-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-[11px] text-muted-foreground">After</p>
+                        <p className="text-xl font-semibold">
+                          {comparison?.afterRoas == null
+                            ? "—"
+                            : `${comparison.afterRoas.toFixed(2)}x`}
+                        </p>
+                      </div>
+                      {difference != null ? (
+                        <p
+                          className={`mb-1 ml-auto text-sm font-medium ${
+                            difference >= 0 ? "text-emerald-600" : "text-red-600"
+                          }`}
+                        >
+                          {difference >= 0 ? "+" : ""}
+                          {difference.toFixed(2)}x
+                          {percentDifference != null
+                            ? ` (${percentDifference >= 0 ? "+" : ""}${percentDifference.toFixed(1)}%)`
+                            : ""}
+                        </p>
+                      ) : null}
+                    </div>
+                    {comparison ? (
+                      <p className="mt-1 text-[11px] text-muted-foreground">
+                        {formatChartDate(comparison.beforeStart)}–
+                        {formatChartDate(comparison.beforeEnd)} vs. {formatChartDate(comparison.afterStart)}–
+                        {formatChartDate(comparison.afterEnd)}
+                      </p>
+                    ) : null}
+                  </div>
+                )
+              })}
+            </div>
           ) : null}
           {data.eulerityDailyRoas.studios.length &&
           data.eulerityDailyRoas.points.some((point) =>
