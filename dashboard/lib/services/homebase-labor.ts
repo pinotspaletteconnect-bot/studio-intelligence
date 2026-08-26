@@ -1,11 +1,11 @@
 import "server-only"
 import { supabase } from "@/lib/supabase/server"
 
-type RoleRow={studio_id:number;studio_name:string;labor_date:string;role_name:string;labor_category:"cogs"|"overhead"|"unmapped";scheduled_hours:number|string|null;actual_hours:number|string|null;scheduled_cost:number|string|null;actual_cost:number|string|null;total_sales:number|string|null}
+type RoleRow={studio_id:number;studio_name:string;labor_date:string;role_name:string;labor_category:"cogs"|"overhead"|"unmapped";scheduled_hours:number|string|null;actual_hours:number|string|null;scheduled_cost:number|string|null;actual_cost:number|string|null;total_sales:number|string|null;is_daily_fallback:boolean;reconciliation_note:string|null;reconciliation_resolution:string|null}
 const num=(value:unknown)=>Number.isFinite(Number(value??0))?Number(value??0):0
 
 export async function getHomebaseLabor(studioId:string|undefined,startDate:string,endDate:string,allowedStudioIds:number[]){
-  let query=supabase.from("homebase_labor_role_reporting").select("studio_id,studio_name,labor_date,role_name,labor_category,scheduled_hours,actual_hours,scheduled_cost,actual_cost,total_sales").gte("labor_date",startDate).lte("labor_date",endDate).order("labor_date")
+  let query=supabase.from("homebase_labor_role_reporting").select("studio_id,studio_name,labor_date,role_name,labor_category,scheduled_hours,actual_hours,scheduled_cost,actual_cost,total_sales,is_daily_fallback,reconciliation_note,reconciliation_resolution").gte("labor_date",startDate).lte("labor_date",endDate).order("labor_date")
   query=studioId&&studioId!=="all"?query.eq("studio_id",studioId):query.in("studio_id",allowedStudioIds)
   const result=await query
   if(result.error)throw result.error

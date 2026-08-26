@@ -252,23 +252,32 @@ async function collectDay(page, date, targets) {
             normalizeLabel(row.location) === normalizeLabel(target.location_name) ||
             normalizeLabel(row.location) === normalizeLabel(target.studio_name)
         );
+        const matchedRoles = roleSource.filter(row =>
+            normalizeLabel(row.location) === normalizeLabel(target.location_name) ||
+            normalizeLabel(row.location) === normalizeLabel(target.studio_name)
+        );
+        const detailedTotals = matchedRoles.reduce((totals, row) => ({
+            scheduled_hours: totals.scheduled_hours + row.scheduled_hours,
+            actual_hours: totals.actual_hours + row.actual_hours,
+            scheduled_cost: totals.scheduled_cost + row.scheduled_cost,
+            actual_cost: totals.actual_cost + row.actual_cost
+        }), { scheduled_hours: 0, actual_hours: 0, scheduled_cost: 0, actual_cost: 0 });
         results.push({
             accountId: Number(target.account_id),
             studioId: Number(target.studio_id),
             studioName: target.studio_name,
             daily: {
                 labor_date: date,
-                scheduled_hours: matched?.scheduled_hours ?? 0,
-                actual_hours: matched?.actual_hours ?? 0,
-                scheduled_cost: 0,
-                actual_cost: matched?.actual_cost ?? 0,
-                regular_hours: matched?.regular_hours ?? 0,
-                overtime_hours: matched?.overtime_hours ?? 0,
+                scheduled_hours: detailedTotals.scheduled_hours,
+                actual_hours: detailedTotals.actual_hours,
+                scheduled_cost: Math.round(detailedTotals.scheduled_cost * 100) / 100,
+                actual_cost: Math.round(detailedTotals.actual_cost * 100) / 100,
+                regular_hours: detailedTotals.actual_hours,
+                overtime_hours: 0,
                 double_overtime_hours: 0,
                 retrieved_at: matched?.retrieved_at ?? new Date().toISOString()
             },
-            roles: roleSource
-                .filter(row => normalizeLabel(row.location) === normalizeLabel(target.location_name) || normalizeLabel(row.location) === normalizeLabel(target.studio_name))
+            roles: matchedRoles
                 .map(row => ({
                     labor_date: date,
                     role: row.role,
