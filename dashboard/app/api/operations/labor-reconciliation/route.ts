@@ -15,7 +15,7 @@ const schema = z.object({
   roleName: z.string().trim().max(300).nullable(),
   actualHours: z.number().finite().nonnegative(),
   actualCost: z.number().finite().nonnegative(),
-  note: z.string().trim().min(1).max(500),
+  note: z.string().trim().min(1).max(500).optional(),
 })
 
 export async function POST(request: NextRequest) {
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       corrected_role_name: parsed.data.resolution === "assign_role" ? parsed.data.roleName : null,
       corrected_actual_hours: parsed.data.resolution === "exclude" ? 0 : parsed.data.actualHours,
       corrected_actual_cost: parsed.data.resolution === "exclude" ? 0 : parsed.data.actualCost,
-      note: parsed.data.note,
+      note: parsed.data.note ?? `Assigned unnamed Homebase labor to ${parsed.data.roleName}.`,
       created_by: access.userId,
       updated_at: new Date().toISOString(),
     }, { onConflict: "organization_id,studio_id,labor_date" })
