@@ -11,7 +11,8 @@ import { supabase } from "@/lib/supabase/server"
 const schema = z.object({
   studioId: z.number().int().positive(),
   laborDate: z.iso.date(),
-  resolution: z.enum(["cogs", "overhead", "exclude"]),
+  resolution: z.enum(["assign_role", "cogs", "overhead", "exclude"]),
+  roleName: z.string().trim().max(300).nullable(),
   actualHours: z.number().finite().nonnegative(),
   actualCost: z.number().finite().nonnegative(),
   note: z.string().trim().min(1).max(500),
@@ -27,12 +28,16 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json({ error: "Enter a valid labor correction and note." }, { status: 400 })
     }
+    if (parsed.data.resolution === "assign_role" && !parsed.data.roleName) {
+      return NextResponse.json({ error: "Choose the Homebase role for this labor." }, { status: 400 })
+    }
     assertStudioAccess(access, parsed.data.studioId)
     const { error } = await supabase.from("homebase_labor_reconciliations").upsert({
       organization_id: access.organizationId,
       studio_id: parsed.data.studioId,
       labor_date: parsed.data.laborDate,
       resolution: parsed.data.resolution,
+      corrected_role_name: parsed.data.resolution === "assign_role" ? parsed.data.roleName : null,
       corrected_actual_hours: parsed.data.resolution === "exclude" ? 0 : parsed.data.actualHours,
       corrected_actual_cost: parsed.data.resolution === "exclude" ? 0 : parsed.data.actualCost,
       note: parsed.data.note,

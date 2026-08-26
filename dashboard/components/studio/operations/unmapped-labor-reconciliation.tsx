@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,6 +28,17 @@ const date = new Intl.DateTimeFormat("en-US", {
 export function UnmappedLaborReconciliation({ entries }: { entries: UnmappedLaborEntry[] }) {
   const [savingKey, setSavingKey] = useState<string | null>(null)
   const [message, setMessage] = useState<{ key: string; error?: string } | null>(null)
+  const [roleOptions, setRoleOptions] = useState<string[]>([])
+
+  useEffect(() => {
+    fetch("/api/settings/homebase-roles")
+      .then(async response => {
+        const result = await response.json()
+        if (!response.ok) throw new Error(result.error)
+        setRoleOptions((result.roles ?? []).map((role: { role_name: string }) => role.role_name).filter(Boolean))
+      })
+      .catch(() => setRoleOptions([]))
+  }, [])
 
   async function save(event: React.FormEvent<HTMLFormElement>, entry: UnmappedLaborEntry) {
     event.preventDefault()
@@ -44,6 +55,7 @@ export function UnmappedLaborReconciliation({ entries }: { entries: UnmappedLabo
           studioId: entry.studio_id,
           laborDate: entry.labor_date,
           resolution,
+          roleName: resolution === "assign_role" ? String(form.get("roleName")) : null,
           actualHours: Number(form.get("actualHours")),
           actualCost: Number(form.get("actualCost")),
           note: String(form.get("note")),
@@ -71,9 +83,10 @@ export function UnmappedLaborReconciliation({ entries }: { entries: UnmappedLabo
             <div><span className="block text-xs text-muted-foreground">Source</span>{entry.role_name || "Unnamed daily total"}</div>
             <label><span className="block text-xs text-muted-foreground">Hours</span><Input name="actualHours" type="number" min="0" step="0.01" defaultValue={entry.actualHours} required /></label>
             <label><span className="block text-xs text-muted-foreground">Cost</span><Input name="actualCost" type="number" min="0" step="0.01" defaultValue={entry.actualCost} required /></label>
-            <label><span className="block text-xs text-muted-foreground">Resolution</span><select name="resolution" defaultValue="exclude" className="h-8 w-full rounded-md border bg-background px-2"><option value="exclude">Exclude duplicate/error</option><option value="cogs">Correct and classify COGS</option><option value="overhead">Correct and classify overhead</option></select></label>
+            <label><span className="block text-xs text-muted-foreground">Resolution</span><select name="resolution" defaultValue="assign_role" className="h-8 w-full rounded-md border bg-background px-2"><option value="assign_role">Assign to source role</option><option value="exclude">Exclude duplicate/error</option><option value="cogs">Correct as COGS only</option><option value="overhead">Correct as overhead only</option></select></label>
             <Button type="submit" size="sm" disabled={savingKey === key}>{savingKey === key ? "Saving…" : "Reconcile"}</Button>
-            <label className="lg:col-span-7"><span className="block text-xs text-muted-foreground">Required reconciliation note</span><Input name="note" placeholder={`Explain the correction to ${entry.actualHours.toFixed(1)} hours / ${money.format(entry.actualCost)}`} maxLength={500} required /></label>
+            <label className="lg:col-span-3"><span className="block text-xs text-muted-foreground">Homebase role (required when assigning)</span><Input name="roleName" list="homebase-role-options" placeholder="Select or enter the source role" /><datalist id="homebase-role-options">{roleOptions.map(role=><option key={role} value={role}/>)}</datalist></label>
+            <label className="lg:col-span-4"><span className="block text-xs text-muted-foreground">Required reconciliation note</span><Input name="note" placeholder={`Explain the correction to ${entry.actualHours.toFixed(1)} hours / ${money.format(entry.actualCost)}`} maxLength={500} required /></label>
             {message?.key === key && message.error ? <p role="alert" className="text-destructive lg:col-span-7">{message.error}</p> : null}
           </form>
         )
