@@ -268,6 +268,41 @@ AI recommendations remain consistent regardless of changes to individual integra
 
 ---
 
+# SI-011 — One Governed Accounting Automation
+
+**Status:** Accepted August 24, 2026
+
+### Decision
+
+QuickBooks financial operations will be presented and operated as one master
+automation with one durable accounting work queue across four independently
+controlled QuickBooks companies. QuickBooks remains the official ledger. Studio
+Intelligence owns cross-source orchestration, proposed accounting treatment,
+approval evidence, audit history, reconciliation, and versioned learning rules.
+
+The master workflow may call reusable implementation components, but those
+components are not separately scheduled business automations. QuickBooks writes
+are introduced only after read-only ingestion and proposal-only validation pass
+documented gates.
+
+### Rationale
+
+A shared queue prevents disconnected receipt, bank, invoice, split, and journal
+workflows from creating duplicate or contradictory accounting actions. Explicit
+company isolation, idempotency, approvals, and read-back verification preserve
+ledger trust while allowing successful corrections to become governed rules.
+
+### Consequences
+
+- Every work item is routed to exactly one QuickBooks connection before posting.
+- One source or company failure must not block unrelated work.
+- Receipt files are evidence and cannot independently authorize duplicate expenses.
+- Classification memory is explicit, scoped, versioned, and auditable.
+- Journal entries and sensitive accounts initially require human approval.
+- Production posting remains disabled until its phase gate is explicitly approved.
+
+---
+
 # Future Decisions
 
 Examples of future decisions that should be documented here include:
