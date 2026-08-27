@@ -63,7 +63,7 @@ Meta Ads and Page Insights now run on production Vault-backed workflows `27 - Me
 | Weather reporting | Planned/warehouse work requires verification before being called production |
 | Google Business Profile | Planned |
 | Reservation/POS systems | Planned |
-| QuickBooks or other financial systems | Planned |
+| QuickBooks Online accounting automation | Phase 1 warehouse migration `20260824120000` is deployed and all 13 service-only tables/views are verified. One Intuit development sandbox realm is connected through Vault with writes disabled, and local read-only source validation passed. Workflow 32 (`pOmosy7cg2hQm0kT`) is imported in the production n8n Studio Intelligence folder but remains unpublished and unexecuted. Four Gmail connections, production QuickBooks realms, collector deployment, and ledger writes remain pending. |
 | Homebase labor | API collection is blocked by Homebase's All-in-One tier requirement. A local browser replacement now uses one encrypted owner login, collects company timesheets one day at a time for today plus the prior 14 days, discards employee identity, and returns studio/day hours and estimated wages. Migration, deployment, credential upgrade, controlled validation, and workflow cutover remain pending. |
 | Google Ads and Microsoft Ads | Planned |
 | Organic social content/creative ingestion beyond current Page Insights | Planned |

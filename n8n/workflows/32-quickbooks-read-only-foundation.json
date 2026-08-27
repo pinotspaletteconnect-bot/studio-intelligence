@@ -1,0 +1,135 @@
+{
+  "name": "32 - QuickBooks Read-Only Accounting Foundation",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "7f19067f-acde-44aa-b90b-a25cabcd3f33",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [-1080, 120]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 15 5 * * *"
+            }
+          ]
+        }
+      },
+      "id": "23f86840-df2a-42ab-bbec-9e0a5bf54d45",
+      "name": "Daily 5:15 AM Eastern",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-1080, 280]
+    },
+    {
+      "parameters": {
+        "url": "https://hsosjnwjangtqtskofag.supabase.co/rest/v1/quickbooks_collection_targets?select=organization_id,connection_id,connection_name,realm_id,connection_status,write_enabled&connection_status=eq.connected&write_enabled=eq.false",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "options": { "timeout": 30000 }
+      },
+      "id": "3222ac3c-f935-4254-aa8d-1b2b77cb190c",
+      "name": "Get Read-Only Companies",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [-820, 200],
+      "credentials": {
+        "supabaseApi": { "id": "A32h7eKkq8JEdg0k", "name": "Supabase account" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const companies=new Map();for(const item of $input.all()){const row=item.json;if(row.write_enabled!==false)throw new Error('QuickBooks write-enabled connection rejected');const connectionId=Number(row.connection_id);const organizationId=Number(row.organization_id);if(!Number.isSafeInteger(connectionId)||!Number.isSafeInteger(organizationId))throw new Error('Invalid QuickBooks collection target');companies.set(connectionId,{connectionId,organizationId});}const transactionTypes=['Bill','BillPayment','CreditCardPayment','Deposit','JournalEntry','Purchase','Transfer','VendorCredit'];const jobs=[];for(const company of companies.values()){jobs.push({json:{...company,entityType:'company_info',path:'company-info',body:{accountId:company.connectionId}}});jobs.push({json:{...company,entityType:'accounts',path:'accounts',body:{accountId:company.connectionId,pageSize:1000,maxRecords:50000}}});jobs.push({json:{...company,entityType:'vendors',path:'vendors',body:{accountId:company.connectionId,pageSize:1000,maxRecords:50000}}});for(const transactionType of transactionTypes)jobs.push({json:{...company,entityType:'transactions',transactionType,path:'transactions',body:{accountId:company.connectionId,entityType:transactionType,pageSize:1000,maxRecords:50000}}});}return jobs;"
+      },
+      "id": "5251591f-59f7-431a-b67a-d59a2864643e",
+      "name": "Build Company Collection Jobs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-560, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://studio-intelligence-production.up.railway.app/quickbooks/' + $json.path }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ 'Bearer ' + $env.COLLECTOR_API_TOKEN }}" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.body) }}",
+        "options": { "timeout": 180000 }
+      },
+      "id": "a0962dba-e743-4694-8bea-41b7759a003c",
+      "name": "Collect QuickBooks Entity",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [-280, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "const now=new Date().toISOString();const groups=[];const connections=[];const accounts=[];const vendors=[];const transactions=[];const lines=[];const cursorCounts=new Map();const ref=v=>v&&typeof v==='object'?(v.value??null):null;const name=v=>v&&typeof v==='object'?(v.name??null):null;const money=v=>v===null||v===undefined||v===''?null:Number(v);const time=v=>v||null;const normalizeName=v=>String(v||'').trim().toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();const digest=async value=>{const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(value)));return [...new Uint8Array(bytes)].map(byte=>byte.toString(16).padStart(2,'0')).join('');};for(const item of $input.all()){const envelope=item.json;if(envelope.success!==true)throw new Error('QuickBooks collector returned an unsuccessful envelope');const connectionId=Number(envelope.connectionId);const job=$('Build Company Collection Jobs').all().find(candidate=>Number(candidate.json.connectionId)===connectionId&&((candidate.json.transactionType||candidate.json.entityType)===(envelope.entityType==='company_info'||envelope.entityType==='accounts'||envelope.entityType==='vendors'?envelope.entityType:envelope.entityType)));const organizationId=Number(job?.json?.organizationId);if(!Number.isSafeInteger(connectionId)||!Number.isSafeInteger(organizationId))throw new Error('QuickBooks response cannot be assigned to a tenant');const records=Array.isArray(envelope.records)?envelope.records:[];const cursorEntity=['company_info','accounts','vendors'].includes(envelope.entityType)?envelope.entityType:'transactions';const cursorKey=connectionId+'|'+cursorEntity;cursorCounts.set(cursorKey,{organization_id:organizationId,connection_id:connectionId,entity_type:cursorEntity,last_source_updated_at:envelope.sourceMaxUpdatedAt||null,last_started_at:envelope.retrievedAt||now,last_completed_at:now,last_status:'succeeded',last_row_count:(cursorCounts.get(cursorKey)?.last_row_count||0)+records.length,last_error_code:null,updated_at:now});if(envelope.entityType==='company_info'){for(const record of records)connections.push({id:connectionId,company_name:record.CompanyName||record.LegalName||null,country_code:record.Country||null,home_currency_code:record.Currency||null,last_discovered_at:now,last_synced_at:now,updated_at:now});continue;}if(envelope.entityType==='accounts'){for(const record of records)accounts.push({organization_id:organizationId,connection_id:connectionId,source_account_id:String(record.Id),account_name:record.Name,fully_qualified_name:record.FullyQualifiedName||null,account_number:record.AcctNum||null,account_type:record.AccountType,account_subtype:record.AccountSubType||null,classification:record.Classification||null,parent_source_account_id:ref(record.ParentRef),currency_code:ref(record.CurrencyRef),current_balance:money(record.CurrentBalance),current_balance_with_subaccounts:money(record.CurrentBalanceWithSubAccounts),is_subaccount:Boolean(record.SubAccount),is_active:record.Active!==false,sync_token:record.SyncToken||null,source_created_at:time(record.MetaData?.CreateTime),source_updated_at:time(record.MetaData?.LastUpdatedTime),discovered_at:now,retrieved_at:envelope.retrievedAt||now,updated_at:now});continue;}if(envelope.entityType==='vendors'){for(const record of records){const display=record.DisplayName||record.CompanyName||record.PrintOnCheckName;if(!display)continue;vendors.push({organization_id:organizationId,connection_id:connectionId,source_vendor_id:String(record.Id),display_name:display,company_name:record.CompanyName||null,account_number:record.AcctNum||null,normalized_name:normalizeName(display),is_1099_vendor:record.Vendor1099??null,currency_code:ref(record.CurrencyRef),is_active:record.Active!==false,sync_token:record.SyncToken||null,source_created_at:time(record.MetaData?.CreateTime),source_updated_at:time(record.MetaData?.LastUpdatedTime),discovered_at:now,retrieved_at:envelope.retrievedAt||now,updated_at:now});}continue;}for(const record of records){const transactionType=envelope.entityType;const transactionId=String(record.Id);const party=record.VendorRef||record.CustomerRef||record.EntityRef||record.PayeeRef||null;const bank=record.BankAccountRef||record.AccountRef||record.DepositToAccountRef||record.FromAccountRef||null;transactions.push({organization_id:organizationId,connection_id:connectionId,source_transaction_id:transactionId,transaction_type:transactionType,transaction_date:record.TxnDate||null,document_number:record.DocNumber||null,counterparty_type:record.VendorRef?'Vendor':record.CustomerRef?'Customer':record.EntityRef?'Entity':record.PayeeRef?'Payee':null,counterparty_source_id:ref(party),counterparty_name:name(party),bank_account_source_id:ref(bank),accounts_payable_source_id:ref(record.APAccountRef),total_amount:money(record.TotalAmt??record.Amount),currency_code:ref(record.CurrencyRef),exchange_rate:money(record.ExchangeRate),source_status:record.status==='Deleted'?'deleted':record.PrivateNote==='Voided'?'voided':'posted',source_private_note_present:Boolean(record.PrivateNote),sync_token:record.SyncToken||null,source_created_at:time(record.MetaData?.CreateTime),source_updated_at:time(record.MetaData?.LastUpdatedTime),source_hash:await digest(record),retrieved_at:envelope.retrievedAt||now,updated_at:now});for(let index=0;index<(record.Line||[]).length;index++){const line=record.Line[index];const detail=line[line.DetailType]||{};const account=detail.AccountRef||detail.ExpenseAccountRef||detail.DepositToAccountRef||detail.FromAccountRef||null;lines.push({organization_id:organizationId,connection_id:connectionId,transaction_type:transactionType,source_transaction_id:transactionId,source_line_id:String(line.Id??index+1),line_number:line.LineNum??index,detail_type:line.DetailType||null,description:line.Description||null,amount:money(line.Amount),posting_type:detail.PostingType||null,account_source_id:ref(account),class_source_id:ref(detail.ClassRef),department_source_id:ref(detail.DepartmentRef),customer_source_id:ref(detail.CustomerRef||detail.EntityRef),vendor_source_id:ref(detail.VendorRef),item_source_id:ref(detail.ItemRef),tax_code_source_id:ref(detail.TaxCodeRef),updated_at:now});}}}const post=(table,conflict,rows)=>{if(rows.length)groups.push({json:{method:'POST',table,query:'?on_conflict='+conflict,body:rows}});};for(const row of connections)groups.push({json:{method:'PATCH',table:'quickbooks_connections',query:'?id=eq.'+row.id,body:Object.fromEntries(Object.entries(row).filter(([key])=>key!=='id'))}});post('quickbooks_accounts','connection_id,source_account_id',accounts);post('quickbooks_vendors','connection_id,source_vendor_id',vendors);post('quickbooks_transactions','connection_id,transaction_type,source_transaction_id',transactions);post('quickbooks_transaction_lines','connection_id,transaction_type,source_transaction_id,source_line_id',lines);post('quickbooks_sync_cursors','connection_id,entity_type',[...cursorCounts.values()]);return groups;"
+      },
+      "id": "b012d736-944a-4944-b067-f1b8259fe073",
+      "name": "Normalize Warehouse Upserts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [0, 200]
+    },
+    {
+      "parameters": {
+        "method": "={{ $json.method }}",
+        "url": "={{ 'https://hsosjnwjangtqtskofag.supabase.co/rest/v1/' + $json.table + $json.query }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Prefer", "value": "resolution=merge-duplicates,return=minimal" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.body) }}",
+        "options": { "timeout": 180000 }
+      },
+      "id": "549982a2-a77e-45e0-811e-e2d536ee8b58",
+      "name": "Upsert QuickBooks Warehouse",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [300, 200],
+      "credentials": {
+        "supabaseApi": { "id": "A32h7eKkq8JEdg0k", "name": "Supabase account" }
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": { "main": [[{ "node": "Get Read-Only Companies", "type": "main", "index": 0 }]] },
+    "Daily 5:15 AM Eastern": { "main": [[{ "node": "Get Read-Only Companies", "type": "main", "index": 0 }]] },
+    "Get Read-Only Companies": { "main": [[{ "node": "Build Company Collection Jobs", "type": "main", "index": 0 }]] },
+    "Build Company Collection Jobs": { "main": [[{ "node": "Collect QuickBooks Entity", "type": "main", "index": 0 }]] },
+    "Collect QuickBooks Entity": { "main": [[{ "node": "Normalize Warehouse Upserts", "type": "main", "index": 0 }]] },
+    "Normalize Warehouse Upserts": { "main": [[{ "node": "Upsert QuickBooks Warehouse", "type": "main", "index": 0 }]] }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/New_York",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true
+  },
+  "versionId": "6250d94f-0b20-44da-920a-c507cae652f4",
+  "meta": { "templateCredsSetupCompleted": true },
+  "tags": []
+}

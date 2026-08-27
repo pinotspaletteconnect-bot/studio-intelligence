@@ -316,7 +316,52 @@ marked production until the full collection-to-warehouse path is validated.
 
 ## Financial Intelligence
 
-Planned sources include QuickBooks Online, Xero, Stripe or payment systems, payroll, budgets, expenses, and forecasting.
+QuickBooks Online architecture and accounting controls entered approved Phase 1
+read-only foundation work on August 24, 2026. The integration supports any future
+number of locations; the current four independently authorized companies are the
+first validation cohort. They are coordinated through one operator-facing
+automation and one durable accounting work queue.
+Initial scope includes read-only company, chart-of-account, vendor, and
+transaction discovery; four receipt inboxes; governed receipt matching and GL
+splits; PTS franchise invoices; and controlled payroll, tips, sales, and COGS
+journal preparation.
+
+The receipt inboxes are delivered through four separate Gmail addresses with four
+separate Google logins. Each planned Vault-backed Gmail OAuth connection is
+authorized independently and routed by configuration to its QuickBooks company.
+The model remains expandable and can support additional mailboxes or aliases
+without code changes. Collection uses immutable Gmail message IDs for idempotency
+and is designed around the read-only scope; Google restricted-scope verification
+and document-storage controls remain preproduction gates.
+
+QuickBooks remains the official ledger. Studio Intelligence will own
+orchestration, proposed treatment, approval evidence, reconciliation, and
+versioned learning rules. Migration `20260824120000` was deployed August 24,
+2026, and all 13 service-only tables/views were verified. One Intuit development
+sandbox realm is connected through Vault with writes disabled. No active
+workflow, production QuickBooks realm, Gmail connection, or QuickBooks write is
+deployed yet.
+The read-only source contract and inactive n8n workflow `32 - QuickBooks
+Read-Only Accounting Foundation` are prepared. The standard Accounting API
+contract covers posted accounting entities; pending Banking `For review` access
+remains a sandbox/support validation gate rather than an assumed entity. See
+`docs/02_development/quickbooks_accounting_automation.md` and
+`docs/02_development/quickbooks_read_only_contract.md` for the phased gates.
+
+The prepared collector exposes authenticated read-only company-info, account,
+vendor, and allowlisted posted-transaction routes. It resolves Vault credentials
+through the dashboard broker, refreshes short-lived tokens only in memory,
+defaults to the Intuit sandbox, and performs no warehouse writes. The collector
+test suite passes locally; deployment and live validation remain pending.
+Workflow 32 discovers any number of write-disabled configured realms, calls only
+those authenticated collector routes, normalizes source records, and UPSERTs the
+account, vendor, transaction, line, company-discovery, and sync-cursor stores.
+It is checked into source and was imported into the production n8n Studio
+Intelligence folder on August 27, 2026 as unpublished workflow
+`pOmosy7cg2hQm0kT`. It has not been executed.
+
+Other payment/POS platforms, payroll systems, budgets, and forecasting remain
+planned until their source contracts are confirmed.
 
 ## Customer Intelligence
 
