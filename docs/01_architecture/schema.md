@@ -34,6 +34,15 @@ This document inventories warehouse objects confirmed by current project documen
 | `organization_memberships` | Invite-only user role and status by organization | Current; migration `20260805110000` deployed August 5, 2026 |
 | `user_studio_access` | Explicit manager/viewer studio grants | Current; migration `20260805110000` deployed August 5, 2026 |
 | `integration_secret_references` | Non-secret integration metadata and external encrypted-secret references | Current; migration `20260805110000` deployed August 5, 2026 |
+| `quickbooks_connections` | Tenant-scoped QuickBooks realms with Vault OAuth references and write-disabled controls | Production schema; no connections configured |
+| `quickbooks_studio_assignments` | Effective-dated studio-to-realm routing without a location limit | Production schema; no assignments configured |
+| `accounting_email_connections` | Vault-backed Gmail OAuth connection; one mailbox may route receipt aliases for many locations | Production schema; no mailboxes configured |
+| `accounting_receipt_inboxes` | Gmail recipient-address/alias routing to QuickBooks connections | Production schema; no routes configured |
+| `accounting_email_messages` | Privacy-minimized Gmail message-ID and routing ledger for duplicate prevention | Production schema; collection inactive |
+| `quickbooks_accounts` and `quickbooks_account_reviews` | Read-only chart cache plus separate accountant-governed cross-company review metadata | Production schema; collection inactive |
+| `quickbooks_vendors` | Privacy-minimized read-only vendor directory | Production schema; collection inactive |
+| `quickbooks_transactions` and `quickbooks_transaction_lines` | Normalized read-only posted-ledger entities and account allocation lines | Production schema; collection inactive |
+| `quickbooks_sync_cursors` | Per-connection/entity incremental collection checkpoint | Production schema; collection inactive |
 
 Expected hierarchy:
 

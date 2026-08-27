@@ -30,13 +30,7 @@ export async function login(
   const auth = await createAuthClient()
   const { data, error } = await auth.auth.signInWithPassword(parsed.data)
 
-  if (error) {
-    console.error("Supabase password login failed", {
-      code: error.code,
-      status: error.status,
-    })
-    return { error: "The email or password is incorrect." }
-  }
+  if (error) return { error: "The email or password is incorrect." }
   if (data.user && mustChangeTemporaryPassword(data.user.app_metadata)) {
     if (temporaryPasswordExpired(data.user.app_metadata)) {
       await auth.auth.signOut()

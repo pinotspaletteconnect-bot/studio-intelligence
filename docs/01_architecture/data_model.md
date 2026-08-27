@@ -158,7 +158,20 @@ organization-level mappings downstream:
 
 ## Financial Intelligence
 
-Planned facts and dimensions include sales, payments, expenses, payroll, budgets, forecasts, and profitability.
+QuickBooks Online financial automation entered its read-only foundation phase on
+August 24, 2026. The deployed source model separates tenant-scoped QuickBooks
+connections and source caches from a shared accounting work queue, immutable
+source/document references, versioned classification and split proposals,
+approvals, posting attempts, state events, and reconciliation results. Rules and
+journal templates are explicit, scoped, effective-dated, and versioned; AI
+suggestions do not silently become posting rules.
+
+The deployed connection, routing, source-cache, review, and cursor objects and the
+proposed downstream queue grains are documented in
+`docs/02_development/quickbooks_accounting_automation.md`. Migration
+`20260824120000` is applied, but no source connection or collection workflow is
+active. Planned downstream facts and views include sales, payments, expenses,
+payroll, budgets, forecasts, cash flow, and profitability.
 
 ## Customer Intelligence
 

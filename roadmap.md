@@ -121,7 +121,7 @@ Work begins after the source systems and warehouse contracts are confirmed.
 
 ## Phase 6 — Financial Intelligence
 
-**Status:** Planned
+**Status:** Phase 1 read-only foundation deployed; one sandbox realm validated and workflow 32 imported unpublished on August 27, 2026; production realms, Gmail, and scheduled execution pending
 
 Planned capabilities:
 
@@ -131,7 +131,20 @@ Planned capabilities:
 - Cash flow and forecasting
 - Financial KPIs by studio, brand, and organization
 
-Potential source systems include QuickBooks Online, payment/POS platforms, and payroll systems; no vendor should be treated as selected until confirmed.
+QuickBooks Online is the selected initial ledger integration for the four current
+studio companies. The implementation begins with one master accounting
+automation, one durable work queue, four independently controlled QuickBooks
+connections, receipt matching, governed GL splits, PTS franchise invoices, and
+controlled journal preparation. QuickBooks remains the official ledger; Studio
+Intelligence owns orchestration, approvals, audit history, and learning rules.
+
+The architecture is configuration-driven and supports future companies and
+locations without a four-location ceiling. Phase 1 includes a complete
+cross-company chart-of-accounts inventory and accountant-governed review before
+classification rules are activated. The tracked implementation and safety gates
+are documented in `docs/02_development/quickbooks_accounting_automation.md` and
+`docs/02_development/quickbooks_read_only_contract.md`. No production writes are
+enabled during the read-only foundation and proposal-validation phases.
 
 ## Phase 7 — Customer Intelligence
 
