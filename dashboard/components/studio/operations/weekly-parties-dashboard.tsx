@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useApp } from "@/contexts/app-context"
 import type { WeeklyPartiesData } from "@/lib/services/weekly-parties"
+import { fetchWithRetry } from "@/lib/http/fetch-with-retry"
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })
 const dateTime = new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "America/New_York" })
@@ -22,7 +23,7 @@ export function WeeklyPartiesDashboard() {
 
   useEffect(() => {
     const controller = new AbortController()
-    fetch(`/api/operations/weekly-parties?${new URLSearchParams({ studioId: selectedStudio })}`, { signal: controller.signal })
+    fetchWithRetry(`/api/operations/weekly-parties?${new URLSearchParams({ studioId: selectedStudio })}`, { signal: controller.signal })
       .then(async (response) => { const result = await response.json(); if (!response.ok) throw new Error(result.error); return result })
       .then(setData)
       .catch((requestError) => { if (!(requestError instanceof DOMException && requestError.name === "AbortError")) setError(requestError instanceof Error ? requestError.message : "Weekly party details are unavailable.") })

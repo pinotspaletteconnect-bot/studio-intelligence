@@ -13,6 +13,7 @@ import {
   type DateRangePreset,
   getCompletedDateRange,
 } from "@/lib/date-range"
+import { fetchWithRetry } from "@/lib/http/fetch-with-retry"
 
 export interface Studio {
   id: number
@@ -67,7 +68,7 @@ export function AppProvider({
   useEffect(() => {
     async function loadStudios() {
       try {
-        const res = await fetch("/api/studios")
+        const res = await fetchWithRetry("/api/studios")
         const data = await res.json()
         setStudios(data)
       } finally {

@@ -9,6 +9,7 @@ import { Card, CardContent, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useApp } from "@/contexts/app-context"
 import { formatAppliedDateRange } from "@/lib/date-range"
+import { fetchWithRetry } from "@/lib/http/fetch-with-retry"
 import type { ClassEventSalesDetailData } from "@/lib/services/operations"
 
 const currency = new Intl.NumberFormat("en-US", {
@@ -54,7 +55,7 @@ export function ClassEventSalesDetail({
           startDate: dateRange.startDate,
           endDate: dateRange.endDate,
         })
-        const response = await fetch(`/api/operations/${endpoint}?${params}`, {
+        const response = await fetchWithRetry(`/api/operations/${endpoint}?${params}`, {
           signal: controller.signal,
         })
         const result = await response.json()

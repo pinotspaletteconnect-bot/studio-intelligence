@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useApp } from "@/contexts/app-context"
 import type { CandleSalesDetailData } from "@/lib/services/operations"
 import { formatAppliedDateRange } from "@/lib/date-range"
+import { fetchWithRetry } from "@/lib/http/fetch-with-retry"
 
 const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" })
 const dateLabel = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })
@@ -36,7 +37,7 @@ export function CandleSalesDetail({ kind = "candles" }: { kind?: "candles" | "ar
           startDate: dateRange.startDate,
           endDate: dateRange.endDate,
         })
-        const response = await fetch(`/api/operations/${endpoint}?${params}`, { signal: controller.signal })
+        const response = await fetchWithRetry(`/api/operations/${endpoint}?${params}`, { signal: controller.signal })
         const result = await response.json()
         if (!response.ok) throw new Error(result.error)
         setData(result)

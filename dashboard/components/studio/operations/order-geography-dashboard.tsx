@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, Tag } from "lucide-react"
 import { useApp } from "@/contexts/app-context"
+import { fetchWithRetry } from "@/lib/http/fetch-with-retry"
 import { DashboardToolbar } from "@/components/studio/shared/dashboard-toolbar"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -15,7 +16,7 @@ const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD
 export function OrderGeographyDashboard() {
   const { selectedStudio, dateRange, studios } = useApp(); const [data, setData] = useState<Data | null>(null); const [error, setError] = useState<string | null>(null); const [loading, setLoading] = useState(true)
   const studioName = (studioId: number) => studios.find(studio => studio.id === studioId)?.studio_name ?? `Studio ${studioId}`
-  useEffect(() => { const controller = new AbortController(); Promise.resolve().then(() => { if (!controller.signal.aborted) setLoading(true) }); fetch(`/api/marketing/order-geography?${new URLSearchParams({ studioId: selectedStudio, startDate: dateRange.startDate, endDate: dateRange.endDate })}`, { signal: controller.signal }).then(async response => { const json = await response.json(); if (!response.ok) throw new Error(json.error); setData(json); setError(null) }).catch(fetchError => { if (fetchError.name !== "AbortError") setError(fetchError.message) }).finally(() => { if (!controller.signal.aborted) setLoading(false) }); return () => controller.abort() }, [selectedStudio, dateRange.startDate, dateRange.endDate])
+  useEffect(() => { const controller = new AbortController(); Promise.resolve().then(() => { if (!controller.signal.aborted) setLoading(true) }); fetchWithRetry(`/api/marketing/order-geography?${new URLSearchParams({ studioId: selectedStudio, startDate: dateRange.startDate, endDate: dateRange.endDate })}`, { signal: controller.signal }).then(async response => { const json = await response.json(); if (!response.ok) throw new Error(json.error); setData(json); setError(null) }).catch(fetchError => { if (fetchError.name !== "AbortError") setError(fetchError.message) }).finally(() => { if (!controller.signal.aborted) setLoading(false) }); return () => controller.abort() }, [selectedStudio, dateRange.startDate, dateRange.endDate])
   const zipGroups = data ? [...data.rows.reduce((groups, row) => { const rows = groups.get(row.studioId) ?? []; rows.push(row); groups.set(row.studioId, rows); return groups }, new Map<number, Data["rows"]>())].sort(([left], [right]) => studioName(left).localeCompare(studioName(right))) : []
   return <div className="space-y-6">
     <Link href="/marketing" className="inline-flex items-center gap-1 text-sm text-muted-foreground"><ArrowLeft className="size-4" />Marketing</Link>

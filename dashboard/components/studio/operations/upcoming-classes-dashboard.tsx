@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useApp } from "@/contexts/app-context"
 import type { UpcomingClassesData } from "@/lib/services/upcoming-classes"
+import { fetchWithRetry } from "@/lib/http/fetch-with-retry"
 
 const currency = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -43,7 +44,7 @@ export function UpcomingClassesDashboard() {
       setError(null)
       try {
         const params = new URLSearchParams({ studioId: selectedStudio })
-        const response = await fetch(`/api/operations/upcoming-classes?${params}`, {
+        const response = await fetchWithRetry(`/api/operations/upcoming-classes?${params}`, {
           signal: controller.signal,
         })
         const result = await response.json()

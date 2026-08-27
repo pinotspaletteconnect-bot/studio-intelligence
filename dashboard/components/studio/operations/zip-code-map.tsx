@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { geoMercator, geoPath } from "d3-geo"
 import { MapPin, RotateCcw, ZoomIn, ZoomOut } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
+import { fetchWithRetry } from "@/lib/http/fetch-with-retry"
 
 type ZipRow = { studioId: number; zipCode: string; orderCount: number; bookedSales: number }
 type StudioLocation = { id: number; name: string; city: string; state: string; address: string | null; latitude: number | null; longitude: number | null }
@@ -99,7 +100,7 @@ export function ZipCodeMap({ rows, studios }: { rows: ZipRow[]; studios: StudioL
   const [activeZip, setActiveZip] = useState<string | null>(null)
   useEffect(() => {
     const controller = new AbortController()
-    Promise.all(["/maps/zcta-east.geojson", "/maps/zcta-arizona.geojson"].map(url => fetch(url, { signal: controller.signal }).then(response => response.json() as Promise<FeatureCollection>)))
+    Promise.all(["/maps/zcta-east.geojson", "/maps/zcta-arizona.geojson"].map(url => fetchWithRetry(url, { signal: controller.signal }).then(response => response.json() as Promise<FeatureCollection>)))
       .then(collections => setFeatures(collections.flatMap(collection => collection.features.map(feature => rewindFeature(feature as Feature)))))
       .catch(error => { if (error.name !== "AbortError") console.error("Unable to load ZIP boundaries", error) })
     return () => controller.abort()

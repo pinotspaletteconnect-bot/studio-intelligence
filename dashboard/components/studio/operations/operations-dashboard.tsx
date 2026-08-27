@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { fetchWithRetry } from "@/lib/http/fetch-with-retry"
 import { useEffect, useMemo, useState } from "react"
 import {
   ArrowRight,
@@ -166,7 +167,7 @@ export function OperationsDashboard() {
           params.set("comparisonStartDate", comparisonDateRange.startDate)
           params.set("comparisonEndDate", comparisonDateRange.endDate)
         }
-        const response = await fetch(`/api/operations/summary?${params}`, {
+        const response = await fetchWithRetry(`/api/operations/summary?${params}`, {
           signal: controller.signal,
         })
         const result = await response.json()

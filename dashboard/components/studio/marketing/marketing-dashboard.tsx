@@ -35,6 +35,7 @@ import type {
   StrategyChangeType,
 } from "@/lib/services/marketing-strategy-changes"
 import { useApp } from "@/contexts/app-context"
+import { fetchWithRetry } from "@/lib/http/fetch-with-retry"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -169,7 +170,7 @@ export function MarketingDashboard() {
           startDate: dateRange.startDate,
           endDate: dateRange.endDate,
         })
-        const response = await fetch(`/api/marketing/summary?${params}`, {
+        const response = await fetchWithRetry(`/api/marketing/summary?${params}`, {
           signal: controller.signal,
         })
         const result = await response.json()

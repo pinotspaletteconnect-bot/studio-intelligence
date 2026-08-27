@@ -7,6 +7,7 @@ import {DashboardToolbar} from "@/components/studio/shared/dashboard-toolbar"
 import {UnmappedLaborReconciliation} from "@/components/studio/operations/unmapped-labor-reconciliation"
 import {Card,CardContent} from "@/components/ui/card"
 import {Skeleton} from "@/components/ui/skeleton"
+import {fetchWithRetry as fetch} from "@/lib/http/fetch-with-retry"
 type Day={studioId:number;studioName:string;date:string;totalSales:number;cogsCost:number;overheadCost:number;unmappedCost:number;totalCost:number;actualHours:number;scheduledHours:number;cogsPercent:number|null;overheadPercent:number|null;totalPercent:number|null}
 type Data={totals:{totalSales:number;cogsCost:number;overheadCost:number;unmappedCost:number;totalCost:number;actualHours:number;scheduledHours:number;cogsPercent:number|null;overheadPercent:number|null;totalPercent:number|null};daily:Day[];roles:Array<{studio_id:number;studio_name:string;labor_date:string;role_name:string;labor_category:string;actualHours:number;actualCost:number;is_daily_fallback:boolean}>}
 const money=new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}),date=new Intl.DateTimeFormat("en-US",{month:"short",day:"numeric",year:"numeric",timeZone:"UTC"}),pct=(v:number|null)=>v===null?"N/A":`${v.toFixed(1)}%`

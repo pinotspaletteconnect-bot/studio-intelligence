@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useApp } from "@/contexts/app-context"
 import type { DailyOperatingDetailData } from "@/lib/services/operations"
+import { fetchWithRetry } from "@/lib/http/fetch-with-retry"
 
 const currency = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -43,7 +44,7 @@ export function DailyOperatingDetail({ initialDate }: { initialDate: string }) {
       setError(null)
       try {
         const params = new URLSearchParams({ studioId: selectedStudio, date })
-        const response = await fetch(`/api/operations/daily-detail?${params}`, {
+        const response = await fetchWithRetry(`/api/operations/daily-detail?${params}`, {
           signal: controller.signal,
         })
         const result = await response.json()

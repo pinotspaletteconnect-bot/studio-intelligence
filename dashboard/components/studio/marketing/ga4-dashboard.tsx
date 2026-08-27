@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useApp } from "@/contexts/app-context"
+import { fetchWithRetry } from "@/lib/http/fetch-with-retry"
 import type { Ga4Breakdown, Ga4Kpi, Ga4NorthAmericaDashboard } from "@/lib/services/ga4-reporting"
 import { KpiHelp } from "@/components/studio/shared/kpi-help"
 
@@ -93,7 +94,7 @@ export function Ga4Dashboard() {
           params.set("comparisonStartDate", comparisonDateRange.startDate)
           params.set("comparisonEndDate", comparisonDateRange.endDate)
         }
-        const response = await fetch(`/api/marketing/ga4?${params}`, { signal: controller.signal })
+        const response = await fetchWithRetry(`/api/marketing/ga4?${params}`, { signal: controller.signal })
         const result = await response.json()
         if (!response.ok) throw new Error(result.error || "GA4 reporting is unavailable.")
         setData(result)

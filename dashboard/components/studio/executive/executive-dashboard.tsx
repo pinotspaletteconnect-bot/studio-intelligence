@@ -17,6 +17,7 @@ import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis } from "recharts"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { fetchWithRetry } from "@/lib/http/fetch-with-retry"
 import {
   ChartContainer,
   ChartLegend,
@@ -108,7 +109,7 @@ export function ExecutiveDashboard() {
           params.set("weekComparisonStartDate", weekComparisonStart)
           params.set("weekComparisonEndDate", weekComparisonEnd)
         }
-        const response = await fetch(`/api/executive/summary?${params}`, {
+        const response = await fetchWithRetry(`/api/executive/summary?${params}`, {
           signal: controller.signal,
         })
         const result = await response.json()

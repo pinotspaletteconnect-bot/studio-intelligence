@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useApp } from "@/contexts/app-context"
 import { formatAppliedDateRange, type AppliedDateRange } from "@/lib/date-range"
 import type { OperationsDashboardData } from "@/lib/services/operations"
+import { fetchWithRetry } from "@/lib/http/fetch-with-retry"
 
 type KpiKey = keyof OperationsDashboardData["kpis"]
 type Metric = { key: KpiKey; label: string; format: "currency" | "decimal" | "number" | "percent" | "days" }
@@ -136,7 +137,7 @@ export function WeekOverWeekDashboard() {
 
     async function request(studioId: number, range: AppliedDateRange) {
       const params = new URLSearchParams({ studioId: String(studioId), startDate: range.startDate, endDate: range.endDate, comparison: "previous" })
-      const response = await fetch(`/api/operations/summary?${params}`, { signal: controller.signal })
+      const response = await fetchWithRetry(`/api/operations/summary?${params}`, { signal: controller.signal })
       const result = await response.json()
       if (!response.ok) throw new Error(result.error || "Period comparison data is unavailable.")
       return result as OperationsDashboardData

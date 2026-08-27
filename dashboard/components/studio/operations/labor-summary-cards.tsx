@@ -7,6 +7,7 @@ import { Clock3 } from "lucide-react"
 import { KpiHelp } from "@/components/studio/shared/kpi-help"
 import { Card, CardContent } from "@/components/ui/card"
 import { useApp } from "@/contexts/app-context"
+import { fetchWithRetry } from "@/lib/http/fetch-with-retry"
 
 type Totals = {
   totalCost: number
@@ -27,7 +28,7 @@ export function LaborSummaryCards() {
 
   useEffect(() => {
     const controller = new AbortController()
-    fetch(`/api/operations/labor?${new URLSearchParams({ studioId: selectedStudio, startDate: dateRange.startDate, endDate: dateRange.endDate })}`, { signal: controller.signal })
+    fetchWithRetry(`/api/operations/labor?${new URLSearchParams({ studioId: selectedStudio, startDate: dateRange.startDate, endDate: dateRange.endDate })}`, { signal: controller.signal })
       .then((response) => response.ok ? response.json() : null)
       .then((result) => setData(result?.totals ?? null))
       .catch(() => null)

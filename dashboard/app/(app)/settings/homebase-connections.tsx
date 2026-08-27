@@ -4,6 +4,7 @@ import { useActionState, useEffect, useState } from "react"
 import { createHomebaseConnection, updateHomebaseBrowserLogin } from "@/app/(app)/settings/actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { fetchWithRetry as fetch } from "@/lib/http/fetch-with-retry"
 
 type Studio = { id: number; studio_name: string }
 type Account = { id: number; account_name: string; studio_name: string | null; location_name: string | null; has_credentials: boolean; last_validated_at: string | null }
