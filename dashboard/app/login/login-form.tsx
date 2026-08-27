@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useActionState } from "react"
+import { useActionState, useEffect } from "react"
 
 import { login } from "@/app/login/actions"
 import { Button } from "@/components/ui/button"
@@ -10,6 +10,10 @@ import { Label } from "@/components/ui/label"
 
 export function LoginForm() {
   const [state, action, pending] = useActionState(login, undefined)
+
+  useEffect(() => {
+    if (state?.redirectTo) window.location.replace(state.redirectTo)
+  }, [state?.redirectTo])
 
   return (
     <form action={action} className="space-y-5">
@@ -35,8 +39,8 @@ export function LoginForm() {
       {state?.error ? (
         <p role="alert" className="text-sm text-red-700">{state.error}</p>
       ) : null}
-      <Button className="w-full" disabled={pending} type="submit">
-        {pending ? "Signing in…" : "Sign in"}
+      <Button className="w-full" disabled={pending || Boolean(state?.redirectTo)} type="submit">
+        {pending || state?.redirectTo ? "Signing in…" : "Sign in"}
       </Button>
       <p className="text-center text-xs leading-5 text-slate-500">
         Accounts are invitation-only. Contact your organization administrator if you need access.

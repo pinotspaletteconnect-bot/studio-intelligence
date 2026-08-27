@@ -9,7 +9,7 @@ import {
   temporaryPasswordExpired,
 } from "@/lib/auth/temporary-password"
 
-export type LoginState = { error?: string } | undefined
+export type LoginState = { error?: string; redirectTo?: string } | undefined
 
 const loginSchema = z.object({
   email: z.email().max(254).transform((value) => value.trim().toLowerCase()),
@@ -30,7 +30,13 @@ export async function login(
   const auth = await createAuthClient()
   const { data, error } = await auth.auth.signInWithPassword(parsed.data)
 
-  if (error) return { error: "The email or password is incorrect." }
+  if (error) {
+    console.error("Supabase password login failed", {
+      code: error.code,
+      status: error.status,
+    })
+    return { error: "The email or password is incorrect." }
+  }
   if (data.user && mustChangeTemporaryPassword(data.user.app_metadata)) {
     if (temporaryPasswordExpired(data.user.app_metadata)) {
       await auth.auth.signOut()
@@ -38,5 +44,5 @@ export async function login(
     }
     redirect("/reset-password")
   }
-  redirect("/dashboard")
+  return { redirectTo: "/dashboard" }
 }
