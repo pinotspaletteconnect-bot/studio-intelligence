@@ -140,6 +140,7 @@ function totals(rows: DailyRow[]): Totals {
 
 const change = (current: number, previous: number) => previous ? ((current - previous) / Math.abs(previous)) * 100 : null
 const metric = (current: number, previous: number): Ga4Kpi => ({ value: current, change: change(current, previous) })
+const BREAKDOWN_PAGE_SIZE = 1000
 
 function groupBreakdowns(rows: BreakdownRow[], type: BreakdownRow["breakdown_type"], limit = 10) {
   const grouped = new Map<string, Ga4Breakdown>()
@@ -181,16 +182,42 @@ export async function getGa4NorthAmericaDashboard(
 
   const currentDailyQuery = addStudioFilter(supabase.from("ga4_north_america_daily_metrics").select(dailySelect).gte("report_date", startDate).lte("report_date", endDate), studioId, allowedStudioIds)
   const previousDailyQuery = addStudioFilter(supabase.from("ga4_north_america_daily_metrics").select(dailySelect).gte("report_date", comparisonStart).lte("report_date", comparisonEnd), studioId, allowedStudioIds)
-  const breakdownQuery = addStudioFilter(supabase.from("ga4_north_america_breakdown_daily").select("breakdown_type,dimension_value,dimension_secondary,sessions,active_users,new_users,key_events,total_revenue").gte("report_date", startDate).lte("report_date", endDate), studioId, allowedStudioIds)
   const currentKeyEventsQuery = addStudioFilter(supabase.from("ga4_north_america_breakdown_daily").select("key_events").eq("breakdown_type", "country").gte("report_date", startDate).lte("report_date", endDate), studioId, allowedStudioIds)
   const previousKeyEventsQuery = addStudioFilter(supabase.from("ga4_north_america_breakdown_daily").select("key_events").eq("breakdown_type", "country").gte("report_date", comparisonStart).lte("report_date", comparisonEnd), studioId, allowedStudioIds)
   const contentQuery = addStudioFilter(supabase.from("ga4_north_america_content_daily").select("page_path,page_views,active_users,key_events,total_revenue").gte("report_date", startDate).lte("report_date", endDate), studioId, allowedStudioIds)
   const eventQuery = addStudioFilter(supabase.from("ga4_north_america_event_daily").select("event_name,event_count,active_users,total_revenue").gte("report_date", startDate).lte("report_date", endDate), studioId, allowedStudioIds)
 
-  const [currentResult, previousResult, breakdownResult, currentKeyEventsResult, previousKeyEventsResult, contentResult, eventResult] = await Promise.all([
-    currentDailyQuery.order("report_date"), previousDailyQuery.order("report_date"), breakdownQuery.range(0, 9999), currentKeyEventsQuery, previousKeyEventsQuery, contentQuery.range(0, 9999), eventQuery.range(0, 9999),
+  async function loadBreakdown(type: BreakdownRow["breakdown_type"]) {
+    const rows: BreakdownRow[] = []
+    for (let offset = 0; ; offset += BREAKDOWN_PAGE_SIZE) {
+      const query = addStudioFilter(
+        supabase
+          .from("ga4_north_america_breakdown_daily")
+          .select("breakdown_type,dimension_value,dimension_secondary,sessions,active_users,new_users,key_events,total_revenue")
+          .eq("breakdown_type", type)
+          .gte("report_date", startDate)
+          .lte("report_date", endDate)
+          .order("report_date")
+          .order("studio_id")
+          .order("dimension_value")
+          .order("dimension_secondary")
+          .range(offset, offset + BREAKDOWN_PAGE_SIZE - 1),
+        studioId,
+        allowedStudioIds
+      )
+      const result = await query
+      if (result.error) return { data: rows, error: result.error }
+      const page = (result.data ?? []) as BreakdownRow[]
+      rows.push(...page)
+      if (page.length < BREAKDOWN_PAGE_SIZE) return { data: rows, error: null }
+    }
+  }
+
+  const breakdownTypes: BreakdownRow["breakdown_type"][] = ["country", "city", "device_category", "operating_system", "source_medium"]
+  const [currentResult, previousResult, breakdownResults, currentKeyEventsResult, previousKeyEventsResult, contentResult, eventResult] = await Promise.all([
+    currentDailyQuery.order("report_date"), previousDailyQuery.order("report_date"), Promise.all(breakdownTypes.map(loadBreakdown)), currentKeyEventsQuery, previousKeyEventsQuery, contentQuery.range(0, 9999), eventQuery.range(0, 9999),
   ])
-  const errors = [currentResult.error, previousResult.error, breakdownResult.error, currentKeyEventsResult.error, previousKeyEventsResult.error, contentResult.error, eventResult.error].filter(Boolean)
+  const errors = [currentResult.error, previousResult.error, ...breakdownResults.map(result => result.error), currentKeyEventsResult.error, previousKeyEventsResult.error, contentResult.error, eventResult.error].filter(Boolean)
   const missingTables = errors.length > 0 && errors.every(error => ["42P01", "PGRST204", "PGRST205"].includes(error?.code ?? ""))
   if (errors.length && !missingTables) throw errors[0]
 
@@ -229,7 +256,7 @@ export async function getGa4NorthAmericaDashboard(
     item.count += numberValue(row.event_count); item.activeUsers += numberValue(row.active_users); item.revenue += numberValue(row.total_revenue)
     events.set(row.event_name, item)
   }
-  const breakdownRows = (breakdownResult.data ?? []) as BreakdownRow[]
+  const breakdownRows = breakdownResults.flatMap(result => result.data)
 
   return {
     scope: "North America", period: { startDate, endDate }, comparisonPeriod: { startDate: comparisonStart, endDate: comparisonEnd }, configured: !missingTables, hasData: currentRows.length > 0,
