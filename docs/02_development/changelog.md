@@ -10,6 +10,11 @@ This project follows a milestone-based changelog rather than tracking every indi
 
 ## Added
 
+- Added average daily frequency to Meta campaign performance. The service derives
+  it from impressions and the available summed daily ad-level reach, and the
+  dashboard explains that this is not Meta's deduplicated campaign frequency for
+  the full selected period.
+
 - Converted workflow `10 - PTS Product Sales Backfill` to the same private
   studio-and-Excel upload pattern as Class Sales. The authenticated parser
   removes customer names and retains the existing historical product table,

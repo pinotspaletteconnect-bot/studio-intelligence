@@ -168,6 +168,9 @@ export function MarketingDashboard() {
       cpm: totals.impressions
         ? (totals.spend / totals.impressions) * 1000
         : 0,
+      averageDailyFrequency: totals.reach
+        ? totals.impressions / totals.reach
+        : 0,
     }
   }, [data])
   const eulerityChannelTotals = useMemo(() => {
@@ -529,7 +532,7 @@ export function MarketingDashboard() {
         <CardContent>
           {data.metaCampaigns.length ? (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[1080px] text-sm">
+              <table className="w-full min-w-[1180px] text-sm">
                 <thead>
                   <tr className="border-b text-left text-xs text-muted-foreground">
                     <th className="px-3 py-2 font-medium">Ad account</th>
@@ -540,6 +543,9 @@ export function MarketingDashboard() {
                     </th>
                     <th className="px-3 py-2 text-right font-medium">
                       Reported reach
+                    </th>
+                    <th className="px-3 py-2 text-right font-medium">
+                      Avg. daily frequency
                     </th>
                     <th className="px-3 py-2 text-right font-medium">Clicks</th>
                     <th className="px-3 py-2 text-right font-medium">CTR</th>
@@ -579,6 +585,9 @@ export function MarketingDashboard() {
                         {campaign.reach.toLocaleString()}
                       </td>
                       <td className="px-3 py-3 text-right tabular-nums">
+                        {campaign.averageDailyFrequency.toFixed(2)}
+                      </td>
+                      <td className="px-3 py-3 text-right tabular-nums">
                         {campaign.clicks.toLocaleString()}
                       </td>
                       <td className="px-3 py-3 text-right tabular-nums">
@@ -608,6 +617,9 @@ export function MarketingDashboard() {
                       {metaCampaignTotals.reach.toLocaleString()}
                     </td>
                     <td className="px-3 py-3 text-right tabular-nums">
+                      {metaCampaignTotals.averageDailyFrequency.toFixed(2)}
+                    </td>
+                    <td className="px-3 py-3 text-right tabular-nums">
                       {metaCampaignTotals.clicks.toLocaleString()}
                     </td>
                     <td className="px-3 py-3 text-right tabular-nums">
@@ -633,8 +645,10 @@ export function MarketingDashboard() {
           )}
           {data.metaCampaigns.length ? (
             <p className="mt-3 text-xs text-muted-foreground">
-              Reported reach is the sum of stored daily ad-level reach and is not
-              deduplicated across ads or days.
+              Avg. daily frequency is impressions divided by reported reach. Because
+              reported reach is summed from daily ad-level rows, neither reach nor
+              frequency is deduplicated across ads or days and may differ from Meta&apos;s
+              campaign-level figure for the full selected period.
             </p>
           ) : null}
         </CardContent>

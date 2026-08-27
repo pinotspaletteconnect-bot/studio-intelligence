@@ -162,6 +162,7 @@ export type MarketingDashboard = {
     spend: number
     impressions: number
     reach: number
+    averageDailyFrequency: number
     clicks: number
     ctr: number
     cpc: number
@@ -567,6 +568,7 @@ export async function getMarketingDashboard(
       spend: 0,
       impressions: 0,
       reach: 0,
+      averageDailyFrequency: 0,
       clicks: 0,
       ctr: 0,
       cpc: 0,
@@ -587,6 +589,9 @@ export async function getMarketingDashboard(
       cpc: campaign.clicks ? campaign.spend / campaign.clicks : 0,
       cpm: campaign.impressions
         ? (campaign.spend / campaign.impressions) * 1000
+        : 0,
+      averageDailyFrequency: campaign.reach
+        ? campaign.impressions / campaign.reach
         : 0,
     }))
     .sort((a, b) => b.spend - a.spend)

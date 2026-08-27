@@ -55,7 +55,7 @@ No integration should bypass this lifecycle without an explicit architectural de
 - **Collection:** Meta Graph API through shared Meta services and Express routes
 - **ETL:** n8n
 - **Warehouse:** `meta_ads_daily`
-- **Current metrics:** campaign/date, spend, impressions, reach, clicks, CTR, CPC, and CPM
+- **Current metrics:** campaign/date, spend, impressions, reach, clicks, CTR, CPC, and CPM; the dashboard derives average daily frequency as impressions divided by summed daily ad-level reach and labels its non-deduplicated limitation
 - **Configuration:** ad account mapping through `studio_integrations`
 - **Status:** Production
 
