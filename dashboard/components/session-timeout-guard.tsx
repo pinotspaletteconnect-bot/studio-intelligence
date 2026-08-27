@@ -1,7 +1,6 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { SESSION_IDLE_LIMIT_MS, SESSION_WARNING_MS } from "@/lib/auth/session-policy"
@@ -9,7 +8,6 @@ import { SESSION_IDLE_LIMIT_MS, SESSION_WARNING_MS } from "@/lib/auth/session-po
 const HEARTBEAT_INTERVAL_MS = 60 * 1000
 
 export function SessionTimeoutGuard() {
-  const router = useRouter()
   const [warningOpen, setWarningOpen] = useState(false)
   const lastActivity = useRef(0)
   const lastHeartbeat = useRef(0)
@@ -21,10 +19,9 @@ export function SessionTimeoutGuard() {
     try {
       await fetch("/api/session/end", { method: "POST", credentials: "same-origin" })
     } finally {
-      router.replace(`/login?reason=${reason}`)
-      router.refresh()
+      window.location.replace(`/login?reason=${reason}`)
     }
-  }, [router])
+  }, [])
 
   const heartbeat = useCallback(async () => {
     const now = Date.now()
