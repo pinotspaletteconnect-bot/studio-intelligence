@@ -18,6 +18,7 @@ export type HomebaseConnectionState = { complete?: boolean; error?: string } | u
 export type EulerityConnectionState = { complete?: boolean; error?: string } | undefined
 export type Ga4ConnectionState = { complete?: boolean; error?: string } | undefined
 export type MetaConnectionState = { complete?: boolean; error?: string } | undefined
+export type QuickBooksConnectionState = { complete?: boolean; error?: string } | undefined
 
 const inviteSchema = z.object({
   email: z.email().max(254).transform((value) => value.trim().toLowerCase()),
@@ -178,6 +179,43 @@ const eulerityMappingSchema = z.object({
 
 const ga4MappingSchema = z.object({ accountId: z.coerce.number().int().positive(), propertyId: z.string().regex(/^\d{1,30}$/), studioId: z.coerce.number().int().positive() })
 const metaMappingSchema = z.object({ accountId: z.coerce.number().int().positive(), assetType: z.enum(["ad_account", "page", "instagram_account"]), assetId: z.string().regex(/^(act_)?\d{1,50}$/), studioId: z.coerce.number().int().positive() })
+const quickbooksMappingSchema = z.object({ connectionId: z.coerce.number().int().positive(), studioId: z.coerce.number().int().positive() })
+
+export async function assignQuickBooksConnection(
+  _state: QuickBooksConnectionState,
+  formData: FormData,
+): Promise<QuickBooksConnectionState> {
+  const access = await requireDashboardContext()
+  if (!(["owner", "administrator"] as string[]).includes(access.role)) {
+    return { error: "Only an owner or administrator can map QuickBooks companies." }
+  }
+  const parsed = quickbooksMappingSchema.safeParse(Object.fromEntries(formData))
+  if (!parsed.success || !access.allowedStudioIds.includes(parsed.data.studioId)) {
+    return { error: "Select a valid QuickBooks company and studio." }
+  }
+
+  const { data: connection, error: connectionError } = await supabase
+    .from("quickbooks_connections")
+    .select("id")
+    .eq("id", parsed.data.connectionId)
+    .eq("organization_id", access.organizationId)
+    .eq("is_active", true)
+    .maybeSingle()
+  if (connectionError || !connection) {
+    return { error: "That QuickBooks company is unavailable." }
+  }
+
+  const { error } = await supabase.rpc("assign_quickbooks_connection_to_studio", {
+    p_organization_id: access.organizationId,
+    p_connection_id: parsed.data.connectionId,
+    p_studio_id: parsed.data.studioId,
+    p_effective_from: new Date().toISOString().slice(0, 10),
+  })
+  if (error) return { error: "The QuickBooks studio mapping could not be saved." }
+
+  revalidatePath("/settings")
+  return { complete: true }
+}
 
 export async function mapMetaAsset(_state: MetaConnectionState, formData: FormData): Promise<MetaConnectionState> {
   const access = await requireDashboardContext()

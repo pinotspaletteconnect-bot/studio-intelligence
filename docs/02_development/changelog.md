@@ -1,6 +1,72 @@
 # Studio Intelligence Changelog
 
+## August 24, 2026
+
+- Started the approved QuickBooks Online Phase 1 read-only foundation. Prepared
+  migration `20260824120000` for expandable tenant/company/studio routing,
+  Vault-backed OAuth references, receipt-inbox configuration, normalized account,
+  vendor, and posted-transaction caches, sync cursors, and a governed
+  chart-of-accounts review directory. Every connection remains forcibly
+  write-disabled.
+- Deployed migration `20260824120000` after reconciling four older migrations
+  that existed in production but were absent from Supabase migration history.
+  Remote history now matches the repository, the migration dry run reports no
+  pending work, and all 13 QuickBooks service-only tables/views return through
+  authenticated server access. No QuickBooks or Gmail connection was created.
+- Added the single-accounting-automation blueprint and read-only source contract.
+  The current four companies are the first validation cohort rather than a system
+  limit. Pending QuickBooks Banking `For review` access remains a documented
+  validation gate because it is not represented in the standard Accounting API
+  entity contract.
+- Added owner/admin-only QuickBooks OAuth connect and callback route scaffolding.
+  Signed expiring state binds the callback to the initiating tenant and user;
+  company discovery is read-only and refresh credentials route directly to Vault.
+  The dashboard lint and production build pass, but the routes remain unavailable
+  until the migration and Intuit server-only environment settings are deployed.
+- Confirmed receipt intake uses four separate Gmail addresses with four separate
+  Google logins, so each mailbox will receive its own independent Vault-backed
+  OAuth connection and QuickBooks-company route. Added privacy-minimized Gmail
+  message-ID tracking for idempotency and documented the read-only restricted
+  scope and Google verification gate. No Gmail credential or message was accessed.
+- Added owner/admin-only Accounting Gmail OAuth connect/callback routes and a
+  Settings section for four independent mailbox connections. The flow requests
+  only `gmail.readonly`, forces explicit Google account selection, stores refresh
+  credentials through the Vault RPC, and displays per-mailbox connection health.
+  Dashboard lint and production build pass; the feature remains unavailable until
+  its migration and Google OAuth configuration are deployed.
+- Added QuickBooks Settings controls for connecting each realm, assigning one or
+  more studios through tenant-validated server actions, and reviewing imported
+  chart-of-accounts rows by company, type, subtype, active status, and governed
+  review state. Completion supports four or more connections so future locations
+  do not require code changes. Dashboard lint and production build pass.
+- Added the QuickBooks read-only collector and authenticated dashboard credential
+  broker. CompanyInfo, Account, Vendor, and an explicit posted-transaction entity
+  allowlist are supported with bounded pagination. Refresh and access credentials
+  remain out of responses and logs, sandbox is the default, and the collector
+  performs no warehouse writes. All 36 collector tests pass.
+- Added inactive n8n workflow `32 - QuickBooks Read-Only Accounting Foundation`.
+  One configuration-driven graph discovers every connected write-disabled realm,
+  collects company metadata, accounts, vendors, and the eight queryable posted
+  transaction types, then normalizes idempotent warehouse and sync-cursor UPSERTs.
+  The workflow has not been imported, activated, or executed against production.
+- Connected one Intuit development sandbox company through the owner OAuth flow
+  and stored its refresh credential in Supabase Vault with writes disabled.
+  Local collector validation returned one CompanyInfo row, 89 accounts, 26
+  vendors, and successful results for eight queryable transaction entities.
+  Corrected `Check` handling after sandbox evidence confirmed QuickBooks returns
+  checks through `Purchase` with `PaymentType = Check` rather than a standalone
+  query entity. Added the QuickBooks internal broker to the dashboard public
+  service-route allowlist; credentials remain excluded from responses and logs.
+- Imported workflow `32 - QuickBooks Read-Only Accounting Foundation`
+  (`pOmosy7cg2hQm0kT`) into the production n8n Studio Intelligence folder. It
+  remains unpublished and was not executed; no scheduled collection or
+  QuickBooks write was enabled.
+
 ## August 22, 2026
+
+- Excluded inquiry placeholders scheduled before 4:00 AM studio-local time
+  from upcoming and historical party reporting. The rule uses each studio's
+  configured timezone, including `America/Phoenix` for Gilbert.
 
 - Formatted the Textellent `{class_date}` message field as a customer-friendly
   month and day (for example, `August 21`) instead of an ISO date.
