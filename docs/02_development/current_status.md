@@ -37,6 +37,12 @@ The collection, ETL, warehouse, and frontend layers are considered stable patter
 
 ## Production Integrations
 
+August 28 incident: Meta and Eulerity morning imports failed in their Vault
+brokers on Supabase target reads (`PGRST303`), surfaced incorrectly as 404.
+A targeted request-isolation, no-cache, and bounded-read-retry repair is locally
+verified; production deployment and recovery are pending. See
+`marketing_refresh_incident_20260828.md` for evidence and rollout status.
+
 | Integration | Collection path | Warehouse state | Status |
 | --- | --- | --- | --- |
 | Google Analytics 4 | API/n8n | `ga4_daily_metrics`, `marketing_attribution_daily` | Production Vault-backed owner OAuth workflows |
