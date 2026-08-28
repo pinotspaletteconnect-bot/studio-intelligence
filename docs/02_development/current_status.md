@@ -9,10 +9,12 @@ This is the fast-changing source of truth for what is implemented, deployed, act
 
 ## Overall Status
 
-August 28 local addition: studio ZIP-map targeting circles support overlapping
+August 28 addition: studio ZIP-map targeting circles support overlapping
 editable radii, address or coordinate centers, and owner/admin-controlled saves
-in existing PTS configuration. Not yet deployed or live-write validated; see
-`map_target_circles.md` for boundaries and release checks.
+in existing PTS configuration. Feature deployed via PR #56; live saving exposed
+a same-origin rejection. A local repair uses the configured public app origin
+instead of the internal request URL. Repair rollout and successful live-write
+validation are pending; see `map_target_circles.md`.
 
 The foundational collection platform and the first dashboard architecture are implemented. Development has shifted from infrastructure-first work toward reporting views, interactive dashboards, comparative analytics, and AI-ready business intelligence.
 

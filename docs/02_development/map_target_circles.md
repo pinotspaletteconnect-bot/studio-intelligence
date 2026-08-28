@@ -1,6 +1,9 @@
 # Studio map targeting circles
 
-Status: implemented locally on `codex/map-target-circles`; not deployed.
+Status: feature deployed August 28 via PR #56. Live save testing exposed a
+same-origin rejection. The local repair uses the existing trusted `APP_URL`
+instead of comparing against the reverse proxy's internal request URL.
+Repair deployment and successful live save/reload remain pending.
 
 ## User contract
 
@@ -33,6 +36,8 @@ updates an existing active PTS integration, never inserts an integration.
 POST performs the address lookup. All operations require authenticated,
 onboarded, legally accepted users with studio access; writes/lookups additionally
 require owner/admin access and same-origin requests. No new table or column.
+The mutation origin guard uses the configured canonical app origin, ignores
+Host/forwarded headers, and fails closed without production URL configuration.
 
 Persisted JSON contains circles, revision UUID, update timestamp and updater ID.
 PUT checks the client revision and atomically compares the original full JSON

@@ -1,5 +1,14 @@
 # Studio Intelligence Changelog
 
+## August 28, 2026 — targeting-circle save origin repair (local)
+
+- Following PR #56 deployment, live saving returned "Same-origin request
+  required." Reuse the trusted configured app origin for circle saves and
+  address lookups instead of the reverse proxy's internal request URL.
+- Preserve authentication, studio permissions, validation and conflict checks.
+  Add regression tests for proxy URLs, foreign/missing origins, spoofed headers,
+  missing/insecure configuration and local development. Live rollout pending.
+
 ## August 28, 2026 — map targeting circles (local, not deployed)
 
 - Added multiple editable, translucent, overlapping target-radius overlays to
