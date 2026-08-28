@@ -1,5 +1,15 @@
 # Studio Intelligence Changelog
 
+## August 28, 2026 — target ZIP outlines (local, not deployed)
+
+- Added per-studio target ZIP lists and border color with explicitly no fill.
+  Preserve sales shading and circle overlays; include targeted boundaries even
+  when no sales exist. Disclose ZIPs absent from regional Census assets.
+- Reuse existing map-target configuration, authorization, origin guard and
+  revision checks. Older circle-only clients preserve ZIP selections. No
+  schema changes or production data writes. Added parsing, validation,
+  compatibility and rendering-contract regression tests.
+
 ## August 28, 2026 — targeting-circle save origin repair (local)
 
 - Following PR #56 deployment, live saving returned "Same-origin request

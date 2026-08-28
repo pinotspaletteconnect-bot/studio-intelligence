@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto"
 import { supabase } from "@/lib/supabase/server"
 import { ApiAccessError, assertStudioAccess } from "@/lib/auth/api"
 import type { UserAccessContext } from "@/lib/auth/session"
-import { readTargetSettings, type TargetCircle } from "@/lib/maps/target-circles"
+import { readTargetSettings, resolveZipTargets, type TargetCircle, type ZipTargets } from "@/lib/maps/target-circles"
 
 export class MapTargetError extends Error {
   constructor(public status: number, message: string) { super(message) }
@@ -27,12 +27,13 @@ export async function getMapTargets(access: UserAccessContext, studioId: number)
   return { ...readTargetSettings(integration.configuration ?? {}), canEdit: ["owner", "administrator"].includes(access.role) }
 }
 
-export async function saveMapTargets(access: UserAccessContext, studioId: number, circles: TargetCircle[], expectedRevision: string | null) {
+export async function saveMapTargets(access: UserAccessContext, studioId: number, circles: TargetCircle[], expectedRevision: string | null, zipTargets?: ZipTargets) {
   assertTargetEditor(access)
   const integration = await integrationFor(access, studioId)
   const configuration = integration.configuration ?? {}
-  if (readTargetSettings(configuration).revision !== expectedRevision) throw new MapTargetError(409, "Someone changed these circles. Reload saved circles before saving again.")
-  const settings = { circles, revision: randomUUID(), updated_at: new Date().toISOString(), updated_by: access.userId }
+  const current = readTargetSettings(configuration)
+  if (current.revision !== expectedRevision) throw new MapTargetError(409, "Someone changed these targets. Reload saved targets before saving again.")
+  const settings = { circles, zipTargets: resolveZipTargets(current.zipTargets, zipTargets), revision: randomUUID(), updated_at: new Date().toISOString(), updated_by: access.userId }
   let query = supabase.from("studio_integrations")
     .update({ configuration: { ...configuration, map_targets: settings } })
     .eq("id", integration.id).eq("organization_id", access.organizationId).eq("studio_id", studioId)
@@ -41,7 +42,7 @@ export async function saveMapTargets(access: UserAccessContext, studioId: number
   const { data, error } = await query.select("id")
   if (error) throw error
   if (data?.length !== 1) throw new MapTargetError(409, "Studio settings changed while saving. Reload saved circles and try again.")
-  return { circles, revision: settings.revision, canEdit: true }
+  return { circles, zipTargets: settings.zipTargets, revision: settings.revision, canEdit: true }
 }
 
 export async function findTargetAddress(address: string) {

@@ -3,7 +3,16 @@
 Status: feature deployed August 28 via PR #56. Live save testing exposed a
 same-origin rejection. The local repair uses the existing trusted `APP_URL`
 instead of comparing against the reverse proxy's internal request URL.
-Repair deployment and successful live save/reload remain pending.
+Repair deployed via PR #57; successful live save/reload remains unverified.
+
+August 28 local addition (not deployed): each studio can save up to 200 target
+ZIP codes with one configurable border color. Target paths explicitly have no
+fill, render above circles, and do not replace existing sales shading. Paste
+comma/space/newline-separated five-digit codes, including leading zeros;
+duplicates are removed. Clearing the list removes the outlines on save.
+Boundaries outside the top-ten-sales region are included and fitted even with
+no sales. Missing regional Census ZCTA boundaries are reported by ZIP; codes
+are retained, not silently dropped. No new boundary provider is introduced.
 
 ## User contract
 
@@ -40,6 +49,10 @@ The mutation origin guard uses the configured canonical app origin, ignores
 Host/forwarded headers, and fails closed without production URL configuration.
 
 Persisted JSON contains circles, revision UUID, update timestamp and updater ID.
+It now also accepts optional `zipTargets: { codes: string[], color: string }`.
+Legacy configurations default to an empty list. Old clients omitting ZIP
+targets preserve the stored list; new clients save both through the same
+revision-checked request. No table/column changes or new integrations.
 PUT checks the client revision and atomically compares the original full JSON
 configuration. Any concurrent configuration change results in 409; unrelated
 integration settings are not overwritten. Invalid stored circles fail closed.

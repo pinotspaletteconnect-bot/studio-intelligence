@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { apiAccessResponse, assertStudioAccess, requireApiAccess } from "@/lib/auth/api"
 import { isTrustedAppRequest } from "@/lib/auth/app-origin"
-import { targetCirclesSchema } from "@/lib/maps/target-circles"
+import { targetCirclesSchema, zipTargetsSchema } from "@/lib/maps/target-circles"
 import { assertTargetEditor, findTargetAddress, getMapTargets, MapTargetError, saveMapTargets } from "@/lib/services/map-targets"
 
 const studioIdSchema = z.number().int().positive()
-const saveSchema = z.object({ studioId: studioIdSchema, circles: targetCirclesSchema, revision: z.uuid().nullable() }).strict()
+const saveSchema = z.object({ studioId: studioIdSchema, circles: targetCirclesSchema, zipTargets: zipTargetsSchema.optional(), revision: z.uuid().nullable() }).strict()
 const addressSchema = z.object({ studioId: studioIdSchema, address: z.string().trim().min(8).max(300) }).strict()
 const json = (value: unknown, status = 200) => NextResponse.json(value, { status, headers: { "Cache-Control": "no-store" } })
 function failure(error: unknown) {
@@ -30,8 +30,8 @@ export async function PUT(request: NextRequest) {
     const access = await requireApiAccess()
     assertTargetEditor(access)
     const parsed = saveSchema.safeParse(await request.json().catch(() => null))
-    if (!parsed.success) return json({ error: "Check circle names, coordinates, colors, and radii (0.1–500 miles; maximum 20 circles)." }, 400)
-    return json(await saveMapTargets(access, parsed.data.studioId, parsed.data.circles, parsed.data.revision))
+    if (!parsed.success) return json({ error: "Check target ZIP codes (up to 200 unique five-digit codes), colors, and circles (0.1–500 miles; maximum 20 circles)." }, 400)
+    return json(await saveMapTargets(access, parsed.data.studioId, parsed.data.circles, parsed.data.revision, parsed.data.zipTargets))
   } catch (error) { return failure(error) }
 }
 export async function POST(request: NextRequest) {

@@ -16,6 +16,11 @@ a same-origin rejection. A local repair uses the configured public app origin
 instead of the internal request URL. Repair rollout and successful live-write
 validation are pending; see `map_target_circles.md`.
 
+Update: origin repair deployed via PR #57; live save/reload remains unverified.
+Target ZIP outlines are implemented locally (not deployed): per-studio lists,
+configurable border color, no target fill, persistent settings alongside circles,
+and warnings for ZIPs absent from regional boundary assets.
+
 The foundational collection platform and the first dashboard architecture are implemented. Development has shifted from infrastructure-first work toward reporting views, interactive dashboards, comparative analytics, and AI-ready business intelligence.
 
 ```text
