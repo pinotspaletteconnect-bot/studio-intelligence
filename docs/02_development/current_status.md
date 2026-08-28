@@ -9,6 +9,11 @@ This is the fast-changing source of truth for what is implemented, deployed, act
 
 ## Overall Status
 
+August 28 local addition: studio ZIP-map targeting circles support overlapping
+editable radii, address or coordinate centers, and owner/admin-controlled saves
+in existing PTS configuration. Not yet deployed or live-write validated; see
+`map_target_circles.md` for boundaries and release checks.
+
 The foundational collection platform and the first dashboard architecture are implemented. Development has shifted from infrastructure-first work toward reporting views, interactive dashboards, comparative analytics, and AI-ready business intelligence.
 
 ```text
