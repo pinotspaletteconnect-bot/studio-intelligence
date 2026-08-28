@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { apiAccessResponse, assertStudioAccess, requireApiAccess } from "@/lib/auth/api"
+import { isTrustedAppRequest } from "@/lib/auth/app-origin"
 import { targetCirclesSchema } from "@/lib/maps/target-circles"
 import { assertTargetEditor, findTargetAddress, getMapTargets, MapTargetError, saveMapTargets } from "@/lib/services/map-targets"
 
@@ -13,7 +14,7 @@ function failure(error: unknown) {
 }
 function sameOrigin(request: NextRequest) {
   // This endpoint is for the dashboard's same-origin JSON forms only.
-  if (request.headers.get("origin") !== request.nextUrl.origin) throw new MapTargetError(403, "Same-origin request required.")
+  if (!isTrustedAppRequest(request)) throw new MapTargetError(403, "Same-origin request required.")
 }
 export async function GET(request: NextRequest) {
   try {

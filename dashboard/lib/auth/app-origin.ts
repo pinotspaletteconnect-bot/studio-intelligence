@@ -13,3 +13,10 @@ export function getTrustedAppOrigin(requestOrigin?: string | null) {
 
   return url.origin
 }
+
+export function isTrustedAppRequest(request: Pick<Request, "headers" | "url">) {
+  // Use deployment configuration, not proxy/Host headers or the container URL.
+  // Only local development may fall back to the incoming request URL.
+  const trustedOrigin = getTrustedAppOrigin(new URL(request.url).origin)
+  return request.headers.get("origin") === trustedOrigin
+}
