@@ -1,9 +1,11 @@
 "use server"
 
 import { redirect } from "next/navigation"
+import { cookies } from "next/headers"
 import { z } from "zod"
 
 import { createAuthClient } from "@/lib/supabase/auth-server"
+import { activityCookieOptions, createActivityCookieValue, SESSION_ACTIVITY_COOKIE } from "@/lib/auth/session-policy"
 import {
   mustChangeTemporaryPassword,
   temporaryPasswordExpired,
@@ -30,13 +32,17 @@ export async function login(
   const auth = await createAuthClient()
   const { data, error } = await auth.auth.signInWithPassword(parsed.data)
 
-  if (error) return { error: "The email or password is incorrect." }
-  if (data.user && mustChangeTemporaryPassword(data.user.app_metadata)) {
+  if (error || !data.user) return { error: "The email or password is incorrect." }
+  const requiresPasswordChange = mustChangeTemporaryPassword(data.user.app_metadata)
+  if (requiresPasswordChange) {
     if (temporaryPasswordExpired(data.user.app_metadata)) {
       await auth.auth.signOut()
       return { error: "This temporary password has expired. Ask your administrator to issue a new one." }
     }
-    redirect("/reset-password")
   }
-  redirect("/dashboard")
+  // A newly authenticated session must not inherit an expired idle timer.
+  // Set only after credentials and temporary-password expiry checks succeed.
+  const cookieStore = await cookies()
+  cookieStore.set(SESSION_ACTIVITY_COOKIE, await createActivityCookieValue(), activityCookieOptions)
+  redirect(requiresPasswordChange ? "/reset-password" : "/dashboard")
 }

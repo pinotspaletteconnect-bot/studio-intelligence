@@ -1,5 +1,14 @@
 # Studio Intelligence Changelog
 
+## August 28, 2026 — fresh sign-in activity reset
+
+- Reset the signed HTTP-only inactivity cookie after successful password login
+  and temporary-password expiry validation, before redirecting. This prevents
+  an old idle timestamp from immediately ending a newly authenticated session.
+- Failed credentials, missing users, invalid forms, and expired temporary
+  passwords do not renew activity. The 30-minute idle and 12-hour absolute
+  limits remain unchanged. Rollout approved; live login verification pending.
+
 ## August 28, 2026 — target ZIP outlines (local, not deployed)
 
 - Added per-studio target ZIP lists and border color with explicitly no fill.
