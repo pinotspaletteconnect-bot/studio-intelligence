@@ -1,0 +1,34 @@
+import { geoCircle } from "d3-geo"
+import { z } from "zod"
+
+export const targetCircleSchema = z.object({
+  id: z.uuid(),
+  name: z.string().trim().min(1).max(80),
+  latitude: z.number().finite().min(-85).max(85),
+  longitude: z.number().finite().min(-180).max(180),
+  radiusMiles: z.number().finite().min(0.1).max(500),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  visible: z.boolean(),
+  address: z.string().trim().max(300).nullable(),
+}).strict()
+
+export const targetCirclesSchema = z.array(targetCircleSchema).max(20).refine(
+  circles => new Set(circles.map(circle => circle.id)).size === circles.length,
+  "Circle IDs must be unique."
+)
+export type TargetCircle = z.infer<typeof targetCircleSchema>
+export type TargetSettings = { circles: TargetCircle[]; revision: string | null }
+
+// d3-geo expects an angular radius, not pixels or meters. WGS84 mean Earth radius.
+export function circleGeometry(circle: Pick<TargetCircle, "latitude" | "longitude" | "radiusMiles">) {
+  return geoCircle().center([circle.longitude, circle.latitude])
+    .radius(circle.radiusMiles * 1609.344 / 6371008.8 * 180 / Math.PI).precision(2)()
+}
+
+export function readTargetSettings(configuration: Record<string, unknown>): TargetSettings {
+  const value = configuration.map_targets
+  if (value === undefined) return { circles: [], revision: null }
+  const parsed = z.object({ circles: targetCirclesSchema, revision: z.uuid() }).safeParse(value)
+  if (!parsed.success) throw new Error("Saved targeting circles are invalid; they have not been overwritten.")
+  return parsed.data
+}

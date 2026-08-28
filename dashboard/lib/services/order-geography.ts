@@ -60,8 +60,8 @@ export async function getOrderGeography(studioId: string | undefined, startDate:
     return {
       id: n(studio.id), name: studio.studio_name, city: studio.city, state: studio.state,
       address: typeof location?.address === "string" ? location.address : null,
-      latitude: Number.isFinite(Number(location?.latitude)) ? Number(location?.latitude) : null,
-      longitude: Number.isFinite(Number(location?.longitude)) ? Number(location?.longitude) : null,
+      latitude: location?.latitude != null && Number.isFinite(Number(location.latitude)) ? Number(location.latitude) : null,
+      longitude: location?.longitude != null && Number.isFinite(Number(location.longitude)) ? Number(location.longitude) : null,
     }
   })
   return { startDate, endDate, totals: { ...totals, averageOrderValue: totals.orderCount ? totals.bookedSales / totals.orderCount : 0, discountRate: totals.orderCount ? totals.discountedOrderCount / totals.orderCount * 100 : 0 }, rows, discountCodes, studios }

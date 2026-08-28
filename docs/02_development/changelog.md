@@ -1,5 +1,22 @@
 # Studio Intelligence Changelog
 
+## August 28, 2026 — map targeting circles (local, not deployed)
+
+- Added multiple editable, translucent, overlapping target-radius overlays to
+  each studio ZIP map. Centers accept latitude/longitude or an explicitly
+  selected US Census address lookup result; radii are in miles. Add, edit,
+  show/hide, remove, reload, and explicit save controls are available.
+- Store up to 20 circles in existing PTS `studio_integrations.configuration`
+  under `map_targets`, scoped by organization and studio. No schema migration
+  or production data write was performed. Owner/admin writes use revision and
+  full-configuration comparison to reject stale edits instead of overwriting
+  concurrent changes. Existing map locations and PTS settings are preserved.
+- Circles are planning overlays only: they do not alter sales, orders, ZIP
+  attribution, or advertising campaigns. Tests cover geographic radius,
+  projection, input validation, duplicates, and stored-setting parsing.
+- Production deployment, authenticated UI testing, real database save/reload,
+  and end-to-end address lookup remain pending. See `map_target_circles.md`.
+
 ## August 24, 2026
 
 - Started the approved QuickBooks Online Phase 1 read-only foundation. Prepared

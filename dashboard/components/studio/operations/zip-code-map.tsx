@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { geoMercator, geoPath } from "d3-geo"
 import { MapPin, RotateCcw, ZoomIn, ZoomOut } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
+import { circleGeometry, type TargetCircle } from "@/lib/maps/target-circles"
+import { TargetCircleEditor } from "@/components/studio/operations/target-circle-editor"
 
 type ZipRow = { studioId: number; zipCode: string; orderCount: number; bookedSales: number }
 type StudioLocation = { id: number; name: string; city: string; state: string; address: string | null; latitude: number | null; longitude: number | null }
@@ -33,6 +35,8 @@ function StudioMap({ studio, rows, features, metric, activeZip, setActiveZip }: 
   const frameRef = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(560)
   const [zoom, setZoom] = useState(1)
+  const [circles, setCircles] = useState<TargetCircle[]>([])
+  const overlays = useMemo(() => circles.filter(circle => circle.visible).map(circle => ({ circle, geometry: circleGeometry(circle) })), [circles])
   useEffect(() => {
     if (!frameRef.current) return
     const observer = new ResizeObserver(entries => setWidth(Math.max(300, Math.floor(entries[0].contentRect.width))))
@@ -55,7 +59,13 @@ function StudioMap({ studio, rows, features, metric, activeZip, setActiveZip }: 
     return features.filter(feature => { const latitude = Number(feature.properties?.CENTLAT), longitude = Number(feature.properties?.CENTLON); return latitude >= minLatitude && latitude <= maxLatitude && longitude >= minLongitude && longitude <= maxLongitude })
   }, [features, topTen])
   const height = width < 480 ? 320 : 390
-  const projection = useMemo(() => region.length ? geoMercator().fitExtent([[10, 10], [width - 10, height - 10]], { type: "FeatureCollection", features: region } as FeatureCollection) : null, [region, width, height])
+  const projection = useMemo(() => {
+    const geometries: GeoJSON.Geometry[] = [...region.map(feature => feature.geometry), ...overlays.map(overlay => overlay.geometry)]
+    if (studio.latitude !== null && studio.longitude !== null) {
+      geometries.push(circleGeometry({ latitude: studio.latitude, longitude: studio.longitude, radiusMiles: 1 }))
+    }
+    return geometries.length ? geoMercator().fitExtent([[18, 18], [width - 18, height - 18]], { type: "GeometryCollection", geometries }) : null
+  }, [region, overlays, studio.latitude, studio.longitude, width, height])
   const path = useMemo(() => projection ? geoPath(projection) : null, [projection])
   const selected = activeZip ? values.get(activeZip) : null
   const fill = (zip: string) => {
@@ -77,6 +87,10 @@ function StudioMap({ studio, rows, features, metric, activeZip, setActiveZip }: 
             const value = values.get(zip)
             return <path key={zip} d={path(feature) ?? undefined} fill={fill(zip)} stroke="var(--card)" strokeWidth={activeZip === zip ? 2 : .7} vectorEffect="non-scaling-stroke" className={value ? "cursor-pointer transition-opacity hover:opacity-80" : undefined} onMouseEnter={() => value && setActiveZip(zip)} onMouseLeave={() => setActiveZip(null)} onFocus={() => value && setActiveZip(zip)} onBlur={() => setActiveZip(null)} tabIndex={value ? 0 : undefined}><title>{value ? `${zip}: ${money.format(value.bookedSales)}, ${value.orderCount} orders` : `ZIP ${zip}`}</title></path>
           })}
+          {overlays.map(({ circle, geometry }) => <g key={circle.id} pointerEvents="none"><path d={path(geometry) ?? undefined} fill={circle.color} fillOpacity={0.13} stroke={circle.color} strokeWidth={2} vectorEffect="non-scaling-stroke"><title>{circle.name}: {circle.radiusMiles} mile radius</title></path>{(() => {
+            const center = projection?.([circle.longitude, circle.latitude])
+            return center ? <><circle cx={center[0]} cy={center[1]} r={3} fill={circle.color} /><text x={center[0]} y={center[1] - 8} textAnchor="middle" fontSize={10} fill={circle.color} stroke="var(--card)" strokeWidth={3} paintOrder="stroke">{circle.name} · {circle.radiusMiles} mi</text></> : null
+          })()}</g>)}
           {topTen.map(row => {
             const feature = region.find(candidate => candidate.properties?.ZCTA5 === row.zipCode)
             const center = feature ? path.centroid(feature) : null
@@ -90,6 +104,8 @@ function StudioMap({ studio, rows, features, metric, activeZip, setActiveZip }: 
       </div>
       <div><h4 className="font-medium">Top 10 ZIP codes</h4><div className="mt-2 space-y-1">{topTen.map((row, index) => <button key={row.zipCode} type="button" onMouseEnter={() => setActiveZip(row.zipCode)} onMouseLeave={() => setActiveZip(null)} onFocus={() => setActiveZip(row.zipCode)} onBlur={() => setActiveZip(null)} className="grid w-full grid-cols-[1rem_1.5rem_1fr_auto] items-center gap-2 rounded px-1 py-1.5 text-left text-sm hover:bg-muted"><span className="size-3 rounded-sm" style={{ backgroundColor: fill(row.zipCode) }} aria-hidden="true" /><span className="text-muted-foreground">{index + 1}</span><span className="font-medium">{row.zipCode}</span><span>{metric === "bookedSales" ? money.format(row.bookedSales) : row.orderCount.toLocaleString()}</span></button>)}</div></div>
     </div>
+    {!rows.length ? <p className="mt-2 text-xs text-muted-foreground">No captured ZIP sales for this studio and date range. Targeting circles are still available.</p> : null}
+    <TargetCircleEditor studioId={studio.id} latitude={studio.latitude} longitude={studio.longitude} circles={circles} onChange={setCircles} />
   </CardContent></Card>
 }
 
@@ -104,7 +120,7 @@ export function ZipCodeMap({ rows, studios }: { rows: ZipRow[]; studios: StudioL
       .catch(error => { if (error.name !== "AbortError") console.error("Unable to load ZIP boundaries", error) })
     return () => controller.abort()
   }, [])
-  const studiosWithData = studios.filter(studio => rows.some(row => row.studioId === studio.id))
+  const studiosWithData = studios
 
   return <section className="space-y-4">
     <div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="text-lg font-semibold">Customer ZIP highlights</h2><p className="text-sm text-muted-foreground">One local customer-origin map per studio for the selected dates.</p></div><div className="flex rounded-md border p-1 text-sm" aria-label="Map metric"><button type="button" onClick={() => setMetric("bookedSales")} className={`rounded px-3 py-1.5 ${metric === "bookedSales" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Booked sales</button><button type="button" onClick={() => setMetric("orderCount")} className={`rounded px-3 py-1.5 ${metric === "orderCount" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Orders</button></div></div>
