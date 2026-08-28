@@ -48,6 +48,36 @@ change is part of this repair. Other integrations retain their existing clients.
   multi-day aggregation. Preserve the published schedules and original draft
   parameters after controlled backfill. Verify warehouse rows and totals per
   studio and source date, not just n8n execution status.
-- Deployment and backfill validation are pending until recorded below.
+- Railway confirmed commit `0b0297a` active and successfully deployed on the
+  dashboard. The existing GitHub deployment also redeployed the collector;
+  its source code was unchanged.
+
+## Completed recovery
+
+| Workflow | Execution | Result |
+| --- | --- | --- |
+| Meta normal August 27 recovery | `110048` | Succeeded; 9 ad rows |
+| Eulerity retry of morning execution | `110049` | Succeeded in 57.594s; August 27 present for all four studios |
+| Meta August 26 backfill | `110050` | Succeeded; 9 ad rows |
+| Meta restored normal-date rerun | `110051` | Succeeded; recovered keys/count unchanged |
+
+Meta recovery contains 18 rows and 18 unique `(studio_id, date_start, ad_id)`
+keys, totaling $96.64. The source dates are August 26 and 27. The historical
+`integration_date = source date + 1 day` convention was preserved, rather than
+assigning both recovered days to today's import date. Temporary request and
+transformation edits were restored to the original content and the normal
+workflow rerun passed. The published schedules were never changed.
+
+| Studio | Meta Aug 26 | Meta Aug 27 | Eulerity Aug 27 |
+| --- | ---: | ---: | ---: |
+| St. Matthews (1) | $6.83 | $8.99 | $44.35 |
+| Short North (2) | $10.03 | $5.76 | $41.13 |
+| Gilbert (3) | $16.21 | $15.84 | $44.35 |
+| Jeffersonville (4) | $17.19 | $15.79 | $31.45 |
+
+Eulerity's four new rows total $161.28; normalized n8n source output matches
+these warehouse amounts to cents. Existing August 26 rows retained their prior
+update timestamps. No duplicate studio/date rows were found. This repair retains
+the existing Eulerity spend normalization; it does not redefine that metric.
 
 Future scheduled-run success remains unverified until the next morning run.

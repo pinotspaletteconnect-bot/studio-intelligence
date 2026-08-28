@@ -39,8 +39,10 @@ The collection, ETL, warehouse, and frontend layers are considered stable patter
 
 August 28 incident: Meta and Eulerity morning imports failed in their Vault
 brokers on Supabase target reads (`PGRST303`), surfaced incorrectly as 404.
-A targeted request-isolation, no-cache, and bounded-read-retry repair is locally
-verified; production deployment and recovery are pending. See
+A targeted request-isolation, no-cache, and bounded-read-retry repair was deployed
+and verified through n8n recovery for all four studios: Meta August 26–27 and
+Eulerity August 27. Meta's normal rerun retained 18 unique recovered records.
+The next overnight scheduled run remains unverified. See
 `marketing_refresh_incident_20260828.md` for evidence and rollout status.
 
 | Integration | Collection path | Warehouse state | Status |
