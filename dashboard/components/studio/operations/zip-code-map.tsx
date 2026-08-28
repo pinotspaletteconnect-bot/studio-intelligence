@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { geoMercator, geoPath } from "d3-geo"
 import { MapPin, RotateCcw, ZoomIn, ZoomOut } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
-import { circleGeometry, type TargetCircle } from "@/lib/maps/target-circles"
+import { circleGeometry, emptyZipTargets, type TargetCircle, type ZipTargets } from "@/lib/maps/target-circles"
 import { TargetCircleEditor } from "@/components/studio/operations/target-circle-editor"
 
 type ZipRow = { studioId: number; zipCode: string; orderCount: number; bookedSales: number }
@@ -36,6 +36,9 @@ function StudioMap({ studio, rows, features, metric, activeZip, setActiveZip }: 
   const [width, setWidth] = useState(560)
   const [zoom, setZoom] = useState(1)
   const [circles, setCircles] = useState<TargetCircle[]>([])
+  const [zipTargets, setZipTargets] = useState<ZipTargets>(emptyZipTargets)
+  const targetFeatures = useMemo(() => features.filter(feature => zipTargets.codes.includes(feature.properties?.ZCTA5 ?? "")), [features, zipTargets.codes])
+  const unmappedTargets = useMemo(() => zipTargets.codes.filter(zip => !features.some(feature => feature.properties?.ZCTA5 === zip)), [features, zipTargets.codes])
   const overlays = useMemo(() => circles.filter(circle => circle.visible).map(circle => ({ circle, geometry: circleGeometry(circle) })), [circles])
   useEffect(() => {
     if (!frameRef.current) return
@@ -51,13 +54,13 @@ function StudioMap({ studio, rows, features, metric, activeZip, setActiveZip }: 
   const max = ranked[0]?.[metric] ?? 0
   const region = useMemo(() => {
     const highlighted = topTen.map(row => features.find(candidate => candidate.properties?.ZCTA5 === row.zipCode)).filter((feature): feature is Feature => Boolean(feature))
-    if (!highlighted.length) return []
+    if (!highlighted.length) return targetFeatures
     const latitudes = highlighted.map(feature => Number(feature.properties?.CENTLAT))
     const longitudes = highlighted.map(feature => Number(feature.properties?.CENTLON))
     const minLatitude = Math.min(...latitudes) - .16, maxLatitude = Math.max(...latitudes) + .16
     const minLongitude = Math.min(...longitudes) - .2, maxLongitude = Math.max(...longitudes) + .2
-    return features.filter(feature => { const latitude = Number(feature.properties?.CENTLAT), longitude = Number(feature.properties?.CENTLON); return latitude >= minLatitude && latitude <= maxLatitude && longitude >= minLongitude && longitude <= maxLongitude })
-  }, [features, topTen])
+    return features.filter(feature => { const latitude = Number(feature.properties?.CENTLAT), longitude = Number(feature.properties?.CENTLON); return targetFeatures.includes(feature) || (latitude >= minLatitude && latitude <= maxLatitude && longitude >= minLongitude && longitude <= maxLongitude) })
+  }, [features, topTen, targetFeatures])
   const height = width < 480 ? 320 : 390
   const projection = useMemo(() => {
     const geometries: GeoJSON.Geometry[] = [...region.map(feature => feature.geometry), ...overlays.map(overlay => overlay.geometry)]
@@ -91,6 +94,9 @@ function StudioMap({ studio, rows, features, metric, activeZip, setActiveZip }: 
             const center = projection?.([circle.longitude, circle.latitude])
             return center ? <><circle cx={center[0]} cy={center[1]} r={3} fill={circle.color} /><text x={center[0]} y={center[1] - 8} textAnchor="middle" fontSize={10} fill={circle.color} stroke="var(--card)" strokeWidth={3} paintOrder="stroke">{circle.name} · {circle.radiusMiles} mi</text></> : null
           })()}</g>)}
+          <g data-map-layer="target-zip-outlines" fill="none" pointerEvents="none">
+            {targetFeatures.map(feature => <path key={feature.properties?.ZCTA5} d={path(feature) ?? undefined} fill="none" stroke={zipTargets.color} strokeWidth={2.5} vectorEffect="non-scaling-stroke"><title>Target ZIP {feature.properties?.ZCTA5}</title></path>)}
+          </g>
           {topTen.map(row => {
             const feature = region.find(candidate => candidate.properties?.ZCTA5 === row.zipCode)
             const center = feature ? path.centroid(feature) : null
@@ -105,7 +111,9 @@ function StudioMap({ studio, rows, features, metric, activeZip, setActiveZip }: 
       <div><h4 className="font-medium">Top 10 ZIP codes</h4><div className="mt-2 space-y-1">{topTen.map((row, index) => <button key={row.zipCode} type="button" onMouseEnter={() => setActiveZip(row.zipCode)} onMouseLeave={() => setActiveZip(null)} onFocus={() => setActiveZip(row.zipCode)} onBlur={() => setActiveZip(null)} className="grid w-full grid-cols-[1rem_1.5rem_1fr_auto] items-center gap-2 rounded px-1 py-1.5 text-left text-sm hover:bg-muted"><span className="size-3 rounded-sm" style={{ backgroundColor: fill(row.zipCode) }} aria-hidden="true" /><span className="text-muted-foreground">{index + 1}</span><span className="font-medium">{row.zipCode}</span><span>{metric === "bookedSales" ? money.format(row.bookedSales) : row.orderCount.toLocaleString()}</span></button>)}</div></div>
     </div>
     {!rows.length ? <p className="mt-2 text-xs text-muted-foreground">No captured ZIP sales for this studio and date range. Targeting circles are still available.</p> : null}
-    <TargetCircleEditor studioId={studio.id} latitude={studio.latitude} longitude={studio.longitude} circles={circles} onChange={setCircles} />
+    {zipTargets.codes.length ? <p className="mt-2 flex items-center gap-2 text-xs"><span className="inline-block h-3 w-5 border-2" style={{ borderColor: zipTargets.color }} aria-hidden="true" />Target ZIP outlines: {targetFeatures.length} of {zipTargets.codes.length} mapped · no target fill</p> : null}
+    {unmappedTargets.length ? <p role="status" className="mt-2 text-xs text-muted-foreground">No boundary currently available for: {unmappedTargets.join(", ")}. These targets can be saved but cannot be outlined with the loaded regional Census boundaries.</p> : null}
+    <TargetCircleEditor studioId={studio.id} latitude={studio.latitude} longitude={studio.longitude} circles={circles} onChange={setCircles} zipTargets={zipTargets} onZipChange={setZipTargets} />
   </CardContent></Card>
 }
 
