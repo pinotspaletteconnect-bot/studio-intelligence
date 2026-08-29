@@ -1,5 +1,14 @@
 # Studio Intelligence Changelog
 
+## August 29, 2026 — tourism neighboring-state exclusions (local)
+
+- Added per-studio state checkboxes to Tourism Indicators. Operators can, for
+  example, exclude Indiana from Louisville while excluding Kentucky from
+  Jeffersonville. Exclusions immediately recalculate tourism order/sales counts,
+  shares, source states, chart, and ZIP table without changing stored data.
+- Excluded states remain in the ZIP-known denominator and are treated as part of
+  the local market. Choices are report-session filters and are not persisted.
+
 ## August 29, 2026 — tourism indicators (local, not deployed)
 
 - Added a separate Marketing → Tourism Indicators report with shared studio and
