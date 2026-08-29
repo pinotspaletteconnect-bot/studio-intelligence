@@ -9,6 +9,11 @@ This is the fast-changing source of truth for what is implemented, deployed, act
 
 ## Overall Status
 
+August 29 local addition: Marketing tourism indicators classify captured PTS
+billing ZIPs against each studio's state and report out-of-state order/sales
+shares, source states, and ZIP detail. The report is explicitly an order-based
+proxy, not guest attendance. Deployment and live-data validation are pending.
+
 August 28 addition: studio ZIP-map targeting circles support overlapping
 editable radii, address or coordinate centers, and owner/admin-controlled saves
 in existing PTS configuration. Feature deployed via PR #56; live saving exposed

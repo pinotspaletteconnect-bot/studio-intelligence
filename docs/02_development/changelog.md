@@ -1,5 +1,17 @@
 # Studio Intelligence Changelog
 
+## August 29, 2026 — tourism indicators (local, not deployed)
+
+- Added a separate Marketing → Tourism Indicators report with shared studio and
+  date filters. Each studio reports out-of-state order count/share, booked-sales
+  amount/share, source-state count, a top-ZIP bar chart, and ZIP detail table.
+- Classify the captured billing ZIP against the studio's configured state using
+  a local, zero-runtime-dependency US ZIP dataset; no customer data is sent to
+  another service. Unknown ZIPs are disclosed and excluded from denominators.
+- Label the metric as an order-based tourism indicator, not guest or seat count.
+  One order may contain multiple seats and an in-state billing address may belong
+  to a traveler. No schema, collection workflow, or production data changes.
+
 ## August 29, 2026 — Executive booked-revenue card
 
 - Added a Booked revenue today card between Completed sales WTD and Future
