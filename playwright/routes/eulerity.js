@@ -40,6 +40,7 @@ router.post("/download", async (req, res) => {
         const browserResults = await runEulerity();
 
         const results = [];
+        const spendRows = [];
 
         for (const studio of browserResults) {
 
@@ -71,6 +72,14 @@ router.post("/download", async (req, res) => {
 
             });
 
+            for (const row of spend) {
+                spendRows.push({
+                    studioCode: studio.studioCode,
+                    studioName: studio.studioName,
+                    ...row
+                });
+            }
+
         }
 
         console.log("==================================");
@@ -81,9 +90,17 @@ router.post("/download", async (req, res) => {
 
             success: true,
 
+            contractVersion: 2,
+
             studioCount: results.length,
 
-            results
+            results,
+
+            // Flattened, warehouse-shaped rows for the n8n spend UPSERT branch.
+            // The nested results contract is retained for backward compatibility.
+            spendRowCount: spendRows.length,
+
+            spendRows
 
         });
 
