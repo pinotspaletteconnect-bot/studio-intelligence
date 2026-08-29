@@ -378,7 +378,7 @@ export function ExecutiveDashboard() {
             ) : null}
             <p className="text-xs text-muted-foreground">Compared with {dateLabel(weekComparison.startDate)}–{dateLabel(weekComparison.endDate)} through {dateLabel(weekComparison.completedThrough)}{weekComparison.snapshotDate ? ` using the ${dateLabel(weekComparison.snapshotDate)} booking snapshot` : " · no booking snapshot available"}.</p>
           </CardHeader>
-          <CardContent className="grid gap-4 sm:grid-cols-2">
+          <CardContent className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             <div className="rounded-lg border p-4">
               <p className="text-xs font-medium text-muted-foreground">Completed sales WTD</p>
               <p className="mt-2 text-2xl font-semibold tabular-nums">{money.format(data.thisWeek.salesWeekToDate)}</p>
@@ -386,18 +386,23 @@ export function ExecutiveDashboard() {
               <p className="mt-2">{comparisonLine(data.thisWeek.salesWeekToDate, weekComparison.salesWeekToDate, money.format)}</p>
             </div>
             <div className="rounded-lg border p-4">
+              <p className="text-xs font-medium text-muted-foreground">Booked revenue today</p>
+              <p className="mt-2 text-2xl font-semibold tabular-nums">{data.yesterdayBookings.sales === null ? "Not available" : money.format(data.yesterdayBookings.sales)}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{data.yesterdayBookings.sales === null ? "Reservations import has not loaded" : `${dateLabel(data.yesterdayBookings.date)} · latest completed booking day`}</p>
+            </div>
+            <div className="rounded-lg border p-4">
               <p className="text-xs font-medium text-muted-foreground">Future booked revenue</p>
               <p className="mt-2 text-2xl font-semibold tabular-nums">{money.format(data.thisWeek.futureBookedRevenue)}</p>
               <p className="mt-1 text-xs text-muted-foreground">{data.thisWeek.futureBookedSeats.toLocaleString()} seats · {data.thisWeek.futureClasses} classes</p>
               <p className="mt-2">{comparisonLine(data.thisWeek.futureBookedRevenue, weekComparison.futureBookedRevenue, money.format)}</p>
             </div>
-            <Link href="/operations/weekly-parties" className="rounded-lg border p-4 transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:col-span-2">
+            <Link href="/operations/weekly-parties" className="rounded-lg border p-4 transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:col-span-2 xl:col-span-3">
               <div className="flex items-center justify-between gap-4">
                 <div><p className="text-xs font-medium text-muted-foreground">Parties scheduled this week</p><p className="mt-2 text-2xl font-semibold tabular-nums">{partyTotal.toLocaleString()}</p><p className="mt-2">{comparisonLine(partyTotal, comparisonPartyTotal, (value) => `${value.toLocaleString()} parties`)}</p></div>
                 <div className="text-right text-sm text-muted-foreground"><p><strong className="text-foreground">{data.thisWeek.privateParties}</strong> private parties</p><p><strong className="text-foreground">{data.thisWeek.mobileEvents}</strong> mobile events</p></div>
               </div>
             </Link>
-            <Link href="/operations/upcoming" className="flex items-center justify-end gap-1 text-sm font-medium text-primary sm:col-span-2">View upcoming classes <ArrowRight className="size-4" /></Link>
+            <Link href="/operations/upcoming" className="flex items-center justify-end gap-1 text-sm font-medium text-primary sm:col-span-2 xl:col-span-3">View upcoming classes <ArrowRight className="size-4" /></Link>
           </CardContent>
         </Card>
       </div>

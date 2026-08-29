@@ -1,5 +1,14 @@
 # Studio Intelligence Changelog
 
+## August 29, 2026 — Executive booked-revenue card
+
+- Added a Booked revenue today card between Completed sales WTD and Future
+  booked revenue in the Executive this-week summary. The card uses the exact
+  gross revenue from the latest completed PTS Reservations booking day and
+  displays that source date so it is not presented as a live intraday figure.
+- Expanded the desktop summary row to three columns while preserving the
+  existing responsive two-column layout on smaller screens.
+
 ## August 28, 2026 — fresh sign-in activity reset
 
 - Reset the signed HTTP-only inactivity cookie after successful password login
