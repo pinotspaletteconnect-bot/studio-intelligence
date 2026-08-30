@@ -77,7 +77,7 @@ const numberValue = (value: unknown) => {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
-function completedEasternDate() {
+function currentEasternDate() {
   const parts = Object.fromEntries(
     new Intl.DateTimeFormat("en-US", {
       timeZone: "America/New_York",
@@ -89,18 +89,14 @@ function completedEasternDate() {
       .filter((part) => part.type !== "literal")
       .map((part) => [part.type, part.value])
   )
-  const date = new Date(
-    Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day))
-  )
-  date.setUTCDate(date.getUTCDate() - 1)
-  return date.toISOString().slice(0, 10)
+  return `${parts.year}-${parts.month}-${parts.day}`
 }
 
 export async function getUpcomingClasses(
   studioId?: string,
   allowedStudioIds?: number[]
 ): Promise<UpcomingClassesData> {
-  const bookingDate = completedEasternDate()
+  const bookingDate = currentEasternDate()
   let query = supabase
     .from("pts_upcoming_classes_current")
     .select(

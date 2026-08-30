@@ -202,24 +202,24 @@ export function ExecutiveDashboard() {
         icon: CalendarClock,
       },
       {
-        label: "Yesterday's booked seats",
-        value: data.yesterdayBookings.seats === null
+        label: "Today's booked seats",
+        value: data.todayBookings.seats === null
           ? "—"
-          : data.yesterdayBookings.seats.toLocaleString(),
+          : data.todayBookings.seats.toLocaleString(),
         change: null,
-        detail: `${dateLabel(data.yesterdayBookings.date)} · gross reservations`,
-        description: "Seats reserved yesterday before refunds or cancellations are deducted.",
+        detail: `${dateLabel(data.todayBookings.date)} · gross reservations`,
+        description: "Seats reserved today before refunds or cancellations are deducted.",
         icon: Users,
         showChange: false,
       },
       {
-        label: "Yesterday's booked sales",
-        value: data.yesterdayBookings.sales === null
+        label: "Today's booked sales",
+        value: data.todayBookings.sales === null
           ? "—"
-          : money.format(data.yesterdayBookings.sales),
+          : money.format(data.todayBookings.sales),
         change: null,
-        detail: `${dateLabel(data.yesterdayBookings.date)} · gross bookings`,
-        description: "Gross reservation-line sales booked yesterday before refunds or cancellations.",
+        detail: `${dateLabel(data.todayBookings.date)} · gross bookings`,
+        description: "Gross reservation-line sales booked today before refunds or cancellations.",
         icon: CircleDollarSign,
         showChange: false,
       },
@@ -387,8 +387,8 @@ export function ExecutiveDashboard() {
             </div>
             <div className="rounded-lg border p-4">
               <p className="text-xs font-medium text-muted-foreground">Booked revenue today</p>
-              <p className="mt-2 text-2xl font-semibold tabular-nums">{data.yesterdayBookings.sales === null ? "Not available" : money.format(data.yesterdayBookings.sales)}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{data.yesterdayBookings.sales === null ? "Reservations import has not loaded" : `${dateLabel(data.yesterdayBookings.date)} · latest completed booking day`}</p>
+              <p className="mt-2 text-2xl font-semibold tabular-nums">{data.todayBookings.sales === null ? "Not available" : money.format(data.todayBookings.sales)}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{data.todayBookings.sales === null ? "Today's reservations import has not loaded" : `${dateLabel(data.todayBookings.date)} · current booking day`}</p>
             </div>
             <div className="rounded-lg border p-4">
               <p className="text-xs font-medium text-muted-foreground">Future booked revenue</p>

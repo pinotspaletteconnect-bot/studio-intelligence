@@ -1,5 +1,13 @@
 # Studio Intelligence Changelog
 
+## August 30, 2026 — current-day booked revenue
+
+- Changed the Executive Booked revenue today card and reservation KPI source to
+  query the current America/New_York business date instead of subtracting one
+  day. The displayed date now matches the current booking day; if today's
+  reservation import has not loaded, the card reports that state rather than
+  showing yesterday's revenue under a today label.
+
 ## August 29, 2026 — tourism neighboring-state exclusions (local)
 
 - Added per-studio state checkboxes to Tourism Indicators. Operators can, for

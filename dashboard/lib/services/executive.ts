@@ -14,7 +14,7 @@ export type ExecutiveDashboardData = {
   operations: OperationsDashboardData
   marketing: MarketingDashboard
   marketingComparison: MarketingDashboard
-  yesterdayBookings: {
+  todayBookings: {
     date: string
     seats: number | null
     sales: number | null
@@ -218,7 +218,7 @@ export async function getExecutiveDashboard(
     operations,
     marketing,
     marketingComparison,
-    yesterdayBookings: {
+    todayBookings: {
       date: upcoming.bookingDate,
       seats: upcoming.kpis.bookedSeats,
       sales: upcoming.kpis.bookedSales,
