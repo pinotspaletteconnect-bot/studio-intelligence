@@ -1,5 +1,10 @@
 # QuickBooks Online Read-Only Contract
 
+> **Boundary update — August 30, 2026:** this contract records the validated
+> Phase 1 prototype. n8n now owns QuickBooks credentials and collection, and the
+> SASHA OAuth and broker routes described below no longer exist. Reuse the data
+> contract and safety gates, not the superseded dashboard connection boundary.
+
 **Phase:** 1 — foundation
 **Status:** Migration deployed August 24, 2026; connection and source validation pending
 **Date:** August 24, 2026

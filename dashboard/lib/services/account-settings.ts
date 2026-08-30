@@ -6,7 +6,7 @@ export async function getAccountSettings(
   organizationId: number,
   allowedStudioIds: number[]
 ) {
-  const [membershipResult, studioResult, integrationResult, mappingResult, brandResult, ptsAccountResult, textellentAccountResult, mntnAccountResult, homebaseAccountResult, eulerityAccountResult, eulerityLocationResult, ga4AccountResult, ga4PropertyResult, metaAccountResult, metaAssetResult, accountingEmailResult, quickbooksConnectionResult, quickbooksAssignmentResult, quickbooksChartResult] =
+  const [membershipResult, studioResult, integrationResult, mappingResult, brandResult, ptsAccountResult, textellentAccountResult, mntnAccountResult, homebaseAccountResult, eulerityAccountResult, eulerityLocationResult, ga4AccountResult, ga4PropertyResult, metaAccountResult, metaAssetResult, accountingEmailResult] =
     await Promise.all([
       supabase
         .from("organization_memberships")
@@ -64,12 +64,9 @@ export async function getAccountSettings(
       supabase.from("meta_integration_accounts").select("id,account_name,meta_user_name,secret_reference,connection_status,token_expires_at,last_discovered_at,last_validated_at").eq("organization_id", organizationId).eq("is_active", true).order("account_name"),
       supabase.from("meta_source_assets").select("account_id,asset_type,asset_id,display_name").eq("organization_id", organizationId).eq("is_active", true).order("display_name"),
       supabase.from("accounting_email_connections").select("id,connection_name,account_email,secret_reference,connection_status,last_received_at,last_validated_at").eq("organization_id", organizationId).eq("provider", "gmail").eq("is_active", true).order("connection_name"),
-      supabase.from("quickbooks_connections").select("id,connection_name,realm_id,company_name,secret_reference,connection_status,write_enabled,last_discovered_at,last_validated_at,last_synced_at").eq("organization_id", organizationId).eq("is_active", true).order("connection_name"),
-      supabase.from("quickbooks_studio_assignments").select("id,connection_id,studio_id,effective_from,effective_to").eq("organization_id", organizationId).eq("is_active", true).is("effective_to", null),
-      supabase.from("quickbooks_chart_of_accounts_review").select("connection_id,source_account_id,account_number,account_name,fully_qualified_name,account_type,account_subtype,is_active,review_status,canonical_account_key,recommendation,retrieved_at").eq("organization_id", organizationId).order("connection_name").order("fully_qualified_name"),
     ])
 
-  for (const result of [membershipResult, studioResult, integrationResult, mappingResult, brandResult, ptsAccountResult, textellentAccountResult, mntnAccountResult, homebaseAccountResult, eulerityAccountResult, eulerityLocationResult, ga4AccountResult, ga4PropertyResult, metaAccountResult, metaAssetResult, accountingEmailResult, quickbooksConnectionResult, quickbooksAssignmentResult, quickbooksChartResult]) {
+  for (const result of [membershipResult, studioResult, integrationResult, mappingResult, brandResult, ptsAccountResult, textellentAccountResult, mntnAccountResult, homebaseAccountResult, eulerityAccountResult, eulerityLocationResult, ga4AccountResult, ga4PropertyResult, metaAccountResult, metaAssetResult, accountingEmailResult]) {
     if (result.error) throw result.error
   }
 
@@ -181,18 +178,6 @@ export async function getAccountSettings(
       ...account,
       has_credentials: /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(account.secret_reference),
     })),
-    quickbooksConnections: (quickbooksConnectionResult.data ?? []).map(connection => {
-      const assignments = (quickbooksAssignmentResult.data ?? []).filter(item => item.connection_id === connection.id)
-      return {
-        ...connection,
-        has_credentials: /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(connection.secret_reference),
-        assignments: assignments.map(assignment => ({
-          ...assignment,
-          studio_name: (studioResult.data ?? []).find(studio => studio.id === assignment.studio_id)?.studio_name ?? null,
-        })),
-        accounts: (quickbooksChartResult.data ?? []).filter(account => account.connection_id === connection.id),
-      }
-    }),
     metaAccounts: (metaAccountResult.data ?? []).map(account => ({
       ...account,
       has_credentials: /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(account.secret_reference),

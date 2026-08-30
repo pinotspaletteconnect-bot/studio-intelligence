@@ -317,48 +317,50 @@ marked production until the full collection-to-warehouse path is validated.
 ## Financial Intelligence
 
 QuickBooks Online architecture and accounting controls entered approved Phase 1
-read-only foundation work on August 24, 2026. The integration supports any future
-number of locations; the current four independently authorized companies are the
-first validation cohort. They are coordinated through one operator-facing
-automation and one durable accounting work queue.
+read-only foundation work on August 24, 2026. On August 30, 2026, the operating
+boundary moved out of SASHA: n8n owns the private QuickBooks connections and
+accounting workflow. SASHA does not display, authorize, map, broker, or query
+QuickBooks. The integration supports any future number of locations; the current
+four independently authorized companies are the first validation cohort. They
+are coordinated through one n8n automation and one durable accounting work queue.
 Initial scope includes read-only company, chart-of-account, vendor, and
 transaction discovery; four receipt inboxes; governed receipt matching and GL
 splits; PTS franchise invoices; and controlled payroll, tips, sales, and COGS
 journal preparation.
 
 The receipt inboxes are delivered through four separate Gmail addresses with four
-separate Google logins. Each planned Vault-backed Gmail OAuth connection is
-authorized independently and routed by configuration to its QuickBooks company.
+separate Google logins. Each Gmail OAuth connection is authorized independently
+and routed by the accounting automation's configuration to its studio and ledger
+company.
 The model remains expandable and can support additional mailboxes or aliases
 without code changes. Collection uses immutable Gmail message IDs for idempotency
 and is designed around the read-only scope; Google restricted-scope verification
 and document-storage controls remain preproduction gates.
 
-QuickBooks remains the official ledger. Studio Intelligence will own
+QuickBooks remains the official ledger. The n8n accounting automation will own
 orchestration, proposed treatment, approval evidence, reconciliation, and
 versioned learning rules. Migration `20260824120000` was deployed August 24,
-2026, and all 13 service-only tables/views were verified. One Intuit development
-sandbox realm is connected through Vault with writes disabled. No active
-workflow, production QuickBooks realm, Gmail connection, or QuickBooks write is
-deployed yet.
-The read-only source contract and inactive n8n workflow `32 - QuickBooks
-Read-Only Accounting Foundation` are prepared. The standard Accounting API
+2026, and all 13 service-only tables/views were verified. One controlled
+development-sandbox run imported company information, 89 accounts, 26 vendors,
+68 posted transactions, and 81 transaction lines with writes disabled. Workflow
+32 remains unpublished; no scheduled workflow, production QuickBooks realm,
+Gmail connection, or QuickBooks write is deployed yet. The standard Accounting API
 contract covers posted accounting entities; pending Banking `For review` access
 remains a sandbox/support validation gate rather than an assumed entity. See
 `docs/02_development/quickbooks_accounting_automation.md` and
 `docs/02_development/quickbooks_read_only_contract.md` for the phased gates.
 
-The prepared collector exposes authenticated read-only company-info, account,
-vendor, and allowlisted posted-transaction routes. It resolves Vault credentials
-through the dashboard broker, refreshes short-lived tokens only in memory,
-defaults to the Intuit sandbox, and performs no warehouse writes. The collector
-test suite passes locally; deployment and live validation remain pending.
-Workflow 32 discovers any number of write-disabled configured realms, calls only
-those authenticated collector routes, normalizes source records, and UPSERTs the
-account, vendor, transaction, line, company-discovery, and sync-cursor stores.
-It is checked into source and was imported into the production n8n Studio
-Intelligence folder on August 27, 2026 as unpublished workflow
-`pOmosy7cg2hQm0kT`. It has not been executed.
+The existing read-only collector and warehouse records are retained as migration
+history while the n8n-owned credential and collection boundary is implemented.
+The removed SASHA OAuth and broker routes must not be reintroduced as a shortcut.
+Production posting remains disabled pending explicit approval and reconciliation.
+Workflow 32 demonstrated discovery, normalization, and idempotent UPSERTs for
+company, account, vendor, posted-transaction, line, and sync-cursor records. It
+was imported as unpublished workflow `pOmosy7cg2hQm0kT` and executed once under
+controlled sandbox conditions. Its former SASHA broker dependency has been
+removed, so it is now a migration prototype rather than a runnable production
+workflow. The replacement must use n8n-owned credentials and remain unpublished
+until the new boundary is validated.
 
 Other payment/POS platforms, payroll systems, budgets, and forecasting remain
 planned until their source contracts are confirmed.
