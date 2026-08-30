@@ -303,6 +303,36 @@ ledger trust while allowing successful corrections to become governed rules.
 
 ---
 
+# SI-012 — n8n Owns the Private Accounting Connection Boundary
+
+**Status:** Accepted August 30, 2026
+
+### Decision
+
+n8n owns the operational QuickBooks credentials, OAuth connections, collection,
+and accounting workflow for the owner's studios. SASHA does not provide
+QuickBooks setup, connection, mapping, brokerage, or credential-management
+surfaces. Supabase remains the durable work queue, audit history, configuration,
+and learning-rule store.
+
+### Rationale
+
+The accounting automation is an internal operational system rather than a SASHA
+customer-facing product capability. Keeping its connection lifecycle in n8n
+reduces duplicate control planes and keeps one automation responsible for Gmail,
+PTS invoice, receipt-matching, categorization, split, approval, and ledger work.
+
+### Consequences
+
+- SASHA contains no QuickBooks OAuth, callback, mapping, or internal broker route.
+- Existing QuickBooks warehouse tables and sandbox history are retained.
+- Gmail and QuickBooks credentials used by the accounting workflow are governed
+  in the n8n execution environment, not exposed through SASHA.
+- Production writes remain disabled until proposal accuracy, approval controls,
+  idempotency, and read-back reconciliation pass their documented gates.
+
+---
+
 # Future Decisions
 
 Examples of future decisions that should be documented here include:

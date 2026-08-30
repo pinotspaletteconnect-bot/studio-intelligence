@@ -1,5 +1,11 @@
 # QuickBooks Accounting Automation
 
+> **Boundary update — August 30, 2026:** n8n now owns the private accounting
+> connections and operating workflow. SASHA QuickBooks setup, OAuth, mapping,
+> and broker surfaces were removed. References below to SASHA connection controls
+> describe the superseded Phase 1 prototype; the warehouse, approval, audit, and
+> safety requirements remain applicable.
+
 **Status:** Phase 1 — approved read-only foundation in development
 **Started:** August 24, 2026
 **Production writes:** Disabled; no QuickBooks connection or warehouse schema has been deployed

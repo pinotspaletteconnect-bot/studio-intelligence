@@ -24,7 +24,6 @@ const publicRoutes = [
   "/api/internal/mntn-account",
   "/api/internal/eulerity-account",
   "/api/internal/ga4-account",
-  "/api/internal/quickbooks-account",
   "/api/internal/meta-account",
   "/api/internal/homebase-account",
   "/api/internal/homebase-targets",

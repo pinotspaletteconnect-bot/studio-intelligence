@@ -1,5 +1,15 @@
 # Studio Intelligence Changelog
 
+## August 30, 2026 — n8n-owned accounting boundary
+
+- Removed QuickBooks setup, OAuth callback/connect, studio mapping, account
+  review queries, and the internal credential broker from SASHA. Existing
+  warehouse tables and controlled sandbox history remain intact.
+- Assigned the private multi-studio accounting connection and orchestration
+  boundary to n8n. QuickBooks production writes remain disabled.
+- Decoupled the Accounting Gmail setup language from a SASHA-managed QuickBooks
+  company; routing will be governed by the accounting automation configuration.
+
 ## August 30, 2026 — current-day booked revenue
 
 - Changed the Executive Booked revenue today card and reservation KPI source to

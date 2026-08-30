@@ -121,7 +121,7 @@ Work begins after the source systems and warehouse contracts are confirmed.
 
 ## Phase 6 — Financial Intelligence
 
-**Status:** Phase 1 read-only foundation deployed; one sandbox realm validated and workflow 32 imported unpublished on August 27, 2026; production realms, Gmail, and scheduled execution pending
+**Status:** n8n-owned private accounting automation selected; controlled sandbox read-only import validated; SASHA QuickBooks surfaces removed; production realms, Gmail, proposal workflow, and scheduled execution pending
 
 Planned capabilities:
 
@@ -134,9 +134,11 @@ Planned capabilities:
 QuickBooks Online is the selected initial ledger integration for the four current
 studio companies. The implementation begins with one master accounting
 automation, one durable work queue, four independently controlled QuickBooks
-connections, receipt matching, governed GL splits, PTS franchise invoices, and
-controlled journal preparation. QuickBooks remains the official ledger; Studio
-Intelligence owns orchestration, approvals, audit history, and learning rules.
+connections in n8n, receipt matching, governed GL splits, PTS franchise invoices,
+and controlled journal preparation. QuickBooks remains the official ledger; n8n
+owns operational connections and orchestration, while the warehouse preserves
+approvals, audit history, and learning rules. SASHA is not a QuickBooks setup or
+credential-management surface.
 
 The architecture is configuration-driven and supports future companies and
 locations without a four-location ceiling. Phase 1 includes a complete
