@@ -14,6 +14,14 @@ billing ZIPs against each studio's state and report out-of-state order/sales
 shares, source states, and ZIP detail. The report is explicitly an order-based
 proxy, not guest attendance. Deployment and live-data validation are pending.
 
+August 31 local refinement: Jeffersonville's tourism report now reads a
+configuration-driven Louisville metro local market from its PTS integration.
+The populated list contains 95 Kentucky ZIP codes assigned to Bullitt,
+Jefferson, Oldham, Shelby, and Spencer counties in the July 2023 Census/OMB
+Louisville MSA; those orders stay in the ZIP-known denominator but no longer
+count as tourism. Henry, Meade, and Nelson counties remain tourism. Migration
+and live-data validation are pending.
+
 August 28 addition: studio ZIP-map targeting circles support overlapping
 editable radii, address or coordinate centers, and owner/admin-controlled saves
 in existing PTS configuration. Feature deployed via PR #56; live saving exposed

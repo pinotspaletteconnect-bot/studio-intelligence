@@ -10,6 +10,19 @@
   completed Reservations date, labeled Yesterday's booked seats/sales, so they
   continue to show all gross reservations placed yesterday.
 
+## August 31, 2026 — Jeffersonville Louisville-metro tourism market (local)
+
+- Populated Jeffersonville's PTS configuration with 95 Kentucky ZIP codes
+  assigned to Bullitt, Jefferson, Oldham, Shelby, and Spencer counties in the
+  July 2023 Census/OMB Louisville/Jefferson County, KY-IN metropolitan
+  statistical area. Henry, Meade, and Nelson counties remain tourism.
+- Treat configured local-market ZIPs as local rather than tourism while keeping
+  their orders and sales in ZIP-known denominators. Kentucky ZIPs outside the
+  configured Louisville metro continue to count as tourism.
+- Show the applied market definition, excluded-period totals, complete ZIP list,
+  and source metadata on Tourism Indicators. No schema change was required;
+  migration and live-data validation are pending.
+
 ## August 30, 2026 — n8n-owned accounting boundary
 
 - Removed QuickBooks setup, OAuth callback/connect, studio mapping, account

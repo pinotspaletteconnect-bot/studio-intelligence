@@ -1,7 +1,8 @@
 import { findState, getStates } from "zipcodes-us"
 
 export type TourismSourceRow = { studioId: number; zipCode: string; orderCount: number; bookedSales: number }
-export type TourismStudio = { id: number; name: string; state: string }
+export type TourismLocalMarket = { name: string; definition: string; source: string; zipCodes: string[] }
+export type TourismStudio = { id: number; name: string; state: string; localMarket?: TourismLocalMarket }
 export type TourismZipRow = { zipCode: string; state: string; orderCount: number; bookedSales: number; averageOrderValue: number }
 
 export function applyStateExclusions<T extends { knownOrders:number; knownSales:number; zipCodes:TourismZipRow[] }>(studio:T, excludedStates:Iterable<string>) {
@@ -22,7 +23,9 @@ export function buildTourismReport(rows: TourismSourceRow[], studios: TourismStu
     const resolved = source.map(row => ({ ...row, state: findState(row.zipCode) }))
     const classified = resolved.filter(row => row.state.isValid && row.state.stateCode)
     const unknown = resolved.filter(row => !row.state.isValid || !row.state.stateCode)
-    const outOfState = classified.filter(row => row.state.stateCode !== homeState)
+    const localMarketZipCodes = new Set(studio.localMarket?.zipCodes ?? [])
+    const localMarket = classified.filter(row => localMarketZipCodes.has(row.zipCode))
+    const outOfState = classified.filter(row => row.state.stateCode !== homeState && !localMarketZipCodes.has(row.zipCode))
     const knownOrders = classified.reduce((sum, row) => sum + row.orderCount, 0)
     const knownSales = classified.reduce((sum, row) => sum + row.bookedSales, 0)
     const outOfStateOrders = outOfState.reduce((sum, row) => sum + row.orderCount, 0)
@@ -39,6 +42,11 @@ export function buildTourismReport(rows: TourismSourceRow[], studios: TourismStu
       salesShare: knownSales ? outOfStateSales / knownSales * 100 : 0,
       stateCount: states.size,
       unknownOrders: unknown.reduce((sum, row) => sum + row.orderCount, 0),
+      localMarket: studio.localMarket ? {
+        ...studio.localMarket,
+        excludedOrders: localMarket.reduce((sum, row) => sum + row.orderCount, 0),
+        excludedSales: localMarket.reduce((sum, row) => sum + row.bookedSales, 0),
+      } : null,
       states: [...states.values()].sort((a, b) => b.orderCount - a.orderCount || b.bookedSales - a.bookedSales),
       zipCodes: outOfState.map(row => ({ zipCode: row.zipCode, state: row.state.stateCode, orderCount: row.orderCount, bookedSales: row.bookedSales, averageOrderValue: row.orderCount ? row.bookedSales / row.orderCount : 0 })).sort((a, b) => b.orderCount - a.orderCount || b.bookedSales - a.bookedSales),
     }
