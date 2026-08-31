@@ -26,7 +26,6 @@ type UpcomingClassRow = {
 type ReservationBookingDailyRow = {
   studio_id: number
   order_date: string
-  booking_line_count: number | string | null
   active_reservations: number | string | null
   refunded_reservations: number | string | null
   on_hold_reservations: number | string | null
@@ -43,6 +42,8 @@ export type UpcomingClassesData = {
     seatsRemaining: number
     capacityPercent: number
     currentRevenue: number
+    todayClassSeats: number | null
+    todayClassRevenue: number | null
     bookedSeats: number | null
     bookedSales: number | null
     activeBookedSeats: number | null
@@ -92,11 +93,17 @@ function currentEasternDate() {
   return `${parts.year}-${parts.month}-${parts.day}`
 }
 
+function previousEasternDate() {
+  const date = new Date(`${currentEasternDate()}T00:00:00Z`)
+  date.setUTCDate(date.getUTCDate() - 1)
+  return date.toISOString().slice(0, 10)
+}
+
 export async function getUpcomingClasses(
   studioId?: string,
   allowedStudioIds?: number[]
 ): Promise<UpcomingClassesData> {
-  const bookingDate = currentEasternDate()
+  const bookingDate = previousEasternDate()
   let query = supabase
     .from("pts_upcoming_classes_current")
     .select(
@@ -111,14 +118,11 @@ export async function getUpcomingClasses(
   let bookingQuery = supabase
     .from("pts_reservation_booking_daily")
     .select(
-      "studio_id,order_date,booking_line_count,active_reservations,refunded_reservations,on_hold_reservations,ordered_seats,booked_sales"
+      "studio_id,order_date,active_reservations,refunded_reservations,on_hold_reservations,ordered_seats,booked_sales"
     )
     .eq("order_date", bookingDate)
-  if (studioId && studioId !== "all") {
-    bookingQuery = bookingQuery.eq("studio_id", studioId)
-  } else if (allowedStudioIds) {
-    bookingQuery = bookingQuery.in("studio_id", allowedStudioIds)
-  }
+  if (studioId && studioId !== "all") bookingQuery = bookingQuery.eq("studio_id", studioId)
+  else if (allowedStudioIds) bookingQuery = bookingQuery.in("studio_id", allowedStudioIds)
 
   const [{ data, error }, bookingResult] = await Promise.all([query, bookingQuery])
   if (error) throw error
@@ -179,22 +183,17 @@ export async function getUpcomingClasses(
     }),
     { seatsSold: 0, capacity: 0, seatsRemaining: 0, revenue: 0 }
   )
+  const todayClasses = classes.filter((row) => row.eventDate === currentEasternDate())
+  const hasSnapshot = rows.length > 0
   const bookingTotals = bookingRows.reduce(
     (sum, row) => ({
       bookedSeats: sum.bookedSeats + numberValue(row.ordered_seats),
       bookedSales: sum.bookedSales + numberValue(row.booked_sales),
-      activeBookedSeats:
-        sum.activeBookedSeats + numberValue(row.active_reservations),
+      activeBookedSeats: sum.activeBookedSeats + numberValue(row.active_reservations),
       refundedSeats: sum.refundedSeats + numberValue(row.refunded_reservations),
       heldSeats: sum.heldSeats + numberValue(row.on_hold_reservations),
     }),
-    {
-      bookedSeats: 0,
-      bookedSales: 0,
-      activeBookedSeats: 0,
-      refundedSeats: 0,
-      heldSeats: 0,
-    }
+    { bookedSeats: 0, bookedSales: 0, activeBookedSeats: 0, refundedSeats: 0, heldSeats: 0 }
   )
   const hasBookings = bookingRows.length > 0
 
@@ -207,6 +206,12 @@ export async function getUpcomingClasses(
       seatsRemaining: totals.seatsRemaining,
       capacityPercent: totals.capacity ? (totals.seatsSold / totals.capacity) * 100 : 0,
       currentRevenue: totals.revenue,
+      todayClassSeats: hasSnapshot
+        ? todayClasses.reduce((sum, row) => sum + row.seatsSold, 0)
+        : null,
+      todayClassRevenue: hasSnapshot
+        ? todayClasses.reduce((sum, row) => sum + row.revenue, 0)
+        : null,
       bookedSeats: hasBookings ? bookingTotals.bookedSeats : null,
       bookedSales: hasBookings ? bookingTotals.bookedSales : null,
       activeBookedSeats: hasBookings ? bookingTotals.activeBookedSeats : null,

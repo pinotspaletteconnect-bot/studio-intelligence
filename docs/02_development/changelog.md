@@ -1,5 +1,15 @@
 # Studio Intelligence Changelog
 
+## August 31, 2026 — today's class seats and revenue
+
+- Changed the Executive This week card to use the morning Upcoming Classes
+  snapshot for classes whose event date is today. It shows current seats sold
+  and class-plus-fee revenue for those classes rather than bookings placed today
+  or pickup across all future dates.
+- Kept the Executive KPI cards and Upcoming Classes booking KPIs on the prior
+  completed Reservations date, labeled Yesterday's booked seats/sales, so they
+  continue to show all gross reservations placed yesterday.
+
 ## August 30, 2026 — n8n-owned accounting boundary
 
 - Removed QuickBooks setup, OAuth callback/connect, studio mapping, account

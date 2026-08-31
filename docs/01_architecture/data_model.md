@@ -153,8 +153,9 @@ organization-level mappings downstream:
   Reservations grid.
 - `pts_reservation_booking_daily` aggregates the non-downloadable Reservations
   grid by studio and order date. It is the authoritative source for exact gross
-  yesterday booked seats and booked sales; snapshot differences remain net
-  class-level pickup only.
+  prior-day booked seats and booked sales. The morning dashboard cards use the
+  current upcoming-class snapshot to sum seats and revenue for classes whose
+  event date is today.
 
 ## Financial Intelligence
 

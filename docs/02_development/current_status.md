@@ -286,8 +286,9 @@ Implemented foundation:
   Snapshots` replacement runs daily at 7:30 AM America/New_York and replaces the current
   snapshot by studio. Its July 31, 2026 validation loaded 700 future classes:
   146 St. Matthews, 233 Short North, 215 Gilbert, and 106 Jeffersonville.
-  Consecutive snapshots remain available as class-level net pickup. Exact gross
-  yesterday booked seats and sales now come from the PTS Reservations grid via
+  The Executive and Upcoming Classes morning cards sum current seats sold and
+  class-plus-fee revenue for classes occurring today. Exact gross prior-day
+  booked seats and sales remain available from the PTS Reservations grid via
   published workflow `13 - PTS Reservation Bookings Import`, scheduled daily at
   6:00 AM America/New_York. Its August 1 production validation loaded all four
   studios: 111 ordered seats, 107 active seats, 2 refunded seats, 2 held seats,
