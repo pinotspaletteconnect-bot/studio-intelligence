@@ -1,5 +1,12 @@
 # Studio Intelligence Changelog
 
+## August 31, 2026 — No Class comparison sales
+
+- Corrected the Operations Year-over-Year Period Comparison `No Class` metric
+  to total the dedicated non-class item list downloaded with the PTS Sales
+  Report. The metric no longer looks for a class-event reporting group or
+  treats the broader Product Sales history as proof that an item had no class.
+
 ## August 31, 2026 — today's class seats and revenue
 
 - Changed the Executive This week card to use the morning Upcoming Classes

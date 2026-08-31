@@ -680,6 +680,14 @@ export async function getOperationsDashboard(
     .filter((row) => row.product_group?.trim().toLowerCase() === name.toLowerCase())
     .filter((row) => numberValue(row.net_sales) !== 0 || !/pre[\s-]*order/.test([row.subcategory, row.item_name].filter(Boolean).join(" ").toLowerCase()))
     .reduce((sum, row) => sum + numberValue(row.net_sales), 0)
+  // The PTS Sales Report has a dedicated non-class export containing the exact
+  // items entered without a class. Do not use the broader Product Sales range
+  // history here because it is authoritative for product reporting, not class
+  // association. currentProductRows comes only from that non-class export view.
+  const noClassSales = currentProductRows.reduce(
+    (sum, row) => sum + numberValue(row.net_sales),
+    0
+  )
 
   for (const row of productRows) {
     if (row.department !== "Food & Beverage") continue
@@ -845,7 +853,7 @@ export async function getOperationsDashboard(
       paintItForwardSales: (classTypeMap.get("Paint it Forward")?.classSales ?? 0) + (classTypeMap.get("Paint it Forward")?.feeSales ?? 0),
       privatePartySales: (privateParty?.classSales ?? 0) + (privateParty?.feeSales ?? 0),
       mobileEventSales: (mobileEvents?.classSales ?? 0) + (mobileEvents?.feeSales ?? 0),
-      noClassSales: (classTypeMap.get("No Class")?.classSales ?? 0) + (classTypeMap.get("No Class")?.feeSales ?? 0),
+      noClassSales,
       foodBeverageShare: totals.totalSales
         ? (totals.foodBeverageSales / totals.totalSales) * 100
         : 0,
