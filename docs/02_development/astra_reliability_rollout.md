@@ -40,7 +40,7 @@ database migration, credential rotation, or infrastructure change is required.
 Production rollout was authorized by the user on September 6.
 
 1. Preserve current Railway deployment and n8n published versions.
-2. Bind encrypted `Studio Intelligence Collector Auth` Header Auth to Meta Ads
+2. Bind encrypted `Studio Intelligence Collector` Header Auth to Meta Ads
    workflow `z5Mww3blBHS89UYu` and Meta Pages `7OMm5L5fprv3Lh5o`. Prior published
    Meta Ads version: `7cb06ac1-28e3-4280-8880-2292cedb7f21`. Verify the active
    Eulerity workflow uses this credential before releasing the collector.
@@ -64,6 +64,7 @@ the registered callback. No redirect setting or account access is changed here.
 - Read-only live 30/90-day reports: attribution counts match exact database
   counts; marketing spend and operations sales reconcile with independent
   source queries; upcoming-class output stays within the selected portfolio.
+  The September 5 end date returned 1,803 and 4,241 attribution rows respectively.
 - The live test is opt-in with `SI_VERIFY_LIVE=1` and existing dashboard
   environment configuration. Ordinary `npm test` skips it.
 - Real-user sign-in/refresh/revocation was not retested; production session and
