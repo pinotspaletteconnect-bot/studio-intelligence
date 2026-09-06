@@ -96,8 +96,8 @@ class MetaAuthService {
 
         const { appId, appSecret } = this.getAppCredentials();
 
-        const redirectUri =
-            "http://localhost:3000/meta/callback";
+        const redirectUri = process.env.META_REDIRECT_URI;
+        if (!redirectUri) throw new Error("Meta redirect URI is not configured");
 
         //
         // Exchange authorization code

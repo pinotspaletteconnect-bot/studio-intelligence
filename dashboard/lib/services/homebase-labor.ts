@@ -1,3 +1,4 @@
+import { fetchAllRows } from "@/lib/supabase/pagination"
 import "server-only"
 import { supabase } from "@/lib/supabase/server"
 
@@ -7,7 +8,7 @@ const num=(value:unknown)=>Number.isFinite(Number(value??0))?Number(value??0):0
 export async function getHomebaseLabor(studioId:string|undefined,startDate:string,endDate:string,allowedStudioIds:number[]){
   let query=supabase.from("homebase_labor_role_reporting").select("organization_id,studio_id,studio_name,labor_date,role_name,labor_category,scheduled_hours,actual_hours,scheduled_cost,actual_cost,total_sales,is_daily_fallback,reconciliation_note,reconciliation_resolution").gte("labor_date",startDate).lte("labor_date",endDate).order("labor_date")
   query=studioId&&studioId!=="all"?query.eq("studio_id",studioId):query.in("studio_id",allowedStudioIds)
-  const [result,reconciliations,mappings]=await Promise.all([query,supabase.from("homebase_labor_reconciliations").select("organization_id,studio_id,labor_date,resolution,corrected_role_name,note").in("studio_id",allowedStudioIds).gte("labor_date",startDate).lte("labor_date",endDate),supabase.from("homebase_role_mappings").select("organization_id,role_name,labor_category")])
+  const [result,reconciliations,mappings]=await Promise.all([fetchAllRows(query.order("studio_id").order("role_name")),fetchAllRows(supabase.from("homebase_labor_reconciliations").select("organization_id,studio_id,labor_date,resolution,corrected_role_name,note").in("studio_id",allowedStudioIds).gte("labor_date",startDate).lte("labor_date",endDate).order("studio_id").order("labor_date")),fetchAllRows(supabase.from("homebase_role_mappings").select("organization_id,role_name,labor_category").order("organization_id").order("role_name"))])
   if(result.error)throw result.error
   if(reconciliations.error)throw reconciliations.error
   if(mappings.error)throw mappings.error

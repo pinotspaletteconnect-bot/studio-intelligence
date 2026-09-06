@@ -1,3 +1,6 @@
+import { assertStudioAccess } from "@/lib/auth/api"
+import { fetchAllRows } from "@/lib/supabase/pagination"
+import { resolveReportPeriod } from "@/lib/date-range"
 import { supabase } from "@/lib/supabase/server"
 import { hasHistoricalPartyEvidence, isReportablePtsClass } from "@/lib/services/pts-class-filters"
 import { getHomebaseLabor } from "@/lib/services/homebase-labor"
@@ -274,7 +277,7 @@ const numberValue = (value: unknown) => {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
-function addStudioFilter<T>(query: T, studioId?: string, allowedStudioIds?: number[]): T {
+function addStudioFilter<T>(query: T, studioId?: string, allowedStudioIds: number[] = []): T {
   if (studioId && studioId !== "all") {
     return (query as T & { eq: (column: string, value: string) => T }).eq(
       "studio_id",
@@ -295,48 +298,25 @@ async function getPagedProductRows(
   periodStart: string,
   periodEnd: string,
   studioId?: string,
-  allowedStudioIds?: number[]
+  allowedStudioIds: number[] = []
 ): Promise<ProductRow[]> {
-  const pageSize = 1000
-  const rows: ProductRow[] = []
-
-  for (let page = 0; page < 20; page += 1) {
-    const from = page * pageSize
-    const query = addStudioFilter(
-      supabase
-        .from(table)
-        .select(
-          "studio_id,report_date,product_group,department,subcategory,item_name,quantity,net_sales"
-        )
-        .gte("report_date", periodStart)
-        .lte("report_date", periodEnd),
-      studioId,
-      allowedStudioIds
-    )
-    const result = await query
-      .order("report_date")
-      .range(from, from + pageSize - 1)
-
-    if (result.error) throw result.error
-
-    const pageRows = (result.data ?? []) as ProductRow[]
-    rows.push(...pageRows)
-    if (pageRows.length < pageSize) return rows
-  }
-
-  throw new Error("PTS product query exceeded the 20,000-row safety limit")
+  assertStudioAccess({ allowedStudioIds }, studioId)
+  const query = addStudioFilter(supabase.from(table)
+    .select("studio_id,report_date,product_group,department,subcategory,item_name,quantity,net_sales")
+    .gte("report_date", periodStart).lte("report_date", periodEnd), studioId, allowedStudioIds)
+  const result = await fetchAllRows(query.order("report_date").order("id"))
+  if (result.error) throw result.error
+  return (result.data ?? []) as ProductRow[]
 }
 
 export async function getOperationsDashboard(
   studioId?: string,
   startDate?: string,
   endDate?: string,
-  allowedStudioIds?: number[]
+  allowedStudioIds: number[] = []
 ): Promise<OperationsDashboardData> {
-  const periodEnd = endDate ?? new Date().toISOString().slice(0, 10)
-  const fallbackStart = new Date(`${periodEnd}T00:00:00Z`)
-  fallbackStart.setUTCDate(fallbackStart.getUTCDate() - 6)
-  const periodStart = startDate ?? fallbackStart.toISOString().slice(0, 10)
+  assertStudioAccess({ allowedStudioIds }, studioId)
+  const { periodStart, periodEnd } = resolveReportPeriod(startDate, endDate, 7)
 
   const currentDailyQuery = addStudioFilter(
     supabase
@@ -353,7 +333,7 @@ export async function getOperationsDashboard(
     supabase
       .from("pts_class_sales_reporting")
       .select(
-        "studio_id,event_date,painting,class_time,reporting_class_type,seats_sold,capacity,class_sales,fee_sales"
+        "studio_id,event_date,painting,class_time,reporting_class_type,seats_sold,capacity,class_sales,fee_sales,lead_time_average"
       )
       .gte("event_date", periodStart)
       .lte("event_date", periodEnd),
@@ -382,17 +362,6 @@ export async function getOperationsDashboard(
     studioId,
     allowedStudioIds
   )
-  const classLeadTimeQuery = addStudioFilter(
-    supabase
-      .from("pts_class_sales_reporting")
-      .select("seats_sold,lead_time_average")
-      .gte("event_date", periodStart)
-      .lte("event_date", periodEnd)
-      .not("lead_time_average", "is", null),
-    studioId,
-    allowedStudioIds
-  )
-
   const [
     currentDailyResult,
     historicalDailyResult,
@@ -400,12 +369,11 @@ export async function getOperationsDashboard(
     historicalProductRows,
     classTypesResult,
     historicalClassTypesResult,
-    classLeadTimeResult,
     laborResult,
   ] =
     await Promise.all([
-      currentDailyQuery.order("report_date").range(0, 4999),
-      historicalDailyQuery.order("report_date").range(0, 4999),
+      fetchAllRows(currentDailyQuery.order("report_date").order("studio_id")),
+      fetchAllRows(historicalDailyQuery.order("report_date").order("studio_id")),
       getPagedProductRows(
         "pts_product_sales_reporting",
         periodStart,
@@ -420,9 +388,8 @@ export async function getOperationsDashboard(
         studioId,
         allowedStudioIds
       ),
-      classTypesQuery.order("event_date").range(0, 4999),
-      historicalClassTypesQuery.order("report_date").range(0, 4999),
-      classLeadTimeQuery.range(0, 4999),
+      fetchAllRows(classTypesQuery.order("event_date").order("id")),
+      fetchAllRows(historicalClassTypesQuery.order("report_date").order("studio_id").order("reporting_class_type")),
       getHomebaseLabor(studioId, periodStart, periodEnd, allowedStudioIds ?? []),
     ])
 
@@ -430,7 +397,6 @@ export async function getOperationsDashboard(
   if (historicalDailyResult.error) throw historicalDailyResult.error
   if (classTypesResult.error) throw classTypesResult.error
   if (historicalClassTypesResult.error) throw historicalClassTypesResult.error
-  if (classLeadTimeResult.error) throw classLeadTimeResult.error
 
   // The range-import table preserves historical dashboard dates while the
   // daily-production view supplies newly collected dates. Prefer production
@@ -501,16 +467,16 @@ export async function getOperationsDashboard(
   const currentClassStudioDates = new Set(
     allCurrentClassTypeRows.map((row) => `${row.studio_id}:${row.event_date}`)
   )
-  const classLeadTimeRows = (classLeadTimeResult.data ?? []) as ClassLeadTimeRow[]
+  const classLeadTimeRows = (classTypesResult.data ?? []).filter((row) => row.lead_time_average !== null) as ClassLeadTimeRow[]
   const studioIds = [...new Set(dailyRows.map((row) => row.studio_id))]
   const studioNames = new Map<number, string>()
   const studioTimeZones = new Map<number, string>()
 
   if (studioIds.length) {
-    const { data: studios, error: studiosError } = await supabase
+    const { data: studios, error: studiosError } = await fetchAllRows(supabase
       .from("studios")
       .select("id,studio_name,timezone")
-      .in("id", studioIds)
+      .in("id", studioIds).order("id"))
 
     if (studiosError) throw studiosError
     for (const studio of studios ?? []) {
@@ -907,8 +873,9 @@ export async function getOperationsDashboardWithComparison(
   comparisonMode: "previous" | "priorYearWeek" | "custom" = "previous",
   customComparisonStart?: string,
   customComparisonEnd?: string,
-  allowedStudioIds?: number[]
+  allowedStudioIds: number[] = []
 ): Promise<OperationsDashboardData> {
+  assertStudioAccess({ allowedStudioIds }, studioId)
   const current = await getOperationsDashboard(studioId, startDate, endDate, allowedStudioIds)
   const duration = current.period.days
   const useCustomComparison =
@@ -966,8 +933,9 @@ export async function getOperationsDashboardWithComparison(
 export async function getDailyOperatingDetail(
   studioId: number | undefined,
   date: string,
-  allowedStudioIds?: number[]
+  allowedStudioIds: number[] = []
 ): Promise<DailyOperatingDetailData> {
+  assertStudioAccess({ allowedStudioIds }, studioId)
   let classesQuery = supabase
     .from("pts_class_sales_reporting")
     .select(
@@ -975,7 +943,7 @@ export async function getDailyOperatingDetail(
     )
     .eq("event_date", date)
     .order("class_time", { ascending: true })
-    .range(0, 999)
+    .order("id")
   let studiosQuery = supabase.from("studios").select("id,studio_name,timezone")
 
   if (studioId) {
@@ -996,9 +964,9 @@ export async function getDailyOperatingDetail(
   else if (allowedStudioIds) operationsQuery = operationsQuery.in("studio_id", allowedStudioIds)
 
   const [classesResult, studioResult, operationsResult, laborResult] = await Promise.all([
-    classesQuery,
-    studiosQuery.order("studio_name"),
-    operationsQuery.range(0, 999),
+    fetchAllRows(classesQuery),
+    fetchAllRows(studiosQuery.order("studio_name").order("id")),
+    fetchAllRows(operationsQuery.order("studio_id")),
     getHomebaseLabor(studioId?.toString(), date, date, allowedStudioIds ?? []),
   ])
 
@@ -1151,8 +1119,9 @@ async function getProductGroupSalesDetail(
   studioId: number | undefined,
   startDate: string,
   endDate: string,
-  allowedStudioIds?: number[]
+  allowedStudioIds: number[] = []
 ): Promise<CandleSalesDetailData> {
+  assertStudioAccess({ allowedStudioIds }, studioId)
   let studiosQuery = supabase.from("studios").select("id,studio_name")
 
   if (studioId) {
@@ -1176,7 +1145,7 @@ async function getProductGroupSalesDetail(
       studioId?.toString(),
       allowedStudioIds
     ),
-    studiosQuery.order("studio_name"),
+    fetchAllRows(studiosQuery.order("studio_name").order("id")),
   ])
   if (studiosResult.error) throw studiosResult.error
 
@@ -1233,7 +1202,7 @@ export function getCandleSalesDetail(
   studioId: number | undefined,
   startDate: string,
   endDate: string,
-  allowedStudioIds?: number[]
+  allowedStudioIds: number[] = []
 ) {
   return getProductGroupSalesDetail(
     "Candles",
@@ -1249,7 +1218,7 @@ export function getArtSuppliesSalesDetail(
   studioId: number | undefined,
   startDate: string,
   endDate: string,
-  allowedStudioIds?: number[]
+  allowedStudioIds: number[] = []
 ) {
   return getProductGroupSalesDetail(
     "Art Supplies",
@@ -1266,8 +1235,9 @@ export async function getClassEventSalesDetail(
   studioId: number | undefined,
   startDate: string,
   endDate: string,
-  allowedStudioIds?: number[]
+  allowedStudioIds: number[] = []
 ): Promise<ClassEventSalesDetailData> {
+  assertStudioAccess({ allowedStudioIds }, studioId)
   let classesQuery = supabase
     .from("pts_class_sales_reporting")
     .select(
@@ -1277,7 +1247,7 @@ export async function getClassEventSalesDetail(
     .gte("event_date", startDate)
     .lte("event_date", endDate)
     .order("event_date", { ascending: false })
-    .range(0, 4999)
+    .order("id")
   let studiosQuery = supabase.from("studios").select("id,studio_name,timezone")
 
   if (studioId) {
@@ -1290,8 +1260,8 @@ export async function getClassEventSalesDetail(
   }
 
   const [classesResult, studiosResult] = await Promise.all([
-    classesQuery,
-    studiosQuery.order("studio_name"),
+    fetchAllRows(classesQuery),
+    fetchAllRows(studiosQuery.order("studio_name").order("id")),
   ])
   if (classesResult.error) throw classesResult.error
   if (studiosResult.error) throw studiosResult.error

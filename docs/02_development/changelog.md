@@ -1,5 +1,15 @@
 # Studio Intelligence Changelog
 
+## September 6, 2026 — Reporting reliability and collector protection
+
+Prepared on the production release base. Reporting now paginates completely,
+rejects partial totals, reuses duplicate Eulerity/class reads, and uses completed
+Eastern date ranges. Services validate studio scope alongside existing API
+membership checks. Meta/Eulerity routes require the existing collector credential.
+Local fonts and focused lint fixes improve build reliability. Existing SASHA
+account flows and integrations are preserved. See `astra_reliability_rollout.md`
+for rollout and verification status.
+
 ## August 31, 2026 — No Class comparison sales
 
 - Corrected the Operations Year-over-Year Period Comparison `No Class` metric

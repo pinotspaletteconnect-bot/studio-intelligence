@@ -2,6 +2,8 @@ console.log("✅ Loaded Meta Routes");
 
 const express = require("express");
 const router = express.Router();
+const { requireCollectorAuth } = require("../middleware/collectorAuth");
+const { beginMetaOAuth, requireMetaOAuthState } = require("../middleware/metaOAuthState");
 
 const ads = require("../services/meta/ads");
 const pageInsights = require("../services/meta/pageInsights");
@@ -23,6 +25,10 @@ router.get("/health", async (req, res) => {
         timestamp: new Date().toISOString()
     });
 });
+
+router.use((req, res, next) => req.path === "/callback"
+    ? requireMetaOAuthState(req, res, next)
+    : requireCollectorAuth(req, res, next));
 
 /**
  * Download Meta Ads Data
@@ -69,7 +75,9 @@ router.get("/auth", (req, res) => {
 
     const { appId } = auth.getAppCredentials();
 
-    const redirectUri = "http://localhost:3000/meta/callback";
+    const redirectUri = process.env.META_REDIRECT_URI;
+    if (!redirectUri) return res.status(503).json({ success: false, error: "Meta redirect URI is not configured" });
+    const state = beginMetaOAuth(res);
 
     const scopes = [
     "ads_read",
@@ -84,7 +92,8 @@ router.get("/auth", (req, res) => {
         `https://www.facebook.com/v25.0/dialog/oauth` +
         `?client_id=${appId}` +
         `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-        `&scope=${encodeURIComponent(scopes)}`;
+        `&scope=${encodeURIComponent(scopes)}` +
+        `&state=${state}`;
 
     res.redirect(url);
 
@@ -97,6 +106,9 @@ router.get("/callback", async (req, res) => {
 
     try {
 
+        if (typeof req.query.code !== "string" || !req.query.code) {
+            return res.status(400).json({ success: false, error: "Missing authorization code" });
+        }
         const result = await auth.completeOAuth(req.query.code);
 
         res.json({

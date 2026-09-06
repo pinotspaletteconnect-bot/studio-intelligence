@@ -1,5 +1,5 @@
 const express = require("express");
-const crypto = require("crypto");
+const { requireCollectorAuth } = require("../middleware/collectorAuth");
 const fs = require("fs");
 
 const { runEulerity } = require("../scripts/eulerity/eulerity");
@@ -13,17 +13,6 @@ const {
 
 const router = express.Router();
 
-function requireCollectorAuth(req, res, next) {
-    const configuredToken = process.env.COLLECTOR_API_TOKEN;
-    const suppliedToken = req.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
-    if (!configuredToken) return res.status(503).json({ success: false, error: "Collector authentication is not configured" });
-    const supplied = Buffer.from(suppliedToken);
-    const configured = Buffer.from(configuredToken);
-    if (supplied.length !== configured.length || !crypto.timingSafeEqual(supplied, configured)) {
-        return res.status(401).json({ success: false, error: "Unauthorized" });
-    }
-    next();
-}
 
 console.log("✅ Eulerity router loaded");
 
@@ -40,6 +29,8 @@ router.get("/", (req, res) => {
     });
 
 });
+
+router.use(requireCollectorAuth);
 
 router.post("/discover", requireCollectorAuth, async (req, res) => {
     try {

@@ -334,6 +334,7 @@ export function DataTable({
 }: {
   data: z.infer<typeof schema>[]
 }) {
+  "use no memo" // TanStack Table exposes mutable APIs; opt out of React Compiler.
   const [data, setData] = React.useState(() => initialData)
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] =
@@ -356,6 +357,8 @@ export function DataTable({
     () => data?.map(({ id }) => id) || [],
     [data]
   )
+  // This component explicitly opts out of memoization for TanStack's mutable API.
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data,
     columns,
