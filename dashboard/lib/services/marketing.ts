@@ -1,3 +1,6 @@
+import { assertStudioAccess } from "@/lib/auth/api"
+import { fetchAllRows } from "@/lib/supabase/pagination"
+import { resolveReportPeriod } from "@/lib/date-range"
 import { supabase } from "@/lib/supabase/server"
 
 type Ga4Row = {
@@ -245,7 +248,7 @@ const numberValue = (value: unknown) => {
 function addStudioFilter<T>(
   query: T,
   studioId?: string,
-  allowedStudioIds?: number[]
+  allowedStudioIds: number[] = []
 ): T {
   if (studioId && studioId !== "all") {
     return (query as T & { eq: (column: string, value: string) => T }).eq(
@@ -266,12 +269,10 @@ export async function getMarketingDashboard(
   studioId?: string,
   startDate?: string,
   endDate?: string,
-  allowedStudioIds?: number[]
+  allowedStudioIds: number[] = []
 ): Promise<MarketingDashboard> {
-  const periodEnd = endDate ?? new Date().toISOString().slice(0, 10)
-  const fallbackStart = new Date(`${periodEnd}T00:00:00Z`)
-  fallbackStart.setUTCDate(fallbackStart.getUTCDate() - 29)
-  const periodStart = startDate ?? fallbackStart.toISOString().slice(0, 10)
+  assertStudioAccess({ allowedStudioIds }, studioId)
+  const { periodStart, periodEnd } = resolveReportPeriod(startDate, endDate, 30)
 
   const ga4Query = addStudioFilter(
     supabase
@@ -294,7 +295,7 @@ export async function getMarketingDashboard(
   const eulerityQuery = addStudioFilter(
     supabase
       .from("eulerity_daily_metrics")
-      .select("studio_id,report_date,spend_total,clicks_total,impressions_total")
+      .select("studio_id,clicks_total,impressions_total,report_date,spend_total,spend_display,spend_search,spend_social,spend_video,spend_other,impressions_display,impressions_search,impressions_social,impressions_video,impressions_other,clicks_display,clicks_search,clicks_social,clicks_video,clicks_other")
       .gte("report_date", periodStart)
       .lte("report_date", periodEnd),
     studioId,
@@ -342,17 +343,6 @@ export async function getMarketingDashboard(
     studioId,
     allowedStudioIds
   )
-  const eulerityChannelQuery = addStudioFilter(
-    supabase
-      .from("eulerity_daily_metrics")
-      .select(
-        "report_date,spend_total,spend_display,spend_search,spend_social,spend_video,spend_other,impressions_display,impressions_search,impressions_social,impressions_video,impressions_other,clicks_display,clicks_search,clicks_social,clicks_video,clicks_other"
-      )
-      .gte("report_date", periodStart)
-      .lte("report_date", periodEnd),
-    studioId,
-    allowedStudioIds
-  )
   const mntnQuery = addStudioFilter(
     supabase
       .from("mntn_performance_daily")
@@ -387,21 +377,19 @@ export async function getMarketingDashboard(
     { data: sourceMediumData, error: sourceMediumError },
     { data: eulerityAttributionData, error: eulerityAttributionError },
     { data: metaCampaignData, error: metaCampaignError },
-    { data: eulerityChannelData, error: eulerityChannelError },
     { data: mntnData, error: mntnError },
     { data: studiosData, error: studiosError },
     { data: paidCpcBenchmarkData, error: paidCpcBenchmarkError },
   ] = await Promise.all([
-    ga4Query.order("date"),
-    metaQuery.order("integration_date"),
-    eulerityQuery.order("report_date"),
-    organicQuery.order("insight_date"),
-    sourceMediumQuery.range(0, 4999),
-    eulerityAttributionQuery.range(0, 4999),
-    metaCampaignQuery.range(0, 4999),
-    eulerityChannelQuery.range(0, 4999),
-    mntnQuery.range(0, 4999),
-    studiosQuery,
+    fetchAllRows(ga4Query.order("date").order("studio_id")),
+    fetchAllRows(metaQuery.order("integration_date").order("id")),
+    fetchAllRows(eulerityQuery.order("report_date").order("studio_id")),
+    fetchAllRows(organicQuery.order("insight_date").order("id")),
+    fetchAllRows(sourceMediumQuery.order("report_date").order("studio_id").order("source").order("medium")),
+    fetchAllRows(eulerityAttributionQuery.order("report_date").order("studio_id").order("source").order("medium")),
+    fetchAllRows(metaCampaignQuery.order("date_start").order("id")),
+    fetchAllRows(mntnQuery.order("report_date").order("studio_id").order("advertiser_id")),
+    fetchAllRows(studiosQuery.order("id")),
     paidCpcBenchmarkQuery,
   ])
 
@@ -419,7 +407,6 @@ export async function getMarketingDashboard(
   }
   if (eulerityAttributionError) throw eulerityAttributionError
   if (metaCampaignError) throw metaCampaignError
-  if (eulerityChannelError) throw eulerityChannelError
   if (
     mntnError &&
     !["42P01", "PGRST204", "PGRST205"].includes(mntnError.code ?? "")
@@ -441,8 +428,7 @@ export async function getMarketingDashboard(
   const eulerityAttributionRows = (eulerityAttributionData ??
     []) as EulerityAttributionRow[]
   const metaCampaignRows = (metaCampaignData ?? []) as MetaCampaignRow[]
-  const eulerityChannelRows = (eulerityChannelData ??
-    []) as EulerityChannelRow[]
+  const eulerityChannelRows = (eulerityResult.data ?? []) as EulerityChannelRow[]
   const mntnRows = (mntnData ?? []) as MntnPerformanceRow[]
   const paidCpcBenchmarkRow = (
     (paidCpcBenchmarkData ?? []) as PaidCpcBenchmarkRow[]

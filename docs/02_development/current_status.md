@@ -9,6 +9,12 @@ This is the fast-changing source of truth for what is implemented, deployed, act
 
 ## Overall Status
 
+September 6 release preparation: reporting pagination, duplicate-read reduction,
+completed Eastern dates, service-level studio checks, and collector protection
+are verified on the actual production branch. Existing organization/studio
+membership controls are preserved. The older root checkout's proposed
+replacement authentication is superseded. See `astra_reliability_rollout.md`.
+
 August 29 local addition: Marketing tourism indicators classify captured PTS
 billing ZIPs against each studio's state and report out-of-state order/sales
 shares, source states, and ZIP detail. The report is explicitly an order-based

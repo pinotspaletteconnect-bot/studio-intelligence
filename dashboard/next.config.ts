@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
   reactCompiler: true,
   async headers() {
     return [
+      { source: "/api/:path*", headers: [{ key: "Cache-Control", value: "private, no-store" }] },
       {
         source: "/(.*)",
         headers: [

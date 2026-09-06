@@ -1,5 +1,5 @@
 const express = require("express");
-const crypto = require("crypto");
+const { requireCollectorAuth } = require("../middleware/collectorAuth");
 
 const {
     parsePtsProductSalesUpload,
@@ -21,32 +21,6 @@ const { runPtsThirdPartyClassCreditsReport } = require("../scripts/pts/thirdPart
 const router = express.Router();
 const { resolvePtsAccount } = require("../services/ptsCredentials");
 
-function requireCollectorAuth(req, res, next) {
-    const configuredToken = process.env.COLLECTOR_API_TOKEN;
-    const suppliedToken = req.get("authorization")?.replace(/^Bearer\s+/i, "");
-
-    if (!configuredToken) {
-        return res.status(503).json({
-            success: false,
-            error: "PTS collector authentication is not configured"
-        });
-    }
-
-    const suppliedBuffer = Buffer.from(suppliedToken ?? "");
-    const configuredBuffer = Buffer.from(configuredToken);
-    const authorized =
-        suppliedBuffer.length === configuredBuffer.length &&
-        crypto.timingSafeEqual(suppliedBuffer, configuredBuffer);
-
-    if (!authorized) {
-        return res.status(401).json({
-            success: false,
-            error: "Unauthorized"
-        });
-    }
-
-    next();
-}
 
 router.get("/health", (req, res) => {
     res.json({

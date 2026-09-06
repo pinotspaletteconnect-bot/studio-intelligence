@@ -1,6 +1,7 @@
+import { fetchAllRows } from "@/lib/supabase/pagination"
 import { supabase } from "@/lib/supabase/server";
 
-export async function getStudios(allowedStudioIds?: number[]) {
+export async function getStudios(allowedStudioIds: number[] = []) {
   let query = supabase
     .from("studios")
     .select(`
@@ -14,7 +15,7 @@ export async function getStudios(allowedStudioIds?: number[]) {
     .order("studio_name");
   if (allowedStudioIds) query = query.in("id", allowedStudioIds)
 
-  const { data, error } = await query
+  const { data, error } = await fetchAllRows(query.order("id"))
 
   if (error) {
     console.error(error);

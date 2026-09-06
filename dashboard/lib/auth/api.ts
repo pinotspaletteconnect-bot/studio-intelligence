@@ -1,3 +1,5 @@
+import { ReportingLimitError } from "@/lib/supabase/pagination"
+import { InvalidReportPeriodError } from "@/lib/date-range"
 import "server-only"
 
 import { NextResponse } from "next/server"
@@ -22,7 +24,7 @@ export async function requireApiAccess(): Promise<UserAccessContext> {
 }
 
 export function assertStudioAccess(
-  context: UserAccessContext,
+  context: Pick<UserAccessContext, "allowedStudioIds">,
   requestedStudioId: string | number | undefined
 ) {
   if (requestedStudioId === undefined || requestedStudioId === "all") return
@@ -34,6 +36,9 @@ export function assertStudioAccess(
 }
 
 export function apiAccessResponse(error: unknown) {
+  if (error instanceof ReportingLimitError || error instanceof InvalidReportPeriodError) {
+    return NextResponse.json({ error: error.message }, { status: error instanceof ReportingLimitError ? 422 : 400, headers: { "Cache-Control": "private, no-store" } })
+  }
   if (!(error instanceof ApiAccessError)) return null
-  return NextResponse.json({ error: error.message }, { status: error.status })
+  return NextResponse.json({ error: error.message }, { status: error.status, headers: { "Cache-Control": "private, no-store" } })
 }

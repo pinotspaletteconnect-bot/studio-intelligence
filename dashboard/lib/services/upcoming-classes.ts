@@ -1,3 +1,6 @@
+import { assertStudioAccess } from "@/lib/auth/api"
+import { fetchAllRows } from "@/lib/supabase/pagination"
+import { businessDate, offsetDate } from "@/lib/date-range"
 import { supabase } from "@/lib/supabase/server"
 import { isReportablePtsClass } from "@/lib/services/pts-class-filters"
 
@@ -78,39 +81,19 @@ const numberValue = (value: unknown) => {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
-function currentEasternDate() {
-  const parts = Object.fromEntries(
-    new Intl.DateTimeFormat("en-US", {
-      timeZone: "America/New_York",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    })
-      .formatToParts(new Date())
-      .filter((part) => part.type !== "literal")
-      .map((part) => [part.type, part.value])
-  )
-  return `${parts.year}-${parts.month}-${parts.day}`
-}
-
-function previousEasternDate() {
-  const date = new Date(`${currentEasternDate()}T00:00:00Z`)
-  date.setUTCDate(date.getUTCDate() - 1)
-  return date.toISOString().slice(0, 10)
-}
-
 export async function getUpcomingClasses(
   studioId?: string,
-  allowedStudioIds?: number[]
+  allowedStudioIds: number[] = []
 ): Promise<UpcomingClassesData> {
-  const bookingDate = previousEasternDate()
+  assertStudioAccess({ allowedStudioIds }, studioId)
+  const bookingDate = offsetDate(businessDate(), -1)
   let query = supabase
     .from("pts_upcoming_classes_current")
     .select(
       "studio_id,snapshot_date,event_date,source_event_key,display_name,painting,class_time,room,source_class_type,reporting_class_type,seats_sold,capacity,seats_remaining,capacity_percent,lead_time_average,class_sales,fee_sales,seats_pickup,revenue_pickup"
     )
     .order("class_time", { ascending: true })
-    .range(0, 4999)
+    .order("studio_id").order("source_event_key")
 
   if (studioId && studioId !== "all") query = query.eq("studio_id", studioId)
   else if (allowedStudioIds) query = query.in("studio_id", allowedStudioIds)
@@ -124,7 +107,7 @@ export async function getUpcomingClasses(
   if (studioId && studioId !== "all") bookingQuery = bookingQuery.eq("studio_id", studioId)
   else if (allowedStudioIds) bookingQuery = bookingQuery.in("studio_id", allowedStudioIds)
 
-  const [{ data, error }, bookingResult] = await Promise.all([query, bookingQuery])
+  const [{ data, error }, bookingResult] = await Promise.all([fetchAllRows(query), fetchAllRows(bookingQuery.order("studio_id"))])
   if (error) throw error
   if (bookingResult.error) throw bookingResult.error
 
@@ -139,10 +122,10 @@ export async function getUpcomingClasses(
   const studioNames = new Map<number, string>()
   const studioTimeZones = new Map<number, string>()
   if (studioIds.length) {
-    const studiosResult = await supabase
+    const studiosResult = await fetchAllRows(supabase
       .from("studios")
       .select("id,studio_name,timezone")
-      .in("id", studioIds)
+      .in("id", studioIds).order("id"))
     if (studiosResult.error) throw studiosResult.error
     for (const studio of studiosResult.data ?? []) {
       studioNames.set(studio.id, studio.studio_name)
@@ -183,7 +166,7 @@ export async function getUpcomingClasses(
     }),
     { seatsSold: 0, capacity: 0, seatsRemaining: 0, revenue: 0 }
   )
-  const todayClasses = classes.filter((row) => row.eventDate === currentEasternDate())
+  const todayClasses = classes.filter((row) => row.eventDate === businessDate())
   const hasSnapshot = rows.length > 0
   const bookingTotals = bookingRows.reduce(
     (sum, row) => ({
