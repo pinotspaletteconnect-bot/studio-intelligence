@@ -71,4 +71,37 @@ the registered callback. No redirect setting or account access is changed here.
   membership flows are preserved. API/service tests cover authentication,
   denied cross-studio requests, and scoped portfolio/studio results.
 
-Deployment and controlled import execution IDs will be recorded after rollout.
+## Deployment record
+
+PR [#64](https://github.com/pinotspaletteconnect-bot/studio-intelligence/pull/64)
+was merged into `codex/auth-onboarding` at
+`3bbdf7c50a60cbd68e93f19f5a0b0fe27c51dedc`. Both Railway services report
+**Active / Deployment successful** for this release:
+
+- Dashboard: `cbee3b8e-c94f-4115-acc9-782e6c91dc6b`.
+- Collector: `13e1aaf2-acf3-40a1-9b30-dac11502cf1f`.
+
+The Meta Ads and Meta Pages workflows were published with the existing
+`Studio Intelligence Collector` credential already selected by the active
+Eulerity workflow `P3tQUsAYYpL3eEcD`. Final published version prefixes are
+`777338ef` (Ads) and `0c03f71f` (Pages); the version name is
+`Verified collector credential — September 6`.
+
+Post-deployment read-only checks confirmed:
+
+- Dashboard login responds successfully; unsigned studios, marketing, and
+  operations API requests redirect to login with private/no-store headers.
+- Collector liveness responds successfully. Unsigned Meta configuration and
+  Meta/Eulerity collection requests return 401. Invalid legacy OAuth callbacks
+  return 400.
+- Anonymous requests to three reporting views return 401 without rows.
+
+The root checkout's local collector diagnostic token returned 401; it has not
+been established to match the production credential. No token was rotated.
+Authenticated import validation must use the existing production credential.
+
+Controlled post-release imports remain pending. Automatic approval review
+rejected execution because it would write production warehouse records and
+requires explicit approval beyond the general deployment request. No test
+import ran. The prior Meta Pages execution `113025` succeeded before this
+release; it does not validate the new collector guard.

@@ -1,7 +1,7 @@
 # Studio Intelligence Current Status
 
 **Version:** 4.1  
-**Last updated:** July 31, 2026
+**Last updated:** September 6, 2026
 
 ## Purpose
 
@@ -9,11 +9,14 @@ This is the fast-changing source of truth for what is implemented, deployed, act
 
 ## Overall Status
 
-September 6 release preparation: reporting pagination, duplicate-read reduction,
+September 6 deployed release (PR #64): reporting pagination, duplicate-read reduction,
 completed Eastern dates, service-level studio checks, and collector protection
-are verified on the actual production branch. Existing organization/studio
+are live on both Railway services from `codex/auth-onboarding`. Existing organization/studio
 membership controls are preserved. The older root checkout's proposed
-replacement authentication is superseded. See `astra_reliability_rollout.md`.
+replacement authentication is superseded. Automated checks, read-only warehouse
+reconciliation, and public access checks passed. Controlled production imports
+await explicit approval after automatic review blocked the write check.
+See `astra_reliability_rollout.md` for deployment IDs and verification limits.
 
 August 29 local addition: Marketing tourism indicators classify captured PTS
 billing ZIPs against each studio's state and report out-of-state order/sales

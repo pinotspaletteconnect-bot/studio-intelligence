@@ -2,7 +2,8 @@
 
 ## September 6, 2026 — Reporting reliability and collector protection
 
-Prepared on the production release base. Reporting now paginates completely,
+Deployed to both Railway services through PR #64 on the production release branch.
+Reporting now paginates completely,
 rejects partial totals, reuses duplicate Eulerity/class reads, and uses completed
 Eastern date ranges. Services validate studio scope alongside existing API
 membership checks. Meta/Eulerity routes require the existing collector credential.
