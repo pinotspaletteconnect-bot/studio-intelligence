@@ -167,6 +167,18 @@ Implemented foundation:
 
 Known incomplete surfaces:
 
+- Prepared locally September 19 (not deployed): Eulerity drill-down now compares
+  all authorized studios on one channel-by-studio table, with spend, spend share,
+  clicks, impressions, CTR, and CPC. Same-channel peer CPC uses combined spend
+  divided by combined clicks, excludes the current studio, and requires complete
+  date coverage. Missing metrics remain unavailable; peer comparisons are not
+  cost targets or booking/revenue attribution. Focused tests, scoped TypeScript
+  validation, and lint pass. Production compilation succeeds, but full-project
+  type checking exhausts the Node heap (also at 8 GB). Live reconciliation and
+  deployment are pending. This feature branch depends on the separate reporting
+  access/reliability work (auth access, API errors, pagination, date helpers,
+  and test tooling), which must be committed before merge or deployment.
+
 - Manual Product Sales history can now be loaded through workflow
   `10 - PTS Product Sales Backfill` by selecting a studio and uploading the PTS
   Product Sales workbook. The Operations dashboard links to the authenticated

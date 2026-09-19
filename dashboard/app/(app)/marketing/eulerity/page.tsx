@@ -1,5 +1,5 @@
-import { MarketingSourcePage } from "@/components/studio/marketing/source-page"
+import { EulerityDashboard } from "@/components/studio/marketing/eulerity-dashboard"
 
 export default function EulerityPage() {
-  return <MarketingSourcePage title="Eulerity" description="Eulerity spend and channel performance, kept separate from Meta Ads." />
+  return <EulerityDashboard />
 }

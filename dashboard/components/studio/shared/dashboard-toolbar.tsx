@@ -23,11 +23,13 @@ import {
 type DashboardToolbarProps = {
   title: string
   subtitle: string
+  allStudios?: boolean
 }
 
 export function DashboardToolbar({
   title,
   subtitle,
+  allStudios = false,
 }: DashboardToolbarProps) {
   const { dateRange, setCustomDateRange, setDateRangePreset } = useApp()
   const [rangeMode, setRangeMode] = useState<DateRangePreset>(
@@ -64,7 +66,7 @@ export function DashboardToolbar({
       <div className="flex flex-wrap items-start gap-2">
         <div className="flex items-center gap-2">
           <Building2 className="h-4 w-4 text-muted-foreground" />
-          <StudioSelect />
+          {allStudios ? <span className="text-sm font-medium">All studios</span> : <StudioSelect />}
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-2">

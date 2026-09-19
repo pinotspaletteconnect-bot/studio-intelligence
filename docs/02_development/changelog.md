@@ -8,6 +8,16 @@ This project follows a milestone-based changelog rather than tracking every indi
 
 # Unreleased
 
+## September 19, 2026 — Eulerity studio comparison (local)
+
+- Replaced the Eulerity placeholder with a compact channel-by-studio comparison
+  using shared dates and all authorized active studios.
+- Added a scoped, paginated reporting endpoint and service calculations for
+  spend, clicks, impressions, CTR, CPC, and weighted same-channel peer costs.
+- Explicitly display missing/partial coverage, zero-click spend, and the
+  difference between peer references and cost targets. No production changes.
+- Calculation tests cover weighted peers, incomplete data, and zero-click rates.
+
 ## Added
 
 - Added average daily frequency to Meta campaign performance. The service derives
