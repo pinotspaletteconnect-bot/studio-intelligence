@@ -9,6 +9,15 @@ This is the fast-changing source of truth for what is implemented, deployed, act
 
 ## Overall Status
 
+September 19 Eulerity release: `/marketing/eulerity` replaces its placeholder
+with a channel-by-studio costs/results comparison for all authorized studios.
+Shared dates, complete-period weighted peer CPC, missing-data labels, and
+existing production membership controls are preserved. The original feature
+branch based on the older root checkout is superseded by
+`codex/eulerity-production`. Verified 36 regression tests, full lint/build, and
+read-only live reconciliation against the current marketing report. Deployment
+verification is recorded in `eulerity_comparison_rollout.md`.
+
 September 6 release preparation: reporting pagination, duplicate-read reduction,
 completed Eastern dates, service-level studio checks, and collector protection
 are verified on the actual production branch. Existing organization/studio
