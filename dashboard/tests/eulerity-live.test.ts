@@ -16,6 +16,8 @@ it.skipIf(process.env.SI_VERIFY_LIVE !== "1")("reconciles Eulerity comparison wi
   expect(comparison.studios.map((studio) => Number(studio.id)).sort()).toEqual(ids.sort())
   expect(comparison.studios.reduce((sum, studio) => sum + (studio.total.spend ?? 0), 0))
     .toBeCloseTo(existing.channels.find((channel) => channel.key === "eulerity")!.spend, 2)
+  expect(comparison.studios.reduce((sum, studio) => sum + (studio.total.attributedRevenue ?? 0), 0))
+    .toBeCloseTo(existing.channels.find((channel) => channel.key === "eulerity")!.attributedRevenue, 2)
   for (const channel of existing.eulerityChannels) {
     expect(comparison.studios.reduce((sum, studio) => sum + (studio.channels.find((item) => item.key === channel.key)!.spend ?? 0), 0)).toBeCloseTo(channel.spend, 2)
   }

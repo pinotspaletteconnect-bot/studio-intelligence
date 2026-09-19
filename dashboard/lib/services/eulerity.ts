@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase/server"
 import { resolveReportPeriod } from "@/lib/date-range"
 import { fetchAllRows } from "@/lib/supabase/pagination"
-import { buildEulerityComparison, type EulerityComparisonRow } from "./eulerity-comparison"
+import { buildEulerityComparison, type EulerityComparisonRow, type EulerityAttributionRow } from "./eulerity-comparison"
 
 // Use the explicit row contract below instead of expanding the SDK's recursive
 // select-string types for this wide report.
@@ -11,14 +11,19 @@ export async function getEulerityComparison(start?: string, end?: string, allowe
   const { periodStart, periodEnd } = resolveReportPeriod(start, end)
   if (!allowedStudioIds.length) return buildEulerityComparison([], [], Math.round((Date.parse(periodEnd) - Date.parse(periodStart)) / 86400000) + 1)
   const client = supabase
-  const [studios, metrics] = await Promise.all([
+  const [studios, metrics, attribution] = await Promise.all([
     fetchAllRows(client.from("studios").select("id,studio_name").in("id", allowedStudioIds).eq("active", true).order("studio_name").order("id")),
     fetchAllRows(client.from("eulerity_daily_metrics")
       .select(metricColumns)
       .in("studio_id", allowedStudioIds)
       .gte("report_date", periodStart).lte("report_date", periodEnd).order("report_date").order("studio_id")),
+    fetchAllRows(client.from("ga4_source_medium_performance")
+      .select("studio_id,report_date,total_revenue")
+      .in("studio_id", allowedStudioIds).eq("vendor", "Eulerity").eq("marketing_type", "Paid")
+      .gte("report_date", periodStart).lte("report_date", periodEnd)
+      .order("report_date").order("studio_id").order("source").order("medium")),
   ])
-  if (studios.error || metrics.error) throw studios.error ?? metrics.error
+  if (studios.error || metrics.error || attribution.error) throw studios.error ?? metrics.error ?? attribution.error
   const days = Math.round((Date.parse(periodEnd) - Date.parse(periodStart)) / 86400000) + 1
-  return buildEulerityComparison(studios.data ?? [], (metrics.data ?? []) as unknown as EulerityComparisonRow[], days)
+  return buildEulerityComparison(studios.data ?? [], (metrics.data ?? []) as unknown as EulerityComparisonRow[], days, (attribution.data ?? []) as EulerityAttributionRow[])
 }

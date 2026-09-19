@@ -10,7 +10,10 @@ This is the fast-changing source of truth for what is implemented, deployed, act
 ## Overall Status
 
 September 19 Eulerity release: `/marketing/eulerity` replaces its placeholder
-with a channel-by-studio costs/results comparison for all authorized studios.
+and now includes selected-period GA4-attributed Eulerity paid revenue and ROAS
+in each studio total. Attribution is not allocated across individual channels.
+Missing attribution and zero/incomplete spend produce unavailable ROAS.
+The channel-by-studio costs/results comparison covers all authorized studios.
 Shared dates, complete-period weighted peer CPC, missing-data labels, and
 existing production membership controls are preserved. The original feature
 branch based on the older root checkout is superseded by
