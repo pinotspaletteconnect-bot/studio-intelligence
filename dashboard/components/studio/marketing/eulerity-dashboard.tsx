@@ -59,7 +59,11 @@ export function EulerityDashboard() {
             <tr className="border-b bg-muted/20">
               <th scope="row" className="p-4 text-left align-top">Eulerity total</th>
               {data.studios.map((studio) => <td key={studio.id} className="border-l p-4 align-top">
-                <p className="text-xl font-semibold tabular-nums">{money(studio.total.spend)}</p>
+                <p className="text-xl font-semibold tabular-nums">{money(studio.total.spend)} <span className="text-xs font-normal text-muted-foreground">spend</span></p>
+                <dl className="my-3 space-y-1 border-y py-2 text-xs tabular-nums">
+                  <div className="flex flex-wrap justify-between gap-1"><dt className="text-muted-foreground">Attributed revenue</dt><dd className="font-semibold">{money(studio.total.attributedRevenue)}</dd></div>
+                  <div className="flex flex-wrap justify-between gap-1"><dt className="text-muted-foreground">Attributed ROAS</dt><dd className="font-semibold">{studio.total.attributedRoas === null ? "—" : `${studio.total.attributedRoas.toFixed(2)}×`}</dd></div>
+                </dl>
                 <p className="mt-1 text-xs text-muted-foreground">{count(studio.total.clicks)} clicks · {money(studio.total.cpc)} CPC</p>
                 <p className="mt-1 text-xs text-muted-foreground">{count(studio.total.impressions)} impressions · {percent(studio.total.ctr)} CTR</p>
               </td>)}
@@ -86,7 +90,8 @@ export function EulerityDashboard() {
       </div>
       <div className="space-y-1 border-t bg-muted/20 px-4 py-3 text-xs leading-relaxed text-muted-foreground">
         <p>Comparison = other studios’ combined spend ÷ combined clicks for the same channel. Only complete periods with known spend and positive clicks are compared. This is a peer reference, not an agreed cost target.</p>
-        <p>Channel spend is allocated from Eulerity totals. CPC and click-through rate (CTR) use period totals. A dash means unavailable; missing days are not treated as zero. Results here are ad clicks and impressions, not bookings or revenue.</p>
+        <p>Attributed revenue is GA4 revenue assigned to Eulerity paid traffic for the selected dates. ROAS = attributed revenue ÷ Eulerity spend. Attribution is available at studio level, not reliably by channel. It does not represent all studio sales.</p>
+        <p>Channel spend is allocated from Eulerity totals. CPC and click-through rate (CTR) use period totals. A dash means unavailable; missing days are not treated as zero. ROAS requires attribution records, positive spend, and complete spend-date coverage.</p>
       </div>
     </Card>}
   </div>

@@ -6,10 +6,11 @@ export type EulerityComparisonRow = {
   report_date: string
 } & Partial<Record<`${"spend" | "clicks" | "impressions"}_${Channel | "total"}`, Value>>
 type Studio = { id: number | string; studio_name: string }
+export type EulerityAttributionRow = { studio_id: number | string; report_date: string; total_revenue: Value }
 
 const number = (value: Value | undefined) => value == null || !Number.isFinite(Number(value)) ? null : Number(value)
 
-export function buildEulerityComparison(studios: Studio[], rows: EulerityComparisonRow[], days: number) {
+export function buildEulerityComparison(studios: Studio[], rows: EulerityComparisonRow[], days: number, attribution: EulerityAttributionRow[] = []) {
   const result = studios.map((studio) => {
     const records = rows.filter((row) => String(row.studio_id) === String(studio.id))
     const daysWithData = new Set(records.map((row) => row.report_date)).size
@@ -25,7 +26,10 @@ export function buildEulerityComparison(studios: Studio[], rows: EulerityCompari
       }
     }
     const total = metrics("total")
-    return { id: String(studio.id), name: studio.studio_name, daysWithData, total,
+    const revenues = attribution.filter((row) => String(row.studio_id) === String(studio.id)).map((row) => number(row.total_revenue))
+    const attributedRevenue = !revenues.length || revenues.some((value) => value === null) ? null : revenues.reduce<number>((sum, value) => sum + (value ?? 0), 0)
+    const attributedRoas = attributedRevenue !== null && total.spend !== null && total.spend > 0 && daysWithData === days ? attributedRevenue / total.spend : null
+    return { id: String(studio.id), name: studio.studio_name, daysWithData, total: { ...total, attributedRevenue, attributedRoas },
       channels: channelKeys.map((key) => {
         const values = metrics(key)
         return { key, ...values, spendShare: values.spend !== null && total.spend !== null && total.spend > 0 ? values.spend / total.spend * 100 : null }

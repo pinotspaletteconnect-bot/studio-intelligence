@@ -10,7 +10,11 @@ clicks, CTR, and CPC across authorized active studios for shared dates.
 Same-channel peer CPC excludes the current studio and uses combined peer
 spend divided by combined clicks. Only complete periods with known spend and
 positive clicks qualify. Peer costs are references, not agreed targets.
-Clicks and impressions do not claim booking or revenue attribution.
+Studio totals also show GA4 revenue attributed to Eulerity paid traffic over
+the selected dates, and ROAS as total attributed revenue divided by total spend.
+No attribution is allocated to channels. Missing attribution stays unavailable;
+ROAS requires positive spend and complete spend-date coverage. This is
+attributed revenue, not all studio sales or a claim of incremental sales.
 
 The new read-only endpoint uses existing authenticated organization/studio
 access, scopes both queries, paginates results, and returns private/no-store.
