@@ -1,6 +1,9 @@
+import { fetchAllRows } from "@/lib/supabase/pagination"
+import { getStudios } from "@/lib/services/studios"
 import { supabase } from "@/lib/supabase/server"
 
 type DailyRow = {
+  studio_id: number
   report_date: string
   active_users: number | string | null
   total_users: number | string | null
@@ -55,7 +58,19 @@ type Totals = {
 
 export type Ga4Kpi = { value: number; change: number | null }
 
+export type Ga4StudioMetric = { value: number | null; previous: number | null; delta: number | null; change: number | null }
+export type Ga4StudioComparison = {
+  id: number
+  name: string
+  currentDays: number
+  previousDays: number
+  kpis: Record<keyof Ga4NorthAmericaDashboard["kpis"], Ga4StudioMetric>
+}
+
 export type Ga4NorthAmericaDashboard = {
+  studios: Ga4StudioComparison[]
+  periodDays: number
+  comparisonDays: number
   scope: "North America"
   period: { startDate: string; endDate: string }
   comparisonPeriod: { startDate: string; endDate: string }
@@ -156,6 +171,23 @@ function groupBreakdowns(rows: BreakdownRow[], type: BreakdownRow["breakdown_typ
   return [...grouped.values()].sort((a, b) => b.sessions - a.sessions || b.activeUsers - a.activeUsers).slice(0, limit)
 }
 
+function buildKpis(current: Totals, previous: Totals, currentKeyEvents: number, previousKeyEvents: number, periodDays: number, comparisonDays: number): Ga4NorthAmericaDashboard["kpis"] {
+  const currentAverageDailyActiveUsers = current.activeUsers / periodDays
+  const previousAverageDailyActiveUsers = previous.activeUsers / comparisonDays
+  const currentEngagementRate = current.sessions ? (current.engagedSessions / current.sessions) * 100 : 0
+  const previousEngagementRate = previous.sessions ? (previous.engagedSessions / previous.sessions) * 100 : 0
+  const currentDuration = current.sessions ? current.sessionDurationSeconds / current.sessions : 0
+  const previousDuration = previous.sessions ? previous.sessionDurationSeconds / previous.sessions : 0
+  const currentConversion = current.sessions ? (current.ecommercePurchases / current.sessions) * 100 : 0
+  const previousConversion = previous.sessions ? (previous.ecommercePurchases / previous.sessions) * 100 : 0
+  return {
+      activeUsers: metric(currentAverageDailyActiveUsers, previousAverageDailyActiveUsers), sessions: metric(current.sessions, previous.sessions), newUsers: metric(current.newUsers, previous.newUsers),
+      engagementRate: metric(currentEngagementRate, previousEngagementRate), pageViewsPerUser: metric(current.activeUsers ? current.pageViews / current.activeUsers : 0, previous.activeUsers ? previous.pageViews / previous.activeUsers : 0),
+      averageEngagementTime: metric(currentDuration, previousDuration), keyEvents: metric(currentKeyEvents, previousKeyEvents), purchases: metric(current.ecommercePurchases, previous.ecommercePurchases),
+      purchaseRevenue: metric(current.purchaseRevenue, previous.purchaseRevenue), conversionRate: metric(currentConversion, previousConversion),
+    }
+}
+
 export async function getGa4NorthAmericaDashboard(
   studioId: string | undefined,
   startDate: string,
@@ -165,6 +197,7 @@ export async function getGa4NorthAmericaDashboard(
   customComparisonStart?: string,
   customComparisonEnd?: string
 ): Promise<Ga4NorthAmericaDashboard> {
+  if (studioId && studioId !== "all" && !allowedStudioIds.includes(Number(studioId))) throw new Error("Studio access denied.")
   const periodDays = Math.round((Date.parse(endDate) - Date.parse(startDate)) / 86_400_000) + 1
   const useCustomComparison = comparisonMode === "custom" && Boolean(customComparisonStart && customComparisonEnd)
   const comparisonEnd = useCustomComparison
@@ -177,18 +210,24 @@ export async function getGa4NorthAmericaDashboard(
     : comparisonMode === "priorYearWeek"
       ? shiftDate(startDate, -364)
       : shiftDate(comparisonEnd, -(periodDays - 1))
-  const dailySelect = "report_date,active_users,total_users,new_users,sessions,engaged_sessions,page_views,average_session_duration,key_events,ecommerce_purchases,purchase_revenue"
+  const comparisonDays = Math.round((Date.parse(comparisonEnd) - Date.parse(comparisonStart)) / 86_400_000) + 1
+  const dailySelect = "studio_id,report_date,active_users,total_users,new_users,sessions,engaged_sessions,page_views,average_session_duration,key_events,ecommerce_purchases,purchase_revenue"
 
   const currentDailyQuery = addStudioFilter(supabase.from("ga4_north_america_daily_metrics").select(dailySelect).gte("report_date", startDate).lte("report_date", endDate), studioId, allowedStudioIds)
   const previousDailyQuery = addStudioFilter(supabase.from("ga4_north_america_daily_metrics").select(dailySelect).gte("report_date", comparisonStart).lte("report_date", comparisonEnd), studioId, allowedStudioIds)
   const breakdownQuery = addStudioFilter(supabase.from("ga4_north_america_breakdown_daily").select("breakdown_type,dimension_value,dimension_secondary,sessions,active_users,new_users,key_events,total_revenue").gte("report_date", startDate).lte("report_date", endDate), studioId, allowedStudioIds)
-  const currentKeyEventsQuery = addStudioFilter(supabase.from("ga4_north_america_breakdown_daily").select("key_events").eq("breakdown_type", "country").gte("report_date", startDate).lte("report_date", endDate), studioId, allowedStudioIds)
-  const previousKeyEventsQuery = addStudioFilter(supabase.from("ga4_north_america_breakdown_daily").select("key_events").eq("breakdown_type", "country").gte("report_date", comparisonStart).lte("report_date", comparisonEnd), studioId, allowedStudioIds)
+  const currentKeyEventsQuery = addStudioFilter(supabase.from("ga4_north_america_breakdown_daily").select("studio_id,report_date,key_events").eq("breakdown_type", "country").gte("report_date", startDate).lte("report_date", endDate), studioId, allowedStudioIds)
+  const previousKeyEventsQuery = addStudioFilter(supabase.from("ga4_north_america_breakdown_daily").select("studio_id,report_date,key_events").eq("breakdown_type", "country").gte("report_date", comparisonStart).lte("report_date", comparisonEnd), studioId, allowedStudioIds)
   const contentQuery = addStudioFilter(supabase.from("ga4_north_america_content_daily").select("page_path,page_views,active_users,key_events,total_revenue").gte("report_date", startDate).lte("report_date", endDate), studioId, allowedStudioIds)
   const eventQuery = addStudioFilter(supabase.from("ga4_north_america_event_daily").select("event_name,event_count,active_users,total_revenue").gte("report_date", startDate).lte("report_date", endDate), studioId, allowedStudioIds)
 
   const [currentResult, previousResult, breakdownResult, currentKeyEventsResult, previousKeyEventsResult, contentResult, eventResult] = await Promise.all([
-    currentDailyQuery.order("report_date"), previousDailyQuery.order("report_date"), breakdownQuery.range(0, 9999), currentKeyEventsQuery, previousKeyEventsQuery, contentQuery.range(0, 9999), eventQuery.range(0, 9999),
+    fetchAllRows(currentDailyQuery.order("studio_id").order("report_date")),
+    fetchAllRows(previousDailyQuery.order("studio_id").order("report_date")),
+    breakdownQuery.range(0, 9999),
+    fetchAllRows(currentKeyEventsQuery.order("studio_id").order("report_date").order("dimension_value").order("dimension_secondary")),
+    fetchAllRows(previousKeyEventsQuery.order("studio_id").order("report_date").order("dimension_value").order("dimension_secondary")),
+    contentQuery.range(0, 9999), eventQuery.range(0, 9999),
   ])
   const errors = [currentResult.error, previousResult.error, breakdownResult.error, currentKeyEventsResult.error, previousKeyEventsResult.error, contentResult.error, eventResult.error].filter(Boolean)
   const missingTables = errors.length > 0 && errors.every(error => ["42P01", "PGRST204", "PGRST205"].includes(error?.code ?? ""))
@@ -200,14 +239,31 @@ export async function getGa4NorthAmericaDashboard(
   const previous = totals(previousRows)
   const currentKeyEvents = (currentKeyEventsResult.data ?? []).reduce((sum, row) => sum + numberValue(row.key_events), 0)
   const previousKeyEvents = (previousKeyEventsResult.data ?? []).reduce((sum, row) => sum + numberValue(row.key_events), 0)
-  const currentAverageDailyActiveUsers = current.activeUsers / periodDays
-  const previousAverageDailyActiveUsers = previous.activeUsers / periodDays
-  const currentEngagementRate = current.sessions ? (current.engagedSessions / current.sessions) * 100 : 0
-  const previousEngagementRate = previous.sessions ? (previous.engagedSessions / previous.sessions) * 100 : 0
-  const currentDuration = current.sessions ? current.sessionDurationSeconds / current.sessions : 0
-  const previousDuration = previous.sessions ? previous.sessionDurationSeconds / previous.sessions : 0
-  const currentConversion = current.sessions ? (current.ecommercePurchases / current.sessions) * 100 : 0
-  const previousConversion = previous.sessions ? (previous.ecommercePurchases / previous.sessions) * 100 : 0
+  const studioList = await getStudios(allowedStudioIds)
+  const studios = (studioList ?? []).filter(studio => !studioId || studioId === "all" || String(studio.id) === studioId).map(studio => {
+    const rows = currentRows.filter(row => Number(row.studio_id) === Number(studio.id))
+    const priorRows = previousRows.filter(row => Number(row.studio_id) === Number(studio.id))
+    const keys = (currentKeyEventsResult.data ?? []).filter(row => Number(row.studio_id) === Number(studio.id))
+    const priorKeys = (previousKeyEventsResult.data ?? []).filter(row => Number(row.studio_id) === Number(studio.id))
+    const currentDays = new Set(rows.map(row => row.report_date)).size
+    const previousDays = new Set(priorRows.map(row => row.report_date)).size
+    const currentTotals = totals(rows)
+    const previousTotals = totals(priorRows)
+    const values = buildKpis(currentTotals, previousTotals, keys.reduce((sum, row) => sum + numberValue(row.key_events), 0), priorKeys.reduce((sum, row) => sum + numberValue(row.key_events), 0), periodDays, comparisonDays)
+    const priorValues = buildKpis(previousTotals, totals([]), priorKeys.reduce((sum, row) => sum + numberValue(row.key_events), 0), 0, comparisonDays, comparisonDays)
+    const kpis = Object.fromEntries(Object.entries(values).map(([key, metric]) => {
+      const metricKey = key as keyof typeof values
+      const currentComplete = currentDays === periodDays && (key !== "keyEvents" || new Set(keys.map(row => row.report_date)).size === periodDays)
+      const previousComplete = previousDays === comparisonDays && (key !== "keyEvents" || new Set(priorKeys.map(row => row.report_date)).size === comparisonDays)
+      // Missing days are unknown, not zero. Ratios also require a denominator.
+      const needsSessions = ["engagementRate", "averageEngagementTime", "conversionRate"].includes(key)
+      const needsUsers = key === "pageViewsPerUser"
+      const now = currentComplete && (!needsSessions || currentTotals.sessions > 0) && (!needsUsers || currentTotals.activeUsers > 0) ? metric.value : null
+      const previous = previousComplete && (!needsSessions || previousTotals.sessions > 0) && (!needsUsers || previousTotals.activeUsers > 0) ? priorValues[metricKey].value : null
+      return [key, { value: now, previous, delta: now !== null && previous !== null ? now - previous : null, change: now !== null && previous !== null ? change(now, previous) : null }]
+    })) as Ga4StudioComparison["kpis"]
+    return { id: Number(studio.id), name: studio.studio_name, currentDays, previousDays, kpis }
+  })
   const daily = new Map<string, Ga4NorthAmericaDashboard["trends"][number]>()
   for (const row of currentRows) {
     const item = daily.get(row.report_date) ?? { date: row.report_date, activeUsers: 0, sessions: 0, purchaseRevenue: 0 }
@@ -233,12 +289,8 @@ export async function getGa4NorthAmericaDashboard(
 
   return {
     scope: "North America", period: { startDate, endDate }, comparisonPeriod: { startDate: comparisonStart, endDate: comparisonEnd }, configured: !missingTables, hasData: currentRows.length > 0,
-    kpis: {
-      activeUsers: metric(currentAverageDailyActiveUsers, previousAverageDailyActiveUsers), sessions: metric(current.sessions, previous.sessions), newUsers: metric(current.newUsers, previous.newUsers),
-      engagementRate: metric(currentEngagementRate, previousEngagementRate), pageViewsPerUser: metric(current.activeUsers ? current.pageViews / current.activeUsers : 0, previous.activeUsers ? previous.pageViews / previous.activeUsers : 0),
-      averageEngagementTime: metric(currentDuration, previousDuration), keyEvents: metric(currentKeyEvents, previousKeyEvents), purchases: metric(current.ecommercePurchases, previous.ecommercePurchases),
-      purchaseRevenue: metric(current.purchaseRevenue, previous.purchaseRevenue), conversionRate: metric(currentConversion, previousConversion),
-    },
+    studios, periodDays, comparisonDays,
+    kpis: buildKpis(current, previous, currentKeyEvents, previousKeyEvents, periodDays, comparisonDays),
     trends: [...daily.values()].sort((a, b) => a.date.localeCompare(b.date)),
     countries: groupBreakdowns(breakdownRows, "country"), cities: groupBreakdowns(breakdownRows, "city", 12), devices: groupBreakdowns(breakdownRows, "device_category"),
     operatingSystems: groupBreakdowns(breakdownRows, "operating_system"), sources: groupBreakdowns(breakdownRows, "source_medium", 15),
