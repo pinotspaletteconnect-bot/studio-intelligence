@@ -9,6 +9,16 @@ This is the fast-changing source of truth for what is implemented, deployed, act
 
 ## Overall Status
 
+September 21 local GA4 addition (not deployed): the North America page shows
+a side-by-side studio table with all ten KPIs, current and comparison values,
+and absolute/relative changes. The existing studio/date/comparison filters apply;
+rate differences use percentage points. Missing or incomplete studio periods
+remain unavailable, with day coverage shown. Daily and country-key-event reads
+are paginated, and custom-period daily averages use each period’s own length.
+No warehouse, collection, or workflow changes. Validation: five focused GA4
+regression tests, full lint, and production webpack build passed with placeholder
+build credentials. Live-data and browser visual verification remain pending.
+
 September 21 Operations addition (local, not deployed): all 14 Operations KPI
 cards now use the Executive dashboard's studio breakdown layout, including
 its three labor cards. All Studios shows studio values on the right, stacking
