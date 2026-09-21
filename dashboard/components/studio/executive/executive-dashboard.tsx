@@ -29,6 +29,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useApp } from "@/contexts/app-context"
 import type { ExecutiveDashboardData } from "@/lib/services/executive"
 import { LaborSummaryCards } from "@/components/studio/operations/labor-summary-cards"
+import { StudioMetricBreakdown, type StudioMetricRow } from "@/components/studio/shared/studio-metric-breakdown"
 import { KpiHelp } from "@/components/studio/shared/kpi-help"
 
 const money = new Intl.NumberFormat("en-US", {
@@ -52,6 +53,7 @@ const dateLabel = (value: string) => shortDate.format(new Date(`${value}T00:00:0
 const studioColors = ["#2563eb", "#7c3aed", "#f97316", "#10b981", "#e11d48", "#0891b2"]
 
 type Metric = {
+  studioRows: StudioMetricRow[]
   label: string
   value: string
   change: number | null
@@ -78,7 +80,7 @@ function Change({ value }: { value: number | null }) {
 }
 
 export function ExecutiveDashboard() {
-  const { comparison, comparisonDateRange, dateRange, selectedStudio } = useApp()
+  const { comparison, comparisonDateRange, dateRange, selectedStudio, studios } = useApp()
   const [data, setData] = useState<ExecutiveDashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -128,6 +130,13 @@ export function ExecutiveDashboard() {
 
   const metrics = useMemo<Metric[]>(() => {
     if (!data) return []
+    const rows = (getValue: (id: number) => number | null | undefined, format: (value: number) => string): StudioMetricRow[] => studios.map((studio) => {
+      const value = getValue(studio.id)
+      return { studioId: studio.id, studioName: studio.studio_name, value: value == null ? "—" : format(value) }
+    })
+    const operation = (id: number) => data.operations.studioSales.find((studio) => studio.studioId === id)
+    const marketingStudio = (id: number) => data.marketing.studioMetrics.find((studio) => studio.studioId === id)
+    const bookings = (id: number) => data.studioBookings.find((studio) => studio.studioId === id)
     const current = data.operations.kpis
     const prior = data.comparison?.kpis
     const marketing = data.marketing.kpis
@@ -135,6 +144,7 @@ export function ExecutiveDashboard() {
     return [
       {
         label: "Total sales",
+        studioRows: rows((id) => operation(id)?.totalSales, money.format),
         value: money.format(current.totalSales),
         change: data.comparison?.changes.totalSales?.percent ?? null,
         detail: `${money.format(current.averageDailySales)} average per day`,
@@ -143,6 +153,7 @@ export function ExecutiveDashboard() {
       },
       {
         label: "Seats sold",
+        studioRows: rows((id) => operation(id)?.seatsSold, (value) => value.toLocaleString()),
         value: current.seatsSold.toLocaleString(),
         change: data.comparison?.changes.seatsSold?.percent ?? null,
         detail: `${current.attendancePercent.toFixed(1)}% capacity`,
@@ -151,6 +162,7 @@ export function ExecutiveDashboard() {
       },
       {
         label: "Revenue per seat",
+        studioRows: rows((id) => operation(id)?.revenuePerSeat, preciseMoney.format),
         value: preciseMoney.format(current.revenuePerSeat),
         change: data.comparison?.changes.revenuePerSeat?.percent ?? null,
         detail: `${preciseMoney.format(current.foodBeveragePerSeat)} F&B per seat`,
@@ -159,6 +171,7 @@ export function ExecutiveDashboard() {
       },
       {
         label: "F&B sales",
+        studioRows: rows((id) => operation(id)?.foodBeverageSales, money.format),
         value: money.format(current.foodBeverageSales),
         change: data.comparison?.changes.foodBeverageSales?.percent ?? null,
         detail: `${current.foodBeverageShare.toFixed(1)}% of sales`,
@@ -167,6 +180,7 @@ export function ExecutiveDashboard() {
       },
       {
         label: "Meta + Eulerity spend",
+        studioRows: rows((id) => marketingStudio(id)?.paidSpend, money.format),
         value: money.format(marketing.paidSpend),
         change: percentChange(marketing.paidSpend, priorMarketing.paidSpend),
         detail: `${marketing.sessions.toLocaleString()} website sessions`,
@@ -175,6 +189,7 @@ export function ExecutiveDashboard() {
       },
       {
         label: "Attributed revenue",
+        studioRows: rows((id) => marketingStudio(id)?.attributedRevenue, money.format),
         value: marketing.attributionAvailable ? money.format(marketing.attributedRevenue) : "—",
         change: marketing.attributionAvailable && priorMarketing.attributionAvailable
           ? percentChange(marketing.attributedRevenue, priorMarketing.attributedRevenue)
@@ -187,6 +202,7 @@ export function ExecutiveDashboard() {
       },
       {
         label: "Website sessions",
+        studioRows: rows((id) => marketingStudio(id)?.sessions, (value) => value.toLocaleString()),
         value: marketing.sessions.toLocaleString(),
         change: percentChange(marketing.sessions, priorMarketing.sessions),
         detail: `${marketing.keyEvents.toLocaleString()} key events`,
@@ -195,6 +211,7 @@ export function ExecutiveDashboard() {
       },
       {
         label: "Average lead time",
+        studioRows: rows((id) => operation(id)?.averageLeadTime, (value) => `${value.toFixed(1)} days`),
         value: `${current.averageLeadTime.toFixed(1)} days`,
         change: prior ? percentChange(current.averageLeadTime, prior.averageLeadTime) : null,
         detail: "Seat-weighted booking lead time",
@@ -203,6 +220,7 @@ export function ExecutiveDashboard() {
       },
       {
         label: "Yesterday's booked seats",
+        studioRows: rows((id) => bookings(id)?.seats, (value) => value.toLocaleString()),
         value: data.yesterdayBookings.seats === null
           ? "—"
           : data.yesterdayBookings.seats.toLocaleString(),
@@ -214,6 +232,7 @@ export function ExecutiveDashboard() {
       },
       {
         label: "Yesterday's booked sales",
+        studioRows: rows((id) => bookings(id)?.sales, money.format),
         value: data.yesterdayBookings.sales === null
           ? "—"
           : money.format(data.yesterdayBookings.sales),
@@ -224,10 +243,10 @@ export function ExecutiveDashboard() {
         showChange: false,
       },
     ]
-  }, [data])
+  }, [data, studios])
 
   if (loading) {
-    return <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">{Array.from({ length: 10 }, (_, index) => <Skeleton key={index} className="h-36 rounded-xl" />)}</div>
+    return <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3 min-[2400px]:grid-cols-5">{Array.from({ length: 10 }, (_, index) => <Skeleton key={index} className="h-36 rounded-xl" />)}</div>
   }
 
   if (error || !data) {
@@ -279,18 +298,21 @@ export function ExecutiveDashboard() {
 
   return (
     <div className="grid gap-6">
-      <LaborSummaryCards />
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        {metrics.map(({ label, value, change, detail, description, icon: Icon, showChange = true }) => (
-          <Card key={label} className="gap-3 py-4">
-            <CardHeader className="flex-row items-center justify-between px-4">
+      <LaborSummaryCards showStudioBreakdown />
+      <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3 min-[2400px]:grid-cols-5">
+        {metrics.map(({ studioRows, label, value, change, detail, description, icon: Icon, showChange = true }) => (
+          <Card key={label} className="@container gap-3 py-4">
+            <CardHeader className="flex flex-row items-center justify-between px-4">
               <div className="flex items-center gap-1.5"><CardTitle className="text-xs font-medium text-muted-foreground">{label}</CardTitle><KpiHelp description={description} /></div>
               <span className="rounded-lg bg-primary/10 p-2 text-primary"><Icon className="size-4" /></span>
             </CardHeader>
-            <CardContent className="px-4">
-              <p className="text-2xl font-semibold tabular-nums">{value}</p>
+            <CardContent className={`grid gap-4 px-4 ${selectedStudio === "all" ? "@min-[360px]:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]" : ""}`}>
+              <div>
+                <p className="text-2xl font-semibold tabular-nums">{value}</p>
               {showChange ? <p className="mt-1 text-xs"><Change value={change} /> <span className="text-muted-foreground">vs {comparisonLabel}</span></p> : null}
               <p className="mt-2 text-xs text-muted-foreground">{detail}</p>
+              </div>
+              {selectedStudio === "all" ? <StudioMetricBreakdown rows={studioRows} label={label} /> : null}
             </CardContent>
           </Card>
         ))}

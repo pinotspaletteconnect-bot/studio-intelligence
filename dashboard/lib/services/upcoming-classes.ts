@@ -56,6 +56,8 @@ export type UpcomingClassesData = {
   studios: Array<{
     id: number
     name: string
+    bookedSeats: number | null
+    bookedSales: number | null
     classes: Array<{
       eventKey: string
       eventDate: string
@@ -205,6 +207,8 @@ export async function getUpcomingClasses(
       .map((id) => ({
         id,
         name: studioNames.get(id) ?? `Studio ${id}`,
+        bookedSeats: bookingRows.some((row) => row.studio_id === id) ? bookingRows.filter((row) => row.studio_id === id).reduce((sum, row) => sum + numberValue(row.ordered_seats), 0) : null,
+        bookedSales: bookingRows.some((row) => row.studio_id === id) ? bookingRows.filter((row) => row.studio_id === id).reduce((sum, row) => sum + numberValue(row.booked_sales), 0) : null,
         classes: classes.filter((row) => row.studioId === id),
       }))
       .sort((a, b) => a.name.localeCompare(b.name)),

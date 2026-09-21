@@ -46,6 +46,7 @@ type ClassTypeRow = {
 }
 
 type ClassLeadTimeRow = {
+  studio_id: number
   seats_sold: number | string | null
   lead_time_average: number | string | null
 }
@@ -125,6 +126,9 @@ export type OperationsDashboardData = {
     totalSales: number
     seatsSold: number
     foodBeverageShare: number
+    foodBeverageSales: number
+    revenuePerSeat: number | null
+    averageLeadTime: number | null
     daily: Array<{ date: string; totalSales: number }>
   }>
   classTypes: Array<{
@@ -769,6 +773,8 @@ export async function getOperationsDashboard(
     .map(([currentStudioId, studioDays]) => {
       const studioFoodBeverage = studioFoodBeverageMap.get(currentStudioId)
       const studioTotals = studioTotalsMap.get(currentStudioId)
+      const leadRows = classLeadTimeRows.filter((row) => row.studio_id === currentStudioId)
+      const leadSeats = leadRows.reduce((sum, row) => sum + numberValue(row.seats_sold), 0)
 
       return {
         studioId: currentStudioId,
@@ -776,6 +782,9 @@ export async function getOperationsDashboard(
           studioNames.get(currentStudioId) ?? `Studio ${currentStudioId}`,
         totalSales: studioTotals?.totalSales ?? 0,
         seatsSold: studioTotals?.seatsSold ?? 0,
+        foodBeverageSales: studioFoodBeverage?.foodBeverageSales ?? 0,
+        revenuePerSeat: studioTotals?.seatsSold ? studioTotals.totalSales / studioTotals.seatsSold : null,
+        averageLeadTime: leadSeats ? leadRows.reduce((sum, row) => sum + numberValue(row.lead_time_average) * numberValue(row.seats_sold), 0) / leadSeats : null,
         foodBeverageShare: studioFoodBeverage?.totalSales
           ? (studioFoodBeverage.foodBeverageSales /
               studioFoodBeverage.totalSales) *

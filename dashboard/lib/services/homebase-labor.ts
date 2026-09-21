@@ -19,5 +19,16 @@ export async function getHomebaseLabor(studioId:string|undefined,startDate:strin
   for(const r of roles){const key=`${r.studio_id}:${r.labor_date}`;const d=grouped.get(key)??{studioId:r.studio_id,studioName:r.studio_name,date:r.labor_date,totalSales:r.totalSales,cogsHours:0,overheadHours:0,unmappedHours:0,cogsCost:0,overheadCost:0,unmappedCost:0,scheduledHours:0,scheduledCost:0};d.scheduledHours+=r.scheduledHours;d.scheduledCost+=r.scheduledCost;if(r.labor_category==="cogs"){d.cogsHours+=r.actualHours;d.cogsCost+=r.actualCost}else if(r.labor_category==="overhead"){d.overheadHours+=r.actualHours;d.overheadCost+=r.actualCost}else{d.unmappedHours+=r.actualHours;d.unmappedCost+=r.actualCost}grouped.set(key,d)}
   const daily=[...grouped.values()].map(d=>{const totalCost=d.cogsCost+d.overheadCost+d.unmappedCost;return{...d,totalCost,actualHours:d.cogsHours+d.overheadHours+d.unmappedHours,cogsPercent:d.totalSales>0?d.cogsCost/d.totalSales*100:null,overheadPercent:d.totalSales>0?d.overheadCost/d.totalSales*100:null,totalPercent:d.totalSales>0?totalCost/d.totalSales*100:null}})
   const totalSales=daily.reduce((s,d)=>s+d.totalSales,0),cogsCost=daily.reduce((s,d)=>s+d.cogsCost,0),overheadCost=daily.reduce((s,d)=>s+d.overheadCost,0),unmappedCost=daily.reduce((s,d)=>s+d.unmappedCost,0),totalCost=cogsCost+overheadCost+unmappedCost
-  return{startDate,endDate,totals:{totalSales,cogsCost,overheadCost,unmappedCost,totalCost,actualHours:daily.reduce((s,d)=>s+d.actualHours,0),scheduledHours:daily.reduce((s,d)=>s+d.scheduledHours,0),cogsPercent:totalSales>0?cogsCost/totalSales*100:null,overheadPercent:totalSales>0?overheadCost/totalSales*100:null,totalPercent:totalSales>0?totalCost/totalSales*100:null},daily,roles}
+  const studios = [...new Set(daily.map((row) => row.studioId))].map((id) => {
+    const rows = daily.filter((row) => row.studioId === id)
+    const sales = rows.reduce((sum, row) => sum + row.totalSales, 0)
+    const totalCost = rows.reduce((sum, row) => sum + row.totalCost, 0)
+    const cogsCost = rows.reduce((sum, row) => sum + row.cogsCost, 0)
+    const overheadCost = rows.reduce((sum, row) => sum + row.overheadCost, 0)
+    return { studioId: id, totalCost, cogsCost, overheadCost,
+      totalPercent: sales > 0 ? totalCost / sales * 100 : null,
+      cogsPercent: sales > 0 ? cogsCost / sales * 100 : null,
+      overheadPercent: sales > 0 ? overheadCost / sales * 100 : null }
+  })
+  return{startDate,endDate,studios,totals:{totalSales,cogsCost,overheadCost,unmappedCost,totalCost,actualHours:daily.reduce((s,d)=>s+d.actualHours,0),scheduledHours:daily.reduce((s,d)=>s+d.scheduledHours,0),cogsPercent:totalSales>0?cogsCost/totalSales*100:null,overheadPercent:totalSales>0?overheadCost/totalSales*100:null,totalPercent:totalSales>0?totalCost/totalSales*100:null},daily,roles}
 }
