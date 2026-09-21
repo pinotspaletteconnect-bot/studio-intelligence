@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/chart"
 import { Skeleton } from "@/components/ui/skeleton"
 import { LaborSummaryCards } from "@/components/studio/operations/labor-summary-cards"
+import { StudioMetricBreakdown } from "@/components/studio/shared/studio-metric-breakdown"
 import { KpiHelp } from "@/components/studio/shared/kpi-help"
 
 const currency = new Intl.NumberFormat("en-US", {
@@ -115,6 +116,7 @@ function formatAbsoluteChange(
 export function OperationsDashboard() {
   const {
     selectedStudio,
+    studios,
     dateRange,
     comparison,
     comparisonDateRange,
@@ -201,7 +203,7 @@ export function OperationsDashboard() {
 
   if (loading) {
     return (
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3 min-[2400px]:grid-cols-4">
         {cards.map((card) => (
           <Skeleton key={card.key} className="h-32 rounded-xl" />
         ))}
@@ -234,7 +236,7 @@ export function OperationsDashboard() {
 
   return (
     <div className="space-y-6">
-      <LaborSummaryCards />
+      <LaborSummaryCards showStudioBreakdown />
       <div className="flex flex-wrap justify-end gap-2">
         <Link href="/operations/labor" className={buttonVariants({ variant: "outline" })}>
           <Clock3 />
@@ -255,18 +257,21 @@ export function OperationsDashboard() {
           Year-over-year
         </Link>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3 min-[2400px]:grid-cols-4">
         {cards.map(({ key, label, description, icon: Icon }) => {
           const change = data.comparison?.changes[key]
           const ChangeIcon = (change?.absolute ?? 0) >= 0
             ? TrendingUp
             : TrendingDown
           const card = (
-          <Card className={key === "foodSales" ? "h-full transition-colors hover:border-primary/50" : undefined}>
-            <CardContent>
-              <div className="flex items-start justify-between">
+          <Card className="@container h-full transition-colors hover:border-primary/50">
+            <CardContent className={`grid gap-4 ${selectedStudio === "all" ? "@min-[360px]:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]" : ""}`}>
+              <div className="min-w-0">
                 <div>
-                  <div className="flex items-center gap-1.5"><p className="text-sm text-muted-foreground">{label}</p><KpiHelp description={description} /></div>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-1.5"><p className="text-sm text-muted-foreground">{label}</p><KpiHelp description={description} /></div>
+                    <Icon className="size-4 shrink-0 text-primary" />
+                  </div>
                   <p className="mt-2 flex flex-wrap items-baseline gap-x-2 text-2xl font-semibold tabular-nums">
                     {formatCard(key, data.kpis[key])}
                     {(key === "candleSales" ||
@@ -292,27 +297,6 @@ export function OperationsDashboard() {
                     <p className="mt-1 text-sm tabular-nums text-muted-foreground">
                       {data.kpis.mobileEventAverageSeats.toFixed(1)} avg seats ·{" "}
                       {currency.format(data.kpis.mobileEventAverageRevenue)} avg revenue
-                    </p>
-                  )}
-                  {key === "foodBeverageShare" && (
-                    <p className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs tabular-nums text-muted-foreground">
-                      {data.studioSales.map((studio) => (
-                        <span key={studio.studioId}>
-                          {studio.studioName} {studio.foodBeverageShare.toFixed(1)}%
-                        </span>
-                      ))}
-                    </p>
-                  )}
-                  {(key === "totalSales" || key === "seatsSold") && (
-                    <p className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs tabular-nums text-muted-foreground">
-                      {data.studioSales.map((studio) => (
-                        <span key={studio.studioId}>
-                          {studio.studioName}{" "}
-                          {key === "totalSales"
-                            ? currency.format(studio.totalSales)
-                            : studio.seatsSold.toLocaleString()}
-                        </span>
-                      ))}
                     </p>
                   )}
                   {change && (
@@ -341,10 +325,13 @@ export function OperationsDashboard() {
                     </div>
                   )}
                 </div>
-                <div className="rounded-lg bg-primary/10 p-2 text-primary">
-                  <Icon className="size-5" />
-                </div>
               </div>
+              {selectedStudio === "all" ? (
+                <StudioMetricBreakdown label={label} rows={studios.map((studio) => {
+                  const value = data.studioKpis.find((row) => row.studioId === studio.id)?.values[key]
+                  return { studioId: studio.id, studioName: studio.studio_name, value: value == null ? "—" : formatCard(key, value) }
+                })} />
+              ) : null}
             </CardContent>
           </Card>
           )

@@ -9,7 +9,18 @@ This is the fast-changing source of truth for what is implemented, deployed, act
 
 ## Overall Status
 
-September 21 local addition (not deployed): the Executive dashboard's ten KPI
+September 21 Operations addition (local, not deployed): all 14 Operations KPI
+cards now use the Executive dashboard's studio breakdown layout, including
+its three labor cards. All Studios shows studio values on the right, stacking
+at narrow widths; a selected studio retains the single total. Existing card
+links and comparisons remain. Studio calculations reuse reconciled reporting
+rows, distinguish unavailable sources from zero, and preserve existing
+imported-day average-sales semantics. No schema or workflow changes.
+Validation: 43 automated tests and full lint pass; production build passes
+with webpack and placeholder build credentials. Two opt-in live tests are
+skipped; authenticated visual verification and deployment remain pending.
+
+September 21 production release (PR #67, `21a7c51`): the Executive dashboard's ten KPI
 cards and three labor cards show studio-level values beside portfolio totals
 when All Studios is selected. Breakdowns use the existing authorized, dated
 service results; booking cards retain yesterday's booking date. Missing studio
@@ -18,8 +29,8 @@ per studio, and labor rows include each studio's percentage of sales. Cards
 stack their breakdowns at narrow widths. No warehouse or workflow changes.
 Validation: 18 focused regression tests and full lint pass. Production build
 passes using webpack and placeholder build credentials; Turbopack rejects the
-shared dependency junction in this isolated checkout. Live visual verification
-and deployment remain pending.
+shared dependency junction in this isolated checkout. Railway confirmed successful deployment September 21; authenticated visual
+verification remains pending.
 
 September 19 Eulerity release: `/marketing/eulerity` replaces its placeholder
 and now includes selected-period GA4-attributed Eulerity paid revenue and ROAS

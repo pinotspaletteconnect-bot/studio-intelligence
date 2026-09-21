@@ -152,3 +152,50 @@ describe("executive studio card breakdowns", () => {
     expect(result.studios.reduce((sum, row) => sum + row.totalCost, 0)).toBe(result.totals.totalCost)
   })
 })
+
+
+describe("operations studio KPI cards", () => {
+  it("reconciles product and event breakdowns while preserving studio ratios and imported-day averages", async () => {
+    const nextDate = "2026-08-02"
+    useWarehouse({
+      pts_daily_operations_reporting: [
+        { studio_id: 1, report_date: date, class_reported_net_sales: 120, class_reported_class_sales: 100, class_reported_seats_sold: 4 },
+        { studio_id: 1, report_date: nextDate, class_reported_net_sales: 80, class_reported_class_sales: 60, class_reported_seats_sold: 6 },
+        { studio_id: 2, report_date: date, class_reported_net_sales: 300, class_reported_class_sales: 250, class_reported_seats_sold: 5 },
+      ],
+      pts_product_sales_reporting: [
+        { studio_id: 1, report_date: date, department: "Food & Beverage", product_group: "Food", net_sales: 20, quantity: 2 },
+        { studio_id: 1, report_date: date, product_group: "Candles", net_sales: 40, quantity: 1 },
+        { studio_id: 1, report_date: date, product_group: "Candles", item_name: "Preorder", net_sales: 0, quantity: 99 },
+        { studio_id: 2, report_date: date, product_group: "Art Supplies", net_sales: 30, quantity: 3 },
+      ],
+      pts_class_sales_reporting: [
+        { studio_id: 1, event_date: date, reporting_class_type: "Private Party", seats_sold: 4, capacity: 10, class_sales: 100, lead_time_average: 2 },
+        { studio_id: 1, event_date: nextDate, reporting_class_type: "Regular", seats_sold: 6, capacity: 10, class_sales: 60, lead_time_average: 12 },
+        { studio_id: 2, event_date: date, reporting_class_type: "Mobile Events", seats_sold: 5, capacity: 10, class_sales: 250, lead_time_average: 5 },
+      ],
+    }, [1, 2])
+    const result = await getOperationsDashboard("all", date, nextDate, state.ids)
+    const one = result.studioKpis.find((row) => row.studioId === 1)!.values
+    const two = result.studioKpis.find((row) => row.studioId === 2)!.values
+    expect(one).toMatchObject({ totalSales: 200, classSales: 160, seatsSold: 10, revenuePerSeat: 20, foodBeveragePerSeat: 2, foodBeverageShare: 10, averageDailySales: 100, averageLeadTime: 8, candleSales: 40, foodSales: 20, artSuppliesSales: 0, privatePartyEvents: 1, mobileEventCount: 0 })
+    expect(two).toMatchObject({ revenuePerSeat: 60, averageDailySales: 300, privatePartyEvents: 0, mobileEventCount: 1, artSuppliesSales: 30 })
+    for (const key of ["totalSales", "classSales", "seatsSold", "foodBeverageSales", "foodSales", "candleSales", "artSuppliesSales", "privatePartyEvents", "mobileEventCount"] as const) {
+      expect(result.studioKpis.reduce((sum, row) => sum + (row.values[key] ?? 0), 0)).toBe(result.kpis[key])
+    }
+    const selected = await getOperationsDashboard("1", date, nextDate, state.ids)
+    expect(selected.studioKpis).toHaveLength(1)
+    expect(selected.studioKpis[0].values).toEqual(one)
+  })
+
+  it("retains product-only studios and keeps missing sources and zero denominators unavailable", async () => {
+    useWarehouse({
+      pts_daily_operations_reporting: [{ studio_id: 1, report_date: date, class_reported_net_sales: 0, class_reported_seats_sold: 0 }],
+      pts_product_sales_reporting: [{ studio_id: 2, report_date: date, product_group: "Candles", net_sales: 25 }],
+    }, [1, 2])
+    const result = await getOperationsDashboard("all", date, date, state.ids)
+    expect(result.studioKpis.find((row) => row.studioId === 1)?.values).toMatchObject({ totalSales: 0, revenuePerSeat: null, foodBeveragePerSeat: null, foodBeverageShare: null, candleSales: null, privatePartyEvents: null })
+    expect(result.studioKpis.find((row) => row.studioId === 2)?.values).toMatchObject({ totalSales: null, candleSales: 25, foodSales: 0 })
+    expect((await getOperationsDashboard("all", date, date, [1])).studioKpis.map((row) => row.studioId)).toEqual([1])
+  })
+})

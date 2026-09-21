@@ -51,7 +51,15 @@ type ClassLeadTimeRow = {
   lead_time_average: number | string | null
 }
 
+export type OperationsCardKey =
+  | "totalSales" | "classSales" | "seatsSold" | "averageLeadTime"
+  | "foodBeverageSales" | "foodSales" | "foodBeverageShare" | "foodBeveragePerSeat"
+  | "revenuePerSeat" | "candleSales" | "artSuppliesSales" | "averageDailySales"
+  | "privatePartyEvents" | "mobileEventCount"
+
 export type OperationsDashboardData = {
+  studioKpis: Array<{ studioId: number; values: Record<OperationsCardKey, number | null> }>
+
   period: { startDate: string; endDate: string; days: number }
   comparison?: {
     label: string
@@ -797,7 +805,48 @@ export async function getOperationsDashboard(
     })
     .sort((a, b) => a.studioName.localeCompare(b.studioName))
 
+  // Reuse reconciled source rows so card breakdowns follow portfolio definitions.
+  // Retain studios with product/class evidence even when their daily sales are absent.
+  const metricStudioIds = new Set([
+    ...studioIds,
+    ...allProductRows.map((row) => row.studio_id),
+    ...allCurrentClassTypeRows.map((row) => row.studio_id),
+    ...classTypeRows.map((row) => row.studio_id),
+  ])
+  const studioKpis = [...metricStudioIds].map((id) => {
+    const summary = studioSales.find((studio) => studio.studioId === id)
+    const days = dailyRows.filter((row) => row.studio_id === id)
+    const hasProducts = allProductRows.some((row) => row.studio_id === id)
+    const hasClasses = allCurrentClassTypeRows.some((row) => row.studio_id === id) || classTypeRows.some((row) => row.studio_id === id)
+    const productSales = (rows: ProductRow[]) => hasProducts
+      ? rows.filter((row) => row.studio_id === id).reduce((sum, row) => sum + numberValue(row.net_sales), 0)
+      : null
+    const eventCount = (name: string) => hasClasses
+      ? classTypeRows.filter((row) => row.studio_id === id && row.reporting_class_type === name).reduce((sum, row) => sum + (row.class_event_count === undefined ? 1 : numberValue(row.class_event_count)), 0)
+      : null
+    return {
+      studioId: id,
+      values: {
+        totalSales: summary?.totalSales ?? null,
+        classSales: days.length ? days.reduce((sum, row) => sum + numberValue(row.class_sales), 0) : null,
+        seatsSold: summary?.seatsSold ?? null,
+        averageLeadTime: summary?.averageLeadTime ?? null,
+        foodBeverageSales: summary?.foodBeverageSales ?? null,
+        foodSales: productSales(foodRows),
+        foodBeverageShare: summary?.totalSales ? summary.foodBeverageShare : null,
+        foodBeveragePerSeat: summary?.seatsSold ? summary.foodBeverageSales / summary.seatsSold : null,
+        revenuePerSeat: summary?.revenuePerSeat ?? null,
+        candleSales: productSales(candleRows),
+        artSuppliesSales: productSales(artSuppliesRows),
+        averageDailySales: summary?.daily.length ? summary.totalSales / summary.daily.length : null,
+        privatePartyEvents: eventCount("Private Party"),
+        mobileEventCount: eventCount("Mobile Events"),
+      },
+    }
+  })
+
   return {
+    studioKpis,
     period: {
       startDate: periodStart,
       endDate: periodEnd,
