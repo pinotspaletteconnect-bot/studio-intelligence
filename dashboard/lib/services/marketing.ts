@@ -4,6 +4,7 @@ import { resolveReportPeriod } from "@/lib/date-range"
 import { supabase } from "@/lib/supabase/server"
 
 type Ga4Row = {
+  studio_id: number
   date: string
   sessions: number | null
   new_users: number | null
@@ -12,6 +13,7 @@ type Ga4Row = {
 }
 
 type MetaAdsRow = {
+  studio_id: number
   integration_date: string
   spend: number | string | null
   clicks: number | null
@@ -123,6 +125,8 @@ export type MarketingTrend = {
 }
 
 export type MarketingDashboard = {
+  studioMetrics: Array<{ studioId: number; paidSpend: number | null; sessions: number | null; attributedRevenue: number | null }>
+
   period: { startDate: string; endDate: string; days: number }
   kpis: {
     paidSpend: number
@@ -277,7 +281,7 @@ export async function getMarketingDashboard(
   const ga4Query = addStudioFilter(
     supabase
       .from("ga4_daily_metrics")
-      .select("date,sessions,new_users,engaged_sessions,key_events")
+      .select("studio_id,date,sessions,new_users,engaged_sessions,key_events")
       .gte("date", periodStart)
       .lte("date", periodEnd),
     studioId,
@@ -286,7 +290,7 @@ export async function getMarketingDashboard(
   const metaQuery = addStudioFilter(
     supabase
       .from("meta_ads_daily")
-      .select("integration_date,spend,clicks,impressions")
+      .select("studio_id,integration_date,spend,clicks,impressions")
       .gte("integration_date", periodStart)
       .lte("integration_date", periodEnd),
     studioId,
@@ -851,6 +855,21 @@ export async function getMarketingDashboard(
   )
 
   return {
+    studioMetrics: (studiosData ?? []).filter((studio) => !studioId || studioId === "all" || Number(studio.id) === Number(studioId)).map((studio) => {
+      const id = Number(studio.id)
+      const meta = metaRows.filter((row) => row.studio_id === id)
+      const eulerity = eulerityRows.filter((row) => row.studio_id === id)
+      const ga4 = ga4Rows.filter((row) => row.studio_id === id)
+      const sources = sourceRows.filter((row) => row.studio_id === id)
+      const metaRevenue = sources.filter((row) => row.visibility !== "Hidden" && row.visibility !== "Grouped" && row.vendor?.toLowerCase() === "meta" && row.marketing_type?.toLowerCase() === "paid").reduce((sum, row) => sum + numberValue(row.total_revenue), 0)
+      const eulerityRevenue = eulerityAttributionRows.filter((row) => row.studio_id === id).reduce((sum, row) => sum + numberValue(row.total_revenue), 0)
+      return {
+        studioId: id,
+        paidSpend: meta.length || eulerity.length ? meta.reduce((sum, row) => sum + numberValue(row.spend), 0) + eulerity.reduce((sum, row) => sum + numberValue(row.spend_total), 0) : null,
+        sessions: ga4.length ? ga4.reduce((sum, row) => sum + numberValue(row.sessions), 0) : null,
+        attributedRevenue: sources.length ? metaRevenue + eulerityRevenue : null,
+      }
+    }),
     period: {
       startDate: periodStart,
       endDate: periodEnd,

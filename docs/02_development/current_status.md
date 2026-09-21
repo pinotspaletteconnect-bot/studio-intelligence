@@ -9,6 +9,18 @@ This is the fast-changing source of truth for what is implemented, deployed, act
 
 ## Overall Status
 
+September 21 local addition (not deployed): the Executive dashboard's ten KPI
+cards and three labor cards show studio-level values beside portfolio totals
+when All Studios is selected. Breakdowns use the existing authorized, dated
+service results; booking cards retain yesterday's booking date. Missing studio
+source data remains unavailable, revenue per seat and lead time are calculated
+per studio, and labor rows include each studio's percentage of sales. Cards
+stack their breakdowns at narrow widths. No warehouse or workflow changes.
+Validation: 18 focused regression tests and full lint pass. Production build
+passes using webpack and placeholder build credentials; Turbopack rejects the
+shared dependency junction in this isolated checkout. Live visual verification
+and deployment remain pending.
+
 September 19 Eulerity release: `/marketing/eulerity` replaces its placeholder
 and now includes selected-period GA4-attributed Eulerity paid revenue and ROAS
 in each studio total. Attribution is not allocated across individual channels.

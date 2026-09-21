@@ -14,6 +14,7 @@ export type ExecutiveDashboardData = {
   operations: OperationsDashboardData
   marketing: MarketingDashboard
   marketingComparison: MarketingDashboard
+  studioBookings: Array<{ studioId: number; seats: number | null; sales: number | null }>
   yesterdayBookings: {
     date: string
     seats: number | null
@@ -223,6 +224,7 @@ export async function getExecutiveDashboard(
     operations,
     marketing,
     marketingComparison,
+    studioBookings: upcoming.studios.map((studio) => ({ studioId: studio.id, seats: studio.bookedSeats, sales: studio.bookedSales })),
     yesterdayBookings: {
       date: upcoming.bookingDate,
       seats: upcoming.kpis.bookedSeats,
