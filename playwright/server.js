@@ -14,6 +14,13 @@ const quickbooksRoutes = require("./routes/quickbooks");
 
 const app = express();
 
+// Optional, protected document utility; preserve all existing collectors.
+const {createReceiptPdfRouter} = require('./routes/receiptPdf');
+const {createEmailRenderer} = require('./services/receipts/render-email.cjs');
+app.use('/receipt-pdf', createReceiptPdfRouter({
+    render: createEmailRenderer(require('playwright').chromium)
+}));
+
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
