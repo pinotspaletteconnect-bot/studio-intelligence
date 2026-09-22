@@ -5,6 +5,7 @@ function prepareEmailDocument(message, context) {
   const hold = reason => ({status: 'needs_review', reason, postingAllowed: false, archiveAllowed: false});
   if (!context || !/^[A-Za-z0-9_-]{1,80}$/.test(context.companyId || '') ||
       !/^[A-Za-z0-9_-]{1,100}$/.test(message?.id || '')) return hold('Missing stable source/company identity');
+  if (message.kind === 'review-summary') return require('./summary-document.cjs').prepareSummary(message, context);
   if (typeof message.text !== 'string' || !message.text.trim()) return hold('Plain-text body unavailable; preserve HTML/attachments for separate conversion');
   if (message.text.length > 200000) return hold('Body exceeds review conversion limit');
   const fields = [message.subject, message.date];
