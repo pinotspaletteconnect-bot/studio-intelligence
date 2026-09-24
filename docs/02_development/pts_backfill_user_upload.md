@@ -21,7 +21,7 @@ workflows 10 and 11; no dispatcher workflow is required.
 Fields:
 
 - `kind`: `product_sales` or `class_sales`
-- `studioCode`: trusted PTS external location ID resolved by SASHA
+- `studioCode`: trusted, tenant-scoped PTS studio selection resolved by SASHA
 - `productSalesFile` or `classSalesFile`: one `.xlsx` or `.xls` workbook,
   matching the existing collector node's binary input field
 
@@ -31,6 +31,30 @@ array response or a `rowCount` property when present.
 
 Any failure response is converted to a generic user-facing error. Raw workflow
 errors and source payloads must remain in protected operational logs.
+
+### Studio selection for every tenant
+
+SASHA sends `studioCode` as `organizationId:studioId:ptsLocationId` after
+checking the administrator's organization and studio grants. This value is a
+selection key, not a secret. Workflows 10 and 11 forward it unchanged in their
+existing `x-pts-studio-code` collector header, so they need no edits. The
+collector resolves that key using the authenticated PTS broker's backfill
+metadata operation. The broker reads active `studio_integrations` and `studios`
+rows and confirms the organization, studio, location, brand, and studio timezone.
+It returns no PTS credentials for this operation. Class Sales parsing uses the
+configured timezone; both parsers return the resolved studio and tenant IDs.
+The existing workflow studio lookup and warehouse upsert continue to derive the
+destination from the resolved studio ID.
+
+Legacy unscoped location IDs are accepted only when they match exactly one
+active PTS studio across all tenants. Unknown, inactive, cross-tenant, or
+ambiguous selections fail before workbook parsing. A broker outage also fails
+closed; the collector does not fall back to its original pilot studio list.
+
+Deploy the dashboard and collector as one coordinated release; either side
+alone cannot process the new selection contract. Verify a controlled Product
+Sales and Class Sales workbook for a newly mapped studio before treating the
+production path as operational.
 
 ## Deployed n8n configuration
 

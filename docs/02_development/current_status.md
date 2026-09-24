@@ -1,5 +1,14 @@
 # Studio Intelligence Current Status
 
+September 24 PTS historical backfill fix prepared locally: Product Sales and
+Class Sales workbook uploads now resolve active PTS studios through the
+existing broker and tenant-scoped studio selection instead of the collector's
+four-studio pilot list. Class Sales uses the configured studio timezone.
+Published n8n workflows 10 and 11 were inspected; they forward the selection
+and resolve the warehouse tenant by studio ID. Local workbook and access tests
+pass. Deployment and controlled Huntington Beach uploads remain pending.
+See docs/02_development/pts_backfill_user_upload.md.
+
 **Version:** 4.1  
 **Last updated:** July 31, 2026
 

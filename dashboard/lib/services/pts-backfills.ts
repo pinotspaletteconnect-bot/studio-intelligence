@@ -23,5 +23,7 @@ export async function getPtsBackfillTarget(organizationId: number, studioId: num
     .eq("is_active", true)
     .maybeSingle()
   if (error) throw error
-  return data?.external_id ? { studioCode: data.external_id } : null
+  // n8n forwards this opaque selection unchanged. Including the tenant and
+  // studio avoids cross-tenant ambiguity when PTS locations are reused.
+  return data?.external_id ? { studioCode: `${organizationId}:${studioId}:${data.external_id}` } : null
 }
