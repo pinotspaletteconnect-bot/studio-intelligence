@@ -7,6 +7,7 @@ const path = require("path");
 const { chromium } = require("playwright");
 
 const { parseNonClassSales } = require("../../services/ptsParser");
+const { resolvePtsUploadStudio } = require("../../services/ptsUploadStudio");
 
 const PTS_URL = "https://admin.pinotspalette.com";
 const DEFAULT_STUDIOS = [
@@ -654,16 +655,7 @@ async function parsePtsProductSalesUpload({ file, studioCode }) {
         throw new Error("PTS Product Sales upload must include a non-empty Excel file");
     }
 
-    const normalizedCode = String(studioCode ?? "")
-        .trim()
-        .toUpperCase();
-    const studio = configuredStudios().find(
-        candidate => String(candidate.code).toUpperCase() === normalizedCode
-    );
-
-    if (!studio) {
-        throw new Error(`Unknown PTS studio code: ${normalizedCode || "missing"}`);
-    }
+    const studio = await resolvePtsUploadStudio(studioCode);
 
     const rows = normalizeProductRows(await parseNonClassSales(file));
 
@@ -672,6 +664,8 @@ async function parsePtsProductSalesUpload({ file, studioCode }) {
     }
 
     return {
+        organizationId: studio.organizationId,
+        brandId: studio.brandId,
         studioId: studio.studioId,
         studioCode: studio.code,
         locationId: studio.locationId,

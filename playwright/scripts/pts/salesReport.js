@@ -4,6 +4,7 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const { chromium } = require("playwright");
+const { resolvePtsUploadStudio } = require("../../services/ptsUploadStudio");
 
 const {
     normalizeClassSalesRows,
@@ -680,37 +681,22 @@ async function parsePtsClassSalesUpload({ file, studioCode }) {
         throw new Error("PTS Class Sales upload must include a non-empty Excel file");
     }
 
-    const normalizedCode = String(studioCode ?? "")
-        .trim()
-        .toUpperCase();
-    const studio = configuredStudios().find(
-        candidate => String(candidate.code).toUpperCase() === normalizedCode
-    );
+    const studio = await resolvePtsUploadStudio(studioCode);
 
-    if (!studio) {
-        throw new Error(`Unknown PTS studio code: ${normalizedCode || "missing"}`);
-    }
-
-    const rows = await parseClassSales(file, {
-        timeZone:
-            studio.timeZone ??
-            DEFAULT_TIME_ZONES[studio.code] ??
-            "America/New_York"
-    });
+    const rows = await parseClassSales(file, { timeZone: studio.timeZone });
 
     if (rows.length === 0) {
         throw new Error("PTS Class Sales workbook contained no class rows");
     }
 
     return {
+        organizationId: studio.organizationId,
+        brandId: studio.brandId,
         studioId: studio.studioId,
         studioCode: studio.code,
         locationId: studio.locationId,
         locationName: studio.locationName,
-        timeZone:
-            studio.timeZone ??
-            DEFAULT_TIME_ZONES[studio.code] ??
-            "America/New_York",
+        timeZone: studio.timeZone,
         rowCount: rows.length,
         rows
     };

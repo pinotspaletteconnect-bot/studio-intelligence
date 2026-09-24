@@ -1,5 +1,14 @@
 # Studio Intelligence Current Status
 
+September 24 PTS historical backfill fix prepared locally: Product Sales and
+Class Sales workbook uploads now resolve active PTS studios through the
+existing broker and tenant-scoped studio selection instead of the collector's
+four-studio pilot list. Class Sales uses the configured studio timezone.
+Published n8n workflows 10 and 11 were inspected; they forward the selection
+and resolve the warehouse tenant by studio ID. Local workbook and access tests
+pass. Deployment and controlled Huntington Beach uploads remain pending.
+See docs/02_development/pts_backfill_user_upload.md.
+
 **Version:** 4.1  
 **Last updated:** July 31, 2026
 
@@ -9,7 +18,7 @@ This is the fast-changing source of truth for what is implemented, deployed, act
 
 ## Overall Status
 
-September 24 Huntington Beach onboarding pilot: Jennifer English's existing identity now owns a separate Huntington Beach organization and Pacific-time studio. Her Duff organization membership was suspended and its four studio grants were removed. The production dashboard now has PTS_VAULT_ONBOARDING_ENABLED=true after confirming dashboard and collector broker settings were present; Railway reports a successful configuration deployment. Jennifer has not submitted PTS credentials or completed any first import. The dashboard now supports adding a PTS login in Settings, updating an existing PTS username and password, and mapping a studio created before its PTS account. The September 24 Railway dashboard deployment completed successfully. Jennifer still needs to submit credentials and verify her first import. See the test-user guide in docs/00_overview/test_studio_onboarding_guide.md.
+September 24 Huntington Beach onboarding pilot: Jennifer English's existing identity now owns a separate Huntington Beach organization and Pacific-time studio. Her Duff organization membership was suspended and its four studio grants were removed. The production dashboard now has PTS_VAULT_ONBOARDING_ENABLED=true after confirming dashboard and collector broker settings were present; Railway reports a successful configuration deployment. Jennifer saved PTS account 2, and studio 5 is mapped to PTS Huntington Beach location 194. A read-only direct PTS test accessed the September 23 Sales Report and found 15 summary rows; no first warehouse import is verified. The dashboard now supports adding a PTS login in Settings, updating an existing PTS username and password, and mapping a studio created before its PTS account. The September 24 Railway dashboard deployment completed successfully. The production collector was not exercised end to end because the local collector token returned 401; the first automated collection and warehouse import remain pending. See the test-user guide in docs/00_overview/test_studio_onboarding_guide.md.
 
 
 September 21 local GA4 addition (not deployed): the North America page shows

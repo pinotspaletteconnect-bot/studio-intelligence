@@ -1,8 +1,16 @@
 # Studio Intelligence Changelog
 
+## September 24, 2026 - PTS historical backfill studio resolution
+
+The manual Product Sales and Class Sales uploads now use active tenant and
+studio mappings from the existing broker instead of the collector's four-studio
+pilot list. Class Sales uses the mapped timezone. The existing n8n workflows
+were inspected and do not need changes. Local workbook and access tests pass;
+production deployment and a controlled Huntington Beach import are pending.
+
 ## September 24, 2026 - Huntington Beach onboarding pilot
 
-Provisioned Jennifer English's separate Huntington Beach workspace using her existing identity; suspended her old membership and removed its four studio grants. Enabled the existing secured PTS account form through the dashboard's production Railway feature setting after checking broker configuration. Added a local owner/admin form to map an already created studio to a saved PTS account, with tenant and duplicate-location checks. Released the Settings forms for new and updated PTS logins, the existing-studio PTS mapping form, and working Eulerity, GA4, and Meta mapping submit buttons. Source credentials, PTS mapping, and first imports remain pending for Huntington Beach.
+Provisioned Jennifer English's separate Huntington Beach workspace using her existing identity; suspended her old membership and removed its four studio grants. Enabled the existing secured PTS account form through the dashboard's production Railway feature setting after checking broker configuration. Added a local owner/admin form to map an already created studio to a saved PTS account, with tenant and duplicate-location checks. Released the Settings forms for new and updated PTS logins, the existing-studio PTS mapping form, and working Eulerity, GA4, and Meta mapping submit buttons. Jennifer saved PTS account 2; mapped Huntington Beach studio 5 to verified PTS location 194. A read-only direct PTS login and September 23 Sales Report check succeeded with 15 summary rows. Automated collection and warehouse import remain pending.
 
 
 ## September 6, 2026 — Reporting reliability and collector protection

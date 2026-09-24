@@ -3,10 +3,15 @@ import { NextResponse } from "next/server"
 import { z } from "zod"
 
 import { supabase } from "@/lib/supabase/server"
+import { resolvePtsUploadTarget } from "@/lib/services/pts-upload-targets"
 
 export const runtime = "nodejs"
 
-const requestSchema = z.object({ accountId: z.number().int().positive() })
+const requestSchema = z.union([
+  z.object({ purpose: z.literal("backfill"), studioCode: z.string().trim().min(1).max(100), organizationId: z.number().int().positive().optional(), studioId: z.number().int().positive().optional() }).strict()
+    .refine(value => (value.organizationId === undefined) === (value.studioId === undefined)),
+  z.object({ accountId: z.number().int().positive() }).strict(),
+])
 
 function authorized(request: Request) {
   const configuredToken = process.env.PTS_SECRET_BROKER_TOKEN
@@ -22,6 +27,17 @@ export async function POST(request: Request) {
 
   const parsed = requestSchema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: "Invalid account request" }, { status: 400 })
+
+  if ("purpose" in parsed.data) {
+    try {
+      const studio = await resolvePtsUploadTarget(parsed.data.studioCode, parsed.data.organizationId, parsed.data.studioId)
+      if (!studio) return NextResponse.json({ error: "Studio mapping unavailable or ambiguous" }, { status: 409 })
+      return NextResponse.json({ studio }, { headers: { "Cache-Control": "no-store, private" } })
+    } catch {
+      console.error("PTS upload studio resolution failed")
+      return NextResponse.json({ error: "Studio resolution unavailable" }, { status: 503 })
+    }
+  }
 
   const [{ data: credentials, error: credentialError }, { data: targets, error: targetError }] = await Promise.all([
     supabase.rpc("get_pts_account_secret", { p_account_id: parsed.data.accountId }),

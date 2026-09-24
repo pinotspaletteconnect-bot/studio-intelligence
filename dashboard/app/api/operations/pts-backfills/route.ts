@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     const result = await response.json().catch(() => null) as { rowCount?: number } | unknown[] | null
     if (!response.ok) {
       console.error("PTS backfill processor rejected an upload", { status: response.status, kind: parsed.data.kind, studioId: parsed.data.studioId })
-      return NextResponse.json({ error: "The workbook could not be imported. Confirm the report type and try again." }, { status: 422 })
+      return NextResponse.json({ error: "The import processor could not complete this upload. The studio configuration, processing service, or workbook may need attention." }, { status: 422 })
     }
     const rowCount = Array.isArray(result) ? result.length : Number(result?.rowCount ?? 0)
     return NextResponse.json({ success: true, rowCount })
