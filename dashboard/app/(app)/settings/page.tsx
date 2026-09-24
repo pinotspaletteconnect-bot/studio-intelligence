@@ -29,7 +29,10 @@ export default async function SettingsPage() {
             <CardHeader><CardTitle>Workspace onboarding</CardTitle></CardHeader>
             <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <p className="max-w-2xl text-sm leading-6 text-muted-foreground">Review studio mappings, secured PTS account references, authorized users, and the latest data received for every required feed.</p>
-              <Link className={buttonVariants()} href="/settings/onboarding">Open setup checklist</Link>
+              <div className="flex flex-wrap gap-2">
+                <Link className={buttonVariants({ variant: "outline" })} href="#pts-connections">Manage PTS login</Link>
+                <Link className={buttonVariants()} href="/settings/onboarding">Open setup checklist</Link>
+              </div>
             </CardContent>
           </Card>
           <Card>
