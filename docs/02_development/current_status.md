@@ -9,6 +9,9 @@ This is the fast-changing source of truth for what is implemented, deployed, act
 
 ## Overall Status
 
+September 24 Huntington Beach onboarding pilot: Jennifer English's existing identity now owns a separate Huntington Beach organization and Pacific-time studio. Her Duff organization membership was suspended and its four studio grants were removed. The production dashboard now has PTS_VAULT_ONBOARDING_ENABLED=true after confirming dashboard and collector broker settings were present; Railway reports a successful configuration deployment. Jennifer has not submitted PTS credentials or completed any first import. A local dashboard change adds mapping for a studio created before its PTS account; it is not deployed. See the test-user guide in docs/00_overview/test_studio_onboarding_guide.md.
+
+
 September 21 local GA4 addition (not deployed): the North America page shows
 a side-by-side studio table with all ten KPIs, current and comparison values,
 and absolute/relative changes. The existing studio/date/comparison filters apply;

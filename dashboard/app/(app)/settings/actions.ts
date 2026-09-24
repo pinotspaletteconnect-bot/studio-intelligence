@@ -10,6 +10,7 @@ import { createAuthClient } from "@/lib/supabase/auth-server"
 
 export type InviteState = { complete?: boolean; error?: string; temporaryPassword?: string } | undefined
 export type AddStudioState = { complete?: boolean; error?: string } | undefined
+export type PtsMappingState = { complete?: boolean; error?: string } | undefined
 export type MemberAccessState = { complete?: boolean; error?: string; temporaryPassword?: string } | undefined
 export type PtsAccountState = { complete?: boolean; error?: string } | undefined
 export type PtsReportState = { complete?: boolean; error?: string } | undefined
@@ -610,6 +611,78 @@ const addStudioSchema = z.object({
   ptsAccountId: z.coerce.number().int().positive(),
   ptsLocationId: z.string().trim().regex(/^\d{1,12}$/),
 })
+
+const mapExistingStudioSchema = z.object({
+  studioId: z.coerce.number().int().positive(),
+  ptsAccountId: z.coerce.number().int().positive(),
+  ptsLocationId: z.string().trim().regex(/^\d{1,12}$/),
+})
+
+export async function mapExistingStudioToPtsAccount(
+  _previousState: PtsMappingState,
+  formData: FormData
+): Promise<PtsMappingState> {
+  const access = await requireDashboardContext()
+  if (!["owner", "administrator"].includes(access.role)) {
+    return { error: "Only an owner or administrator can connect a studio to PTS." }
+  }
+
+  const parsed = mapExistingStudioSchema.safeParse({
+    studioId: formData.get("studioId"),
+    ptsAccountId: formData.get("ptsAccountId"),
+    ptsLocationId: formData.get("ptsLocationId"),
+  })
+  if (!parsed.success || !access.allowedStudioIds.includes(parsed.data.studioId)) {
+    return { error: "Choose your studio, PTS account, and numeric PTS location ID." }
+  }
+
+  const [studioResult, accountResult, existingMappingResult, locationResult] = await Promise.all([
+    supabase.from("studios").select("id,brand_id,studio_name").eq("id", parsed.data.studioId)
+      .eq("organization_id", access.organizationId).eq("active", true).maybeSingle(),
+    supabase.from("pts_integration_accounts").select("id,secret_reference")
+      .eq("id", parsed.data.ptsAccountId).eq("organization_id", access.organizationId)
+      .eq("is_active", true).maybeSingle(),
+    supabase.from("studio_integrations").select("id").eq("studio_id", parsed.data.studioId)
+      .eq("integration_type", "pts").maybeSingle(),
+    supabase.from("studio_integrations").select("id").eq("integration_type", "pts")
+      .eq("external_id", parsed.data.ptsLocationId).eq("is_active", true).limit(1),
+  ])
+  if ([studioResult, accountResult, existingMappingResult, locationResult].some(result => result.error)) {
+    return { error: "PTS mapping could not be checked. Please try again." }
+  }
+  const studio = studioResult.data
+  const account = accountResult.data
+  if (!studio || !account) return { error: "The selected studio or PTS account is unavailable." }
+  if (existingMappingResult.data) return { error: "This studio already has a PTS mapping." }
+  if (locationResult.data?.length) return { error: "That PTS location is already mapped." }
+
+  const { error } = await supabase.from("studio_integrations").insert({
+    organization_id: access.organizationId,
+    brand_id: studio.brand_id,
+    studio_id: studio.id,
+    integration_type: "pts",
+    integration_name: studio.studio_name,
+    external_id: parsed.data.ptsLocationId,
+    is_active: true,
+    configuration: {
+      pts_account_id: account.id,
+      credential_reference: account.secret_reference,
+      reports: ["sales", "product_sales", "class_sales", "reservations", "upcoming_classes"],
+    },
+  })
+  if (error) {
+    console.error("Existing studio PTS mapping failed", {
+      organizationId: access.organizationId,
+      studioId: studio.id,
+      code: error.code,
+    })
+    return { error: "The PTS mapping could not be saved." }
+  }
+
+  revalidatePath("/settings")
+  revalidatePath("/settings/onboarding")
+  return { complete: true }
+}
 
 export async function addStudioWithExistingPtsAccount(
   _previousState: AddStudioState,

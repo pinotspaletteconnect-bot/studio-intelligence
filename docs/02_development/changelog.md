@@ -1,5 +1,10 @@
 # Studio Intelligence Changelog
 
+## September 24, 2026 - Huntington Beach onboarding pilot
+
+Provisioned Jennifer English's separate Huntington Beach workspace using her existing identity; suspended her old membership and removed its four studio grants. Enabled the existing secured PTS account form through the dashboard's production Railway feature setting after checking broker configuration. Added a local owner/admin form to map an already created studio to a saved PTS account, with tenant and duplicate-location checks. Source credentials, PTS mapping, first imports, and the local form's deployment remain pending.
+
+
 ## September 6, 2026 — Reporting reliability and collector protection
 
 Prepared on the production release base. Reporting now paginates completely,

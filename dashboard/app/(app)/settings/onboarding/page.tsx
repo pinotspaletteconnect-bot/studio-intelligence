@@ -9,6 +9,7 @@ import {
 } from "lucide-react"
 
 import { PtsAccountForm } from "@/app/(app)/settings/onboarding/pts-account-form"
+import { PtsStudioMappingForm } from "@/app/(app)/settings/onboarding/pts-studio-mapping-form"
 import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -141,6 +142,18 @@ export default async function WorkspaceOnboardingPage() {
         <Card><CardHeader><CardTitle>Add a secured PTS account</CardTitle></CardHeader><CardContent><PtsAccountForm /></CardContent></Card>
       ) : canAdminister ? (
         <Card><CardHeader><CardTitle>Secured PTS account onboarding</CardTitle></CardHeader><CardContent className="text-sm text-muted-foreground">Credential entry is unavailable until the Vault and broker configuration pass validation.</CardContent></Card>
+      ) : null}
+
+      {canAdminister && readiness.studios.some(studio => !studio.hasPtsMapping) ? (
+        <Card>
+          <CardHeader><CardTitle>Connect an existing studio to PTS</CardTitle></CardHeader>
+          <CardContent>
+            <PtsStudioMappingForm
+              studios={readiness.studios.filter(studio => !studio.hasPtsMapping).map(studio => ({ id: studio.id, label: studio.studio_name }))}
+              accounts={readiness.accounts.map(account => ({ id: account.id, label: account.account_name }))}
+            />
+          </CardContent>
+        </Card>
       ) : null}
     </div>
   )
