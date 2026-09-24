@@ -57,8 +57,8 @@ The current setup requires a PTS account before you can add a studio.
 
 1. In a separate private browser window, sign in to your normal PTS administration site.
 2. Confirm that your studio appears in the location selector and that you can open its sales and class reports.
-3. Return to SASHA and open **Settings → Workspace Setup** (`/settings/onboarding`).
-4. Find **Add a secured PTS account**. Enter a recognizable account label, your PTS username, and your PTS password.
+3. Return to SASHA and open **Settings → Workspace Setup** (`/settings/onboarding`). In the current production layout, scroll past the readiness cards to **Add a secured PTS account** near the bottom of the page. The next release adds a direct **Enter PTS login** link and the same new-account form under **Settings → Integration setup → PTS**.
+4. Enter a recognizable account label, your PTS username, and your PTS password.
 5. Enter **your SASHA password** in the separate confirmation field.
 6. Select **Save encrypted PTS account**.
 

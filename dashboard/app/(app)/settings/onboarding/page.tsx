@@ -83,7 +83,7 @@ export default async function WorkspaceOnboardingPage() {
         </Card>
         <Card>
           <CardHeader className="gap-3"><CardTitle className="text-base">2. PTS credentials</CardTitle><Status complete={readiness.checks.credentials} /></CardHeader>
-          <CardContent className="space-y-3 text-sm text-muted-foreground"><p>{readiness.accounts.filter(account => account.validated).length} of {readiness.accounts.length} active accounts validated.</p><div className="flex items-start gap-2 rounded-lg bg-slate-50 p-3"><LockKeyhole className="mt-0.5 size-4 shrink-0" /><span>Credentials remain encrypted in Vault and cannot be viewed.</span></div></CardContent>
+          <CardContent className="space-y-3 text-sm text-muted-foreground"><p>{readiness.accounts.filter(account => account.validated).length} of {readiness.accounts.length} active accounts validated.</p><div className="flex items-start gap-2 rounded-lg bg-slate-50 p-3"><LockKeyhole className="mt-0.5 size-4 shrink-0" /><span>Credentials remain encrypted in Vault and cannot be viewed.</span></div>{canAdminister ? <Link className={buttonVariants({ variant: "outline", size: "sm" })} href="#pts-account-setup">{readiness.accounts.length ? "Add another PTS account" : "Enter PTS login"}</Link> : null}</CardContent>
         </Card>
         <Card>
           <CardHeader className="gap-3"><CardTitle className="text-base">3. Studio mappings</CardTitle><Status complete={readiness.checks.mappings} /></CardHeader>
@@ -139,9 +139,9 @@ export default async function WorkspaceOnboardingPage() {
       </Card>
 
       {canAdminister && vaultOnboardingEnabled ? (
-        <Card><CardHeader><CardTitle>Add a secured PTS account</CardTitle></CardHeader><CardContent><PtsAccountForm /></CardContent></Card>
+        <Card id="pts-account-setup" className="scroll-mt-4"><CardHeader><CardTitle>Add a secured PTS account</CardTitle></CardHeader><CardContent><PtsAccountForm /></CardContent></Card>
       ) : canAdminister ? (
-        <Card><CardHeader><CardTitle>Secured PTS account onboarding</CardTitle></CardHeader><CardContent className="text-sm text-muted-foreground">Credential entry is unavailable until the Vault and broker configuration pass validation.</CardContent></Card>
+        <Card id="pts-account-setup" className="scroll-mt-4"><CardHeader><CardTitle>Secured PTS account onboarding</CardTitle></CardHeader><CardContent className="text-sm text-muted-foreground">Credential entry is unavailable until the Vault and broker configuration pass validation.</CardContent></Card>
       ) : null}
 
       {canAdminister && readiness.studios.some(studio => !studio.hasPtsMapping) ? (

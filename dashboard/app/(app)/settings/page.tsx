@@ -47,6 +47,7 @@ export default async function SettingsPage() {
           </Card>
           <IntegrationSetup
             ptsAccounts={settings.ptsAccounts}
+            ptsOnboardingEnabled={process.env.PTS_VAULT_ONBOARDING_ENABLED === "true"}
             textellentAccounts={settings.textellentAccounts}
             mntnAccounts={settings.mntnAccounts}
             homebaseAccounts={settings.homebaseAccounts}
