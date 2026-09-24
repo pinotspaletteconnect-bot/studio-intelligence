@@ -90,9 +90,9 @@ replacement schedule and re-enabling the preserved legacy schedule.
 - [ ] Confirm automatic success and sanitized-failure auditing for each feed.
 - [ ] Confirm Operations, Executive, and Upcoming Classes consumers remain
   consistent with their reporting views after the scheduled loads.
-- [ ] Onboard one test studio under its intended organization and PTS account.
-- [ ] Prove the dispatcher returns only that account's assigned studios.
-- [ ] Prove warehouse writes carry the correct organization and studio keys.
+- [x] Onboard one test studio under its intended organization and PTS account (Huntington Beach, September 24).
+- [x] Prove an account-scoped dispatcher job contains only that account's assigned studios (account 2, studio 5).
+- [x] Prove all five PTS warehouse feeds carry the correct organization and studio keys (organization 3, studio 5).
 - [ ] Prove dashboard authorization exposes no cross-organization data.
 - [ ] Exercise and document one rollback without deleting either workflow.
 - [ ] Close the migration only after the observation window and tenant-isolation

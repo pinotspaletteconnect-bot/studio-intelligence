@@ -4,7 +4,7 @@ September 19, 2026 · Assisted test-user guide
 
 This guide takes you from your first sign-in to verified studio reporting in Studio Intelligence, called SASHA in the application. Your private workspace must be prepared before you begin. Some connection screens exist but still need a first import verified for your account. A saved password or green connection badge alone does not mean your reports are ready. You can check your own setup in SASHA; another studio owner cannot open your workspace from their SASHA login.
 
-**Current pilot checkpoint (September 24):** the Huntington Beach workspace and studio exist, and its owner can use an existing SASHA login. Jennifer saved her PTS login, and Huntington Beach is mapped to PTS location 194. A read-only PTS sign-in and September 23 Sales Report check succeeded; the report showed 15 summary rows. The first automated collection and warehouse import still need verification before SASHA reporting is considered ready.
+**Current pilot checkpoint (September 24):** the Huntington Beach workspace and studio exist, and its owner can use an existing SASHA login. Jennifer saved her PTS login, and Huntington Beach is mapped to PTS location 194. A read-only PTS sign-in and September 23 Sales Report check succeeded. Supervised account-scoped imports saved September 23 Daily Sales ($532.03 net sales, 15 seats sold), three Product Sales rows, 27 Class Sales rows, 187 Upcoming Classes snapshots, and 20 Reservations rows. Each feed has organization 3 and studio 5 keys and is present in its live reporting view. Jennifer should confirm the visible figures and studio scope from her own SASHA login before onboarding is considered complete.
 
 ## 1. Get your workspace invitation
 

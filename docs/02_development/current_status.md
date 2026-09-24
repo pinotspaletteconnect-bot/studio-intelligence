@@ -697,3 +697,27 @@ without the per-studio ingestion manifest planned for a later reliability
 phase. The page passed targeted lint and the production Next.js build.
 Production validation correctly identified two overdue feeds before recovery
 and reported all feeds current after their warehouse writes.
+
+### September 24 Huntington Beach PTS onboarding pilot
+
+Jennifer English's organization 3, studio 5 (`HBCA`), PTS account 2, and PTS
+location 194 are mapped in production. A supervised account-scoped runner
+filtered the dispatcher output to exactly this one studio. The first 05B Daily
+Sales attempt collected September 23 data but exposed a disconnected
+collector-to-writer edge and two hardcoded four-studio validations. The edge
+was restored, the validations were made account-size aware, and both 05B
+changes were published. A rerun saved the September 23 sales row ($532.03 net,
+15 seats) with organization 3 and studio 5 keys; the row is present in
+`pts_daily_operations_reporting`. The 06B Product Sales import saved three
+September 23 item rows, and 12B Upcoming Classes saved 187 snapshots; both
+are present in their reporting views for studio 5.
+
+07B Class Sales and 13B Reservations had hardcoded four-studio checks. Both
+validators now use the account's configured studio count, and both changes
+were published. Supervised account-scoped reruns loaded 27 Class Sales rows
+and 20 Reservations rows for studio 5; both are present in their reporting
+views. All five PTS source tables for Huntington Beach carry organization 3
+and studio 5 keys. No `integration_runs` record was observed for organization
+3 after these successful imports, so automatic run auditing remains an open
+Phase 6 validation item. Jennifer still needs to confirm the figures and
+studio scope from her own SASHA session.
