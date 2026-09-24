@@ -2,7 +2,7 @@
 
 ## September 24, 2026 - Huntington Beach onboarding pilot
 
-Provisioned Jennifer English's separate Huntington Beach workspace using her existing identity; suspended her old membership and removed its four studio grants. Enabled the existing secured PTS account form through the dashboard's production Railway feature setting after checking broker configuration. Added a local owner/admin form to map an already created studio to a saved PTS account, with tenant and duplicate-location checks. Source credentials, PTS mapping, first imports, and the local form's deployment remain pending.
+Provisioned Jennifer English's separate Huntington Beach workspace using her existing identity; suspended her old membership and removed its four studio grants. Enabled the existing secured PTS account form through the dashboard's production Railway feature setting after checking broker configuration. Added a local owner/admin form to map an already created studio to a saved PTS account, with tenant and duplicate-location checks. Released the Settings forms for new and updated PTS logins, the existing-studio PTS mapping form, and working Eulerity, GA4, and Meta mapping submit buttons. Source credentials, PTS mapping, and first imports remain pending for Huntington Beach.
 
 
 ## September 6, 2026 — Reporting reliability and collector protection

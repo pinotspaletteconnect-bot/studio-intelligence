@@ -4,7 +4,7 @@ September 19, 2026 · Assisted test-user guide
 
 This guide takes you from your first sign-in to verified studio reporting in Studio Intelligence, called SASHA in the application. Your private workspace must be prepared before you begin. Some connection screens exist but still need a first import verified for your account. A saved password or green connection badge alone does not mean your reports are ready. You can check your own setup in SASHA; another studio owner cannot open your workspace from their SASHA login.
 
-**Current pilot checkpoint (September 24):** the Huntington Beach workspace and studio exist, and its owner can use an existing SASHA login. The PTS account form was enabled in production after checking the existing Vault and broker configuration. Jennifer still needs to sign in and enter her own PTS credentials. No PTS data has been verified for Huntington Beach yet.
+**Current pilot checkpoint (September 24):** the Huntington Beach workspace and studio exist, and its owner can use an existing SASHA login. New and existing PTS login forms and the existing-studio mapping form are live in Settings. Jennifer still needs to enter her own PTS credentials and map Huntington Beach to the correct PTS location. No PTS data has been verified for Huntington Beach yet.
 
 ## 1. Get your workspace invitation
 
@@ -57,12 +57,12 @@ The current setup requires a PTS account before you can add a studio.
 
 1. In a separate private browser window, sign in to your normal PTS administration site.
 2. Confirm that your studio appears in the location selector and that you can open its sales and class reports.
-3. Return to SASHA and open **Settings → Workspace Setup** (`/settings/onboarding`). In the current production layout, scroll past the readiness cards to **Add a secured PTS account** near the bottom of the page. The next release adds a direct **Enter PTS login** link and the same new-account form under **Settings → Integration setup → PTS**.
+3. Return to SASHA and open **Settings → Integration setup → PTS** (`/settings#pts-connections`). The PTS section opens by default. If you do not have a saved PTS account, the new-account form appears there. You can also use **Workspace Setup → Enter PTS login** (`/settings/onboarding#pts-account-setup`).
 4. Enter a recognizable account label, your PTS username, and your PTS password.
 5. Enter **your SASHA password** in the separate confirmation field.
 6. Select **Save encrypted PTS account**.
 
-If this section is unavailable, contact the onboarding operator. If you already have a PTS account listed, use **Settings → Integration setup → PTS** to supply or replace its credentials instead of adding a duplicate.
+If this section is unavailable, contact the onboarding operator. If you already have a PTS account listed, use **Settings → Integration setup → PTS → Update PTS login** to enter the updated username and password instead of adding a duplicate.
 
 PTS uses a login in the current integration, not an API key. SASHA's implemented form stores the login in encrypted server-side storage and does not display it again. Saving the account is followed by mapping and collection verification.
 
@@ -70,7 +70,7 @@ PTS uses a login in the current integration, not an API key. SASHA's implemented
 
 ## 5. Add your studio and match its PTS location
 
-If an operator has already created your studio, confirm its name, city, state, and time zone in the studio selector and Workspace Setup. Do not add it again. Once the existing-studio mapping form is released, use **Workspace Setup → Connect an existing studio to PTS** to select your saved PTS account and enter the PTS location ID. The onboarding operator must assist with this step until the release is live. Jennifer should follow this path for Huntington Beach.
+If an operator has already created your studio, confirm its name, city, state, and time zone in the studio selector and Workspace Setup. Do not add it again. Use **Workspace Setup → Connect an existing studio to PTS** to select your saved PTS account and enter the PTS location ID. Jennifer should follow this path for Huntington Beach.
 
 If your studio has not been created yet, add it using these steps:
 
