@@ -51,10 +51,10 @@ active PTS studio across all tenants. Unknown, inactive, cross-tenant, or
 ambiguous selections fail before workbook parsing. A broker outage also fails
 closed; the collector does not fall back to its original pilot studio list.
 
-Deploy the dashboard and collector as one coordinated release; either side
-alone cannot process the new selection contract. Verify a controlled Product
-Sales and Class Sales workbook for a newly mapped studio before treating the
-production path as operational.
+The dashboard and collector were released together through PR #72. Both Railway
+deployments became active and the collector health check passed. Verify a
+controlled Product Sales and Class Sales workbook for a newly mapped studio
+before treating the import path as fully operational.
 
 ## Deployed n8n configuration
 

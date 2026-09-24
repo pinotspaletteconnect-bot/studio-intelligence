@@ -5,8 +5,9 @@
 The manual Product Sales and Class Sales uploads now use active tenant and
 studio mappings from the existing broker instead of the collector's four-studio
 pilot list. Class Sales uses the mapped timezone. The existing n8n workflows
-were inspected and do not need changes. Local workbook and access tests pass;
-production deployment and a controlled Huntington Beach import are pending.
+were inspected and did not need changes. Local workbook and access tests passed.
+PR #72 deployed to both Railway services and the collector health check passed.
+A controlled Huntington Beach import and warehouse verification remain pending.
 
 ## September 24, 2026 - Huntington Beach onboarding pilot
 
