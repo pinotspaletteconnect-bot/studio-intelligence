@@ -15,7 +15,7 @@ function LocationMapping({ location, studios }: { location: Location; studios: S
     <input type="hidden" name="accountId" value={location.account_id} /><input type="hidden" name="sourceKey" value={location.source_key} />
     <div className="text-sm"><strong>{location.display_name}</strong><p className="text-xs text-muted-foreground">{location.studio_name ?? "Needs a SASHA studio mapping"}</p></div>
     <select className="h-9 rounded-md border bg-background px-3 text-sm" name="studioId" required defaultValue={location.studio_id ?? ""}><option value="" disabled>Select studio</option>{studios.map(studio => <option key={studio.id} value={studio.id}>{studio.studio_name}</option>)}</select>
-    <Button size="sm" disabled={pending}>{pending ? "Saving…" : "Map"}</Button>
+    <Button type="submit" size="sm" disabled={pending}>{pending ? "Saving…" : "Map"}</Button>
     {state?.error ? <p className="text-xs text-destructive sm:col-span-3">{state.error}</p> : null}
   </form>
 }
@@ -31,7 +31,7 @@ export function EulerityConnections({ studios, accounts }: { studios: Studio[]; 
       <label className="space-y-1 text-sm"><span>Eulerity email</span><Input name="email" type="email" autoComplete="username" required /></label>
       <label className="space-y-1 text-sm"><span>Eulerity password</span><Input name="password" type="password" autoComplete="new-password" required /></label>
       <label className="space-y-1 text-sm md:col-span-2"><span>Your SASHA password</span><Input name="currentPassword" type="password" autoComplete="current-password" required /></label>
-      <div className="flex items-center gap-3 md:col-span-2"><Button disabled={pending}>{pending ? "Encrypting…" : "Save Eulerity connection"}</Button>{state?.error ? <p className="text-sm text-destructive">{state.error}</p> : null}{state?.complete ? <p className="text-sm text-emerald-700">Connection saved.</p> : null}</div>
+      <div className="flex items-center gap-3 md:col-span-2"><Button type="submit" disabled={pending}>{pending ? "Encrypting…" : "Save Eulerity connection"}</Button>{state?.error ? <p className="text-sm text-destructive">{state.error}</p> : null}{state?.complete ? <p className="text-sm text-emerald-700">Connection saved.</p> : null}</div>
     </form>
   </div>
 }

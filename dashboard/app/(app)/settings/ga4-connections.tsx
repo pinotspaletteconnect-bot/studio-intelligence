@@ -15,7 +15,7 @@ function PropertyMapping({ property, studios }: { property: Property; studios: S
     <input type="hidden" name="accountId" value={property.account_id} /><input type="hidden" name="propertyId" value={property.property_id} />
     <div className="text-sm"><strong>{property.display_name}</strong><p className="text-xs text-muted-foreground">Property {property.property_id}{property.account_display_name ? ` · ${property.account_display_name}` : ""}<br />{property.studio_name ?? "Needs a SASHA studio mapping"}</p></div>
     <select className="h-9 rounded-md border bg-background px-3 text-sm" name="studioId" required defaultValue={property.studio_id ?? ""}><option value="" disabled>Select studio</option>{studios.map(studio => <option key={studio.id} value={studio.id}>{studio.studio_name}</option>)}</select>
-    <Button size="sm" disabled={pending}>{pending ? "Saving…" : "Map"}</Button>{state?.error ? <p className="text-xs text-destructive sm:col-span-3">{state.error}</p> : null}
+    <Button type="submit" size="sm" disabled={pending}>{pending ? "Saving…" : "Map"}</Button>{state?.error ? <p className="text-xs text-destructive sm:col-span-3">{state.error}</p> : null}
   </form>
 }
 
