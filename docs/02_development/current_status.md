@@ -1,5 +1,16 @@
 # Studio Intelligence Current Status
 
+September 25 GA4 partial-period fix: the studio comparison shows observed
+values when requested days are missing, with explicit partial-day labels.
+Daily active-user averages divide by loaded days. Changes remain unavailable
+until both metric periods are complete; key events use separate country-data
+coverage. Empty periods and undefined ratios remain unavailable. This
+supersedes the incomplete-period hiding described in the September 21 entry.
+Validation: 67 tests passed, two opt-in live tests skipped, full lint and
+production webpack build passed with placeholder credentials. Live warehouse
+freshness and authenticated browser verification remain pending. No collection,
+schema, or workflow changes.
+
 September 24 PTS backfill deployment: PR #72 was merged into the Railway
 production branch. Railway reports the dashboard and collector deployments as
 active; the collector PTS health endpoint returned HTTP 200. The dashboard

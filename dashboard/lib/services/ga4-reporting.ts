@@ -64,6 +64,8 @@ export type Ga4StudioComparison = {
   name: string
   currentDays: number
   previousDays: number
+  currentKeyEventDays: number
+  previousKeyEventDays: number
   kpis: Record<keyof Ga4NorthAmericaDashboard["kpis"], Ga4StudioMetric>
 }
 
@@ -247,22 +249,25 @@ export async function getGa4NorthAmericaDashboard(
     const priorKeys = (previousKeyEventsResult.data ?? []).filter(row => Number(row.studio_id) === Number(studio.id))
     const currentDays = new Set(rows.map(row => row.report_date)).size
     const previousDays = new Set(priorRows.map(row => row.report_date)).size
+    const currentKeyEventDays = new Set(keys.map(row => row.report_date)).size
+    const previousKeyEventDays = new Set(priorKeys.map(row => row.report_date)).size
     const currentTotals = totals(rows)
     const previousTotals = totals(priorRows)
-    const values = buildKpis(currentTotals, previousTotals, keys.reduce((sum, row) => sum + numberValue(row.key_events), 0), priorKeys.reduce((sum, row) => sum + numberValue(row.key_events), 0), periodDays, comparisonDays)
-    const priorValues = buildKpis(previousTotals, totals([]), priorKeys.reduce((sum, row) => sum + numberValue(row.key_events), 0), 0, comparisonDays, comparisonDays)
+    const values = buildKpis(currentTotals, previousTotals, keys.reduce((sum, row) => sum + numberValue(row.key_events), 0), priorKeys.reduce((sum, row) => sum + numberValue(row.key_events), 0), Math.max(currentDays, 1), Math.max(previousDays, 1))
+    const priorValues = buildKpis(previousTotals, totals([]), priorKeys.reduce((sum, row) => sum + numberValue(row.key_events), 0), 0, Math.max(previousDays, 1), 1)
     const kpis = Object.fromEntries(Object.entries(values).map(([key, metric]) => {
       const metricKey = key as keyof typeof values
-      const currentComplete = currentDays === periodDays && (key !== "keyEvents" || new Set(keys.map(row => row.report_date)).size === periodDays)
-      const previousComplete = previousDays === comparisonDays && (key !== "keyEvents" || new Set(priorKeys.map(row => row.report_date)).size === comparisonDays)
-      // Missing days are unknown, not zero. Ratios also require a denominator.
+      const loadedDays = key === "keyEvents" ? currentKeyEventDays : currentDays
+      const priorLoadedDays = key === "keyEvents" ? previousKeyEventDays : previousDays
+      const comparable = loadedDays === periodDays && priorLoadedDays === comparisonDays
+      // Show observed data, but never compare incomplete periods or count missing days as zero.
       const needsSessions = ["engagementRate", "averageEngagementTime", "conversionRate"].includes(key)
       const needsUsers = key === "pageViewsPerUser"
-      const now = currentComplete && (!needsSessions || currentTotals.sessions > 0) && (!needsUsers || currentTotals.activeUsers > 0) ? metric.value : null
-      const previous = previousComplete && (!needsSessions || previousTotals.sessions > 0) && (!needsUsers || previousTotals.activeUsers > 0) ? priorValues[metricKey].value : null
-      return [key, { value: now, previous, delta: now !== null && previous !== null ? now - previous : null, change: now !== null && previous !== null ? change(now, previous) : null }]
+      const now = loadedDays > 0 && (!needsSessions || currentTotals.sessions > 0) && (!needsUsers || currentTotals.activeUsers > 0) ? metric.value : null
+      const previous = priorLoadedDays > 0 && (!needsSessions || previousTotals.sessions > 0) && (!needsUsers || previousTotals.activeUsers > 0) ? priorValues[metricKey].value : null
+      return [key, { value: now, previous, delta: comparable && now !== null && previous !== null ? now - previous : null, change: comparable && now !== null && previous !== null ? change(now, previous) : null }]
     })) as Ga4StudioComparison["kpis"]
-    return { id: Number(studio.id), name: studio.studio_name, currentDays, previousDays, kpis }
+    return { id: Number(studio.id), name: studio.studio_name, currentDays, previousDays, currentKeyEventDays, previousKeyEventDays, kpis }
   })
   const daily = new Map<string, Ga4NorthAmericaDashboard["trends"][number]>()
   for (const row of currentRows) {

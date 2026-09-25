@@ -52,10 +52,15 @@ export function Ga4StudioComparison({ data }: { data: Ga4NorthAmericaDashboard }
             {data.studios.map(studio => {
               const metric = studio.kpis[key]
               const delta = metric.delta
-              const deltaLabel = delta === null ? "Change unavailable" : signed(delta, format === "percent" ? `${Math.abs(delta).toFixed(1)} pp` : valueLabel(Math.abs(delta), format))
+              const currentDays = key === "keyEvents" ? studio.currentKeyEventDays : studio.currentDays
+              const previousDays = key === "keyEvents" ? studio.previousKeyEventDays : studio.previousDays
+              const incomplete = currentDays < data.periodDays || previousDays < data.comparisonDays
+              const deltaLabel = delta === null ? (incomplete ? "Change unavailable: incomplete period" : "Change unavailable") : signed(delta, format === "percent" ? `${Math.abs(delta).toFixed(1)} pp` : valueLabel(Math.abs(delta), format))
               return <td key={studio.id} className="border-l p-4 align-top tabular-nums">
                 <p className="text-xl font-semibold">{valueLabel(metric.value, format)}</p>
+                {currentDays > 0 && currentDays < data.periodDays && <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">Partial: {currentDays}/{data.periodDays} current days</p>}
                 <p className="mt-1 text-xs text-muted-foreground">Comparison: {valueLabel(metric.previous, format)}</p>
+                {previousDays > 0 && previousDays < data.comparisonDays && <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">Partial: {previousDays}/{data.comparisonDays} comparison days</p>}
                 <p className={`mt-1 text-xs font-medium ${delta === null || delta === 0 ? "text-muted-foreground" : delta > 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-700 dark:text-red-400"}`}>
                   {deltaLabel}{format !== "percent" && metric.change !== null ? ` (${signed(metric.change, `${Math.abs(metric.change).toFixed(1)}%`)})` : ""}
                 </p>
@@ -65,7 +70,7 @@ export function Ga4StudioComparison({ data }: { data: Ga4NorthAmericaDashboard }
           </tr>)}</tbody>
         </table>
       </div>
-      <p className="mt-3 text-xs text-muted-foreground">Changes compare each studio with its own selected comparison period. Rate changes use percentage points (pp). A dash means incomplete data or an unavailable metric; missing days are never counted as zero.</p>
+      <p className="mt-3 text-xs text-muted-foreground">Partial values include only loaded days; daily averages use loaded days, and missing days are never counted as zero. Key events have separate day coverage. Changes appear only when both periods are complete. Rate changes use percentage points (pp). A dash means no data or an unavailable metric.</p>
     </CardContent>
   </Card>
 }

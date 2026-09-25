@@ -1,5 +1,14 @@
 # Studio Intelligence Changelog
 
+## September 25, 2026 — GA4 partial-period visibility
+
+- Show loaded studio metrics when some requested days are missing, and label
+  partial current and comparison periods. Daily averages use loaded days.
+- Withhold changes until both periods are complete. Track country-key-event
+  coverage separately, preserving unavailable metrics and undefined ratios.
+- Verified 67 tests, full lint, and production webpack build. Two opt-in live
+  tests were skipped.
+
 ## September 24, 2026 - PTS historical backfill studio resolution
 
 The manual Product Sales and Class Sales uploads now use active tenant and
