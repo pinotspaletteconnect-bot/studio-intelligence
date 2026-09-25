@@ -24,7 +24,11 @@ function UploadCard({ kind, title, description, studios }: { kind: BackfillKind;
       const response = await fetch("/api/operations/pts-backfills", { method: "POST", body: formData })
       const body = await response.json() as { success?: boolean; rowCount?: number; error?: string }
       if (!response.ok || !body.success) throw new Error(body.error ?? "The import was unsuccessful.")
-      setResult({ success: true, message: `Import successful. ${Number(body.rowCount ?? 0).toLocaleString()} source rows were processed.` })
+      const sourceRowCount = typeof body.rowCount === "number" && Number.isSafeInteger(body.rowCount) && body.rowCount >= 0
+        ? body.rowCount : undefined
+      setResult({ success: true, message: sourceRowCount !== undefined
+        ? `Import successful. ${sourceRowCount.toLocaleString()} source rows were processed.`
+        : "Import successful." })
       formRef.current?.reset()
     } catch (error) {
       setResult({ success: false, message: error instanceof Error ? error.message : "The import was unsuccessful." })

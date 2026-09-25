@@ -44,13 +44,16 @@ export async function POST(request: Request) {
       cache: "no-store",
       signal: AbortSignal.timeout(120_000),
     })
-    const result = await response.json().catch(() => null) as { rowCount?: number } | unknown[] | null
+    const result = await response.json().catch(() => null) as { rowCount?: unknown } | unknown[] | null
     if (!response.ok) {
       console.error("PTS backfill processor rejected an upload", { status: response.status, kind: parsed.data.kind, studioId: parsed.data.studioId })
       return NextResponse.json({ error: "The import processor could not complete this upload. The studio configuration, processing service, or workbook may need attention." }, { status: 422 })
     }
-    const rowCount = Array.isArray(result) ? result.length : Number(result?.rowCount ?? 0)
-    return NextResponse.json({ success: true, rowCount })
+    // The current workflows return a warehouse row, not the collector's source-row count.
+    // Only show a count when the workflow explicitly supplies one.
+    const rowCount = !Array.isArray(result) && typeof result?.rowCount === "number" &&
+      Number.isSafeInteger(result.rowCount) && result.rowCount >= 0 ? result.rowCount : undefined
+    return NextResponse.json({ success: true, ...(rowCount === undefined ? {} : { rowCount }) })
   } catch (error) {
     const accessResponse = apiAccessResponse(error)
     if (accessResponse) return accessResponse

@@ -1,5 +1,13 @@
 # Studio Intelligence Current Status
 
+September 25 PTS Class Sales backfill verification: a Huntington Beach workbook
+completed workflow 11 (execution 120160). The collector parsed 490 source rows
+for the scoped studio, and the warehouse upsert returned 325 grouped records.
+The dashboard nevertheless reported zero because the workflow final response
+contains a warehouse row rather than the collector rowCount. The dashboard
+now omits the count when the workflow does not explicitly provide one. The
+shared SASHA PTS Backfill webhook credential was configured before this run.
+
 September 25 GA4 partial-period fix: the studio comparison shows observed
 values when requested days are missing, with explicit partial-day labels.
 Daily active-user averages divide by loaded days. Changes remain unavailable
@@ -227,6 +235,11 @@ The live Supabase schema is authoritative. Update `docs/01_architecture/schema.m
 - `pts_class_sales_daily` — one latest-observed class event per studio and
   stable source event key; the published daily workflow refreshes the prior 14
   completed event days at 5:00 AM America/New_York
+A newly onboarded PTS organization lacked product and class reporting
+mappings, leaving category cards at zero despite successful backfills.
+Its mapping configuration has been repaired, and a dashboard change to
+seed same-brand mappings during PTS studio onboarding awaits release.
+
 - `pts_class_type_mappings` and `pts_product_reporting_mappings` — governed
   organization-level mappings for operations reporting groups
 - `pts_class_type_sales_daily` and `pts_product_sales_daily` — replacement
