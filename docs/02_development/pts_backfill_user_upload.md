@@ -26,8 +26,9 @@ Fields:
   matching the existing collector node's binary input field
 
 The internal webhook responds synchronously after its final warehouse node. A
-successful 2xx response is treated as success; SASHA derives `rowCount` from an
-array response or a `rowCount` property when present.
+successful 2xx response is treated as success. SASHA displays a source-row
+count only when the workflow explicitly returns a valid `rowCount` property;
+warehouse rows and array length are not source-row counts.
 
 Any failure response is converted to a generic user-facing error. Raw workflow
 errors and source payloads must remain in protected operational logs.

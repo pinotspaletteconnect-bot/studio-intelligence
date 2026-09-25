@@ -1,5 +1,13 @@
 # Studio Intelligence Current Status
 
+September 25 PTS Class Sales backfill verification: a Huntington Beach workbook
+completed workflow 11 (execution 120160). The collector parsed 490 source rows
+for the scoped studio, and the warehouse upsert returned 325 grouped records.
+The dashboard nevertheless reported zero because the workflow final response
+contains a warehouse row rather than the collector rowCount. The dashboard
+now omits the count when the workflow does not explicitly provide one. The
+shared SASHA PTS Backfill webhook credential was configured before this run.
+
 September 25 GA4 partial-period fix: the studio comparison shows observed
 values when requested days are missing, with explicit partial-day labels.
 Daily active-user averages divide by loaded days. Changes remain unavailable
