@@ -1,5 +1,17 @@
 # Studio Intelligence Changelog
 
+## September 25, 2026 — Huntington Beach PTS reporting mappings
+
+The Product Sales backfill for a newly onboarded studio loaded records, but its
+F&B, candle, and food dashboard cards stayed at zero.
+The organization had no PTS product or class reporting mappings. Copied the
+existing Pinot's Palette rules to it and mapped its observed
+`Miscellaneous` subcategory to Other Products. The reporting view now classifies
+the imported rows, and the workbook did not require re-uploading. PTS studio
+onboarding now seeds missing reporting rules from an
+established organization with the same brand name, preserving any rules already
+configured for the new organization.
+
 ## September 25, 2026 — GA4 partial-period visibility
 
 - Show loaded studio metrics when some requested days are missing, and label

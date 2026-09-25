@@ -235,6 +235,11 @@ The live Supabase schema is authoritative. Update `docs/01_architecture/schema.m
 - `pts_class_sales_daily` — one latest-observed class event per studio and
   stable source event key; the published daily workflow refreshes the prior 14
   completed event days at 5:00 AM America/New_York
+A newly onboarded PTS organization lacked product and class reporting
+mappings, leaving category cards at zero despite successful backfills.
+Its mapping configuration has been repaired, and a dashboard change to
+seed same-brand mappings during PTS studio onboarding awaits release.
+
 - `pts_class_type_mappings` and `pts_product_reporting_mappings` — governed
   organization-level mappings for operations reporting groups
 - `pts_class_type_sales_daily` and `pts_product_sales_daily` — replacement

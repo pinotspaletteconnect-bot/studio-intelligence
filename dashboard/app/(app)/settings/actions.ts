@@ -7,6 +7,7 @@ import { z } from "zod"
 import { getAuthenticatedUser, requireDashboardContext } from "@/lib/auth/session"
 import { supabase } from "@/lib/supabase/server"
 import { createAuthClient } from "@/lib/supabase/auth-server"
+import { ensurePtsReportingMappings } from "@/lib/services/pts-reporting-setup"
 
 export type InviteState = { complete?: boolean; error?: string; temporaryPassword?: string } | undefined
 export type AddStudioState = { complete?: boolean; error?: string } | undefined
@@ -656,6 +657,13 @@ export async function mapExistingStudioToPtsAccount(
   if (existingMappingResult.data) return { error: "This studio already has a PTS mapping." }
   if (locationResult.data?.length) return { error: "That PTS location is already mapped." }
 
+  try {
+    await ensurePtsReportingMappings(access.organizationId, studio.brand_id)
+  } catch (setupError) {
+    console.error("PTS reporting setup failed", setupError)
+    return { error: "PTS reporting categories could not be set up. Please try again." }
+  }
+
   const { error } = await supabase.from("studio_integrations").insert({
     organization_id: access.organizationId,
     brand_id: studio.brand_id,
@@ -743,6 +751,13 @@ export async function addStudioWithExistingPtsAccount(
   if (!brand || !ptsAccount) return { error: "The selected brand or PTS account is unavailable." }
   if (duplicateStudio) return { error: "That studio code is already in use." }
   if (duplicateLocation) return { error: "That PTS location is already mapped." }
+
+  try {
+    await ensurePtsReportingMappings(access.organizationId, brand.id)
+  } catch (setupError) {
+    console.error("PTS reporting setup failed", setupError)
+    return { error: "PTS reporting categories could not be set up. Please try again." }
+  }
 
   const { data: studio, error: studioError } = await supabase
     .from("studios")
