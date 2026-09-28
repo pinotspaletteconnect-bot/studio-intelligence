@@ -10,7 +10,9 @@
   and reconciled to $5,238.65; 64 had source ZIPs.
 - Added authenticated, cached on-demand Census ZIP boundaries to the dashboard
   map for Huntington Beach and future studios outside the bundled regions.
-  Dashboard deployment remains pending.
+  PR #76 is deployed and active on Railway. The Huntington Beach reporting view
+  contains 61 ZIP/date rows across 48 ZIPs for September 23–27; authenticated
+  visual map verification remains open because the browser requires sign-in.
 
 ## September 25, 2026 — Huntington Beach PTS reporting mappings
 

@@ -53,10 +53,13 @@ including nine Huntington Beach orders with nine billing ZIPs and $484.25 in
 booked sales; the warehouse query confirmed those nine rows. A scoped
 September 23-26 backfill then upserted 68 Huntington Beach orders totaling
 $5,238.65; 64 had source ZIPs, and warehouse dates/counts/sales reconciled.
-The next scheduled multi-account run still needs observation. The dashboard map change is
-local and not deployed: it requests missing 2020 Census ZCTA boundaries by
-ZIP so California and future studio locations can render without another
-regional geometry file. Lint, TypeScript, focused tests, and build passed.
+The next scheduled multi-account run still needs observation. PR #76 deployed
+the dashboard map change on Railway; it requests missing 2020 Census ZCTA
+boundaries by ZIP so California and future studios can render without another
+regional geometry file. The Huntington Beach reporting view has 61 ZIP/date
+rows across 48 ZIPs for September 23-27. Authenticated visual map verification
+remains open because the browser session redirects to sign-in. Lint, TypeScript,
+focused tests, and build passed.
 See `huntington_zip_repair_rollout.md` for the verified counts and rollout steps.
 
 September 24 Huntington Beach onboarding pilot: Jennifer English's existing identity now owns a separate Huntington Beach organization and Pacific-time studio. Her Duff organization membership was suspended and its four studio grants were removed. The production dashboard now has PTS_VAULT_ONBOARDING_ENABLED=true after confirming dashboard and collector broker settings were present; Railway reports a successful configuration deployment. Jennifer saved PTS account 2, and studio 5 is mapped to PTS Huntington Beach location 194. A read-only direct PTS test accessed the September 23 Sales Report and found 15 summary rows; no first warehouse import is verified. The dashboard now supports adding a PTS login in Settings, updating an existing PTS username and password, and mapping a studio created before its PTS account. The September 24 Railway dashboard deployment completed successfully. The production collector was not exercised end to end because the local collector token returned 401; the first automated collection and warehouse import remain pending. See the test-user guide in docs/00_overview/test_studio_onboarding_guide.md.
