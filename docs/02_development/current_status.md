@@ -45,15 +45,15 @@ This is the fast-changing source of truth for what is implemented, deployed, act
 
 ## Overall Status
 
-September 28 PTS order-geography repair (local code and tested n8n draft;
-scheduled publication pending approval): workflow 31's production loader consumed
+September 28 PTS order-geography repair: workflow 31's production loader consumed
 only the first collector response, dropping the second PTS account and its
 Huntington Beach orders. The revised loader processes and validates all account
-responses before upsert. A controlled draft run loaded 36 September 27 orders,
+responses before upsert and is now published. A controlled draft run loaded 36 September 27 orders,
 including nine Huntington Beach orders with nine billing ZIPs and $484.25 in
-booked sales; the warehouse query confirmed those nine rows. The scheduled
-published version still needs the approved update, and Huntington Beach's
-earlier order dates need a controlled backfill. The dashboard map change is
+booked sales; the warehouse query confirmed those nine rows. A scoped
+September 23-26 backfill then upserted 68 Huntington Beach orders totaling
+$5,238.65; 64 had source ZIPs, and warehouse dates/counts/sales reconciled.
+The next scheduled multi-account run still needs observation. The dashboard map change is
 local and not deployed: it requests missing 2020 Census ZCTA boundaries by
 ZIP so California and future studio locations can render without another
 regional geometry file. Lint, TypeScript, focused tests, and build passed.

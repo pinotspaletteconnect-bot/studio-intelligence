@@ -1,12 +1,13 @@
 # Studio Intelligence Changelog
 
-## September 28, 2026 — Huntington Beach order geography repair (pending rollout)
+## September 28, 2026 — Huntington Beach order geography repair
 
 - Fixed workflow 31's order loader to include and validate all PTS account
   responses. A controlled draft execution loaded 36 September 27 orders,
   including nine Huntington Beach orders with ZIP codes; warehouse totals
-  reconciled to $484.25 for that studio. Scheduled publication and historical
-  backfill remain pending approval.
+  reconciled to $484.25 for that studio. The corrected daily workflow was
+  published. A scoped September 23–26 backfill added 68 Huntington Beach orders
+  and reconciled to $5,238.65; 64 had source ZIPs.
 - Added authenticated, cached on-demand Census ZIP boundaries to the dashboard
   map for Huntington Beach and future studios outside the bundled regions.
   Dashboard deployment remains pending.
