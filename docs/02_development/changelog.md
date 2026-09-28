@@ -1,5 +1,16 @@
 # Studio Intelligence Changelog
 
+## September 28, 2026 — Huntington Beach order geography repair (pending rollout)
+
+- Fixed workflow 31's order loader to include and validate all PTS account
+  responses. A controlled draft execution loaded 36 September 27 orders,
+  including nine Huntington Beach orders with ZIP codes; warehouse totals
+  reconciled to $484.25 for that studio. Scheduled publication and historical
+  backfill remain pending approval.
+- Added authenticated, cached on-demand Census ZIP boundaries to the dashboard
+  map for Huntington Beach and future studios outside the bundled regions.
+  Dashboard deployment remains pending.
+
 ## September 25, 2026 — Huntington Beach PTS reporting mappings
 
 The Product Sales backfill for a newly onboarded studio loaded records, but its
@@ -33,8 +44,6 @@ A controlled Huntington Beach import and warehouse verification remain pending.
 ## September 24, 2026 - Huntington Beach onboarding pilot
 
 Provisioned Jennifer English's separate Huntington Beach workspace using her existing identity; suspended her old membership and removed its four studio grants. Enabled the existing secured PTS account form through the dashboard's production Railway feature setting after checking broker configuration. Added a local owner/admin form to map an already created studio to a saved PTS account, with tenant and duplicate-location checks. Released the Settings forms for new and updated PTS logins, the existing-studio PTS mapping form, and working Eulerity, GA4, and Meta mapping submit buttons. Jennifer saved PTS account 2; mapped Huntington Beach studio 5 to verified PTS location 194. A read-only direct PTS login and September 23 Sales Report check succeeded with 15 summary rows. Automated collection and warehouse import remain pending.
-
-
 ## September 6, 2026 — Reporting reliability and collector protection
 
 Prepared on the production release base. Reporting now paginates completely,
