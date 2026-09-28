@@ -31,12 +31,34 @@ function rewindFeature(feature: Feature): Feature {
   return feature
 }
 
-function StudioMap({ studio, rows, features, metric, activeZip, setActiveZip }: { studio: StudioLocation; rows: ZipRow[]; features: Feature[]; metric: Metric; activeZip: string | null; setActiveZip: (zip: string | null) => void }) {
+function StudioMap({ studio, rows, staticFeatures, staticLoaded, metric, activeZip, setActiveZip }: { studio: StudioLocation; rows: ZipRow[]; staticFeatures: Feature[]; staticLoaded: boolean; metric: Metric; activeZip: string | null; setActiveZip: (zip: string | null) => void }) {
   const frameRef = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(560)
   const [zoom, setZoom] = useState(1)
   const [circles, setCircles] = useState<TargetCircle[]>([])
   const [zipTargets, setZipTargets] = useState<ZipTargets>(emptyZipTargets)
+  const [remoteFeatures, setRemoteFeatures] = useState<Feature[]>([])
+  const [boundaryError, setBoundaryError] = useState(false)
+  const features = useMemo(() => [...new Map([...staticFeatures, ...remoteFeatures].map(feature => [feature.properties?.ZCTA5, feature])).values()], [staticFeatures, remoteFeatures])
+  const requestedCodes = useMemo(() => {
+    const sales = [...rows].sort((a, b) => b.bookedSales - a.bookedSales).slice(0, 10)
+    const orders = [...rows].sort((a, b) => b.orderCount - a.orderCount).slice(0, 10)
+    const staticCodes = new Set(staticFeatures.map(feature => feature.properties?.ZCTA5))
+    return [...new Set([...sales, ...orders].map(row => row.zipCode).concat(zipTargets.codes))]
+      .filter(code => !staticCodes.has(code)).sort().join(",")
+  }, [rows, staticFeatures, zipTargets.codes])
+  useEffect(() => {
+    if (!staticLoaded || !requestedCodes) return
+    const controller = new AbortController()
+    fetch(`/api/marketing/zip-boundaries?${new URLSearchParams({ codes: requestedCodes })}`, { signal: controller.signal })
+      .then(async response => {
+        if (!response.ok) throw new Error("ZIP boundaries unavailable")
+        return response.json() as Promise<FeatureCollection>
+      })
+      .then(collection => { setRemoteFeatures(collection.features.map(feature => rewindFeature(feature as Feature))); setBoundaryError(false) })
+      .catch(error => { if (error.name !== "AbortError") setBoundaryError(true) })
+    return () => controller.abort()
+  }, [requestedCodes, staticLoaded])
   const targetFeatures = useMemo(() => features.filter(feature => zipTargets.codes.includes(feature.properties?.ZCTA5 ?? "")), [features, zipTargets.codes])
   const unmappedTargets = useMemo(() => zipTargets.codes.filter(zip => !features.some(feature => feature.properties?.ZCTA5 === zip)), [features, zipTargets.codes])
   const overlays = useMemo(() => circles.filter(circle => circle.visible).map(circle => ({ circle, geometry: circleGeometry(circle) })), [circles])
@@ -112,13 +134,15 @@ function StudioMap({ studio, rows, features, metric, activeZip, setActiveZip }: 
     </div>
     {!rows.length ? <p className="mt-2 text-xs text-muted-foreground">No captured ZIP sales for this studio and date range. Targeting circles are still available.</p> : null}
     {zipTargets.codes.length ? <p className="mt-2 flex items-center gap-2 text-xs"><span className="inline-block h-3 w-5 border-2" style={{ borderColor: zipTargets.color }} aria-hidden="true" />Target ZIP outlines: {targetFeatures.length} of {zipTargets.codes.length} mapped · no target fill</p> : null}
-    {unmappedTargets.length ? <p role="status" className="mt-2 text-xs text-muted-foreground">No boundary currently available for: {unmappedTargets.join(", ")}. These targets can be saved but cannot be outlined with the loaded regional Census boundaries.</p> : null}
+    {unmappedTargets.length && !boundaryError ? <p role="status" className="mt-2 text-xs text-muted-foreground">No 2020 Census ZIP boundary currently available for: {unmappedTargets.join(", ")}. These targets remain saved.</p> : null}
+    {boundaryError ? <p role="status" className="mt-2 text-xs text-muted-foreground">ZIP boundaries could not be loaded right now. ZIP sales in the table remain available.</p> : null}
     <TargetCircleEditor studioId={studio.id} latitude={studio.latitude} longitude={studio.longitude} circles={circles} onChange={setCircles} zipTargets={zipTargets} onZipChange={setZipTargets} />
   </CardContent></Card>
 }
 
 export function ZipCodeMap({ rows, studios }: { rows: ZipRow[]; studios: StudioLocation[] }) {
   const [features, setFeatures] = useState<Feature[]>([])
+  const [staticLoaded, setStaticLoaded] = useState(false)
   const [metric, setMetric] = useState<Metric>("bookedSales")
   const [activeZip, setActiveZip] = useState<string | null>(null)
   useEffect(() => {
@@ -126,13 +150,14 @@ export function ZipCodeMap({ rows, studios }: { rows: ZipRow[]; studios: StudioL
     Promise.all(["/maps/zcta-east.geojson", "/maps/zcta-arizona.geojson"].map(url => fetch(url, { signal: controller.signal }).then(response => response.json() as Promise<FeatureCollection>)))
       .then(collections => setFeatures(collections.flatMap(collection => collection.features.map(feature => rewindFeature(feature as Feature)))))
       .catch(error => { if (error.name !== "AbortError") console.error("Unable to load ZIP boundaries", error) })
+      .finally(() => { if (!controller.signal.aborted) setStaticLoaded(true) })
     return () => controller.abort()
   }, [])
   const studiosWithData = studios
 
   return <section className="space-y-4">
     <div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="text-lg font-semibold">Customer ZIP highlights</h2><p className="text-sm text-muted-foreground">One local customer-origin map per studio for the selected dates.</p></div><div className="flex rounded-md border p-1 text-sm" aria-label="Map metric"><button type="button" onClick={() => setMetric("bookedSales")} className={`rounded px-3 py-1.5 ${metric === "bookedSales" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Booked sales</button><button type="button" onClick={() => setMetric("orderCount")} className={`rounded px-3 py-1.5 ${metric === "orderCount" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Orders</button></div></div>
-    <div className="grid items-start gap-4 xl:grid-cols-2">{studiosWithData.map(studio => <StudioMap key={studio.id} studio={studio} rows={rows.filter(row => row.studioId === studio.id)} features={features} metric={metric} activeZip={activeZip} setActiveZip={setActiveZip} />)}</div>
+    <div className="grid items-start gap-4 xl:grid-cols-2">{studiosWithData.map(studio => <StudioMap key={studio.id} studio={studio} rows={rows.filter(row => row.studioId === studio.id)} staticFeatures={features} staticLoaded={staticLoaded} metric={metric} activeZip={activeZip} setActiveZip={setActiveZip} />)}</div>
     <p className="text-xs text-muted-foreground">Boundaries are 2020 Census ZCTAs, which approximate USPS ZIP service areas.</p>
   </section>
 }

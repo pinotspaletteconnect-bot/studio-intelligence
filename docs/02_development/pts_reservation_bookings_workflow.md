@@ -60,11 +60,17 @@ the Upcoming Classes service.
 Migration `20260817160000_pts_order_geography_discounts.sql` adds the separate
 `pts_order_attributes` order grain, the `upsert_pts_order_attributes` loading
 RPC, and `pts_order_geography_daily`. The migration was deployed and verified
-August 17, 2026; production workflow cutover remains pending.
+August 17, 2026.
 
 Workflow 13B keeps the option disabled so the established reservation feed is
-unchanged. Unpublished workflow 31 requests enrichment explicitly and loads
-the separate order-grain table, providing an independent rollback boundary.
+unchanged. Published workflow 31 requests enrichment explicitly at 6:30 AM
+Eastern and loads the separate order-grain table. On September 28, its loader
+was found to consume only the first of two account responses, silently omitting
+Huntington Beach. The corrected loader validates every account and studio
+result before loading and is now published. Its controlled run loaded 36
+September 27 orders, including nine Huntington Beach orders with nine ZIPs
+and $484.25 booked sales. A scoped September 23–26 backfill loaded 68
+Huntington Beach orders, 64 with source ZIPs, and reconciled to $5,238.65.
 
 ## Scheduling and reliability
 

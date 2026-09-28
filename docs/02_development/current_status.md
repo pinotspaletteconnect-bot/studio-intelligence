@@ -45,8 +45,21 @@ This is the fast-changing source of truth for what is implemented, deployed, act
 
 ## Overall Status
 
-September 24 Huntington Beach onboarding pilot: Jennifer English's existing identity now owns a separate Huntington Beach organization and Pacific-time studio. Her Duff organization membership was suspended and its four studio grants were removed. The production dashboard now has PTS_VAULT_ONBOARDING_ENABLED=true after confirming dashboard and collector broker settings were present; Railway reports a successful configuration deployment. Jennifer saved PTS account 2, and studio 5 is mapped to PTS Huntington Beach location 194. A read-only direct PTS test accessed the September 23 Sales Report and found 15 summary rows; no first warehouse import is verified. The dashboard now supports adding a PTS login in Settings, updating an existing PTS username and password, and mapping a studio created before its PTS account. The September 24 Railway dashboard deployment completed successfully. The production collector was not exercised end to end because the local collector token returned 401; the first automated collection and warehouse import remain pending. See the test-user guide in docs/00_overview/test_studio_onboarding_guide.md.
+September 28 PTS order-geography repair: workflow 31's production loader consumed
+only the first collector response, dropping the second PTS account and its
+Huntington Beach orders. The revised loader processes and validates all account
+responses before upsert and is now published. A controlled draft run loaded 36 September 27 orders,
+including nine Huntington Beach orders with nine billing ZIPs and $484.25 in
+booked sales; the warehouse query confirmed those nine rows. A scoped
+September 23-26 backfill then upserted 68 Huntington Beach orders totaling
+$5,238.65; 64 had source ZIPs, and warehouse dates/counts/sales reconciled.
+The next scheduled multi-account run still needs observation. The dashboard map change is
+local and not deployed: it requests missing 2020 Census ZCTA boundaries by
+ZIP so California and future studio locations can render without another
+regional geometry file. Lint, TypeScript, focused tests, and build passed.
+See `huntington_zip_repair_rollout.md` for the verified counts and rollout steps.
 
+September 24 Huntington Beach onboarding pilot: Jennifer English's existing identity now owns a separate Huntington Beach organization and Pacific-time studio. Her Duff organization membership was suspended and its four studio grants were removed. The production dashboard now has PTS_VAULT_ONBOARDING_ENABLED=true after confirming dashboard and collector broker settings were present; Railway reports a successful configuration deployment. Jennifer saved PTS account 2, and studio 5 is mapped to PTS Huntington Beach location 194. A read-only direct PTS test accessed the September 23 Sales Report and found 15 summary rows; no first warehouse import is verified. The dashboard now supports adding a PTS login in Settings, updating an existing PTS username and password, and mapping a studio created before its PTS account. The September 24 Railway dashboard deployment completed successfully. The production collector was not exercised end to end because the local collector token returned 401; the first automated collection and warehouse import remain pending. See the test-user guide in docs/00_overview/test_studio_onboarding_guide.md.
 
 September 21 local GA4 addition (not deployed): the North America page shows
 a side-by-side studio table with all ten KPIs, current and comparison values,
@@ -396,20 +409,16 @@ Implemented foundation:
   6:00 AM America/New_York. Its August 1 production validation loaded all four
   studios: 111 ordered seats, 107 active seats, 2 refunded seats, 2 held seats,
   and $4,166.20 gross booked sales.
-- PTS order geography and discount enrichment is implemented locally. The
+- PTS order geography and discount enrichment is active in production. The
   collector reads five-digit `BillingZip` plus item-level discounts at one row
-  per order, and the dashboard exposes on-demand ZIP, booked-sales, average
-  order value, revenue-share, and discount-use reporting. The dashboard also
-  includes a no-recurring-cost filled ZCTA map with sales/order shading, ranked
-  ZIP interaction, and configured studio address markers. Regional 2020 Census
-  geometry is hosted with the dashboard; studio addresses and coordinates are
-  stored in the existing PTS integration configuration. All four production
-  configurations were populated and verified August 21; migration
-  `20260820150000` remains pending in the remote migration ledger. Supabase migration
-  `20260817160000` was deployed and its table, reporting view, and RPC were
-  verified August 17. Railway deployment, unpublished workflow 31 credential
-  binding/manual validation, backfill, and controlled production validation remain pending; the feature must not be
-  described as production until those steps are complete.
+  per order, and the dashboard exposes ZIP, booked-sales, average order value,
+  revenue-share, and discount-use reporting. Existing eastern and Arizona
+  studios use bundled 2020 Census map boundaries; the local repair adds on-demand
+  boundaries for other regions. Workflow 31 is published at 6:30 AM Eastern,
+  but its published loader currently omits accounts after the first. The
+  multi-account correction passed a controlled draft run and awaits publication.
+  Huntington Beach's historical order gap remains to be backfilled.
+
 - The upcoming-class ingestion contract now preserves the nullable PTS calendar
   Display Name separately from the painting. The current-week party drill-down
   presents it as Title between Date and time and Event; snapshots collected
