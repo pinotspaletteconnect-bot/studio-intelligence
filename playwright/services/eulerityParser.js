@@ -17,20 +17,42 @@ function parseNumber(value) {
 
 function formatDate(value) {
     const s = String(value).trim();
+    let year;
+    let month;
+    let day;
 
     // YYYYMMDD
     if (/^\d{8}$/.test(s)) {
-        return `${s.substring(0, 4)}-${s.substring(4, 6)}-${s.substring(6, 8)}`;
+        year = Number(s.substring(0, 4));
+        month = Number(s.substring(4, 6));
+        day = Number(s.substring(6, 8));
     }
-
     // M/D/YYYY or MM/DD/YYYY
-    if (s.includes("/")) {
-        const [month, day, year] = s.split("/");
+    else if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)) {
+        const parts = s.split("/").map(Number);
+        [month, day, year] = parts;
+    }
+    // Eulerity also exports dates such as "Aug 28, 2024".
+    else {
+        const namedDate = /^([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4})$/.exec(s);
+        const monthNames = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+        const namedMonth = namedDate && monthNames.indexOf(namedDate[1].slice(0, 3).toLowerCase());
 
-        return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+        if (namedMonth === null || namedMonth < 0) {
+            throw new Error(`Invalid date: ${value}`);
+        }
+
+        month = namedMonth + 1;
+        day = Number(namedDate[2]);
+        year = Number(namedDate[3]);
     }
 
-    throw new Error(`Invalid date: ${value}`);
+    const date = new Date(Date.UTC(year, month - 1, day));
+    if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) {
+        throw new Error(`Invalid date: ${value}`);
+    }
+
+    return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
 function loadCSV(filePath) {
