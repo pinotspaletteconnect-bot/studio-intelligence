@@ -628,6 +628,8 @@ This project follows a milestone-based changelog rather than tracking every indi
 
 # Unreleased
 
+- October 2: add CPM to Eulerity channel and studio comparisons, including totals. CPM uses selected-period spend per 1,000 impressions; unavailable or zero impressions show a dash.
+
 - Restored Product Sales collection after multi-account studio validation began
   requiring a time zone by adding the four legacy pilot studios' canonical time
   zones to the Product Sales collector defaults and covering them with a

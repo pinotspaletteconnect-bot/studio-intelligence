@@ -22,6 +22,7 @@ export function buildEulerityComparison(studios: Studio[], rows: EulerityCompari
       const spend = sum("spend"), clicks = sum("clicks"), impressions = sum("impressions")
       return { spend, clicks, impressions,
         cpc: spend !== null && clicks !== null && clicks > 0 ? spend / clicks : null,
+        cpm: spend !== null && impressions !== null && impressions > 0 ? spend / impressions * 1000 : null,
         ctr: clicks !== null && impressions !== null && impressions > 0 ? clicks / impressions * 100 : null,
       }
     }

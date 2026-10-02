@@ -7,6 +7,16 @@ const row = (id: number, spend: number | null, clicks: number, date = "2026-09-0
   spend_total: spend, clicks_total: clicks, impressions_total: 1000,
 })
 describe("Eulerity studio comparison", () => {
+  it("calculates CPM from period totals and preserves unavailable impressions", () => {
+    const second = { ...row(1, 90, 30, "2026-09-02"), impressions_social: 9000, impressions_total: 9000 };
+    const result = buildEulerityComparison(studios, [row(1, 10, 10), second, { ...row(2, 20, 0), impressions_social: 0, impressions_total: 0 }, row(3, null, 10)], 2);
+    expect(result.studios[0].total.cpm).toBe(10);
+    expect(result.studios[0].channels[0].cpm).toBe(10);
+    expect(result.studios[1].total.cpm).toBeNull();
+    expect(result.studios[2].channels[0].cpm).toBeNull();
+    expect(result.studios[3].total.cpm).toBeNull();
+  });
+
   it("uses period revenue divided by period spend and keeps missing attribution distinct from zero", () => {
     const result = buildEulerityComparison(studios, [row(1, 25, 10), row(1, 75, 10, "2026-09-02"), row(2, 0, 0), row(3, 50, 10)], 2, [
       { studio_id: 1, report_date: "2026-09-01", total_revenue: 150 },
