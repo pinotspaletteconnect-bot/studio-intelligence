@@ -66,6 +66,7 @@ export function EulerityDashboard() {
                 </dl>
                 <p className="mt-1 text-xs text-muted-foreground">{count(studio.total.clicks)} clicks · {money(studio.total.cpc)} CPC</p>
                 <p className="mt-1 text-xs text-muted-foreground">{count(studio.total.impressions)} impressions · {percent(studio.total.ctr)} CTR</p>
+                <p className="mt-1 text-xs text-muted-foreground">{money(studio.total.cpm)} CPM</p>
               </td>)}
             </tr>
             {channelKeys.map((channelKey, index) => <tr key={channelKey} className="border-b last:border-b-0">
@@ -80,6 +81,7 @@ export function EulerityDashboard() {
                   </p>
                   <div className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1 text-xs text-muted-foreground">
                     <span>{count(channel.clicks)} clicks</span><span>{percent(channel.ctr)} CTR</span>
+                    <span>{money(channel.cpm)} CPM</span><span />
                     <span>{count(channel.impressions)} impressions</span><span>{percent(channel.spendShare)} of spend</span>
                   </div>
                 </td>
@@ -91,7 +93,7 @@ export function EulerityDashboard() {
       <div className="space-y-1 border-t bg-muted/20 px-4 py-3 text-xs leading-relaxed text-muted-foreground">
         <p>Comparison = other studios’ combined spend ÷ combined clicks for the same channel. Only complete periods with known spend and positive clicks are compared. This is a peer reference, not an agreed cost target.</p>
         <p>Attributed revenue is GA4 revenue assigned to Eulerity paid traffic for the selected dates. ROAS = attributed revenue ÷ Eulerity spend. Attribution is available at studio level, not reliably by channel. It does not represent all studio sales.</p>
-        <p>Channel spend is allocated from Eulerity totals. CPC and click-through rate (CTR) use period totals. A dash means unavailable; missing days are not treated as zero. ROAS requires attribution records, positive spend, and complete spend-date coverage.</p>
+        <p>Channel spend is allocated from Eulerity totals. CPC, CPM, and click-through rate (CTR) use period totals. CPM is spend per 1,000 impressions. A dash means unavailable; missing days are not treated as zero. ROAS requires attribution records, positive spend, and complete spend-date coverage.</p>
       </div>
     </Card>}
   </div>

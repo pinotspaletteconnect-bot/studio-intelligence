@@ -250,6 +250,7 @@ export function MarketingDashboard() {
         ? (totals.clicks / totals.impressions) * 100
         : 0,
       cpc: totals.clicks ? totals.spend / totals.clicks : 0,
+      cpm: totals.impressions > 0 ? (totals.spend / totals.impressions) * 1000 : null,
     }
   }, [data])
   const strategyChangesByDate = useMemo(() => {
@@ -869,6 +870,7 @@ export function MarketingDashboard() {
                   <th className="px-3 py-2 text-right font-medium">Clicks</th>
                   <th className="px-3 py-2 text-right font-medium">CTR</th>
                   <th className="px-3 py-2 text-right font-medium">CPC</th>
+                  <th className="px-3 py-2 text-right font-medium" title="Cost per 1,000 impressions">CPM</th>
                 </tr>
               </thead>
               <tbody>
@@ -892,6 +894,9 @@ export function MarketingDashboard() {
                     </td>
                     <td className="px-3 py-3 text-right tabular-nums">
                       {decimalCurrency.format(channel.cpc)}
+                    </td>
+                    <td className="px-3 py-3 text-right tabular-nums">
+                      {channel.cpm === null ? "—" : decimalCurrency.format(channel.cpm)}
                     </td>
                   </tr>
                 ))}
@@ -917,14 +922,17 @@ export function MarketingDashboard() {
                   <td className="px-3 py-3 text-right tabular-nums">
                     {decimalCurrency.format(eulerityChannelTotals.cpc)}
                   </td>
+                  <td className="px-3 py-3 text-right tabular-nums">
+                    {eulerityChannelTotals.cpm === null ? "—" : decimalCurrency.format(eulerityChannelTotals.cpm)}
+                  </td>
                 </tr>
               </tfoot>
             </table>
           </div>
           <p className="mt-3 text-xs text-muted-foreground">
             Channel spend is allocated from Eulerity total spend using the
-            reported channel percentages. CTR and CPC are recalculated from the
-            selected-period totals.
+            reported channel percentages. CTR, CPC, and CPM are recalculated from the
+            selected-period totals. CPM is spend per 1,000 impressions; a dash means no impressions.
           </p>
         </CardContent>
       </Card>

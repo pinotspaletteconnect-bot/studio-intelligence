@@ -193,6 +193,7 @@ export type MarketingDashboard = {
     clicks: number
     ctr: number
     cpc: number
+    cpm: number | null
   }>
   eulerityDailyRoas: {
     studios: Array<{
@@ -717,6 +718,7 @@ export async function getMarketingDashboard(
       ? (channel.clicks / channel.impressions) * 100
       : 0,
     cpc: channel.clicks ? channel.spend / channel.clicks : 0,
+    cpm: channel.impressions > 0 ? (channel.spend / channel.impressions) * 1000 : null,
   }))
   const mntnTotals = mntnRows.reduce(
     (sum, row) => ({
