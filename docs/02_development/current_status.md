@@ -1,5 +1,15 @@
 # Studio Intelligence Current Status
 
+October 5 ZIP-map navigation fix prepared locally (not deployed): default view
+uses a 25-mile radius around the configured studio, independent of top-10
+outliers. Rankings remain complete. Users can show all top ZIPs or select a
+ZIP to center it, drag or use arrow keys to pan, and zoom up to 12x. ZIP and
+circle labels retain their screen size. No warehouse, ETL, or metric changes.
+Validation: two focused regression tests, full lint, and production webpack
+build with placeholder Supabase settings pass. Authenticated browser checks
+and production deployment remain pending.
+
+
 September 25 PTS Class Sales backfill verification: a Huntington Beach workbook
 completed workflow 11 (execution 120160). The collector parsed 490 source rows
 for the scoped studio, and the warehouse upsert returned 325 grouped records.
