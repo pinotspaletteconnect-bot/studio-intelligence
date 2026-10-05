@@ -1,5 +1,11 @@
 # Studio Intelligence Changelog
 
+## October 2, 2026 — Executive future booked seats
+
+- Added a dedicated "Future booked seats" card to the executive This week
+  snapshot. It compares seats booked for the remaining days of this week with
+  the equivalent booking snapshot for the selected comparison week.
+
 ## September 28, 2026 — Huntington Beach order geography repair
 
 - Fixed workflow 31's order loader to include and validate all PTS account
