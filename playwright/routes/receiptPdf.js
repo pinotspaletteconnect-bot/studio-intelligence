@@ -27,6 +27,7 @@ function createReceiptPdfRouter({render, bundle = require('../services/receipts/
         return res.status(422).json({error:'Source requires review', postingAllowed:false, archiveAllowed:false});
       res.set('X-Content-Type-Options','nosniff');
       res.set('Content-Disposition', `attachment; filename="${result.fileName}"`);
+      if(req.get('accept')==='application/json')return res.json({status:result.status,sourceMessageId:result.sourceMessageId,companyId:result.companyId,fileName:result.fileName,size:result.pdf.length,pdfBase64:result.pdf.toString('base64'),postingAllowed:false,archiveAllowed:false});
       res.type('application/pdf').send(result.pdf);
     } catch {
       res.status(503).json({error:'PDF rendering failed; source retained for review'});
@@ -39,6 +40,7 @@ function createReceiptPdfRouter({render, bundle = require('../services/receipts/
       const result=await bundle(req.body);
       res.set('X-Content-Type-Options','nosniff');
       res.set('Content-Disposition',`attachment; filename="${result.fileName}"`);
+      if(req.get('accept')==='application/json')return res.json({status:result.status,sourceMessageId:result.sourceMessageId,companyId:result.companyId,fileName:result.fileName,size:result.pdf.length,pdfBase64:result.pdf.toString('base64'),postingAllowed:false,archiveAllowed:false});
       res.type('application/pdf').send(result.pdf);
     } catch {
       res.status(422).json({error:'Original PDF bundle requires review; sources retained',postingAllowed:false,archiveAllowed:false});
