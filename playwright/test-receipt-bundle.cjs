@@ -27,6 +27,9 @@ test('bundle endpoint keeps authentication, shared concurrency, generic failures
  assert.equal((await fetch(url,{method:'POST',body:'{}',headers:{'Content-Type':'application/json'}})).status,401);
  const headers={'Content-Type':'application/json',Authorization:`Bearer ${secret}`};
  const good=await fetch(url,{method:'POST',headers,body:JSON.stringify(await input())});assert.equal(good.status,200);assert.equal(good.headers.get('cache-control'),'no-store');
+ const json=await fetch(url,{method:'POST',headers:{...headers,Accept:'application/json'},body:JSON.stringify(await input())});
+ const payload=await json.json();assert.equal(payload.status,'pdf_ready_for_review');assert.equal(payload.sourceMessageId,'synthetic');
+ const bytes=Buffer.from(payload.pdfBase64,'base64');assert.equal(bytes.length,payload.size);assert.equal(bytes.subarray(0,5).toString(),'%PDF-');assert.equal(payload.postingAllowed,false);
  const bad=await fetch(url,{method:'POST',headers,body:'{}'});assert.equal(bad.status,422);assert.doesNotMatch(await bad.text(),/stack|node_modules/);
 });
 if(process.env.RECEIPT_BUNDLE_QA==='true')input().then(bundlePdfs).then(r=>require('node:fs').writeFileSync(process.env.RECEIPT_BUNDLE_QA_PATH,r.pdf));
