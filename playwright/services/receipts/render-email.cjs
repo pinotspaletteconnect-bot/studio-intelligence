@@ -10,9 +10,10 @@ function createEmailRenderer(chromium) {
     if (prepared.status !== 'ready_for_pdf_render') return prepared;
     if (busy) throw new Error('Renderer busy; queue this receipt');
     busy = true;
-    let browser;
+    let browser; let phase='browser_launch';
     try {
       browser = await chromium.launch({headless:true, timeout:15000});
+      phase='document_render';
       const isolated = await browser.newContext({javaScriptEnabled:false, serviceWorkers:'block', offline:true});
       await isolated.route('**/*', route => route.abort());
       const page = await isolated.newPage();
@@ -31,6 +32,10 @@ function createEmailRenderer(chromium) {
           timer = setTimeout(() => reject(new Error('PDF rendering timed out')),15000);
         })]);
       } finally { clearTimeout(timer); }
+    } catch(error) {
+      // Log only a fixed phase, never receipt text, URLs or credentials.
+      console.error('receipt_pdf_failure', phase);
+      throw error;
     } finally {
       try { if (browser) await browser.close(); } finally { busy = false; }
     }

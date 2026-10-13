@@ -1,7 +1,7 @@
 'use strict';
 const express = require('express');
 const {timingSafeEqual} = require('node:crypto');
-function createReceiptPdfRouter({render, env = process.env}) {
+function createReceiptPdfRouter({render, bundle = require('../services/receipts/bundle-worker.cjs').renderBundle, env = process.env}) {
   const router = express.Router();
   let busy = false;
   router.use((req, res, next) => {
@@ -31,6 +31,18 @@ function createReceiptPdfRouter({render, env = process.env}) {
     } catch {
       res.status(503).json({error:'PDF rendering failed; source retained for review'});
     } finally { busy = false; }
+  });
+  router.post('/bundle', express.json({limit:'28mb', inflate:false}), async (req,res) => {
+    if(busy)return res.status(429).set('Retry-After','5').json({error:'Renderer busy'});
+    busy=true;
+    try {
+      const result=await bundle(req.body);
+      res.set('X-Content-Type-Options','nosniff');
+      res.set('Content-Disposition',`attachment; filename="${result.fileName}"`);
+      res.type('application/pdf').send(result.pdf);
+    } catch {
+      res.status(422).json({error:'Original PDF bundle requires review; sources retained',postingAllowed:false,archiveAllowed:false});
+    } finally {busy=false;}
   });
   router.use((err, req, res, next) => {
     res.status(err.type === 'entity.too.large' ? 413 : 400).json({error:'Invalid request body'});
