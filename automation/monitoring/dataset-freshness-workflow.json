@@ -1,0 +1,1064 @@
+{
+  "name": "Dataset Reporting Health — Production Email Alerts",
+  "active": false,
+  "nodes": [
+    {
+      "id": "970df9ed-4036-454b-8483-b4304803db8a",
+      "name": "Manual Preview — Never Email",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "8c0565e1-b85c-4905-a938-7cc90f18fd6d",
+      "name": "Hourly Dataset Refresh Check",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "15 * * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "681ae379-6c4a-4ed3-99c1-85d039482766",
+      "name": "Dataset Import Error",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        450
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "daeed3fa-f59f-4737-9fef-304126058cd0",
+      "name": "Dataset Monitor Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const catalog=[{\"id\":\"sales\",\"label\":\"Daily sales\",\"workflowId\":\"qavPSqIYA8fxlVyO\",\"workflowName\":\"05B - PTS Daily Sales Multi-Account\",\"deadlineMinute\":570},{\"id\":\"products\",\"label\":\"Product sales\",\"workflowId\":\"yAWfErXHToZq8PLf\",\"workflowName\":\"06B - PTS Product Sales Multi-Account\",\"deadlineMinute\":600},{\"id\":\"classes\",\"label\":\"Class sales\",\"workflowId\":\"JByM3h5lNvqLC6oy\",\"workflowName\":\"07B - PTS Class Sales Multi-Account\",\"deadlineMinute\":570},{\"id\":\"upcoming\",\"label\":\"Upcoming classes\",\"workflowId\":\"UdRtR0bj4HqqheXr\",\"workflowName\":\"12B - PTS Upcoming Classes Multi-Account\",\"deadlineMinute\":540},{\"id\":\"reservations\",\"label\":\"Reservation bookings\",\"workflowId\":\"J1duIhF3jXGcAfYl\",\"workflowName\":\"13B - PTS Reservations Multi-Account\",\"deadlineMinute\":540},{\"id\":\"eulerity\",\"label\":\"Eulerity advertising\",\"workflowId\":\"P3tQUsAYYpL3eEcD\",\"workflowName\":\"24 - Eulerity Vault Daily Import\",\"deadlineMinute\":390},{\"id\":\"ga4-daily\",\"label\":\"GA4 daily metrics\",\"workflowId\":\"wslKYa086WXmayGw\",\"workflowName\":\"26 - GA4 Daily Metrics Vault Shadow\",\"deadlineMinute\":330},{\"id\":\"ga4-attribution\",\"label\":\"GA4 source and medium\",\"workflowId\":\"mK8hKmfMPPiLghPk\",\"workflowName\":\"25 - GA4 Source Medium Vault Shadow\",\"deadlineMinute\":335},{\"id\":\"orders\",\"label\":\"Order geography and discounts\",\"workflowId\":\"bkHGxZsNyUfR5vvl\",\"workflowName\":\"31 - PTS Order Geography and Discounts\",\"deadlineMinute\":480},{\"id\":\"labor\",\"label\":\"Homebase labor\",\"workflowId\":\"05SBbROT3f8kuYwn\",\"workflowName\":\"29 - Homebase Browser Timesheets Daily\",\"deadlineMinute\":480},{\"id\":\"mntn\",\"label\":\"MNTN connected TV\",\"workflowId\":\"QVxPXBbcDOWihWF0\",\"workflowName\":\"16 - MNTN Vault Daily Import\",\"deadlineMinute\":405},{\"id\":\"ga4-na\",\"label\":\"GA4 North America reports\",\"workflowId\":\"IJNHnMGTkrCxzAeg\",\"workflowName\":\"30 - GA4 North America Reporting\",\"deadlineMinute\":495},{\"id\":\"credits\",\"label\":\"Third-party class credits\",\"workflowId\":\"Wa8I1xTD0VLMGYBM\",\"workflowName\":\"23 - PTS Third Party Class Credits\",\"deadlineMinute\":600}];\nreturn [{json:{catalog,today:$now.setZone('America/New_York').toISODate(),minuteOfDay:$now.setZone('America/New_York').hour*60+$now.setZone('America/New_York').minute,checkedAt:$now.toISO(),dryRun:$execution.mode!=='production'}}];"
+      }
+    },
+    {
+      "id": "472011f7-64f0-4a1f-bad0-5af09246262c",
+      "name": "Read Daily sales execution status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        450,
+        0
+      ],
+      "parameters": {
+        "url": "https://primary-production-a88c.up.railway.app/api/v1/executions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "workflowId",
+              "value": "qavPSqIYA8fxlVyO"
+            },
+            {
+              "name": "includeData",
+              "value": "false"
+            },
+            {
+              "name": "limit",
+              "value": "100"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "__CONNECT_EXECUTION_LIST_KEY__",
+          "name": "Dataset Reporting Health — Execution History"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "26cd0468-1fa3-40e6-8d11-31c1524b915b",
+      "name": "Read Product sales execution status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        670,
+        0
+      ],
+      "parameters": {
+        "url": "https://primary-production-a88c.up.railway.app/api/v1/executions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "workflowId",
+              "value": "yAWfErXHToZq8PLf"
+            },
+            {
+              "name": "includeData",
+              "value": "false"
+            },
+            {
+              "name": "limit",
+              "value": "100"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "__CONNECT_EXECUTION_LIST_KEY__",
+          "name": "Dataset Reporting Health — Execution History"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "6eb28810-20a4-4b33-b662-bc7c6940d029",
+      "name": "Read Class sales execution status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        890,
+        0
+      ],
+      "parameters": {
+        "url": "https://primary-production-a88c.up.railway.app/api/v1/executions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "workflowId",
+              "value": "JByM3h5lNvqLC6oy"
+            },
+            {
+              "name": "includeData",
+              "value": "false"
+            },
+            {
+              "name": "limit",
+              "value": "100"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "__CONNECT_EXECUTION_LIST_KEY__",
+          "name": "Dataset Reporting Health — Execution History"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "76d24d04-d38f-4ac9-acde-43e368203a40",
+      "name": "Read Upcoming classes execution status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1110,
+        0
+      ],
+      "parameters": {
+        "url": "https://primary-production-a88c.up.railway.app/api/v1/executions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "workflowId",
+              "value": "UdRtR0bj4HqqheXr"
+            },
+            {
+              "name": "includeData",
+              "value": "false"
+            },
+            {
+              "name": "limit",
+              "value": "100"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "__CONNECT_EXECUTION_LIST_KEY__",
+          "name": "Dataset Reporting Health — Execution History"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "c5b9fc35-bfbd-4ed6-bf64-76cb6a8d1a92",
+      "name": "Read Reservation bookings execution status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1330,
+        0
+      ],
+      "parameters": {
+        "url": "https://primary-production-a88c.up.railway.app/api/v1/executions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "workflowId",
+              "value": "J1duIhF3jXGcAfYl"
+            },
+            {
+              "name": "includeData",
+              "value": "false"
+            },
+            {
+              "name": "limit",
+              "value": "100"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "__CONNECT_EXECUTION_LIST_KEY__",
+          "name": "Dataset Reporting Health — Execution History"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "aa70e1d8-56e9-4ed8-ae1c-3f44b5fa19ec",
+      "name": "Read Eulerity advertising execution status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1550,
+        0
+      ],
+      "parameters": {
+        "url": "https://primary-production-a88c.up.railway.app/api/v1/executions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "workflowId",
+              "value": "P3tQUsAYYpL3eEcD"
+            },
+            {
+              "name": "includeData",
+              "value": "false"
+            },
+            {
+              "name": "limit",
+              "value": "100"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "__CONNECT_EXECUTION_LIST_KEY__",
+          "name": "Dataset Reporting Health — Execution History"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "17d84f06-3d78-444e-af1f-242cd8fa713b",
+      "name": "Read GA4 daily metrics execution status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1770,
+        0
+      ],
+      "parameters": {
+        "url": "https://primary-production-a88c.up.railway.app/api/v1/executions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "workflowId",
+              "value": "wslKYa086WXmayGw"
+            },
+            {
+              "name": "includeData",
+              "value": "false"
+            },
+            {
+              "name": "limit",
+              "value": "100"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "__CONNECT_EXECUTION_LIST_KEY__",
+          "name": "Dataset Reporting Health — Execution History"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "ca3626c7-2a12-4399-97ab-6d4a207e4aab",
+      "name": "Read GA4 source and medium execution status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1990,
+        0
+      ],
+      "parameters": {
+        "url": "https://primary-production-a88c.up.railway.app/api/v1/executions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "workflowId",
+              "value": "mK8hKmfMPPiLghPk"
+            },
+            {
+              "name": "includeData",
+              "value": "false"
+            },
+            {
+              "name": "limit",
+              "value": "100"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "__CONNECT_EXECUTION_LIST_KEY__",
+          "name": "Dataset Reporting Health — Execution History"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "e0467969-cdfb-47ad-8706-0ab8251be45c",
+      "name": "Read Order geography and discounts execution status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2210,
+        0
+      ],
+      "parameters": {
+        "url": "https://primary-production-a88c.up.railway.app/api/v1/executions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "workflowId",
+              "value": "bkHGxZsNyUfR5vvl"
+            },
+            {
+              "name": "includeData",
+              "value": "false"
+            },
+            {
+              "name": "limit",
+              "value": "100"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "__CONNECT_EXECUTION_LIST_KEY__",
+          "name": "Dataset Reporting Health — Execution History"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "c5d1ec5f-aff5-47fc-bf0d-677de3b48b54",
+      "name": "Read Homebase labor execution status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2430,
+        0
+      ],
+      "parameters": {
+        "url": "https://primary-production-a88c.up.railway.app/api/v1/executions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "workflowId",
+              "value": "05SBbROT3f8kuYwn"
+            },
+            {
+              "name": "includeData",
+              "value": "false"
+            },
+            {
+              "name": "limit",
+              "value": "100"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "__CONNECT_EXECUTION_LIST_KEY__",
+          "name": "Dataset Reporting Health — Execution History"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "68f7a17f-51c2-4d8a-bb20-859643c06b98",
+      "name": "Read MNTN connected TV execution status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2650,
+        0
+      ],
+      "parameters": {
+        "url": "https://primary-production-a88c.up.railway.app/api/v1/executions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "workflowId",
+              "value": "QVxPXBbcDOWihWF0"
+            },
+            {
+              "name": "includeData",
+              "value": "false"
+            },
+            {
+              "name": "limit",
+              "value": "100"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "__CONNECT_EXECUTION_LIST_KEY__",
+          "name": "Dataset Reporting Health — Execution History"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "7d3f0256-97d8-4746-ad5e-4e0eb2368ebe",
+      "name": "Read GA4 North America reports execution status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2870,
+        0
+      ],
+      "parameters": {
+        "url": "https://primary-production-a88c.up.railway.app/api/v1/executions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "workflowId",
+              "value": "IJNHnMGTkrCxzAeg"
+            },
+            {
+              "name": "includeData",
+              "value": "false"
+            },
+            {
+              "name": "limit",
+              "value": "100"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "__CONNECT_EXECUTION_LIST_KEY__",
+          "name": "Dataset Reporting Health — Execution History"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "778c34fe-9ef3-40b4-9926-dc3a92f8aebb",
+      "name": "Read Third-party class credits execution status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3090,
+        0
+      ],
+      "parameters": {
+        "url": "https://primary-production-a88c.up.railway.app/api/v1/executions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "workflowId",
+              "value": "Wa8I1xTD0VLMGYBM"
+            },
+            {
+              "name": "includeData",
+              "value": "false"
+            },
+            {
+              "name": "limit",
+              "value": "100"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "__CONNECT_EXECUTION_LIST_KEY__",
+          "name": "Dataset Reporting Health — Execution History"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "6dda4b9d-0757-4d26-87aa-0a3e3a4048d2",
+      "name": "Assess Dataset Refreshes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3550,
+        0
+      ],
+      "parameters": {
+        "jsCode": "'use strict';\nfunction easternDate(value) {\n const parts=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date(value)).map(p=>[p.type,p.value]));\n return parts.year+'-'+parts.month+'-'+parts.day;\n}\nfunction assessExecutions(input,previous={}) {\n const state=previous.feeds||{},events=[];\n for(const feed of input.catalog){\n  const prior=state[feed.id]||{};let issue='',successAt='',latestAttemptAt='';\n  if(input.kind==='error') {if(input.failedWorkflowId!==feed.workflowId)continue;issue='The import failed. Review its n8n execution.';}\n  else {\n   const response=input.executions[feed.id];\n   if(!response||response.error||response.statusCode!==200||!Array.isArray(response.body?.data))issue='The monitor could not read this import’s execution history.';\n   else {\n    const relevant=response.body.data.filter(r=>r.workflowId===feed.workflowId&&['trigger','integrated','retry','webhook'].includes(r.mode));\n    const successes=relevant.filter(r=>r.status==='success'&&r.finished===true&&Number.isFinite(Date.parse(r.stoppedAt)));\n    const success=successes.sort((a,b)=>Date.parse(b.stoppedAt)-Date.parse(a.stoppedAt))[0];successAt=success?.stoppedAt||'';\n    const attempts=relevant.filter(r=>Number.isFinite(Date.parse(r.startedAt))).sort((a,b)=>Date.parse(b.startedAt)-Date.parse(a.startedAt));\n    const latest=attempts[0];latestAttemptAt=latest?.startedAt||'';\n    if(latest&&['error','crashed','canceled'].includes(latest.status)&&(!successAt||Date.parse(latest.stoppedAt||latest.startedAt)>Date.parse(successAt)))issue='The latest production import failed or was canceled.';\n    else if(input.minuteOfDay>=feed.deadlineMinute&&(!successAt||input.localDate(successAt)!==input.today))issue='No successful completed refresh was recorded after today’s scheduled import.';\n    else if(prior.issue&&(!successAt||Date.parse(successAt)<=Date.parse(prior.failedAt||prior.notifiedAt)))issue=prior.issue;\n    else if(!success&&response.body.nextCursor)issue='Import history is incomplete; no production completion could be verified.';\n   }\n  }\n  let action='quiet';if(issue&&!prior.issue)action='alert';else if(!issue&&prior.issue&&successAt)action='recovered';\n  events.push({feedId:feed.id,label:feed.label,workflowId:feed.workflowId,action,issue,successAt,latestAttemptAt,subject:action==='recovered'?`SASHA: ${feed.label} refresh recovered`:`SASHA: ${feed.label} refresh needs attention`,text:action==='recovered'?`${feed.label} completed a successful production refresh at ${successAt}. The import alert has cleared.`:`${feed.label}: ${issue}\\n\\nDashboard values may be incomplete. Missing data is not verified zero activity. A completed empty import is accepted as healthy.\\n\\nReview: https://primary-production-a88c.up.railway.app/workflow/${feed.workflowId}/executions`});\n }\n return events;\n}\n\r\n\nconst context=$('Dataset Monitor Context').first().json;const executions={\"sales\":$('Read Daily sales execution status').first().json,\"products\":$('Read Product sales execution status').first().json,\"classes\":$('Read Class sales execution status').first().json,\"upcoming\":$('Read Upcoming classes execution status').first().json,\"reservations\":$('Read Reservation bookings execution status').first().json,\"eulerity\":$('Read Eulerity advertising execution status').first().json,\"ga4-daily\":$('Read GA4 daily metrics execution status').first().json,\"ga4-attribution\":$('Read GA4 source and medium execution status').first().json,\"orders\":$('Read Order geography and discounts execution status').first().json,\"labor\":$('Read Homebase labor execution status').first().json,\"mntn\":$('Read MNTN connected TV execution status').first().json,\"ga4-na\":$('Read GA4 North America reports execution status').first().json,\"credits\":$('Read Third-party class credits execution status').first().json};const events=assessExecutions({...context,executions,localDate:easternDate},$getWorkflowStaticData('global'));const changes=events.filter(e=>e.action!=='quiet');return [{json:{events,changes,notify:changes.length>0,dryRun:$execution.mode!=='production',checkedAt:$now.toISO(),subject:'SASHA: '+(changes.every(e=>e.action==='recovered')?'Dataset refresh recovered':'Dataset refresh needs attention'),text:changes.map(e=>e.text).join('\\n\\n----------------\\n\\n')}}];"
+      }
+    },
+    {
+      "id": "cb80e76d-9326-4fbb-a626-341eb59304b2",
+      "name": "Assess Failed Dataset Import",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        450,
+        450
+      ],
+      "parameters": {
+        "jsCode": "'use strict';\nfunction easternDate(value) {\n const parts=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date(value)).map(p=>[p.type,p.value]));\n return parts.year+'-'+parts.month+'-'+parts.day;\n}\nfunction assessExecutions(input,previous={}) {\n const state=previous.feeds||{},events=[];\n for(const feed of input.catalog){\n  const prior=state[feed.id]||{};let issue='',successAt='',latestAttemptAt='';\n  if(input.kind==='error') {if(input.failedWorkflowId!==feed.workflowId)continue;issue='The import failed. Review its n8n execution.';}\n  else {\n   const response=input.executions[feed.id];\n   if(!response||response.error||response.statusCode!==200||!Array.isArray(response.body?.data))issue='The monitor could not read this import’s execution history.';\n   else {\n    const relevant=response.body.data.filter(r=>r.workflowId===feed.workflowId&&['trigger','integrated','retry','webhook'].includes(r.mode));\n    const successes=relevant.filter(r=>r.status==='success'&&r.finished===true&&Number.isFinite(Date.parse(r.stoppedAt)));\n    const success=successes.sort((a,b)=>Date.parse(b.stoppedAt)-Date.parse(a.stoppedAt))[0];successAt=success?.stoppedAt||'';\n    const attempts=relevant.filter(r=>Number.isFinite(Date.parse(r.startedAt))).sort((a,b)=>Date.parse(b.startedAt)-Date.parse(a.startedAt));\n    const latest=attempts[0];latestAttemptAt=latest?.startedAt||'';\n    if(latest&&['error','crashed','canceled'].includes(latest.status)&&(!successAt||Date.parse(latest.stoppedAt||latest.startedAt)>Date.parse(successAt)))issue='The latest production import failed or was canceled.';\n    else if(input.minuteOfDay>=feed.deadlineMinute&&(!successAt||input.localDate(successAt)!==input.today))issue='No successful completed refresh was recorded after today’s scheduled import.';\n    else if(prior.issue&&(!successAt||Date.parse(successAt)<=Date.parse(prior.failedAt||prior.notifiedAt)))issue=prior.issue;\n    else if(!success&&response.body.nextCursor)issue='Import history is incomplete; no production completion could be verified.';\n   }\n  }\n  let action='quiet';if(issue&&!prior.issue)action='alert';else if(!issue&&prior.issue&&successAt)action='recovered';\n  events.push({feedId:feed.id,label:feed.label,workflowId:feed.workflowId,action,issue,successAt,latestAttemptAt,subject:action==='recovered'?`SASHA: ${feed.label} refresh recovered`:`SASHA: ${feed.label} refresh needs attention`,text:action==='recovered'?`${feed.label} completed a successful production refresh at ${successAt}. The import alert has cleared.`:`${feed.label}: ${issue}\\n\\nDashboard values may be incomplete. Missing data is not verified zero activity. A completed empty import is accepted as healthy.\\n\\nReview: https://primary-production-a88c.up.railway.app/workflow/${feed.workflowId}/executions`});\n }\n return events;\n}\n\r\n\nconst catalog=[{\"id\":\"sales\",\"label\":\"Daily sales\",\"workflowId\":\"qavPSqIYA8fxlVyO\",\"workflowName\":\"05B - PTS Daily Sales Multi-Account\",\"deadlineMinute\":570},{\"id\":\"products\",\"label\":\"Product sales\",\"workflowId\":\"yAWfErXHToZq8PLf\",\"workflowName\":\"06B - PTS Product Sales Multi-Account\",\"deadlineMinute\":600},{\"id\":\"classes\",\"label\":\"Class sales\",\"workflowId\":\"JByM3h5lNvqLC6oy\",\"workflowName\":\"07B - PTS Class Sales Multi-Account\",\"deadlineMinute\":570},{\"id\":\"upcoming\",\"label\":\"Upcoming classes\",\"workflowId\":\"UdRtR0bj4HqqheXr\",\"workflowName\":\"12B - PTS Upcoming Classes Multi-Account\",\"deadlineMinute\":540},{\"id\":\"reservations\",\"label\":\"Reservation bookings\",\"workflowId\":\"J1duIhF3jXGcAfYl\",\"workflowName\":\"13B - PTS Reservations Multi-Account\",\"deadlineMinute\":540},{\"id\":\"eulerity\",\"label\":\"Eulerity advertising\",\"workflowId\":\"P3tQUsAYYpL3eEcD\",\"workflowName\":\"24 - Eulerity Vault Daily Import\",\"deadlineMinute\":390},{\"id\":\"ga4-daily\",\"label\":\"GA4 daily metrics\",\"workflowId\":\"wslKYa086WXmayGw\",\"workflowName\":\"26 - GA4 Daily Metrics Vault Shadow\",\"deadlineMinute\":330},{\"id\":\"ga4-attribution\",\"label\":\"GA4 source and medium\",\"workflowId\":\"mK8hKmfMPPiLghPk\",\"workflowName\":\"25 - GA4 Source Medium Vault Shadow\",\"deadlineMinute\":335},{\"id\":\"orders\",\"label\":\"Order geography and discounts\",\"workflowId\":\"bkHGxZsNyUfR5vvl\",\"workflowName\":\"31 - PTS Order Geography and Discounts\",\"deadlineMinute\":480},{\"id\":\"labor\",\"label\":\"Homebase labor\",\"workflowId\":\"05SBbROT3f8kuYwn\",\"workflowName\":\"29 - Homebase Browser Timesheets Daily\",\"deadlineMinute\":480},{\"id\":\"mntn\",\"label\":\"MNTN connected TV\",\"workflowId\":\"QVxPXBbcDOWihWF0\",\"workflowName\":\"16 - MNTN Vault Daily Import\",\"deadlineMinute\":405},{\"id\":\"ga4-na\",\"label\":\"GA4 North America reports\",\"workflowId\":\"IJNHnMGTkrCxzAeg\",\"workflowName\":\"30 - GA4 North America Reporting\",\"deadlineMinute\":495},{\"id\":\"credits\",\"label\":\"Third-party class credits\",\"workflowId\":\"Wa8I1xTD0VLMGYBM\",\"workflowName\":\"23 - PTS Third Party Class Credits\",\"deadlineMinute\":600}];\nconst event=$input.first().json;const events=assessExecutions({catalog,kind:'error',failedWorkflowId:event.workflow?.id},$getWorkflowStaticData('global'));const changes=events.filter(e=>e.action!=='quiet');return [{json:{events,changes,notify:changes.length>0,dryRun:$execution.mode!=='production',checkedAt:$now.toISO(),subject:'SASHA: '+(changes.every(e=>e.action==='recovered')?'Dataset refresh recovered':'Dataset refresh needs attention'),text:changes.map(e=>e.text).join('\\n\\n----------------\\n\\n')}}];"
+      }
+    },
+    {
+      "id": "4699a8ab-863c-4ea9-a262-06ac6e888e21",
+      "name": "Send Only Production Changes",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3790,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f8d9aac9-af22-4b87-84cf-3d1e78adb157",
+              "leftValue": "={{ $json.dryRun === false && $json.notify === true }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "01e5c0a5-a2ad-4a83-84d0-e45963bf482b",
+      "name": "Send Owner Dataset Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4050,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.microsoft.com/v1.0/users/jeff.duff@pinotspalette.com/sendMail",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftOutlookOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {message:{subject:$json.subject,body:{contentType:\"Text\",content:$json.text},toRecipients:[{emailAddress:{address:\"jeff.duff@pinotspalette.com\"}}]},saveToSentItems:true} }}",
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "AoL1twbYDe2JYTec",
+          "name": "Jeff.Duff Microsoft Outlook"
+        }
+      }
+    },
+    {
+      "id": "e235968f-a4d0-4d3b-844d-d5440696079a",
+      "name": "Record Accepted Dataset Notice",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4300,
+        0
+      ],
+      "parameters": {
+        "jsCode": "if($input.first().json.statusCode!==202)throw Error('Email provider did not accept notification');const item=$('Send Only Production Changes').first().json;const state=$getWorkflowStaticData('global');state.feeds??={};for(const event of item.changes){state.feeds[event.feedId]={issue:event.issue,notifiedAt:item.checkedAt,failedAt:event.issue?item.checkedAt:null,lastSuccessAt:event.successAt||null};}return [{json:{emailAccepted:true,changes:item.changes.map(e=>({dataset:e.label,action:e.action})),checkedAt:item.checkedAt}}];"
+      }
+    },
+    {
+      "id": "717ecce7-b0bb-45f5-abca-9d23bc181187",
+      "name": "Quiet Or Preview",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4050,
+        220
+      ],
+      "parameters": {
+        "jsCode": "return $input.all().map(i=>({json:{...i.json,emailSent:false,preview:i.json.dryRun}}));"
+      }
+    }
+  ],
+  "connections": {
+    "Manual Preview — Never Email": {
+      "main": [
+        [
+          {
+            "node": "Dataset Monitor Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hourly Dataset Refresh Check": {
+      "main": [
+        [
+          {
+            "node": "Dataset Monitor Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dataset Monitor Context": {
+      "main": [
+        [
+          {
+            "node": "Read Daily sales execution status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Daily sales execution status": {
+      "main": [
+        [
+          {
+            "node": "Read Product sales execution status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Product sales execution status": {
+      "main": [
+        [
+          {
+            "node": "Read Class sales execution status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Class sales execution status": {
+      "main": [
+        [
+          {
+            "node": "Read Upcoming classes execution status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Upcoming classes execution status": {
+      "main": [
+        [
+          {
+            "node": "Read Reservation bookings execution status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Reservation bookings execution status": {
+      "main": [
+        [
+          {
+            "node": "Read Eulerity advertising execution status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Eulerity advertising execution status": {
+      "main": [
+        [
+          {
+            "node": "Read GA4 daily metrics execution status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read GA4 daily metrics execution status": {
+      "main": [
+        [
+          {
+            "node": "Read GA4 source and medium execution status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read GA4 source and medium execution status": {
+      "main": [
+        [
+          {
+            "node": "Read Order geography and discounts execution status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Order geography and discounts execution status": {
+      "main": [
+        [
+          {
+            "node": "Read Homebase labor execution status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Homebase labor execution status": {
+      "main": [
+        [
+          {
+            "node": "Read MNTN connected TV execution status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read MNTN connected TV execution status": {
+      "main": [
+        [
+          {
+            "node": "Read GA4 North America reports execution status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read GA4 North America reports execution status": {
+      "main": [
+        [
+          {
+            "node": "Read Third-party class credits execution status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Third-party class credits execution status": {
+      "main": [
+        [
+          {
+            "node": "Assess Dataset Refreshes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dataset Import Error": {
+      "main": [
+        [
+          {
+            "node": "Assess Failed Dataset Import",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assess Dataset Refreshes": {
+      "main": [
+        [
+          {
+            "node": "Send Only Production Changes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assess Failed Dataset Import": {
+      "main": [
+        [
+          {
+            "node": "Send Only Production Changes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Only Production Changes": {
+      "main": [
+        [
+          {
+            "node": "Send Owner Dataset Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Quiet Or Preview",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Owner Dataset Alert": {
+      "main": [
+        [
+          {
+            "node": "Record Accepted Dataset Notice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/New_York",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all"
+  },
+  "pinData": {}
+}

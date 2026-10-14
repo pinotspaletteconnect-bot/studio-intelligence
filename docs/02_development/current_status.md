@@ -1,3 +1,19 @@
+# Dataset alert expansion â€” October 14, 2026
+
+Prepared a supplemental n8n monitor for 13 active production imports (PTS sales,
+products, classes, upcoming classes, reservations, order attributes, class
+credits; GA4 totals/attribution/North America; Eulerity; MNTN; Homebase).
+Twenty-seven focused checks pass. It reads execution metadata without source
+contents, accepts completed empty imports, alerts on failures or overdue
+completion, deduplicates notices, and sends recovery emails through the existing
+owner Outlook connection. Existing Facebook alert remains active.
+
+Expansion is NOT active: a dedicated API key with only execution:list permission
+requires separate owner confirmation because it creates persistent access.
+Key form is prepared but not saved. All 13 current import exports are backed up;
+no source logic, schedules, or error settings have changed. Rollout checkpoint:
+`automation/monitoring/DATASET_FRESHNESS_ROLLOUT.md`.
+
 # Studio Intelligence Current Status
 
 October 5 ZIP-map navigation fix prepared locally (not deployed): default view
@@ -79,7 +95,7 @@ a side-by-side studio table with all ten KPIs, current and comparison values,
 and absolute/relative changes. The existing studio/date/comparison filters apply;
 rate differences use percentage points. Missing or incomplete studio periods
 remain unavailable, with day coverage shown. Daily and country-key-event reads
-are paginated, and custom-period daily averages use each period’s own length.
+are paginated, and custom-period daily averages use each periodï¿½s own length.
 No warehouse, collection, or workflow changes. Validation: five focused GA4
 regression tests, full lint, and production webpack build passed with placeholder
 build credentials. Live-data and browser visual verification remain pending.
