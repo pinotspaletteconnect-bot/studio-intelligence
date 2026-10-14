@@ -1,28 +1,25 @@
-# Facebook reporting email alerts
+# Facebook reporting email alerts — active
 
-Prepared as an unpublished n8n draft; activation is pending production workflow approval. Recipient/sender: jeff.duff@pinotspalette.com through the existing Jeff.Duff Microsoft Outlook connection. No new secrets or authentication changes.
+Owner approved activation, both error-handler assignments, and one test email on October 14, 2026. Production workflow K0OJ1cak3dwlKyiI (Facebook Reporting Health — Production Email Alerts) is published. The older preparation draft 7VU8y1CDikjWqvMP remains unpublished and is not used by either import.
 
-## Behavior
+## Verified behavior
 
-- Immediate alerts when the published Meta Ads or Page import fails, after linking their error-workflow setting to this monitor.
-- Daily 06:00 America/New_York check after the 04:30/04:40 imports. Active asset/studio mappings come from configuration.
-- Compare yesterday's mapped Facebook source records with the warehouse, catching token/source failures, missing/partial loads, duplicate keys, invalid values, and incomplete query responses. Verified no-ad delivery and explicit zero Page values stay healthy.
-- Warn seven days before the Facebook credential expires. One notification for an unchanged incident, a new notice if another feed fails, and one recovery notice after all problems clear.
-- Notification state is committed only after Microsoft Graph accepts the mail. No warehouse writes, source reruns that load data, or spending changes.
-- Manual/editor or unknown execution modes cannot email or commit notification state; only production mode can send. The daily check performs read-only collector/API requests in addition to warehouse reads.
+- One daily schedule, 06:00 America/New_York. Next scheduled check: October 15, 2026, 06:00 Eastern. This future automatic execution is not yet observed.
+- Immediate import-failure routing from 27 - Meta Paid Vault Daily Import (z5Mww3blBHS89UYu) and 28 - Meta Pages Vault Daily Import (7OMm5L5fprv3Lh5o). Fresh exports confirm both settings.errorWorkflow references point to K0OJ1cak3dwlKyiI. Both imports remain published; their nodes, connections, and schedules match the prior backups exactly.
+- Configuration-derived active asset/studio mappings. Previous-day source records are checked against warehouse records, including missing/partial loads, source/token failures, duplicates, invalid values, and incomplete query results. Verified zero-ad delivery and explicit zero Page values remain healthy.
+- Warning seven days before credential expiration; deduplicated unchanged incidents and one recovery notification after problems clear. Notification state changes only after Microsoft accepts the email. Manual/editor/unknown modes cannot email or persist notification state.
+- Existing Jeff.Duff Microsoft Outlook connection sends to jeff.duff@pinotspalette.com. No new credentials, warehouse/schema changes, source spending changes, or collector/dashboard deployment.
 
-## Validation and activation
+## Verification
 
-Twelve focused offline tests pass. The live draft was checked against current four-studio source/warehouse data. Its initial preview exposed n8n's test-mode naming; that guard was corrected before publication and the final preview is recorded in the main recovery checkpoint. No emails were sent.
+Twelve focused offline checks pass. The clean production definition contains exactly 17 unique nodes, one schedule, and both production-only mail guards; its timezone is explicitly configured. Its pre-publication live preview found all four studios healthy, action quiet, preview true, and emailSent false.
 
-Draft workflow: 7VU8y1CDikjWqvMP, Facebook Reporting Health — Owner Email Alerts.
+The old draft import had duplicated branches, so activation used a clean blank workflow imported once. The duplicate draft remains unpublished. No bulk deletion occurred. Production source backup is meta-freshness-workflow.json, with active false intentionally retained for safe import into a blank draft.
 
-Before activation, review the saved draft and approve publishing it, assigning it as error workflow for 27 - Meta Paid Vault Daily Import (z5Mww3blBHS89UYu) and 28 - Meta Pages Vault Daily Import (7OMm5L5fprv3Lh5o), and sending one explicitly labeled delivery-test email. Neither import currently has an error workflow in the reviewed exports. Preserve all other workflow settings. No import code or schedules need changing.
+Exactly one approved delivery-test POST was sent at 14:35:58 Eastern. Microsoft returned HTTP 202 Accepted. All subsequent receipt checks were GET-only. The exact-subject mailbox lookup found a sent copy and a distinct received copy at 14:36:00 Eastern addressed to Jeff.Duff@pinotspalette.com; a folder-ID lookup confirmed that received copy resides in Inbox. Initial well-known Inbox queries returned no match, so receipt was verified through the exact message's parentFolderId instead. Test subject: SASHA Facebook alert delivery test 20261014.
 
-After activation, verify 06:00 timezone/next scheduled execution, the two error-workflow references, and the owner's accepted delivery-test message. Alert deduplication uses n8n workflow static data, persisted only by successful active production executions; manual previews intentionally do not persist it. Record alert acceptance before claiming delivery verification.
+Alert decision branches and deduplication are covered by offline tests; no real Facebook import was deliberately failed to test the handler. n8n static data persists on successful active production executions. The daily check is read-only apart from notification state and owner emails. This monitor cannot independently alert if all of n8n is unavailable.
 
-Rollback: unpublish this monitor and remove only its two error-workflow references; leave imports, warehouse history, and credentials intact. This monitor runs inside n8n and cannot independently alert if the entire n8n service is unavailable.
+## Rollback
 
-## Final draft verification
-
-Execution 155422 at 08:00 EDT October 14 succeeded in 15.557 seconds. All four studios/source/warehouse checks returned healthy: action quiet, no issues, dryRun true, preview true, emailSent false. Draft remains unpublished, and neither production import error-workflow setting has changed. Sender connection is connected; end-to-end mail delivery is not yet tested.
+Unpublish K0OJ1cak3dwlKyiI and remove only its two error-workflow references. Preserve import logic, schedules, historical data, and credentials. No database migration is required.
