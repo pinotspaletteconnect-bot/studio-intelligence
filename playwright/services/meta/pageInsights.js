@@ -1,7 +1,22 @@
 const auth = require("./auth");
 const config = require("./config");
 
+function insightDateRange(options) {
+    if (options.since === undefined && options.until === undefined) return {};
+    const validDate = value => typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value) &&
+        Number.isFinite(Date.parse(value + "T00:00:00Z")) &&
+        new Date(value + "T00:00:00Z").toISOString().slice(0, 10) === value;
+    if (!validDate(options.since) || !validDate(options.until)) {
+        throw new Error("Page Insights requires both since and until as valid YYYY-MM-DD dates");
+    }
+    const days = (Date.parse(options.until) - Date.parse(options.since)) / 86400000;
+    if (days < 0 || days > 90) throw new Error("Page Insights date range must be ordered and at most 90 days");
+    return { since: options.since, until: options.until };
+}
+
 async function download(options = {}) {
+
+    const dateRange = insightDateRange(options);
 
     const pages = await auth.getPages(options.accessToken);
 
@@ -17,7 +32,8 @@ async function download(options = {}) {
                     `/${page.id}/insights`,
                     page.accessToken,
                     {
-                        metric
+                        metric,
+                        ...dateRange
                     }
                 );
 
