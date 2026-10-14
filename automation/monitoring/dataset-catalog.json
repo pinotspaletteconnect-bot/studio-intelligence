@@ -1,0 +1,93 @@
+[
+  {
+    "id": "sales",
+    "label": "Daily sales",
+    "workflowId": "qavPSqIYA8fxlVyO",
+    "workflowName": "05B - PTS Daily Sales Multi-Account",
+    "deadlineMinute": 570
+  },
+  {
+    "id": "products",
+    "label": "Product sales",
+    "workflowId": "yAWfErXHToZq8PLf",
+    "workflowName": "06B - PTS Product Sales Multi-Account",
+    "deadlineMinute": 600
+  },
+  {
+    "id": "classes",
+    "label": "Class sales",
+    "workflowId": "JByM3h5lNvqLC6oy",
+    "workflowName": "07B - PTS Class Sales Multi-Account",
+    "deadlineMinute": 570
+  },
+  {
+    "id": "upcoming",
+    "label": "Upcoming classes",
+    "workflowId": "UdRtR0bj4HqqheXr",
+    "workflowName": "12B - PTS Upcoming Classes Multi-Account",
+    "deadlineMinute": 540
+  },
+  {
+    "id": "reservations",
+    "label": "Reservation bookings",
+    "workflowId": "J1duIhF3jXGcAfYl",
+    "workflowName": "13B - PTS Reservations Multi-Account",
+    "deadlineMinute": 540
+  },
+  {
+    "id": "eulerity",
+    "label": "Eulerity advertising",
+    "workflowId": "P3tQUsAYYpL3eEcD",
+    "workflowName": "24 - Eulerity Vault Daily Import",
+    "deadlineMinute": 390
+  },
+  {
+    "id": "ga4-daily",
+    "label": "GA4 daily metrics",
+    "workflowId": "wslKYa086WXmayGw",
+    "workflowName": "26 - GA4 Daily Metrics Vault Shadow",
+    "deadlineMinute": 330
+  },
+  {
+    "id": "ga4-attribution",
+    "label": "GA4 source and medium",
+    "workflowId": "mK8hKmfMPPiLghPk",
+    "workflowName": "25 - GA4 Source Medium Vault Shadow",
+    "deadlineMinute": 335
+  },
+  {
+    "id": "orders",
+    "label": "Order geography and discounts",
+    "workflowId": "bkHGxZsNyUfR5vvl",
+    "workflowName": "31 - PTS Order Geography and Discounts",
+    "deadlineMinute": 480
+  },
+  {
+    "id": "labor",
+    "label": "Homebase labor",
+    "workflowId": "05SBbROT3f8kuYwn",
+    "workflowName": "29 - Homebase Browser Timesheets Daily",
+    "deadlineMinute": 480
+  },
+  {
+    "id": "mntn",
+    "label": "MNTN connected TV",
+    "workflowId": "QVxPXBbcDOWihWF0",
+    "workflowName": "16 - MNTN Vault Daily Import",
+    "deadlineMinute": 405
+  },
+  {
+    "id": "ga4-na",
+    "label": "GA4 North America reports",
+    "workflowId": "IJNHnMGTkrCxzAeg",
+    "workflowName": "30 - GA4 North America Reporting",
+    "deadlineMinute": 495
+  },
+  {
+    "id": "credits",
+    "label": "Third-party class credits",
+    "workflowId": "Wa8I1xTD0VLMGYBM",
+    "workflowName": "23 - PTS Third Party Class Credits",
+    "deadlineMinute": 600
+  }
+]
