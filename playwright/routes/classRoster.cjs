@@ -25,10 +25,12 @@ function createClassRosterRouter({ resolveSession, collect = collectClassRoster,
       }
       const source = await collect(session);
       res.json({ success: true, accountId: req.body.accountId, studioId: req.body.studioId, source });
-    } catch {
+    } catch (error) {
       // Browser errors can include guest text or session URLs; keep response and
       // service logs sanitized. Detailed diagnostics stay inside a private run.
-      res.status(502).json({ success: false, error: 'Class roster collection failed; no destination update was authorized' });
+      const allowedStages = new Set(['account-resolve','browser-launch','source-login','class-before','class-validation','seating-before','order-reservations','class-after','seating-after']);
+      res.status(502).json({ success: false, error: 'Class roster collection failed; no destination update was authorized',
+        ...(allowedStages.has(error?.sourceStage) ? { sourceStage: error.sourceStage } : {}) });
     } finally {
       if (session?.close) { try { await session.close(); } catch { /* Never leak a session URL through cleanup diagnostics. */ } }
     }

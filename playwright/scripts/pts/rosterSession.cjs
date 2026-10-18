@@ -15,12 +15,16 @@ function createRosterSessionResolver({ chromium, resolveAccount, env = process.e
     }
     // Reuse production's account-isolated Vault broker. Never fall back to a
     // shared legacy login just because the requested account cannot be resolved.
-    const account = await resolveAccount(accountId);
+    let account;
+    try { account = await resolveAccount(accountId); }
+    catch { throw Object.assign(new Error('Source account resolution failed'), { sourceStage: 'account-resolve' }); }
     const mapping = account.studios?.find(s => s.studioId === studioId);
     if (!mapping || mapping.code !== studio.studioCode || !account.credentials?.username || !account.credentials?.password) {
       throw Error('Source account/studio mapping mismatch');
     }
-    const browser = await chromium.launch({ headless: true });
+    let browser;
+    try { browser = await chromium.launch({ headless: true }); }
+    catch { throw Object.assign(new Error('Source browser launch failed'), { sourceStage: 'browser-launch' }); }
     try {
       const context = await browser.newContext();
       const page = await context.newPage();
@@ -32,7 +36,7 @@ function createRosterSessionResolver({ chromium, resolveAccount, env = process.e
         page.getByRole('button', { name: 'Sign In' }).click(),
       ]);
       return { page, target: { ...studio, accountId, studioId, classId: String(classId) }, close: () => browser.close() };
-    } catch (error) { await browser.close(); throw error; }
+    } catch { await browser.close(); throw Object.assign(new Error('Source login failed'), { sourceStage: 'source-login' }); }
   };
 }
 
