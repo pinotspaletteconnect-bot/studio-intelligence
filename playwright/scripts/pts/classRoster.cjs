@@ -90,24 +90,34 @@ async function readOrderReservations(page, orderId, classId) {
 // Authentication/browser lifetime belong to the caller's existing account
 // resolver. This collector has no Google, n8n or warehouse writes.
 async function collectClassRoster({ page, target }) {
+  let stage = 'class-before';
+  try {
   if (!/^\d+$/.test(target?.classId) || !target.sourceLocationLabel || !target.sourceRoomId || !target.allowedClassTypeIds?.length) throw Error('Missing authorized class source configuration');
   const before = await readClass(page, target.classId);
+  stage = 'class-validation';
   assertClass(before, target);
+  stage = 'seating-before';
   const seating = await readSeating(page, target.classId, before.reservedCount);
   if (seating.hasPaging || seating.rows.length !== before.reservedCount || seating.rows.some(row => row.length !== 9 || !/^\d+$/.test(row[0]))) {
     throw Error('Seating source is incomplete');
   }
   const orderIds = [...new Set(seating.rows.map(row => row[0]))];
   const reservations = [];
+  stage = 'order-reservations';
   for (const orderId of orderIds) reservations.push(...await readOrderReservations(page, orderId, target.classId));
+  stage = 'class-after';
   const after = await readClass(page, target.classId);
   assertClass(after, target);
   if (JSON.stringify(before) !== JSON.stringify(after)) throw Error('Class changed during collection; retry without writing');
+  stage = 'seating-after';
   const confirmation = await readSeating(page, target.classId, after.reservedCount);
   if (JSON.stringify(seating) !== JSON.stringify(confirmation)) throw Error('Reservations changed during collection; retry without writing');
   return { classId: target.classId, studioCode: target.studioCode, complete: true, isPrivate: false,
     expectedRowCount: before.reservedCount, retrievedAt: new Date().toISOString(),
     details: before, headers: seating.headers, rows: seating.rows, reservations };
+  } catch {
+    throw Object.assign(new Error('Class source step failed'), { sourceStage: stage });
+  }
 }
 
 module.exports = { assertClass, readClass, readSeating, readOrderReservations, collectClassRoster };
