@@ -1,0 +1,371 @@
+{
+  "name": "01 - Seating Charts - STM isolated refresh test",
+  "active": false,
+  "nodes": [
+    {
+      "id": "stm-preserve-0",
+      "name": "Manual isolated preservation test",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "stm-preserve-1",
+      "name": "Verify STM Google identity",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "Fmbjd7IWMJeb4vZQ",
+          "name": "St Matthews Seating Charts — Google Drive"
+        }
+      }
+    },
+    {
+      "id": "stm-preserve-2",
+      "name": "Require STM Google account",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "jsCode": "if($input.first().json.user?.emailAddress!==\"pinotsstmatthews@gmail.com\")throw Error('Wrong studio Google account');return [{json:{accountVerified:true}}];"
+      }
+    },
+    {
+      "id": "stm-preserve-3",
+      "name": "Make isolated test copy",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.googleapis.com/drive/v3/files/1ktf-zV74f--JWaaPlrrtYgmbLVGI6ZJI9JdArrYootA/copy",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"name\":\"TEST ONLY - STM reservation refresh safeguards\",\"parents\":[\"1-WqB2lVbK6e1j6Y0mCojZjPoCvmaJ4L7\"]}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "Fmbjd7IWMJeb4vZQ",
+          "name": "St Matthews Seating Charts — Google Drive"
+        }
+      }
+    },
+    {
+      "id": "stm-preserve-4",
+      "name": "Require a separate native copy",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const target={studioCode:'STM',isPrivate:false,classId:'123',sheetId:0,sheetName:'Seating Chart Main',rowLimit:6,\nspreadsheetId:$('Make isolated test copy').first().json.id,masterSpreadsheetId:\"1ktf-zV74f--JWaaPlrrtYgmbLVGI6ZJI9JdArrYootA\"};\nif(!target.spreadsheetId||target.spreadsheetId===target.masterSpreadsheetId)throw Error('No verified test copy');return [{json:{copyVerified:true}}];"
+      }
+    },
+    {
+      "id": "stm-preserve-5",
+      "name": "Seed synthetic guests in test copy",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const structuredClone = value => JSON.parse(JSON.stringify(value));\n// Build RAW value requests only. Caller must resolve the authorized copy/tab,\n// stable reservation identities, and existing row positions before using this.\n// No request ever includes seating (T), label formulas (U), or attendance (AB).\nconst IMPORT_FIELDS = ['perks', 'guest', 'guestEmail', 'purchaser', 'purchaserEmail', 'purchaserPhone'];\n\n// Display only: retain the original blank source name for reservation matching.\nfunction guestDisplayName(item) {\n  if (item.guest != null && typeof item.guest !== 'string') throw Error('Expected source text for guest');\n  if (item.guest?.trim()) return item.guest;\n  if (item.purchaser != null && typeof item.purchaser !== 'string') throw Error('Expected source text for purchaser');\n  const firstName = (item.purchaser ?? '').trim().split(/\\s+/u)[0];\n  return firstName ? `${firstName}'s guest` : 'Guest';\n}\n\nfunction buildRosterRowWrites({ isPrivate, sheetName, rowLimit, rows }) {\n  if (isPrivate !== false) throw new Error('Seating charts are for verified non-private classes only');\n  if (typeof sheetName !== 'string' || !sheetName.trim()) throw new Error('Missing verified tab name');\n  if (!Number.isSafeInteger(rowLimit) || rowLimit < 1) throw new Error('Missing verified row limit');\n  if (!Array.isArray(rows)) throw new Error('Expected mapped reservation rows');\n  const seenRows = new Set();\n  const seenKeys = new Set();\n  const tab = `'${sheetName.replace(/'/g, \"''\")}'`;\n  const data = [];\n  for (const item of rows) {\n    if (!Number.isSafeInteger(item.row) || item.row < 1 || item.row > rowLimit) {\n      throw new Error('Mapped row is outside the verified tab');\n    }\n    if (typeof item.reservationKey !== 'string' || !item.reservationKey.trim()) {\n      throw new Error('Missing durable reservation identity');\n    }\n    if (seenRows.has(item.row) || seenKeys.has(item.reservationKey)) {\n      throw new Error('Duplicate reservation identity or destination row');\n    }\n    seenRows.add(item.row);\n    seenKeys.add(item.reservationKey);\n    const cell = field => {\n      if (field === 'guest') return guestDisplayName(item);\n      const value = item[field];\n      if (value == null) return '';\n      if (typeof value !== 'string') throw new Error(`Expected source text for ${field}`);\n      return value;\n    };\n    data.push({ range: `${tab}!V${item.row}:AA${item.row}`, values: [IMPORT_FIELDS.map(cell)] });\n    data.push({ range: `${tab}!AC${item.row}`, values: [[cell('comments')]] });\n  }\n  return { valueInputOption: 'RAW', data };\n}\n\n\nconst FIELDS = ['perks', 'guest', 'guestEmail', 'purchaser', 'purchaserEmail', 'purchaserPhone', 'comments'];\nconst text = value => value == null ? '' : String(value);\nconst valuesOf = row => FIELDS.map(key => {\n  if (key === 'guest') return guestDisplayName(row);\n  if (row[key] != null && typeof row[key] !== 'string') throw Error('Expected literal reservation text');\n  return row[key] ?? '';\n});\n\nfunction validateTarget(target) {\n  if (target?.studioCode !== 'STM' || target.isPrivate !== false || target.sheetId !== 0 || target.sheetName !== 'Seating Chart Main') {\n    throw Error('This pilot supports verified St Matthews Main classes only');\n  }\n  if (!target.spreadsheetId || target.spreadsheetId === target.masterSpreadsheetId || !target.masterSpreadsheetId ||\n      !/^\\d+$/.test(target.classId) || !Number.isSafeInteger(target.rowLimit) || target.rowLimit < 1) {\n    throw Error('Missing verified pilot copy or class configuration');\n  }\n}\n\nfunction adoptExistingRows({ target, source, cells }) {\n  validateTarget(target);\n  if (target.allowPilotAdoption !== true) throw Error('Existing pilot adoption is not enabled');\n  // This one-time adoption is allowed only before staff have entered seats or\n  // attendance, and only when every existing imported row matches fresh source.\n  const available = source.rows.map(seat => ({ seat, values: valuesOf(seat) }));\n  const ledger = [];\n  for (let i = 0; i < cells.length; i++) {\n    const c = cells[i];\n    if (!Array.isArray(c) || c.length !== 10 || text(c[0]) || text(c[8])) throw Error('Pilot already has seating or attendance; review adoption');\n    const values = [...c.slice(2, 8), c[9]].map(text);\n    if (values.every(v => v === '')) continue;\n    const match = available.findIndex(item => JSON.stringify(item.values) === JSON.stringify(values));\n    if (match < 0) throw Error('Existing pilot import differs from fresh reservations');\n    const item = available.splice(match, 1)[0];\n    ledger.push({ reservationKey: item.seat.reservationKey, row: i + 1, lastWritten: item.values, status: 'active' });\n  }\n  if (available.length) throw Error('Existing pilot is not a complete source match');\n  return ledger;\n}\n\n// Each destination row is read as T:AC. Only V:AA and AC can be written.\n// The caller supplies a complete fresh, bounded read plus the warehouse ledger.\nfunction planRefresh({ target, source, ledger, cells }) {\n  validateTarget(target);\n  if (source?.complete !== true || source.isPrivate !== false || source.studioCode !== target.studioCode ||\n      source.classId !== target.classId || !Array.isArray(source.rows) || source.rows.length !== source.expectedRowCount) {\n    throw Error('Incomplete or wrong studio/class source');\n  }\n  if (!Array.isArray(ledger) || !Array.isArray(cells) || cells.length !== target.rowLimit || cells.some(row => !Array.isArray(row) || row.length !== 10)) throw Error('Missing complete ledger or destination read');\n  const rowsById = new Map();\n  const occupied = new Set();\n  const nextLedger = structuredClone(ledger);\n  for (const entry of nextLedger) {\n    if (!/^\\d+$/.test(entry.reservationKey) || rowsById.has(entry.reservationKey) || occupied.has(entry.row) ||\n        !Number.isSafeInteger(entry.row) || entry.row < 1 || entry.row > target.rowLimit ||\n        !Array.isArray(entry.lastWritten) || entry.lastWritten.length !== FIELDS.length) throw Error('Invalid reservation row ledger');\n    rowsById.set(entry.reservationKey, entry); occupied.add(entry.row);\n  }\n  const current = row => {\n    const values = cells[row - 1];\n    if (!Array.isArray(values) || values.length !== 10) throw Error('Incomplete T:AC cell read');\n    return values;\n  };\n  const imported = row => { const c = current(row); return [...c.slice(2, 8), c[9]].map(text); };\n  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);\n  const seen = new Set();\n  const writes = [];\n  const review = [];\n  const allocate = () => {\n    // Do not reuse a removed guest's row or appropriate an existing manual row.\n    for (let row = 1; row <= target.rowLimit; row++) {\n      if (occupied.has(row)) continue;\n      const c = current(row);\n      if ([c[0], ...c.slice(2)].some(value => text(value) !== '')) continue;\n      occupied.add(row); return row;\n    }\n    throw Error('No unused guest row remains; no rows were shifted');\n  };\n  for (const seat of source.rows) {\n    if (!/^\\d+$/.test(seat.reservationKey) || seen.has(seat.reservationKey)) throw Error('Missing or duplicate source reservation ID');\n    seen.add(seat.reservationKey);\n    const desired = valuesOf(seat);\n    let entry = rowsById.get(seat.reservationKey);\n    if (!entry) {\n      entry = { reservationKey: seat.reservationKey, row: allocate(), lastWritten: Array(7).fill(''), status: 'active' };\n      rowsById.set(entry.reservationKey, entry); nextLedger.push(entry);\n    }\n    const live = imported(entry.row);\n    if ([...current(entry.row).slice(2, 8), current(entry.row)[9]].some(v => v && typeof v === 'object')) throw Error('Formula found in an owned import cell; review required');\n    // A previous write may have succeeded before its acknowledgement was lost.\n    if (!same(live, entry.lastWritten) && !same(live, desired)) throw Error('Imported guest data was changed manually; review required');\n    if (!same(live, desired)) writes.push({ ...seat, row: entry.row });\n    entry.lastWritten = desired; entry.status = 'active';\n  }\n  for (const entry of nextLedger) {\n    if (seen.has(entry.reservationKey)) continue;\n    entry.status = 'removed-review';\n    // Never erase or reuse a removed guest's row; keep their staff work attached.\n    review.push({ reservationKey: entry.reservationKey, row: entry.row, reason: 'reservation-no-longer-active' });\n  }\n  const request = buildRosterRowWrites({ isPrivate: false, sheetName: target.sheetName, rowLimit: target.rowLimit, rows: writes });\n  return { request, ledger: nextLedger, review, activeCount: source.rows.length, changedCount: writes.length };\n}\n\nfunction verifyReadback({ target, before, after, plan }) {\n  validateTarget(target);\n  if (before.length !== target.rowLimit || after.length !== target.rowLimit) throw Error('Incomplete verification read');\n  for (let i = 0; i < target.rowLimit; i++) {\n    if (before[i]?.length !== 10 || after[i]?.length !== 10) throw Error('Incomplete verification cells');\n    // T seat, U label formula and AB attendance: compare user-entered values,\n    // not computed formula results (which should change when names change).\n    for (const column of [0, 1, 8]) if (JSON.stringify(before[i][column] ?? '') !== JSON.stringify(after[i][column] ?? '')) {\n      throw Error('Protected seating, formula or attendance cell changed; do not mark success');\n    }\n  }\n  for (const entry of plan.ledger.filter(e => e.status === 'active')) {\n    const c = after[entry.row - 1];\n    if (JSON.stringify([...c.slice(2, 8), c[9]].map(text)) !== JSON.stringify(entry.lastWritten)) throw Error('Reservation readback mismatch');\n  }\n  return { status: plan.review.length ? 'updated-needs-review' : 'updated', activeCount: plan.activeCount,\n    changedCount: plan.changedCount, reviewCount: plan.review.length, seatingUnchanged: true, attendanceUnchanged: true, formulasUnchanged: true };\n}\n\n// A real store stages the complete source and immutable plan BEFORE Google.\n// A durable run ID lets retries recover the same allocation after a lost reply.\nfunction prepareRun(run, before) {\n    validateTarget(run.target);\n    let ledger = run.ledger;\n    if (!run.plan && !ledger.length && run.target.allowPilotAdoption) ledger = adoptExistingRows({ target: run.target, source: run.source, cells: before });\n    const plan = run.plan ?? planRefresh({ target: run.target, source: run.source, ledger, cells: before });\n    if (run.plan) {\n      // A staged plan can be retried after a partial/lost Google response, but\n      // cannot overwrite a third value entered by staff since it was staged.\n      for (const entry of plan.ledger.filter(e => e.status === 'active')) {\n        const old = run.ledger.find(e => e.reservationKey === entry.reservationKey)?.lastWritten ?? Array(7).fill('');\n        const live = before[entry.row - 1];\n        const imported = [...live.slice(2, 8), live[9]];\n        if (imported.some((v, i) => v && typeof v === 'object' || text(v) !== old[i] && text(v) !== entry.lastWritten[i])) {\n          throw Error('Pending refresh conflicts with a staff edit; review required');\n        }\n      }\n    }\n    return plan;\n}\n\nasync function refreshReservations({ targetId, runId, source, store, sheets }) {\n  const run = await store.claim({ targetId, runId, source });\n  if (run.completed) return run.result;\n  try {\n    const before = await sheets.read(run.target);\n    const plan = prepareRun(run, before);\n    if (!run.plan) await store.stage({ runId, plan });\n    if (plan.request.data.length) await sheets.write(run.target, plan.request);\n    const after = await sheets.read(run.target);\n    const result = verifyReadback({ target: run.target, before, after, plan });\n    await store.complete({ runId, plan, result });\n    return result;\n  } catch (error) {\n    await store.fail({ runId, reason: 'refresh-failed-review-required' });\n    throw error;\n  }\n}\n\n\n\nconst target={studioCode:'STM',isPrivate:false,classId:'123',sheetId:0,sheetName:'Seating Chart Main',rowLimit:6,\nspreadsheetId:$('Make isolated test copy').first().json.id,masterSpreadsheetId:\"1ktf-zV74f--JWaaPlrrtYgmbLVGI6ZJI9JdArrYootA\"};\nconst seat=(id,guest)=>({reservationKey:String(id),perks:'',guest,guestEmail:'',purchaser:'Synthetic test purchaser',purchaserEmail:'test@example.invalid',purchaserPhone:'',comments:''});\nconst initial=[seat(11,'Test guest A'),seat(12,'')];\nconst incoming=[seat(12,'Test guest B'),seat(11,'Test guest A corrected'),seat(13,'New test guest')];\nconst source=rows=>({studioCode:'STM',classId:'123',complete:true,isPrivate:false,rows,expectedRowCount:rows.length});\nconst cells=Array.from({length:6},()=>Array(10).fill(''));\nconst plan=planRefresh({target,source:source(initial),ledger:[],cells});\nplan.request.data.push({range:\"'Seating Chart Main'!T1:T2\",values:[['TEST A7'],['TEST B4']]},\n{range:\"'Seating Chart Main'!AB1:AB2\",values:[[true],[false]]});\nreturn [{json:{request:plan.request,ledger:plan.ledger}}];"
+      }
+    },
+    {
+      "id": "stm-preserve-6",
+      "name": "Write test fixtures only",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $('Make isolated test copy').first().json.id }}/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.request }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "Fmbjd7IWMJeb4vZQ",
+          "name": "St Matthews Seating Charts — Google Drive"
+        }
+      }
+    },
+    {
+      "id": "stm-preserve-7",
+      "name": "Read before reservation refresh",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1680,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $('Make isolated test copy').first().json.id }}?ranges='Seating%20Chart%20Main'!T1%3AAC6&includeGridData=true&fields=spreadsheetId,sheets(properties(sheetId,title),data(startRow,startColumn,rowData(values(userEnteredValue))))",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "Fmbjd7IWMJeb4vZQ",
+          "name": "St Matthews Seating Charts — Google Drive"
+        }
+      }
+    },
+    {
+      "id": "stm-preserve-8",
+      "name": "Plan reservation refresh",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const structuredClone = value => JSON.parse(JSON.stringify(value));\n// Build RAW value requests only. Caller must resolve the authorized copy/tab,\n// stable reservation identities, and existing row positions before using this.\n// No request ever includes seating (T), label formulas (U), or attendance (AB).\nconst IMPORT_FIELDS = ['perks', 'guest', 'guestEmail', 'purchaser', 'purchaserEmail', 'purchaserPhone'];\n\n// Display only: retain the original blank source name for reservation matching.\nfunction guestDisplayName(item) {\n  if (item.guest != null && typeof item.guest !== 'string') throw Error('Expected source text for guest');\n  if (item.guest?.trim()) return item.guest;\n  if (item.purchaser != null && typeof item.purchaser !== 'string') throw Error('Expected source text for purchaser');\n  const firstName = (item.purchaser ?? '').trim().split(/\\s+/u)[0];\n  return firstName ? `${firstName}'s guest` : 'Guest';\n}\n\nfunction buildRosterRowWrites({ isPrivate, sheetName, rowLimit, rows }) {\n  if (isPrivate !== false) throw new Error('Seating charts are for verified non-private classes only');\n  if (typeof sheetName !== 'string' || !sheetName.trim()) throw new Error('Missing verified tab name');\n  if (!Number.isSafeInteger(rowLimit) || rowLimit < 1) throw new Error('Missing verified row limit');\n  if (!Array.isArray(rows)) throw new Error('Expected mapped reservation rows');\n  const seenRows = new Set();\n  const seenKeys = new Set();\n  const tab = `'${sheetName.replace(/'/g, \"''\")}'`;\n  const data = [];\n  for (const item of rows) {\n    if (!Number.isSafeInteger(item.row) || item.row < 1 || item.row > rowLimit) {\n      throw new Error('Mapped row is outside the verified tab');\n    }\n    if (typeof item.reservationKey !== 'string' || !item.reservationKey.trim()) {\n      throw new Error('Missing durable reservation identity');\n    }\n    if (seenRows.has(item.row) || seenKeys.has(item.reservationKey)) {\n      throw new Error('Duplicate reservation identity or destination row');\n    }\n    seenRows.add(item.row);\n    seenKeys.add(item.reservationKey);\n    const cell = field => {\n      if (field === 'guest') return guestDisplayName(item);\n      const value = item[field];\n      if (value == null) return '';\n      if (typeof value !== 'string') throw new Error(`Expected source text for ${field}`);\n      return value;\n    };\n    data.push({ range: `${tab}!V${item.row}:AA${item.row}`, values: [IMPORT_FIELDS.map(cell)] });\n    data.push({ range: `${tab}!AC${item.row}`, values: [[cell('comments')]] });\n  }\n  return { valueInputOption: 'RAW', data };\n}\n\n\nconst FIELDS = ['perks', 'guest', 'guestEmail', 'purchaser', 'purchaserEmail', 'purchaserPhone', 'comments'];\nconst text = value => value == null ? '' : String(value);\nconst valuesOf = row => FIELDS.map(key => {\n  if (key === 'guest') return guestDisplayName(row);\n  if (row[key] != null && typeof row[key] !== 'string') throw Error('Expected literal reservation text');\n  return row[key] ?? '';\n});\n\nfunction validateTarget(target) {\n  if (target?.studioCode !== 'STM' || target.isPrivate !== false || target.sheetId !== 0 || target.sheetName !== 'Seating Chart Main') {\n    throw Error('This pilot supports verified St Matthews Main classes only');\n  }\n  if (!target.spreadsheetId || target.spreadsheetId === target.masterSpreadsheetId || !target.masterSpreadsheetId ||\n      !/^\\d+$/.test(target.classId) || !Number.isSafeInteger(target.rowLimit) || target.rowLimit < 1) {\n    throw Error('Missing verified pilot copy or class configuration');\n  }\n}\n\nfunction adoptExistingRows({ target, source, cells }) {\n  validateTarget(target);\n  if (target.allowPilotAdoption !== true) throw Error('Existing pilot adoption is not enabled');\n  // This one-time adoption is allowed only before staff have entered seats or\n  // attendance, and only when every existing imported row matches fresh source.\n  const available = source.rows.map(seat => ({ seat, values: valuesOf(seat) }));\n  const ledger = [];\n  for (let i = 0; i < cells.length; i++) {\n    const c = cells[i];\n    if (!Array.isArray(c) || c.length !== 10 || text(c[0]) || text(c[8])) throw Error('Pilot already has seating or attendance; review adoption');\n    const values = [...c.slice(2, 8), c[9]].map(text);\n    if (values.every(v => v === '')) continue;\n    const match = available.findIndex(item => JSON.stringify(item.values) === JSON.stringify(values));\n    if (match < 0) throw Error('Existing pilot import differs from fresh reservations');\n    const item = available.splice(match, 1)[0];\n    ledger.push({ reservationKey: item.seat.reservationKey, row: i + 1, lastWritten: item.values, status: 'active' });\n  }\n  if (available.length) throw Error('Existing pilot is not a complete source match');\n  return ledger;\n}\n\n// Each destination row is read as T:AC. Only V:AA and AC can be written.\n// The caller supplies a complete fresh, bounded read plus the warehouse ledger.\nfunction planRefresh({ target, source, ledger, cells }) {\n  validateTarget(target);\n  if (source?.complete !== true || source.isPrivate !== false || source.studioCode !== target.studioCode ||\n      source.classId !== target.classId || !Array.isArray(source.rows) || source.rows.length !== source.expectedRowCount) {\n    throw Error('Incomplete or wrong studio/class source');\n  }\n  if (!Array.isArray(ledger) || !Array.isArray(cells) || cells.length !== target.rowLimit || cells.some(row => !Array.isArray(row) || row.length !== 10)) throw Error('Missing complete ledger or destination read');\n  const rowsById = new Map();\n  const occupied = new Set();\n  const nextLedger = structuredClone(ledger);\n  for (const entry of nextLedger) {\n    if (!/^\\d+$/.test(entry.reservationKey) || rowsById.has(entry.reservationKey) || occupied.has(entry.row) ||\n        !Number.isSafeInteger(entry.row) || entry.row < 1 || entry.row > target.rowLimit ||\n        !Array.isArray(entry.lastWritten) || entry.lastWritten.length !== FIELDS.length) throw Error('Invalid reservation row ledger');\n    rowsById.set(entry.reservationKey, entry); occupied.add(entry.row);\n  }\n  const current = row => {\n    const values = cells[row - 1];\n    if (!Array.isArray(values) || values.length !== 10) throw Error('Incomplete T:AC cell read');\n    return values;\n  };\n  const imported = row => { const c = current(row); return [...c.slice(2, 8), c[9]].map(text); };\n  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);\n  const seen = new Set();\n  const writes = [];\n  const review = [];\n  const allocate = () => {\n    // Do not reuse a removed guest's row or appropriate an existing manual row.\n    for (let row = 1; row <= target.rowLimit; row++) {\n      if (occupied.has(row)) continue;\n      const c = current(row);\n      if ([c[0], ...c.slice(2)].some(value => text(value) !== '')) continue;\n      occupied.add(row); return row;\n    }\n    throw Error('No unused guest row remains; no rows were shifted');\n  };\n  for (const seat of source.rows) {\n    if (!/^\\d+$/.test(seat.reservationKey) || seen.has(seat.reservationKey)) throw Error('Missing or duplicate source reservation ID');\n    seen.add(seat.reservationKey);\n    const desired = valuesOf(seat);\n    let entry = rowsById.get(seat.reservationKey);\n    if (!entry) {\n      entry = { reservationKey: seat.reservationKey, row: allocate(), lastWritten: Array(7).fill(''), status: 'active' };\n      rowsById.set(entry.reservationKey, entry); nextLedger.push(entry);\n    }\n    const live = imported(entry.row);\n    if ([...current(entry.row).slice(2, 8), current(entry.row)[9]].some(v => v && typeof v === 'object')) throw Error('Formula found in an owned import cell; review required');\n    // A previous write may have succeeded before its acknowledgement was lost.\n    if (!same(live, entry.lastWritten) && !same(live, desired)) throw Error('Imported guest data was changed manually; review required');\n    if (!same(live, desired)) writes.push({ ...seat, row: entry.row });\n    entry.lastWritten = desired; entry.status = 'active';\n  }\n  for (const entry of nextLedger) {\n    if (seen.has(entry.reservationKey)) continue;\n    entry.status = 'removed-review';\n    // Never erase or reuse a removed guest's row; keep their staff work attached.\n    review.push({ reservationKey: entry.reservationKey, row: entry.row, reason: 'reservation-no-longer-active' });\n  }\n  const request = buildRosterRowWrites({ isPrivate: false, sheetName: target.sheetName, rowLimit: target.rowLimit, rows: writes });\n  return { request, ledger: nextLedger, review, activeCount: source.rows.length, changedCount: writes.length };\n}\n\nfunction verifyReadback({ target, before, after, plan }) {\n  validateTarget(target);\n  if (before.length !== target.rowLimit || after.length !== target.rowLimit) throw Error('Incomplete verification read');\n  for (let i = 0; i < target.rowLimit; i++) {\n    if (before[i]?.length !== 10 || after[i]?.length !== 10) throw Error('Incomplete verification cells');\n    // T seat, U label formula and AB attendance: compare user-entered values,\n    // not computed formula results (which should change when names change).\n    for (const column of [0, 1, 8]) if (JSON.stringify(before[i][column] ?? '') !== JSON.stringify(after[i][column] ?? '')) {\n      throw Error('Protected seating, formula or attendance cell changed; do not mark success');\n    }\n  }\n  for (const entry of plan.ledger.filter(e => e.status === 'active')) {\n    const c = after[entry.row - 1];\n    if (JSON.stringify([...c.slice(2, 8), c[9]].map(text)) !== JSON.stringify(entry.lastWritten)) throw Error('Reservation readback mismatch');\n  }\n  return { status: plan.review.length ? 'updated-needs-review' : 'updated', activeCount: plan.activeCount,\n    changedCount: plan.changedCount, reviewCount: plan.review.length, seatingUnchanged: true, attendanceUnchanged: true, formulasUnchanged: true };\n}\n\n// A real store stages the complete source and immutable plan BEFORE Google.\n// A durable run ID lets retries recover the same allocation after a lost reply.\nfunction prepareRun(run, before) {\n    validateTarget(run.target);\n    let ledger = run.ledger;\n    if (!run.plan && !ledger.length && run.target.allowPilotAdoption) ledger = adoptExistingRows({ target: run.target, source: run.source, cells: before });\n    const plan = run.plan ?? planRefresh({ target: run.target, source: run.source, ledger, cells: before });\n    if (run.plan) {\n      // A staged plan can be retried after a partial/lost Google response, but\n      // cannot overwrite a third value entered by staff since it was staged.\n      for (const entry of plan.ledger.filter(e => e.status === 'active')) {\n        const old = run.ledger.find(e => e.reservationKey === entry.reservationKey)?.lastWritten ?? Array(7).fill('');\n        const live = before[entry.row - 1];\n        const imported = [...live.slice(2, 8), live[9]];\n        if (imported.some((v, i) => v && typeof v === 'object' || text(v) !== old[i] && text(v) !== entry.lastWritten[i])) {\n          throw Error('Pending refresh conflicts with a staff edit; review required');\n        }\n      }\n    }\n    return plan;\n}\n\nasync function refreshReservations({ targetId, runId, source, store, sheets }) {\n  const run = await store.claim({ targetId, runId, source });\n  if (run.completed) return run.result;\n  try {\n    const before = await sheets.read(run.target);\n    const plan = prepareRun(run, before);\n    if (!run.plan) await store.stage({ runId, plan });\n    if (plan.request.data.length) await sheets.write(run.target, plan.request);\n    const after = await sheets.read(run.target);\n    const result = verifyReadback({ target: run.target, before, after, plan });\n    await store.complete({ runId, plan, result });\n    return result;\n  } catch (error) {\n    await store.fail({ runId, reason: 'refresh-failed-review-required' });\n    throw error;\n  }\n}\n\n\n\nconst target={studioCode:'STM',isPrivate:false,classId:'123',sheetId:0,sheetName:'Seating Chart Main',rowLimit:6,\nspreadsheetId:$('Make isolated test copy').first().json.id,masterSpreadsheetId:\"1ktf-zV74f--JWaaPlrrtYgmbLVGI6ZJI9JdArrYootA\"};\nconst seat=(id,guest)=>({reservationKey:String(id),perks:'',guest,guestEmail:'',purchaser:'Synthetic test purchaser',purchaserEmail:'test@example.invalid',purchaserPhone:'',comments:''});\nconst initial=[seat(11,'Test guest A'),seat(12,'')];\nconst incoming=[seat(12,'Test guest B'),seat(11,'Test guest A corrected'),seat(13,'New test guest')];\nconst source=rows=>({studioCode:'STM',classId:'123',complete:true,isPrivate:false,rows,expectedRowCount:rows.length});\nconst block=$input.first().json.sheets?.find(s=>s.properties.sheetId===0)?.data?.[0];\nif(!block)throw Error('Missing test-copy cell data');\nconst cells=Array.from({length:6},(_,i)=>Array.from({length:10},(_,j)=>{const v=block.rowData?.[i]?.values?.[j]?.userEnteredValue;\nreturn v?.formulaValue?{formulaValue:v.formulaValue}:v?.stringValue??v?.numberValue??v?.boolValue??'';}));\nconst ledger=$('Seed synthetic guests in test copy').first().json.ledger;\nconst plan=planRefresh({target,source:source(incoming),ledger,cells});\nreturn [{json:{target,before:cells,plan,incoming}}];"
+      }
+    },
+    {
+      "id": "stm-preserve-9",
+      "name": "Refresh only reservation columns",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2160,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $('Make isolated test copy').first().json.id }}/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.plan.request }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "Fmbjd7IWMJeb4vZQ",
+          "name": "St Matthews Seating Charts — Google Drive"
+        }
+      }
+    },
+    {
+      "id": "stm-preserve-10",
+      "name": "Read after reservation refresh",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2400,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $('Make isolated test copy').first().json.id }}?ranges='Seating%20Chart%20Main'!T1%3AAC6&includeGridData=true&fields=spreadsheetId,sheets(properties(sheetId,title),data(startRow,startColumn,rowData(values(userEnteredValue))))",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "Fmbjd7IWMJeb4vZQ",
+          "name": "St Matthews Seating Charts — Google Drive"
+        }
+      }
+    },
+    {
+      "id": "stm-preserve-11",
+      "name": "Verify staff work and repeat refresh",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const structuredClone = value => JSON.parse(JSON.stringify(value));\n// Build RAW value requests only. Caller must resolve the authorized copy/tab,\n// stable reservation identities, and existing row positions before using this.\n// No request ever includes seating (T), label formulas (U), or attendance (AB).\nconst IMPORT_FIELDS = ['perks', 'guest', 'guestEmail', 'purchaser', 'purchaserEmail', 'purchaserPhone'];\n\n// Display only: retain the original blank source name for reservation matching.\nfunction guestDisplayName(item) {\n  if (item.guest != null && typeof item.guest !== 'string') throw Error('Expected source text for guest');\n  if (item.guest?.trim()) return item.guest;\n  if (item.purchaser != null && typeof item.purchaser !== 'string') throw Error('Expected source text for purchaser');\n  const firstName = (item.purchaser ?? '').trim().split(/\\s+/u)[0];\n  return firstName ? `${firstName}'s guest` : 'Guest';\n}\n\nfunction buildRosterRowWrites({ isPrivate, sheetName, rowLimit, rows }) {\n  if (isPrivate !== false) throw new Error('Seating charts are for verified non-private classes only');\n  if (typeof sheetName !== 'string' || !sheetName.trim()) throw new Error('Missing verified tab name');\n  if (!Number.isSafeInteger(rowLimit) || rowLimit < 1) throw new Error('Missing verified row limit');\n  if (!Array.isArray(rows)) throw new Error('Expected mapped reservation rows');\n  const seenRows = new Set();\n  const seenKeys = new Set();\n  const tab = `'${sheetName.replace(/'/g, \"''\")}'`;\n  const data = [];\n  for (const item of rows) {\n    if (!Number.isSafeInteger(item.row) || item.row < 1 || item.row > rowLimit) {\n      throw new Error('Mapped row is outside the verified tab');\n    }\n    if (typeof item.reservationKey !== 'string' || !item.reservationKey.trim()) {\n      throw new Error('Missing durable reservation identity');\n    }\n    if (seenRows.has(item.row) || seenKeys.has(item.reservationKey)) {\n      throw new Error('Duplicate reservation identity or destination row');\n    }\n    seenRows.add(item.row);\n    seenKeys.add(item.reservationKey);\n    const cell = field => {\n      if (field === 'guest') return guestDisplayName(item);\n      const value = item[field];\n      if (value == null) return '';\n      if (typeof value !== 'string') throw new Error(`Expected source text for ${field}`);\n      return value;\n    };\n    data.push({ range: `${tab}!V${item.row}:AA${item.row}`, values: [IMPORT_FIELDS.map(cell)] });\n    data.push({ range: `${tab}!AC${item.row}`, values: [[cell('comments')]] });\n  }\n  return { valueInputOption: 'RAW', data };\n}\n\n\nconst FIELDS = ['perks', 'guest', 'guestEmail', 'purchaser', 'purchaserEmail', 'purchaserPhone', 'comments'];\nconst text = value => value == null ? '' : String(value);\nconst valuesOf = row => FIELDS.map(key => {\n  if (key === 'guest') return guestDisplayName(row);\n  if (row[key] != null && typeof row[key] !== 'string') throw Error('Expected literal reservation text');\n  return row[key] ?? '';\n});\n\nfunction validateTarget(target) {\n  if (target?.studioCode !== 'STM' || target.isPrivate !== false || target.sheetId !== 0 || target.sheetName !== 'Seating Chart Main') {\n    throw Error('This pilot supports verified St Matthews Main classes only');\n  }\n  if (!target.spreadsheetId || target.spreadsheetId === target.masterSpreadsheetId || !target.masterSpreadsheetId ||\n      !/^\\d+$/.test(target.classId) || !Number.isSafeInteger(target.rowLimit) || target.rowLimit < 1) {\n    throw Error('Missing verified pilot copy or class configuration');\n  }\n}\n\nfunction adoptExistingRows({ target, source, cells }) {\n  validateTarget(target);\n  if (target.allowPilotAdoption !== true) throw Error('Existing pilot adoption is not enabled');\n  // This one-time adoption is allowed only before staff have entered seats or\n  // attendance, and only when every existing imported row matches fresh source.\n  const available = source.rows.map(seat => ({ seat, values: valuesOf(seat) }));\n  const ledger = [];\n  for (let i = 0; i < cells.length; i++) {\n    const c = cells[i];\n    if (!Array.isArray(c) || c.length !== 10 || text(c[0]) || text(c[8])) throw Error('Pilot already has seating or attendance; review adoption');\n    const values = [...c.slice(2, 8), c[9]].map(text);\n    if (values.every(v => v === '')) continue;\n    const match = available.findIndex(item => JSON.stringify(item.values) === JSON.stringify(values));\n    if (match < 0) throw Error('Existing pilot import differs from fresh reservations');\n    const item = available.splice(match, 1)[0];\n    ledger.push({ reservationKey: item.seat.reservationKey, row: i + 1, lastWritten: item.values, status: 'active' });\n  }\n  if (available.length) throw Error('Existing pilot is not a complete source match');\n  return ledger;\n}\n\n// Each destination row is read as T:AC. Only V:AA and AC can be written.\n// The caller supplies a complete fresh, bounded read plus the warehouse ledger.\nfunction planRefresh({ target, source, ledger, cells }) {\n  validateTarget(target);\n  if (source?.complete !== true || source.isPrivate !== false || source.studioCode !== target.studioCode ||\n      source.classId !== target.classId || !Array.isArray(source.rows) || source.rows.length !== source.expectedRowCount) {\n    throw Error('Incomplete or wrong studio/class source');\n  }\n  if (!Array.isArray(ledger) || !Array.isArray(cells) || cells.length !== target.rowLimit || cells.some(row => !Array.isArray(row) || row.length !== 10)) throw Error('Missing complete ledger or destination read');\n  const rowsById = new Map();\n  const occupied = new Set();\n  const nextLedger = structuredClone(ledger);\n  for (const entry of nextLedger) {\n    if (!/^\\d+$/.test(entry.reservationKey) || rowsById.has(entry.reservationKey) || occupied.has(entry.row) ||\n        !Number.isSafeInteger(entry.row) || entry.row < 1 || entry.row > target.rowLimit ||\n        !Array.isArray(entry.lastWritten) || entry.lastWritten.length !== FIELDS.length) throw Error('Invalid reservation row ledger');\n    rowsById.set(entry.reservationKey, entry); occupied.add(entry.row);\n  }\n  const current = row => {\n    const values = cells[row - 1];\n    if (!Array.isArray(values) || values.length !== 10) throw Error('Incomplete T:AC cell read');\n    return values;\n  };\n  const imported = row => { const c = current(row); return [...c.slice(2, 8), c[9]].map(text); };\n  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);\n  const seen = new Set();\n  const writes = [];\n  const review = [];\n  const allocate = () => {\n    // Do not reuse a removed guest's row or appropriate an existing manual row.\n    for (let row = 1; row <= target.rowLimit; row++) {\n      if (occupied.has(row)) continue;\n      const c = current(row);\n      if ([c[0], ...c.slice(2)].some(value => text(value) !== '')) continue;\n      occupied.add(row); return row;\n    }\n    throw Error('No unused guest row remains; no rows were shifted');\n  };\n  for (const seat of source.rows) {\n    if (!/^\\d+$/.test(seat.reservationKey) || seen.has(seat.reservationKey)) throw Error('Missing or duplicate source reservation ID');\n    seen.add(seat.reservationKey);\n    const desired = valuesOf(seat);\n    let entry = rowsById.get(seat.reservationKey);\n    if (!entry) {\n      entry = { reservationKey: seat.reservationKey, row: allocate(), lastWritten: Array(7).fill(''), status: 'active' };\n      rowsById.set(entry.reservationKey, entry); nextLedger.push(entry);\n    }\n    const live = imported(entry.row);\n    if ([...current(entry.row).slice(2, 8), current(entry.row)[9]].some(v => v && typeof v === 'object')) throw Error('Formula found in an owned import cell; review required');\n    // A previous write may have succeeded before its acknowledgement was lost.\n    if (!same(live, entry.lastWritten) && !same(live, desired)) throw Error('Imported guest data was changed manually; review required');\n    if (!same(live, desired)) writes.push({ ...seat, row: entry.row });\n    entry.lastWritten = desired; entry.status = 'active';\n  }\n  for (const entry of nextLedger) {\n    if (seen.has(entry.reservationKey)) continue;\n    entry.status = 'removed-review';\n    // Never erase or reuse a removed guest's row; keep their staff work attached.\n    review.push({ reservationKey: entry.reservationKey, row: entry.row, reason: 'reservation-no-longer-active' });\n  }\n  const request = buildRosterRowWrites({ isPrivate: false, sheetName: target.sheetName, rowLimit: target.rowLimit, rows: writes });\n  return { request, ledger: nextLedger, review, activeCount: source.rows.length, changedCount: writes.length };\n}\n\nfunction verifyReadback({ target, before, after, plan }) {\n  validateTarget(target);\n  if (before.length !== target.rowLimit || after.length !== target.rowLimit) throw Error('Incomplete verification read');\n  for (let i = 0; i < target.rowLimit; i++) {\n    if (before[i]?.length !== 10 || after[i]?.length !== 10) throw Error('Incomplete verification cells');\n    // T seat, U label formula and AB attendance: compare user-entered values,\n    // not computed formula results (which should change when names change).\n    for (const column of [0, 1, 8]) if (JSON.stringify(before[i][column] ?? '') !== JSON.stringify(after[i][column] ?? '')) {\n      throw Error('Protected seating, formula or attendance cell changed; do not mark success');\n    }\n  }\n  for (const entry of plan.ledger.filter(e => e.status === 'active')) {\n    const c = after[entry.row - 1];\n    if (JSON.stringify([...c.slice(2, 8), c[9]].map(text)) !== JSON.stringify(entry.lastWritten)) throw Error('Reservation readback mismatch');\n  }\n  return { status: plan.review.length ? 'updated-needs-review' : 'updated', activeCount: plan.activeCount,\n    changedCount: plan.changedCount, reviewCount: plan.review.length, seatingUnchanged: true, attendanceUnchanged: true, formulasUnchanged: true };\n}\n\n// A real store stages the complete source and immutable plan BEFORE Google.\n// A durable run ID lets retries recover the same allocation after a lost reply.\nfunction prepareRun(run, before) {\n    validateTarget(run.target);\n    let ledger = run.ledger;\n    if (!run.plan && !ledger.length && run.target.allowPilotAdoption) ledger = adoptExistingRows({ target: run.target, source: run.source, cells: before });\n    const plan = run.plan ?? planRefresh({ target: run.target, source: run.source, ledger, cells: before });\n    if (run.plan) {\n      // A staged plan can be retried after a partial/lost Google response, but\n      // cannot overwrite a third value entered by staff since it was staged.\n      for (const entry of plan.ledger.filter(e => e.status === 'active')) {\n        const old = run.ledger.find(e => e.reservationKey === entry.reservationKey)?.lastWritten ?? Array(7).fill('');\n        const live = before[entry.row - 1];\n        const imported = [...live.slice(2, 8), live[9]];\n        if (imported.some((v, i) => v && typeof v === 'object' || text(v) !== old[i] && text(v) !== entry.lastWritten[i])) {\n          throw Error('Pending refresh conflicts with a staff edit; review required');\n        }\n      }\n    }\n    return plan;\n}\n\nasync function refreshReservations({ targetId, runId, source, store, sheets }) {\n  const run = await store.claim({ targetId, runId, source });\n  if (run.completed) return run.result;\n  try {\n    const before = await sheets.read(run.target);\n    const plan = prepareRun(run, before);\n    if (!run.plan) await store.stage({ runId, plan });\n    if (plan.request.data.length) await sheets.write(run.target, plan.request);\n    const after = await sheets.read(run.target);\n    const result = verifyReadback({ target: run.target, before, after, plan });\n    await store.complete({ runId, plan, result });\n    return result;\n  } catch (error) {\n    await store.fail({ runId, reason: 'refresh-failed-review-required' });\n    throw error;\n  }\n}\n\n\n\nconst seat=(id,guest)=>({reservationKey:String(id),perks:'',guest,guestEmail:'',purchaser:'Synthetic test purchaser',purchaserEmail:'test@example.invalid',purchaserPhone:'',comments:''});\nconst initial=[seat(11,'Test guest A'),seat(12,'')];\nconst incoming=[seat(12,'Test guest B'),seat(11,'Test guest A corrected'),seat(13,'New test guest')];\nconst source=rows=>({studioCode:'STM',classId:'123',complete:true,isPrivate:false,rows,expectedRowCount:rows.length});\nconst block=$input.first().json.sheets?.find(s=>s.properties.sheetId===0)?.data?.[0];\nif(!block)throw Error('Missing test-copy cell data');\nconst cells=Array.from({length:6},(_,i)=>Array.from({length:10},(_,j)=>{const v=block.rowData?.[i]?.values?.[j]?.userEnteredValue;\nreturn v?.formulaValue?{formulaValue:v.formulaValue}:v?.stringValue??v?.numberValue??v?.boolValue??'';}));\nconst run=$('Plan reservation refresh').first().json;\nconst result=verifyReadback({target:run.target,before:run.before,after:cells,plan:run.plan});\nconst repeat=planRefresh({target:run.target,source:source(run.incoming.slice().reverse()),ledger:run.plan.ledger,cells});\nif(repeat.request.data.length!==0)throw Error('Repeat refresh is not idempotent');\nif(cells[0][0]!=='TEST A7'||cells[1][0]!=='TEST B4'||cells[0][8]!==true||cells[1][8]!==false)throw Error('Test staff values changed');\nreturn [{json:{...result,status:'preservation_test_passed',syntheticGuestsOnly:true,repeatWriteCount:0,\ntestSpreadsheetId:run.target.spreadsheetId,originalPilotUntouched:true,scheduleEnabled:false}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Manual isolated preservation test": {
+      "main": [
+        [
+          {
+            "node": "Verify STM Google identity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify STM Google identity": {
+      "main": [
+        [
+          {
+            "node": "Require STM Google account",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Require STM Google account": {
+      "main": [
+        [
+          {
+            "node": "Make isolated test copy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Make isolated test copy": {
+      "main": [
+        [
+          {
+            "node": "Require a separate native copy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Require a separate native copy": {
+      "main": [
+        [
+          {
+            "node": "Seed synthetic guests in test copy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Seed synthetic guests in test copy": {
+      "main": [
+        [
+          {
+            "node": "Write test fixtures only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write test fixtures only": {
+      "main": [
+        [
+          {
+            "node": "Read before reservation refresh",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read before reservation refresh": {
+      "main": [
+        [
+          {
+            "node": "Plan reservation refresh",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plan reservation refresh": {
+      "main": [
+        [
+          {
+            "node": "Refresh only reservation columns",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Refresh only reservation columns": {
+      "main": [
+        [
+          {
+            "node": "Read after reservation refresh",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read after reservation refresh": {
+      "main": [
+        [
+          {
+            "node": "Verify staff work and repeat refresh",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/New_York",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "none",
+    "saveManualExecutions": false
+  }
+}

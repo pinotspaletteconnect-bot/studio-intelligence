@@ -23,6 +23,16 @@ app.use('/receipt-pdf', createReceiptPdfRouter({
 
 app.use(express.json());
 
+// Account-isolated seating source; n8n owns warehouse state and Sheets writes.
+const { createClassRosterRouter } = require('./routes/classRoster.cjs');
+const { createRosterSessionResolver } = require('./scripts/pts/rosterSession.cjs');
+const { resolvePtsAccount } = require('./services/ptsCredentials');
+const { runPtsReportQueued } = require('./services/ptsReportQueue');
+app.use('/pts/class-roster', createClassRosterRouter({
+    resolveSession: createRosterSessionResolver({ chromium: require('playwright').chromium, resolveAccount: resolvePtsAccount }),
+    runQueued: runPtsReportQueued,
+}));
+
 const PORT = process.env.PORT || 3000;
 
 app.get("/", (req, res) => {
