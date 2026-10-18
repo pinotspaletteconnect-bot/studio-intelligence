@@ -1,0 +1,16 @@
+// DRAFT deployment addition to playwright/server.js after owner approval.
+// Reuse Express's existing JSON parser and existing /pts report routes.
+const { createClassRosterRouter } = require('./routes/classRoster.cjs');
+const { createRosterSessionResolver } = require('./scripts/pts/rosterSession.cjs');
+const { resolvePtsAccount } = require('./services/ptsCredentials');
+const { runPtsReportQueued } = require('./services/ptsReportQueue');
+app.use('/pts/class-roster', createClassRosterRouter({
+  resolveSession: createRosterSessionResolver({ chromium: require('playwright').chromium, resolveAccount: resolvePtsAccount }),
+  runQueued: runPtsReportQueued,
+}));
+
+// Add only these non-secret Railway settings, after matching the active account
+// and studio against the live warehouse. Reuse the existing Vault broker and
+// per-account queue; never change login credentials or broker configuration here.
+// PTS_SEATING_ACCOUNT_ID=<verified existing primary account ID>
+// PTS_SEATING_STUDIOS_JSON=[{"studioId":<verified STM ID>,"studioCode":"STM","sourceLocationLabel":"Matthews","sourceRoomId":"21","allowedClassTypeIds":["100"]}]

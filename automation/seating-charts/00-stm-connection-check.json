@@ -1,0 +1,278 @@
+{
+  "name": "00 - Seating Charts - STM connection check",
+  "active": false,
+  "nodes": [
+    {
+      "id": "seating-check-0",
+      "name": "Manual connection check",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "seating-check-1",
+      "name": "Read connected Google identity",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "Fmbjd7IWMJeb4vZQ",
+          "name": "St Matthews Seating Charts — Google Drive"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "seating-check-2",
+      "name": "Require studio account",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const expected=\"pinotsstmatthews@gmail.com\";\nconst actual=String($input.first().json.user?.emailAddress||'').toLowerCase();\nif(actual!==expected.toLowerCase())throw new Error('Google account mismatch: expected '+expected+'; connected '+(actual||'unknown'));\nreturn [{json:{studioCode:\"STM\",accountVerified:true}}];"
+      }
+    },
+    {
+      "id": "seating-check-3",
+      "name": "Verify master access",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://www.googleapis.com/drive/v3/files/1ktf-zV74f--JWaaPlrrtYgmbLVGI6ZJI9JdArrYootA?fields=id%2Cname%2CmimeType%2Cparents%2Cowners(emailAddress)%2Ccapabilities(canCopy%2CcanEdit)",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "Fmbjd7IWMJeb4vZQ",
+          "name": "St Matthews Seating Charts — Google Drive"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "seating-check-4",
+      "name": "Require studio master",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const file=$input.first().json;\nif(file.id!==\"1ktf-zV74f--JWaaPlrrtYgmbLVGI6ZJI9JdArrYootA\"||file.mimeType!=='application/vnd.google-apps.spreadsheet'||file.capabilities?.canCopy!==true)throw new Error('Master cannot be verified or copied');\nif(!file.owners?.some(o=>o.emailAddress?.toLowerCase()===\"pinotsstmatthews@gmail.com\"))throw new Error('Master owner does not match the studio');\nreturn [{json:{masterVerified:true}}];"
+      }
+    },
+    {
+      "id": "seating-check-5",
+      "name": "Verify destination folder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://www.googleapis.com/drive/v3/files/1-WqB2lVbK6e1j6Y0mCojZjPoCvmaJ4L7?fields=id%2Cname%2CmimeType%2Cparents%2Cowners(emailAddress)%2Ccapabilities(canCopy%2CcanEdit)",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "Fmbjd7IWMJeb4vZQ",
+          "name": "St Matthews Seating Charts — Google Drive"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "seating-check-6",
+      "name": "Require studio folder",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const folder=$input.first().json;\nif(folder.id!==\"1-WqB2lVbK6e1j6Y0mCojZjPoCvmaJ4L7\"||folder.mimeType!=='application/vnd.google-apps.folder'||folder.capabilities?.canEdit!==true)throw new Error('Destination folder is not writable');\nif(!folder.owners?.some(o=>o.emailAddress?.toLowerCase()===\"pinotsstmatthews@gmail.com\"))throw new Error('Destination folder owner mismatch');\nreturn [{json:{folderVerified:true}}];"
+      }
+    },
+    {
+      "id": "seating-check-7",
+      "name": "Verify Sheets API access",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1680,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1ktf-zV74f--JWaaPlrrtYgmbLVGI6ZJI9JdArrYootA?fields=spreadsheetId,properties(title,timeZone),sheets(properties(sheetId,title))",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "Fmbjd7IWMJeb4vZQ",
+          "name": "St Matthews Seating Charts — Google Drive"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "seating-check-8",
+      "name": "Connection check result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const sheet=$input.first().json;\nif(sheet.spreadsheetId!==\"1ktf-zV74f--JWaaPlrrtYgmbLVGI6ZJI9JdArrYootA\"||sheet.properties?.timeZone!==\"America/New_York\")throw new Error('Spreadsheet identity or timezone mismatch');\nreturn [{json:{studioCode:\"STM\",status:'connection_verified',writesPerformed:0,scheduleEnabled:false,masterTitle:sheet.properties.title,sheetCount:sheet.sheets.length}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Manual connection check": {
+      "main": [
+        [
+          {
+            "node": "Read connected Google identity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read connected Google identity": {
+      "main": [
+        [
+          {
+            "node": "Require studio account",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Require studio account": {
+      "main": [
+        [
+          {
+            "node": "Verify master access",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify master access": {
+      "main": [
+        [
+          {
+            "node": "Require studio master",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Require studio master": {
+      "main": [
+        [
+          {
+            "node": "Verify destination folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify destination folder": {
+      "main": [
+        [
+          {
+            "node": "Require studio folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Require studio folder": {
+      "main": [
+        [
+          {
+            "node": "Verify Sheets API access",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Sheets API access": {
+      "main": [
+        [
+          {
+            "node": "Connection check result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/New_York",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "none",
+    "saveManualExecutions": false
+  }
+}
