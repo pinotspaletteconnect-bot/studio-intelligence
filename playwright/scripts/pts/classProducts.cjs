@@ -24,22 +24,30 @@ function productPage(snapshot){
 }
 function filterDate(dateText){const m=/\b(\d{1,2}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d{4})$/.exec(dateText??'');if(!m)throw Error('Unverified class date');return `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].indexOf(m[2])+1}/${Number(m[1])}/${m[3]}`;}
 async function readProducts(page,target,details){
+ let sourceStage='products-grid-open';
+ try{
  await page.goto(BASE+'/Product/Reservations',{waitUntil:'domcontentloaded'});
+ sourceStage='products-grid-location';
  await page.locator('span[aria-owns="LocationId_listbox"]').click();
  const options=await page.locator('#LocationId_listbox li').allTextContents();
  const normalize=s=>s.trim().replace(/^St\.\s*/i,'');
  const matches=options.filter(s=>normalize(s)===target.sourceLocationLabel);
  if(matches.length!==1)throw Error('Product studio label mismatch');
  await page.locator('#LocationId_listbox').getByText(matches[0],{exact:true}).click();
+ sourceStage='products-grid-status';
  await page.locator('span[aria-owns="StatusId_listbox"]').click();
  await page.locator('#StatusId_listbox').getByText('Reserved',{exact:true}).click();
+ sourceStage='products-grid-dates';
  const date=filterDate(details.dateText);
  await page.locator('#DateFilter_FromDate').fill(date);await page.locator('#DateFilter_ToDate').fill(date);await page.locator('#noClass').uncheck();
  const responseFor=action=>Promise.all([page.waitForResponse(r=>r.url().includes('/Product/GetProductReservations')&&r.status()===200),action()]).then(async([r])=>{try{return await r.json();}catch{return null;}});
+ sourceStage='products-grid-response';
  let response=await responseFor(()=>page.getByRole('button',{name:'Search',exact:true}).click());
  const all=[];let expected;
  for(let pageNumber=0;pageNumber<101;pageNumber++){
+  sourceStage='products-grid-settle';
   await page.waitForFunction(()=>{const g=document.querySelector('#productReservations');return g&&g.querySelector('.k-pager-info')?.textContent.trim()&&!Array.from(g.querySelectorAll('.k-loading-mask')).some(e=>e.getClientRects().length);});
+  sourceStage='products-grid-parse';
   const snapshot=await page.evaluate(productGridDOM),pack=productPage(snapshot);
   if(snapshot.locationId!==String(target.sourceLocationId)||snapshot.statusId!=='100'||snapshot.noClass||snapshot.fromDate!==date||snapshot.toDate!==date)throw Error('Product filters changed');
   expected??=pack.total;if(pack.total!==expected)throw Error('Product count changed while paging');
@@ -53,10 +61,12 @@ async function readProducts(page,target,details){
   }
   if(all.length===expected){if(pack.next)throw Error('Unexpected extra product page');break;}
   if(!pack.next||all.length>expected||pack.rows.length===0)throw Error('Incomplete product pagination');
+  sourceStage='products-grid-page';
   response=await responseFor(()=>page.locator('#productReservations .k-pager-next').click());
  }
  if(all.length!==expected||new Set(all.map(r=>r.sourceOrderId+':'+r.voucherCode)).size!==all.length)throw Error('Duplicate or missing product units');
  return all;
+ }catch(error){throw Object.assign(new Error('Product grid could not be verified'),{sourceStage,sourceIssue:error?.name==='TimeoutError'?'timeout':'verification-failed'});}
 }
 async function collectClassProducts({page,target}){
  let stage='class-before';
@@ -85,7 +95,7 @@ async function collectClassProducts({page,target}){
   stage='class-after';const after=await readClass(page,target.classId);assertClass(after,target);
   if(JSON.stringify(productClassFacts(before))!==JSON.stringify(productClassFacts(after)))throw Error('Class changed during collection');
   return {classId:target.classId,studioCode:target.studioCode,isPrivate:false,complete:true,expectedRowCount:rows.length,retrievedAt:new Date().toISOString(),details:productClassFacts(before),rows};
- }catch{throw Object.assign(new Error('Class product collection failed'),{sourceStage:stage});}
+ }catch(error){throw Object.assign(new Error('Class product collection failed'),{sourceStage:error?.sourceStage??stage,sourceIssue:error?.sourceIssue});}
 }
 function productClassFacts(details){return Object.fromEntries(['title','locationLabel','roomId','classTypeId','dateText','startTimeText','endTimeText','isPublished'].map(k=>[k,details[k]]));}
 module.exports={productGridDOM,productPage,filterDate,readProducts,collectClassProducts,productClassFacts};
