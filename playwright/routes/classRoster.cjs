@@ -28,9 +28,10 @@ function createClassRosterRouter({ resolveSession, collect = collectClassRoster,
     } catch (error) {
       // Browser errors can include guest text or session URLs; keep response and
       // service logs sanitized. Detailed diagnostics stay inside a private run.
-      const allowedStages = new Set(['account-resolve','browser-launch','source-login','class-before','class-validation','seating-before','order-reservations','class-after','seating-after','products-grid','products-orders','products-after']);
+      const allowedStages = new Set(['account-resolve','browser-launch','source-login','class-before','class-validation','seating-before','order-reservations','class-after','seating-after','products-grid','products-orders','products-after',...['open','location','status','dates','response','settle','parse','page'].map(s=>'products-grid-'+s)]);
       res.status(502).json({ success: false, error: 'Class roster collection failed; no destination update was authorized',
-        ...(allowedStages.has(error?.sourceStage) ? { sourceStage: error.sourceStage } : {}) });
+        ...(allowedStages.has(error?.sourceStage) ? { sourceStage: error.sourceStage } : {}),
+        ...(['timeout','verification-failed'].includes(error?.sourceIssue)?{sourceIssue:error.sourceIssue}:{}) });
     } finally {
       if (session?.close) { try { await session.close(); } catch { /* Never leak a session URL through cleanup diagnostics. */ } }
     }

@@ -1,5 +1,23 @@
 # Studio Intelligence Changelog
 
+## October 19, 2026 - St. Matthews seating schedules enabled
+
+- Deployed PR99 and applied private migration006 after transactional validation.
+- Published the minute dispatcher and protected helpers for seven-day discovery,
+  overnight02:00, T-24h, T-6/-5/-4/-3/-2h and final T-75m; no T-1h run.
+- Enabled pilot170284 and automatic170306 passed; automatic170293 added two
+  reservations while preserving seating, attendance and formulas.
+- Held only Spooky Gnome after a source room change; owner confirmed KLR.
+  Blank-layout replacement approval is pending. Seven additional ready files
+  were created without duplicate copies, but follow-up refreshes need diagnosis;
+  class927728 has a staged guest run and must not be blindly retried.
+- Recorded SN Entry I2 proposal and protected A:H; JEF AB2/AG attendance requires
+  a different import mapping. Existing GIL receipts credential is a different
+  account and was left unchanged. Other studios remain off pending setup/tests.
+-24 automation checks and four product collector checks passed. Evidence and
+  recovery: automation/seating-charts/SCHEDULE_ROLLOUT.md.
+
+
 
 ## October 19, 2026 - STM overlap creation manual rollout verified
 

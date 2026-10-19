@@ -1,5 +1,16 @@
 # Studio Intelligence Data Model
 
+## October 19, 2026 - private scheduled seating work
+
+Migration006 adds private seating_chart_schedule_runs at studio/milestone grain,
+with execution identity, due/start instants, status and bounded verification result.
+A unique running-studio index serializes discovery and class refreshes; durable
+job keys prevent repeats. Latest overdue work coalesces per class. Completion
+requires seating/formula/attendance and product protected-cell evidence. No BI
+or browser-role access is added. STM is enabled; all other studios remain off.
+Room/overlap changes retain existing files and require explicit reconciliation.
+
+
 ## October 19, 2026 - private seating product grain
 
 Reserved merchandise source grain is one class-linked order/voucher unit, never
