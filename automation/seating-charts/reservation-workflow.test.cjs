@@ -47,3 +47,23 @@ test('isolated Google test makes its own native copy and all embedded code compi
   assert(w.nodes.findIndex(n=>n.name==='Require a separate native copy')<w.nodes.findIndex(n=>n.name==='Write test fixtures only'));
   for(const node of w.nodes.filter(n=>n.type.endsWith('code'))) assert.doesNotThrow(()=>compile(node),node.name);
 });
+
+test('embedded staffing refresh writes only mapped headers and verifies them beside protected reservation cells',()=>{
+ const target={studioCode:'STM',isPrivate:false,classId:'123',sheetId:0,sheetName:'Seating Chart Main',rowLimit:3,spreadsheetId:'copy',masterSpreadsheetId:'master',staffUpdatesEnabled:true};
+ const run={target,ledger:[],staffLedger:{},source:{complete:true,isPrivate:false,studioCode:'STM',classId:'123',rows:[],expectedRowCount:0,
+ assignedStaff:{complete:true,expectedRowCount:2,rows:[{assignmentId:'1',name:'Haley Zempel',role:'Instructor',status:'Scheduled'},{assignmentId:'2',name:'Kit Kongos',role:'Assistant',status:'Scheduled On-Call'}]}}};
+ const cell=stringValue=>({values:[{userEnteredValue:{stringValue}}]});
+ const document={spreadsheetId:'copy',sheets:[{properties:{sheetId:0,title:target.sheetName,gridProperties:{rowCount:100}},data:[
+ {startColumn:19,rowData:[{values:[{}, {userEnteredValue:{formulaValue:'=W1'}}]}]},
+ {startRow:4,startColumn:17,rowData:[{values:[{userEnteredValue:{numberValue:123}}]}]},
+ {startRow:4,startColumn:3,rowData:[cell('Stage: '),cell('Floor 1: '),cell('Floor 2:')]},
+ {startRow:5,startColumn:6,rowData:[cell('On-Call 1: '),cell('On-Call 2:')]},
+ ]}]};
+ const prepare=workflow.nodes.find(n=>n.name==='Prepare immutable reservation plan');
+ const prepared=compile(prepare)({first:()=>({json:document})},()=>({first:()=>({json:run})}))[0].json;
+ assert.deepEqual(prepared.plan.request.data.map(d=>d.range),["'Seating Chart Main'!D5","'Seating Chart Main'!G6"]);
+ document.sheets[0].data[2].rowData[0]=cell('Stage: Haley');document.sheets[0].data[3].rowData[0]=cell('On-Call 1: Kit');
+ const verify=workflow.nodes.find(n=>n.name==='Verify reservations and protected staff cells');
+ const result=compile(verify)({first:()=>({json:document})},name=>({first:()=>({json:name==='Prepare immutable reservation plan'?prepared:run})}))[0].json;
+ assert.equal(result.staffVerified,true);assert.equal(result.staffChangedCount,2);assert.equal(result.attendanceUnchanged,true);assert.equal(result.formulasUnchanged,true);
+});

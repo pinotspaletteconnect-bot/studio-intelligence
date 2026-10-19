@@ -1,5 +1,17 @@
 # Studio Intelligence Changelog
 
+## October 18, 2026 - St. Matthews seating manual pilot
+
+- Added account-isolated collection, private source/row state, and a guarded
+  manual n8n reservation refresh in its own Seating Charts folder.
+- Applied two RLS tables/four service-only RPCs after live rollback checks.
+- Two real nine-reservation refreshes passed with stable rows and unchanged
+  T/U/AB. No real updates were needed; synthetic update/addition test passed.
+- Added purchaser-first-name guest labels, sanitized diagnostics, and support
+  for loaded grids in collapsed order details. 63 local checks pass.
+- Schedules remain OFF. Creation/overlap/party/other-studio execution incomplete.
+  Checkpoint: automation/seating-charts/PILOT_ROLLOUT.md.
+
 ## September 28, 2026 — Huntington Beach order geography repair
 
 - Fixed workflow 31's order loader to include and validate all PTS account

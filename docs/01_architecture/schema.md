@@ -1,5 +1,15 @@
 # Studio Intelligence Warehouse Schema
 
+## October 18, 2026 - private seating pilot state applied
+
+seating_chart_targets and seating_chart_refresh_runs are current private
+operational tables. Both have RLS and deny anon/authenticated browser reads;
+four refresh RPCs allow service role only. Live rollback, ownership, concurrency,
+replay, protected-range and completion checks passed before migration. One STM
+target has two verified runs and nine stable reservation rows. Guest source/run
+history is not public reporting data. Schedules remain OFF.
+Migration and checkpoint: automation/seating-charts/.
+
 **Version:** 4.3
 **Last updated:** August 9, 2026
 

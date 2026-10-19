@@ -5,6 +5,15 @@ const BASE = 'https://admin.pinotspalette.com';
 async function readClass(page, classId) {
   await page.goto(`${BASE}/Class/Edit/${classId}`, { waitUntil: 'domcontentloaded' });
   await page.locator('#ClassTypeId').waitFor();
+  // jqGrid loads assigned staff asynchronously. Never mistake an unloaded or
+  // paginated staff table for an empty schedule.
+  await page.waitForFunction(() => {
+    const info=document.querySelector('#pager_right')?.textContent.trim() ?? '';
+    const total=/^View\s+\d+\s*-\s*\d+\s+of\s+([\d,]+)$/.exec(info);
+    const loading=document.querySelector('#load_list');
+    if(!loading || getComputedStyle(loading).display!=='none')return false;
+    return (total && document.querySelectorAll('#list tr.jqgrow').length===Number(total[1].replace(/,/g,''))) || info==='No records to view' && document.querySelectorAll('#list tr.jqgrow').length===0;
+  },null,{timeout:20000});
   return page.evaluate(() => {
     const row = Array.from(document.querySelectorAll('tr')).find(r => {
       const labels = Array.from(r.children).map(c => c.textContent.trim());
@@ -22,6 +31,16 @@ async function readClass(page, classId) {
       startTimeText: document.querySelector('#ClassStartTime')?.value,
       endTimeText: document.querySelector('#ClassEndTime')?.value,
       reservedCount: /^\d+$/.test(counts[2] ?? '') ? Number(counts[2]) : null,
+      assignedStaff: {
+        complete: true,
+        expectedRowCount: document.querySelectorAll('#list tr.jqgrow').length,
+        rows: Array.from(document.querySelectorAll('#list tr.jqgrow')).map(r => ({
+          assignmentId: r.id,
+          name: r.querySelector('[aria-describedby="list_StaffId"]')?.textContent.trim(),
+          role: r.querySelector('[aria-describedby="list_PayRateRoleId"]')?.textContent.trim(),
+          status: r.querySelector('[aria-describedby="list_AssignedStaffStatusTypeId"]')?.textContent.trim(),
+        })),
+      },
     };
   });
 }

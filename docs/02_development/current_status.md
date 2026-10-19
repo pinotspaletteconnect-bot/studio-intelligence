@@ -1,5 +1,21 @@
 # Studio Intelligence Current Status
 
+## October 18, 2026 - STM reservation refresh manual pilot verified
+
+Owner approved deployment, database changes and manual tests with schedules OFF.
+The separate automation/seating-charts directory and n8n Seating Charts folder
+contain the scoped workflow. The deployed collector reuses the current Vault
+broker and account queue. Two private RLS tables/four service-only RPCs passed
+rollback and access checks before migration.
+
+Real runs168282/168286 passed: nine reservations, stable rows, no duplicates or
+review items, and unchanged seating T, formulas U and attendance AB. Both wrote
+zero cells because the pilot was current, including four guest labels. Actual
+update/addition writes passed in a separate synthetic copy. 63 local checks pass.
+02 remains unpublished/manual-only; 03 is a read-only audit. Creation/overlap,
+party forms, other studios and recurring rollout remain incomplete.
+Checkpoint: automation/seating-charts/PILOT_ROLLOUT.md.
+
 October 5 ZIP-map navigation fix prepared locally (not deployed): default view
 uses a 25-mile radius around the configured studio, independent of top-10
 outliers. Rankings remain complete. Users can show all top ZIPs or select a

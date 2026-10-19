@@ -1,7 +1,7 @@
 # Seating chart automation
 
 October 18, 2026. Local planning helpers plus a one-class manual pilot; no active
-scheduled sync. Existing production workflows/credentials, schema and master
+scheduled sync. Existing production workflows/credentials and master
 Sheets remain unchanged. Business owner: Jeff Duff. Scope: STM, SN, JEF, GIL.
 The separate n8n **Seating Charts** folder contains an unpublished, manual-only,
 read-only connection check (`jRuTmUjlinamazss`):
@@ -12,15 +12,24 @@ Nine source seats were imported once, including four unnamed guests; readback
 confirmed attendance/seats blank and label formulas intact. This does not prove
 automated refresh or durable guest matching. A separate St. Matthews Google
 credential/client is saved and its full read-only access check passed. Details in
-[PILOT_ROLLOUT.md](PILOT_ROLLOUT.md). All 60 local checks pass (54 planning/ETL,
-six protected collector-route tests). The folder also contains the successful
-isolated refresh test and a deployment-pending reservation-refresh draft.
+[PILOT_ROLLOUT.md](PILOT_ROLLOUT.md). All 63 local checks pass (54 planning/ETL,
+nine protected collector/account tests). Owner approved scoped rollout with
+schedules OFF. Two private tables/four RPCs passed live rollback and access
+checks and are applied. Collector route deployed through PR88 from the running
+production branch; one STM manual target is registered. Two complete manual
+refreshes passed: nine reservations kept the same rows and T/U/AB were unchanged.
+Both found the pilot current and wrote zero cells. All n8n seating workflows
+remain unpublished/manual-only; schedules are OFF.
 
 The isolated live Google test updated three synthetic guests, preserved T seat
 values, AB attendance and U formulas, and produced zero writes for a repeat
 refresh with reversed source order. Its separate native test copy is
 `18zK3ZhaN_KFx8lMtGqfBlbwPbnpTOLfuwJwp9-G1YqA`; the real pilot was untouched.
-The complete Pinot-to-warehouse-to-Sheets path is not deployed or live-tested.
+The complete Pinot-to-warehouse-to-Sheets verification path passed twice for the
+real pilot (runs168282/168286, 37.821s/36.177s). Actual changed/additional guest
+writes were exercised by the isolated synthetic test; no real reservation
+changes were needed. Automatic creation/overlap execution and other studios
+remain incomplete. The database03 workflow is now a read-only pilot audit.
 
 ## Owner-confirmed behavior
 
