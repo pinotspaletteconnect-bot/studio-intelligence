@@ -1,7 +1,7 @@
 'use strict';
 const {groupOverlappingEvents}=require('./planner.cjs');
 const {planStaffRefresh}=require('./staff-writes.cjs');
-const {buildPrivatePartyWrites,FIELD_CELLS}=require('./private-party-writes.cjs');
+const {buildPrivatePartyWrites,FIELD_CELLS,verifiedDepositFact,partyNoteFacts}=require('./private-party-writes.cjs');
 const DAY=86400000;
 const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function parseDay(value){const m=/^(?:[A-Za-z]{3}, )?(\d{1,2}) ([A-Za-z]{3}) (\d{4})$/.exec(value??'');if(!m||!months.includes(m[2]))throw Error('Unverified class date');const iso=`${m[3]}-${String(months.indexOf(m[2])+1).padStart(2,'0')}-${m[1].padStart(2,'0')}`;if(new Date(iso).toISOString().slice(0,10)!==iso)throw Error('Invalid class date');return iso;}
@@ -94,12 +94,17 @@ function buildInitialValues({group,plan,studio,document,now}){
    const p=event.details.privateParty;if(!p)throw Error('Missing private party facts');
    const sourceFields={dateAndTime:{verified:true,value:`${displayDate(event.startAt)} ${event.details.startTimeText}-${event.details.endTimeText}`},
     hostNameAndPhone:{verified:!!p.hostName&&!!p.hostPhone,value:[p.hostName,p.hostPhone].filter(Boolean).join(' - ')},paintingSummary:{verified:true,value:event.details.paintingSummary},eventName:{verified:!!p.eventName,value:p.eventName},pricePerSeat:{verified:/^\d+(\.\d{1,2})?$/.test(p.pricePerSeat??''),value:p.pricePerSeat},paymentArrangement:{verified:!!p.paymentArrangement,value:p.paymentArrangement},expectedHeadcount:{verified:!!p.expectedHeadcount,value:p.expectedHeadcount}};
-   const current=Object.fromEntries(Object.values(FIELD_CELLS).map(c=>[c,headerValue(document,tab.sheetId,c)||null]));
+   sourceFields.depositReceived=verifiedDepositFact(p.depositRecords);
+   Object.assign(sourceFields,partyNoteFacts(p.posStaffComments));
+   const current=Object.fromEntries(Object.values(FIELD_CELLS).map(c=>[c,headerValue(document,tab.sheetId,c)??null]));
+   // Known sample values on a brand-new form may be replaced by actual notes.
+   if(current.C19==='$XXX.XX')current.C19=null;
+   current.C7=null;
    const party=buildPrivatePartyWrites({isPrivate:true,sheetName:tab.sheetName,sourceFields,currentCells:current});
    data.push(...party.request.data);for(const [cell,value]of Object.entries(party.writtenCells))expected[`${tab.sheetId}:${cell}`]=value;
    review.push(...party.needsReview.map(r=>({classId:event.classId,...r})));
    // Only known sample placeholders on the brand-new form are cleared.
-   for(const [cell,value]of Object.entries({G2:displayDate(now),H2:'Automatic',C7:'',C19:''}))add(tab,cell,value);
+   for(const [cell,value]of Object.entries({G2:displayDate(now),H2:'Automatic',C7:'',C19:''}))if(!Object.hasOwn(party.writtenCells,cell))add(tab,cell,value);
   }
  }
  return {request:{valueInputOption:'RAW',data},expected,staffLedgers,review};

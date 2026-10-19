@@ -46,9 +46,21 @@
       "hostNameAndPhone": "C4",
       "paintingSummary": "C5",
       "eventName": "C8",
+      "depositReceived": "C9",
       "pricePerSeat": "C12",
       "paymentArrangement": "C15",
-      "expectedHeadcount": "C22"
+      "expectedHeadcount": "C22",
+      "doorsOpenClose": "C7",
+      "applyDeposit": "C10",
+      "seatNotes": "C13",
+      "minimumNeedsToPay": "H4",
+      "music": "C16",
+      "food": "C17",
+      "barOrdered": "C18",
+      "barCharge": "C19",
+      "barPayment": "C20",
+      "extraTime": "C21",
+      "otherNotes": "C23"
     },
     "preserveStaffEdits": true,
     "unverifiedDetails": "review-without-guessing"

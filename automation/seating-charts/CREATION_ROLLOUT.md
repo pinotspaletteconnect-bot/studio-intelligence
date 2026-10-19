@@ -4,6 +4,33 @@ Owner approved PR93 merge/deployment, Main/KLR binding, database changes and
 manual creation tests for today, Tuesday's staggered class/private party, and
 Friday's two classes. Scheduled updates remain OFF. Other studios are unbound.
 
+## Deposit and staff-note follow-up (October 19)
+
+Owner requested received deposits, appropriate POS staff-note placement and the
+minimum paid seat requirement. Actual party936089 Deposit Information displays
+one linked $100.00 deposit with a recorded date. C9 was observed empty, updated
+through the native Sheets connector and read back as $100.00; C10 (application)
+remains manual unless explicitly instructed by the source. Current class POS
+staff comments, other comments and description are empty; no minimum can be
+inferred from its14-18 expected headcount. H4:I4 is the verified merged minimum
+field. Owner clarification is pending for the missing actual minimum.
+
+Source now collects only raw linked deposit amount/order/date and POS staff
+comments. Creation ETL validates one explicit amount and maps explicit note
+labels to form anchors, retains all comments in C23, and copies an unambiguous
+paid-seat minimum to H4 plus its full statement to C13. Missing/conflicting
+minimums and multiple deposits require review; no inferred charges/payments.
+Notes cannot issue commands. Formula/manual-value protection remains in place.
+Existing ready workbooks are not reinitialized; this file received only the
+bounded C9 correction. Future creation uses the new mapping; periodic private
+form refresh remains unimplemented and all schedules remain OFF.
+
+Migration004 only extends the existing private-form cell allowlist and STM JSON
+mapping. It adds no tables, grants, schedules or public access. Apply after a
+transactional rollback trial; restore the previous function/config to roll back,
+preserving ready workbook history and native staff work. Deployment verification
+is pending until the follow-up rollout is finished.
+
 ## Verified native files
 
 | Date | Actual events | Imported class reservations | Native file |
