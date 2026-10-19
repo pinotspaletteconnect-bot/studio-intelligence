@@ -84,8 +84,16 @@ caused strict selection errors (source-only probe calendar-before); the regressi
 fixture navigates October/November successfully. Railway shows successful active
 deployment4a680a5c; fresh native source-only discovery returned25 complete events,
 zero new groups and only the expected unsupported-room/type931231 review. Friday's
-room-plan hold is gone. New scheduled milestone confirmation is pending.
-Routine source probes are read-only. The temporary
-workflow still contains the already-applied database node: never run its global
-manual trigger. Archive it after verification. Original07 remains unchanged.
+room-plan hold is gone. Scheduled170636 subsequently passed today's T-2h update:
+four guests/four product units, zero writes, unchanged seating/formulas/attendance,
+staff verified and the same retained manual product-box review. Scheduled
+discovery170644 completed with zero copies and only931231's eligibility review.
+Native Admin identifies that event as Who Rescued Who?, October21, Main Studio,
+Painting It Forward. The owner was asked whether to include that additional type;
+it remains outside the verified Regular/Private Party configuration for now.
+The bounded repair resolver appended subsequent verified run references to14
+historical failure results, preserving their original statuses, results and times.
+Both temporary workflows SDIReYv3G3lXbXg9 and g25CgFnjTicTuo8s are archived.
+The applied database node cannot be accidentally rerun from the active folder.
+Original07 remains unchanged. Routine source probes were read-only.
 Other studios remain off/unbound.

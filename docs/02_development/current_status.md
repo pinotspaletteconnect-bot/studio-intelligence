@@ -17,6 +17,10 @@ retaining existing perks. Today's four guests have CPM; repeats write0. The
 staff-edited product summary2 versus Admin4 is preserved for review. Seating,
 attendance, formulas and actual staff verified unchanged.96 automation tests and
 10 isolated collector checks pass. No new schema, grants or credentials.
+Scheduled170636 passed T-2h with0 writes; discovery170644 completed with0 new
+files. Fourteen historical failures retain verified recovery references, and both
+temporary repair workflows are archived. Painting It Forward931231 (Who Rescued
+Who?, October21) awaits an owner decision about adding that class type.
 STM schedules remain ON at the approved timing; other studios remain off/unbound.
 Private-party forms still refresh only at creation. See
 automation/seating-charts/REPAIRS_ROLLOUT.md. Earlier checkpoints below are

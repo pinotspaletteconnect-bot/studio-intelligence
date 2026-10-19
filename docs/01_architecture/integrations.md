@@ -13,9 +13,11 @@ Native06/08/09 collect products first, pass a verified private snapshot referenc
 and append CAN/CP/CPM according to exact order quantities. Existing perks and
 staff product-box edits are retained. Today has a retained manual2-versus-source4
 product-box review. Fresh discovery returned25 complete events and0 new groups;
-only unsupported event931231 remains an expected eligibility review. STM timing
+only Painting It Forward event931231 awaits a type-eligibility decision. STM timing
 stays ON; other studios remain off/unbound.96 automation and10 collector checks
-pass. See automation/seating-charts/REPAIRS_ROLLOUT.md. Earlier checkpoints below
+pass. Scheduled170636 and discovery170644 subsequently passed after repairs;
+14 historical failure results retain recovery references, and temporary repair
+workflows are archived. See automation/seating-charts/REPAIRS_ROLLOUT.md. Earlier checkpoints below
 describe historical holds and OFF states, superseded by this repair evidence.
 
 ## October 19, 2026 - STM seating scheduler active

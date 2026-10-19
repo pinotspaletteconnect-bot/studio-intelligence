@@ -13,8 +13,11 @@
 - Reconciled verified identical purchaser-display rows with actual unnamed order
   reservations. Ghosty Girly8 first/repeat0, KLR0 and all11 current targets passed
   protected checks. Friday Main gained two more guests (21 total).
+- Scheduled170636 passed T-2h with0 writes and protected work unchanged;
+  discovery170644 reused all files. Appended recovery evidence to14 historical
+  failures without erasing them; archived both temporary repair workflows.
 - Retained today's staff-edited product summary2 versus source4 for review;
-  unsupported event931231 remains an eligibility review. Other studios stay off.
+  Painting It Forward931231 awaits a type-eligibility decision. Other studios stay off.
 - 96 automation tests and10 isolated collector checks pass. No new schema or
   credential changes. Current evidence: automation/seating-charts/REPAIRS_ROLLOUT.md.
 
