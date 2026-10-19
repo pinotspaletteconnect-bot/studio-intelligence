@@ -38,9 +38,26 @@ optional expectation remains backward compatible; no credentials need changing.
 
 Twenty isolated collector/route/browser tests passed, including non-Regular
 classes, explicit party/holiday rejection, expected-type mismatch, malformed
-request fields and unchanged account isolation. Twenty-seven targeted automation
-checks passed, including every configured class kind, private forms, holiday
-exclusion and unknown-room holds. Sandbox loopback initially denied connections;
-isolated fixtures passed with the installed runtime outside the sandbox.
-Production deployment, native publication, configuration and actual class pilot
-are pending. Do not report the expanded policy live until those steps pass.
+request fields and unchanged account isolation. The full97 automation checks
+passed, including every configured class kind, private forms, holiday exclusion
+and unknown-room holds. Sandbox loopback initially denied connections; isolated
+fixtures passed outside the sandbox.
+
+PR104 merged into codex/auth-onboarding as9ae8f06e. The deployed collector accepted
+the actual type700 source-only probe and verified five guests. Native06/08/10 are
+published with the expected-type request;09/05 remain compatible and unchanged.
+The scoped configuration utility saved the previous fields to the ignored
+stm-class-types-before-activation.json snapshot, applied ten class kinds/seven
+seating kinds, and verified the schedule flag stayed ON. No schema changes.
+
+Manual creation170760 created ready workbook3889c70e-3c60-4d36-9cba-e793f2e3e434,
+file163herFVXLd8N0PJbYWjMHf3XxN9U9PaEsX-msqgnMVY, target
+cf8d0127-34b6-401d-9817-eef33a21b3d8, tab100931231 (Main6.30PM-931231).
+Guest170763 imported5, review0; product170762 verified0 units. Automatic170764
+repeated through guest170767/product170766:5 stable guest rows,0 writes,0 reviews.
+Both passes verified seating, attendance, formulas and staff unchanged; no lease
+remains. Discovery170768 completed with review[] and0 new groups, resolving the
+prior type hold without duplicate files. Native bounded cell reads confirmed
+R5=931231, five guest names, blank seats/attendance and retained label formulas.
+Visual proof is ignored output/seating-charts/all-class-fundraiser-verified.png.
+The temporary manual pilot hET3ATW3UzRweKMB is archived after success.
