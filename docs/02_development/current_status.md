@@ -1,5 +1,19 @@
 # Studio Intelligence Current Status
 
+## October 19, 2026 - STM product refresh manual pilot verified
+
+Protected /pts/class-products collector (PR97), private migration005 and native
+07/08/09 workflows are deployed. First/repeat runs imported four Reserved
+cheese/meat voucher units into exactly J25/R25, then wrote0. Combined execution
+170249 verified guests/staff before products; seating, attendance and formulas
+unchanged, no review items.05 now calls combined09;07 remains manual-only. KLR
+master now has Main-equivalent product boxes at rows19-21; new copies inherit it.
+Only exact configured product names are accepted. RLS/service-only product-run
+state retains immutable source/plans and completion evidence. Schedules remain
+OFF; other studios, live public KLR products and scheduled dispatch untested.
+Checkpoint: automation/seating-charts/PRODUCTS_ROLLOUT.md.
+
+
 ## October 19, 2026 - STM private-party deposit and staff-note mapping verified
 
 PR95 and bounded migration004 are deployed. Actual party936089's linked $100

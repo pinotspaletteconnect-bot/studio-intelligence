@@ -1,0 +1,91 @@
+{
+  "name": "07 - Seating Charts - STM products refresh - MANUAL TEST",
+  "active": false,
+  "nodes": [
+    {
+      "id": "input",
+      "name": "Combined class update input",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "combined-2",
+      "name": "Pass registered product target",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        0
+      ],
+      "parameters": {
+        "jsCode": "return [{json:{targetId:\"e28a9f46-373b-4eba-a221-15a1179e83ec\"}}];"
+      }
+    },
+    {
+      "id": "combined-3",
+      "name": "Refresh class product reservations",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        750,
+        0
+      ],
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "BLcMG5WWcf5huXpi",
+          "mode": "id"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "mode": "each",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Combined class update input": {
+      "main": [
+        [
+          {
+            "node": "Pass registered product target",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pass registered product target": {
+      "main": [
+        [
+          {
+            "node": "Refresh class product reservations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/New_York",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "none",
+    "saveManualExecutions": false
+  }
+}

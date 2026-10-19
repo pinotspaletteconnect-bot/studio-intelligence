@@ -113,5 +113,63 @@
         "isPrivate": true
       }
     }
+  },
+  "productReservations": {
+    "enabled": true,
+    "status": "Reserved",
+    "templates": {
+      "0": [
+        {
+          "key": "candles",
+          "sourceNames": [
+            "Create your own Scented Candle - Standard"
+          ],
+          "namesCell": "J23",
+          "totalCell": "R23"
+        },
+        {
+          "key": "cheese",
+          "sourceNames": [
+            "PRE-ORDER: Artisan Cheese Plate (+$22 on arrival) - 1 Serving"
+          ],
+          "namesCell": "J24",
+          "totalCell": "R24"
+        },
+        {
+          "key": "cheeseAndMeat",
+          "sourceNames": [
+            "PRE-ORDER: Artisan Cheese Plate w/ Salami (+$25 on arrival) - 1 Serving"
+          ],
+          "namesCell": "J25",
+          "totalCell": "R25"
+        }
+      ],
+      "1955136908": [
+        {
+          "key": "candles",
+          "sourceNames": [
+            "Create your own Scented Candle - Standard"
+          ],
+          "namesCell": "J19",
+          "totalCell": "R19"
+        },
+        {
+          "key": "cheese",
+          "sourceNames": [
+            "PRE-ORDER: Artisan Cheese Plate (+$22 on arrival) - 1 Serving"
+          ],
+          "namesCell": "J20",
+          "totalCell": "R20"
+        },
+        {
+          "key": "cheeseAndMeat",
+          "sourceNames": [
+            "PRE-ORDER: Artisan Cheese Plate w/ Salami (+$25 on arrival) - 1 Serving"
+          ],
+          "namesCell": "J21",
+          "totalCell": "R21"
+        }
+      ]
+    }
   }
 }

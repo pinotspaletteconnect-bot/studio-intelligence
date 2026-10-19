@@ -1,5 +1,15 @@
 # Studio Intelligence Data Model
 
+## October 19, 2026 - private seating product grain
+
+Reserved merchandise source grain is one class-linked order/voucher unit, never
+a guest seat or payment amount. Complete source snapshots and staged plans live
+in private product-run state, separate from BI product revenue facts. n8n maps
+exact configured source names to three customer/count summary pairs, retains
+staff edits for review, and compares all other chart values/validation unchanged.
+Products are refreshed after guest/staff completion; scheduled dispatch stays OFF.
+
+
 
 ## October 19, 2026 - seating operational grain
 

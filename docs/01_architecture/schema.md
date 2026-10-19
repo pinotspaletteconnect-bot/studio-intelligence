@@ -1,5 +1,16 @@
 # Studio Intelligence Warehouse Schema
 
+## October 19, 2026 - private product refresh migration005 applied
+
+seating_chart_product_runs stores target/run identity, immutable source and
+plan, prior ledger, lease, result and status. RLS denies browser roles. Service-only
+claim_seating_product_refresh, stage_seating_product_refresh and
+complete_seating_product_refresh enforce ownership, manual STM configuration,
+six literal product cells and protected-chart readback. Existing guest/staff
+state is unchanged. Rollback/access and protected-column denials passed before
+application; complete/repeat/combined native tests passed. Schedules remain OFF.
+
+
 
 ## October 19, 2026 - private STM workbook creation applied
 
