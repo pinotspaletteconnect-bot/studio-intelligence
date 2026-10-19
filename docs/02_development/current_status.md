@@ -49,6 +49,20 @@ remain OFF and need dedicated Google accounts plus differing layout tests.
 See automation/seating-charts/SCHEDULE_ROLLOUT.md for evidence and recovery.
 
 
+## October 19, 2026 - All STM class types live and verified
+
+Owner confirmed all classes. PR104 is deployed; native06/08/10 and the scoped
+studio class-type policy are live. Regular, Marketing Event, Little Brushes,
+Painting It Forward and virtual class variants use mapped seating layouts;
+private/mobile parties retain information forms and holidays are skipped.
+Who Rescued Who?931231 created its Main chart:5 reservations, automatic repeat0
+writes, stable guest rows and no reviews. Seating, attendance, formulas and staff
+are unchanged. Discovery170768 returned review[] and0 new files. STM schedules
+remain ON at the agreed timing. Other studios remain off/unbound pending their
+connections/layout verification.97 automation and20 collector/route checks passed.
+See automation/seating-charts/ALL_CLASSES_ROLLOUT.md for live evidence and rollback.
+Earlier notes about the Painting It Forward eligibility decision are superseded.
+
 ## October 19, 2026 - STM product refresh manual pilot verified
 
 Protected /pts/class-products collector (PR97), private migration005 and native

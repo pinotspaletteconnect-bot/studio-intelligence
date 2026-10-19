@@ -7,6 +7,10 @@ and quantity; repeat runs do not duplicate codes. The confirmed KLR room move,
 template import merge and source navigation errors are repaired. See
 [REPAIRS_ROLLOUT.md](REPAIRS_ROLLOUT.md) for current evidence and retained manual
 product-box review, and [SCHEDULE_ROLLOUT.md](SCHEDULE_ROLLOUT.md) for timing.
+All configured class types are now included after owner approval. Painting It
+Forward931231 passed first and automatic repeat refreshes with5 stable guests,
+0 repeat writes, and protected cells unchanged. Latest discovery has no reviews
+and creates no duplicate files. See [ALL_CLASSES_ROLLOUT.md](ALL_CLASSES_ROLLOUT.md).
 Other studios remain off and unbound pending separate connections/layout tests.
 
 The separate n8n **Seating Charts** folder contains the dedicated workflows:
@@ -372,10 +376,10 @@ Store the numeric class ID as durable identity. Titles are display names only.
 If changed event times combine or split already-created files, flag for review;
 do not silently move/delete staff work or create duplicate charts. Look ahead
 beyond the seven-day creation boundary enough to resolve overlapping sessions.
-STM creation currently permits verified Regular100/PrivateParty200 in configured
-Main21/KLR22 rooms. Inquiry placeholders and unpublished public drafts are excluded;
-unsupported overlapping events hold their group for review. Mobile/virtual events
-and other uncertain types require an explicit eligibility rule. Do not infer
+STM creation permits every verified Admin class type in configured Main21/KLR22
+rooms. Private Party200/Mobile Party300 use information forms; Holiday500 is
+skipped. Inquiry placeholders and unpublished public drafts are excluded;
+unknown overlapping types/rooms hold their group for review. Do not infer
 cancellation just because a class disappears from an incomplete feed.
 
 ## Verification and next action
@@ -389,6 +393,6 @@ rows, literal source text, verified party-field mapping and staff-edit
 preservation, GET-only connection checks and studio account/ownership guards.
 They do not prove production synchronization.
 
-Next: owner review of the three native files in CREATION_ROLLOUT.md, then a
-separate scheduling rollout and remaining-studio mapping. Agree the overnight
-time before activation. Scheduled updates remain OFF.
+Current: STM creation and scheduled updates are ON and verified. Overnight is
+02:00 America/New_York. Remaining studios need their dedicated Google connection,
+folder, exact layout mapping and manual preservation tests before activation.
