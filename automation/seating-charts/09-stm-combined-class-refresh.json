@@ -55,7 +55,7 @@
         0
       ],
       "parameters": {
-        "jsCode": "return [{json:{targetId:$('Combined class update input').first().json.targetId}}];"
+        "jsCode": "return [{json:{targetId:$('Combined class update input').first().json.targetId,scheduledStartAt:$('Combined class update input').first().json.scheduledStartAt}}];"
       }
     },
     {
@@ -98,7 +98,7 @@
         0
       ],
       "parameters": {
-        "jsCode": "return [{json:{reservations:$('Refresh reservations and staff').first().json,products:$input.first().json,scheduledUpdates:false}}];"
+        "jsCode": "return [{json:{reservations:$('Refresh reservations and staff').first().json,products:$input.first().json,scheduledUpdates:!!$('Combined class update input').first().json.scheduledStartAt}}];"
       }
     }
   ],

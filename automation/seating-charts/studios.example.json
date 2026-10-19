@@ -162,10 +162,31 @@
     {
       "studioCode": "SN",
       "timeZone": "America/New_York",
-      "masterSpreadsheetId": null,
-      "googleAccountEmail": null,
+      "masterSpreadsheetId": "11Q4BJUmAmQUkzwwSaJJpVpkHmnc2JdLjBBNO7v0yUyI",
+      "googleAccountEmail": "shortnorth@pinotspalette.com",
       "n8nGoogleCredentialRef": null,
-      "destinationFolderId": null
+      "destinationFolderId": null,
+      "inspectionAccess": "signed-in-studio-browser; connector-permission-denied",
+      "sheetTemplates": {
+        "main": {
+          "sheetId": 372745926,
+          "sheetName": "Main Room"
+        },
+        "entry": {
+          "sheetId": 1501108647,
+          "sheetName": "Entry",
+          "exactTitlePending": true
+        }
+      },
+      "importStartCell": "I2",
+      "importStartStatus": "owner-proposed; blank destination verified in browser; full mapping pending",
+      "preserveRanges": [
+        "Entry!A1:H1000"
+      ],
+      "observedAttendanceColumn": "E",
+      "observedSeatingNameColumn": "C",
+      "observedClassSizeCell": "G2",
+      "observedClassSizeFormula": "=COUNTIF(C3:C50, \"<>\")"
     },
     {
       "studioCode": "JEF",
