@@ -35,6 +35,7 @@ async function readClass(page, classId) {
       isPublished: document.querySelector('#IsPublished')?.checked,
       privateParty: document.querySelector('#ClassTypeId option:checked')?.textContent.trim()==='Private Party'?{
         eventName:document.querySelector('#PartyName')?.value,
+        partyType:document.querySelector('#PartyTypesId option:checked')?.textContent.trim(),
         hostName:[document.querySelector('#PrivatePartyOrganizer_FirstName')?.value,document.querySelector('#PrivatePartyOrganizer_LastName')?.value].filter(Boolean).join(' '),
         hostPhone:document.querySelector('#PrivatePartyOrganizer_PrimaryPhone')?.value,
         pricePerSeat:document.querySelector('#Price')?.value,

@@ -58,3 +58,11 @@ test('n8n expression delimiters do not collide with nested object closing braces
  }
 });
 module.exports={item,payload,fixture,now};
+test('blank private POS notes add only the configured minimum and never invented instructions',()=>{
+ for(const [partyType,wanted]of [['Bachelorette',8],['Birthday - Kid',10]]){
+  const event=item('101','6:00 PM','8:00 PM',true,'22');Object.assign(event.privateParty,{partyType,posStaffComments:''});
+  const {group,plan,doc}=fixture([event]),values=buildInitialValues({group,plan,studio,document:doc,now});
+  assert.ok(values.request.data.some(d=>d.range.endsWith('!H4')&&d.values[0][0]===wanted));
+  assert.ok(!values.request.data.some(d=>/!C(?:10|13|16|17|18|20|21|23)$/.test(d.range)));
+ }
+});

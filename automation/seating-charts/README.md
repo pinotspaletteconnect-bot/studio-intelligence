@@ -254,7 +254,7 @@ No personal contact details or form contents are persisted in source files.
 | C12 | Price (source per-seat price, not deposit/payment total) |
 | C15 | CollectionMethodTypeId selected text, verbatim; Paying All Together does not identify the payer |
 | C22 | PrivatePartyExpectedHeadcount (expected guests, not attended count or minimum paid seats) |
-| H4 | Explicit minimum paid painter/seat count from POS staff comments; never expected headcount |
+| H4 | Explicit minimum paid painter/seat count from POS staff comments; otherwise owner-confirmed defaults: adult8, kids10, using configured source party types; never expected headcount |
 | C13 | Full minimum statement and explicit seat notes |
 | C7 / C10 | Explicit door times / deposit application instructions from POS staff comments |
 | C16 / C17 | Explicit music / food instructions from POS staff comments |
@@ -277,6 +277,10 @@ deposit is reviewed without inventing a zero or financial total. Notes use
 conservative explicit-label matching; the complete original comment is retained
 in C23. Ambiguous minimums stay in notes and leave H4 for review. A minimum count
 does not determine a dollar charge or an attended count.
+Blank POS comments add no specific instructions. Defaults live in STM private
+form configuration; the collector returns the selected raw party type. Explicit
+note minimums take precedence, including ambiguous exceptions that need review.
+Unmapped/blank party types do not silently choose an adult or kids minimum.
 Do not calculate total charges from expected headcount. Do not copy template
 sample dates, preparer, door-time or $XXX.XX placeholders as event facts; show
 these for review during initial-copy cleanup. The payment/registration list

@@ -72,7 +72,22 @@
           "otherNotes": "C23"
         },
         "preserveStaffEdits": true,
-        "unverifiedDetails": "review-without-guessing"
+        "unverifiedDetails": "review-without-guessing",
+        "minimumPaidSeats": {
+          "adult": 8,
+          "kids": 10,
+          "partyTypes": {
+            "Birthday - Adult": "adult",
+            "Birthday - Kid": "kids",
+            "Bachelorette": "adult",
+            "Corporate": "adult",
+            "Engagement": "adult",
+            "Baby Shower": "adult",
+            "Bridal Shower": "adult",
+            "Networking": "adult",
+            "Alumni": "adult"
+          }
+        }
       },
       "staffHeaderMapping": {
         "stage": "D5",

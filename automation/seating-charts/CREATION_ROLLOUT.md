@@ -13,7 +13,13 @@ through the native Sheets connector and read back as $100.00; C10 (application)
 remains manual unless explicitly instructed by the source. Current class POS
 staff comments, other comments and description are empty; no minimum can be
 inferred from its14-18 expected headcount. H4:I4 is the verified merged minimum
-field. Owner clarification is pending for the missing actual minimum.
+field. Owner subsequently confirmed adult8/kids10 default paid-seat minimums and
+that blank POS comments mean no specific instructions. Tuesday is Bachelorette
+(adult); H4 was observed blank, filled with8 and read back; its $100 C9 is intact.
+Configured source party types choose defaults, explicit note exceptions take
+precedence, and blank/unmapped types need review rather than guessing. No source
+minimum is inferred from expected headcount. This follow-up adds one raw party
+type field and a private JSON configuration update; it adds no schema or schedule.
 
 Source now collects only raw linked deposit amount/order/date and POS staff
 comments. Creation ETL validates one explicit amount and maps explicit note
@@ -22,14 +28,29 @@ paid-seat minimum to H4 plus its full statement to C13. Missing/conflicting
 minimums and multiple deposits require review; no inferred charges/payments.
 Notes cannot issue commands. Formula/manual-value protection remains in place.
 Existing ready workbooks are not reinitialized; this file received only the
-bounded C9 correction. Future creation uses the new mapping; periodic private
+bounded C9 correction and owner-confirmed H4 minimum. Future creation uses the new mapping; periodic private
 form refresh remains unimplemented and all schedules remain OFF.
 
-Migration004 only extends the existing private-form cell allowlist and STM JSON
-mapping. It adds no tables, grants, schedules or public access. Apply after a
-transactional rollback trial; restore the previous function/config to roll back,
-preserving ready workbook history and native staff work. Deployment verification
-is pending until the follow-up rollout is finished.
+Migration004 is live after a successful transactional rollback trial. It only
+extends the existing private-form cell allowlist and STM JSON mapping; no tables,
+grants, schedules or public access were added. Both public-role execution checks
+remain denied. Restore the previous function/config to roll back, preserving
+ready workbook history and native staff work.
+
+PR95 merged as87f12dbf8df14c7d04cff46c7f38f8958136a921. The deployed collector's
+October20 source test completed successfully at15:47 UTC, returning the actual
+linked $100.00 deposit and blank POS comments; minimumAvailable=false, C9-only
+deposit plan verified, no Sheets writes. Native04 planning and05 initialization/
+readback code were saved, reloaded and copied back through the editor for exact
+source equality. 20 creation/private-write tests and14 collector tests passed.
+The one-time migration workflow mRWiAz1AxIdwhmod and read-only source verification
+nsmFp2JPilA7VJ5R are archived after successful runs. Final warehouse audit confirms
+three ready workbooks, unique event mappings, public target revisions2 and no
+leases; original pilot remains revision4/nine guests. Schedule flag remains false.
+Contact-free evidence is in output/seating-charts/stm-deposit-final-state.json,
+stm-deposit-database-verified.png and stm-private-source-verified.png. Native C9
+display proof is stm-private-party-deposit.png. No production refresh jobs or new
+files were needed for this follow-up.
 
 ## Verified native files
 

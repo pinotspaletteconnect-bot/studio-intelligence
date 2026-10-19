@@ -2,7 +2,7 @@
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { FIELD_CELLS, buildPrivatePartyWrites: build, verifiedDepositFact, partyNoteFacts } = require('./private-party-writes.cjs');
+const { FIELD_CELLS, buildPrivatePartyWrites: build, verifiedDepositFact, partyNoteFacts, minimumPaidSeatsFact } = require('./private-party-writes.cjs');
 const base = { isPrivate: true, sheetName: 'Private Party' };
 
 test('class events cannot receive Private Party form writes', () => {
@@ -87,4 +87,21 @@ test('unread cells and formulas are never overwritten', () => {
   assert.deepEqual(result.request.data, []);
   assert.ok(result.needsReview.some(r => r.cell === 'C8' && r.reason === 'current_cell_not_read'));
   assert.ok(result.needsReview.some(r => r.cell === 'C12' && r.reason === 'formula_or_non_scalar_cell'));
+});
+
+test('configured adult/kids minimums apply with blank notes; explicit exceptions and staff edits survive',()=>{
+ const policy=require('./stm-creation-settings.json').privatePartyFormMapping.minimumPaidSeats;
+ for(const [partyType,wanted]of [['Bachelorette',8],['Birthday - Adult',8],['Birthday - Kid',10]]){
+  const party={partyType,posStaffComments:'',expectedHeadcount:'14-18'};
+  assert.deepEqual(partyNoteFacts(party.posStaffComments),{});
+  const fact=minimumPaidSeatsFact(party,policy);
+  assert.deepEqual(fact,{verified:true,value:wanted});
+  const planned=build({...base,sourceFields:{minimumNeedsToPay:fact},currentCells:{H4:null}});
+  assert.deepEqual(planned.request.data,[{range:"'Private Party'!H4",values:[[wanted]]}]);
+  assert.equal(build({...base,sourceFields:{minimumNeedsToPay:fact},currentCells:{H4:14}}).request.data.length,0);
+ }
+ assert.deepEqual(minimumPaidSeatsFact({partyType:'Birthday - Kid',posStaffComments:'Minimum 12 paid seats'},policy),{verified:true,value:12});
+ assert.deepEqual(minimumPaidSeatsFact({partyType:'Bachelorette',posStaffComments:'Minimum payment $500'},policy),{verified:false,value:null});
+ for(const partyType of ['',undefined,'Other'])assert.deepEqual(minimumPaidSeatsFact({partyType,posStaffComments:''},policy),{verified:false,value:null});
+ assert.deepEqual(minimumPaidSeatsFact({partyType:'Bachelorette'},undefined),{verified:false,value:null});
 });
