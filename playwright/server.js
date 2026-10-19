@@ -37,6 +37,12 @@ app.use('/pts/seating-events', createSeatingEventsRouter({
     resolveSession: createRosterSessionResolver({ chromium: require('playwright').chromium, resolveAccount: resolvePtsAccount }),
     runQueued: runPtsReportQueued,
 }));
+const {collectClassProducts}=require('./scripts/pts/classProducts.cjs');
+app.use('/pts/class-products',createClassRosterRouter({
+    resolveSession:createRosterSessionResolver({chromium:require('playwright').chromium,resolveAccount:resolvePtsAccount}),
+    collect:collectClassProducts,
+    runQueued:runPtsReportQueued,
+}));
 
 const PORT = process.env.PORT || 3000;
 
