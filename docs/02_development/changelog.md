@@ -1,5 +1,15 @@
 # Studio Intelligence Changelog
 
+## October 18, 2026 - staff preview and preservation checks
+
+- Added five staff-header mappings with manual-edit/formula preservation, source
+  completeness/status guards and private ledger/readback. 71 local checks pass.
+- Applied migration002 after a successful rollback/access trial.
+- Native manual preview changed two headers; T:AC unchanged across1000 rows,
+  repeat planning0. No native n8n staff run completed because the editor loses
+  its server connection. Staff activation and schedules remain OFF.
+- Preserved prior reservation pilot revision2/nine rows/no lease;03 is read-only.
+
 ## October 18, 2026 - St. Matthews seating manual pilot
 
 - Added account-isolated collection, private source/row state, and a guarded

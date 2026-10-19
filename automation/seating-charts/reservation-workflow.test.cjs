@@ -18,11 +18,11 @@ test('draft reservation workflow is manual-only, secret-free, and blocked until 
 test('warehouse source claim and immutable plan precede Google writes; verified readback precedes completion', () => {
   const names=workflow.nodes.map(n=>n.name);
   assert(names.indexOf('Claim warehouse refresh')<names.indexOf('Read chart before refresh'));
-  assert(names.indexOf('Stage warehouse plan')<names.indexOf('Write only reservation columns'));
+  assert(names.indexOf('Stage warehouse plan')<names.indexOf('Write approved chart cells'));
   assert(names.indexOf('Verify reservations and protected staff cells')<names.indexOf('Complete verified warehouse refresh'));
-  const write=workflow.nodes.find(n=>n.name==='Write only reservation columns');
+  const write=workflow.nodes.find(n=>n.name==='Write approved chart cells');
   assert.match(write.parameters.url,/values:batchUpdate/); assert.match(write.parameters.jsonBody,/plan.request/);
-  assert.equal(workflow.connections['Reservation changes exist'].main[1][0].node,'Read chart after refresh');
+  assert.equal(workflow.connections['Chart changes exist'].main[1][0].node,'Read chart after refresh');
 });
 test('generated n8n planner uses fresh bounded cell metadata and preserves real formulas', () => {
   const target={studioCode:'STM',isPrivate:false,classId:'123',sheetId:0,sheetName:'Seating Chart Main',rowLimit:3,
@@ -51,7 +51,7 @@ test('isolated Google test makes its own native copy and all embedded code compi
 test('embedded staffing refresh writes only mapped headers and verifies them beside protected reservation cells',()=>{
  const target={studioCode:'STM',isPrivate:false,classId:'123',sheetId:0,sheetName:'Seating Chart Main',rowLimit:3,spreadsheetId:'copy',masterSpreadsheetId:'master',staffUpdatesEnabled:true};
  const run={target,ledger:[],staffLedger:{},source:{complete:true,isPrivate:false,studioCode:'STM',classId:'123',rows:[],expectedRowCount:0,
- assignedStaff:{complete:true,expectedRowCount:2,rows:[{assignmentId:'1',name:'Haley Zempel',role:'Instructor',status:'Scheduled'},{assignmentId:'2',name:'Kit Kongos',role:'Assistant',status:'Scheduled On-Call'}]}}};
+ assignedStaff:{complete:true,expectedRowCount:2,rows:[{assignmentId:'1',name:'Maya Stage',role:'Instructor',status:'Scheduled'},{assignmentId:'2',name:'Jordan Reserve',role:'Assistant',status:'Scheduled On-Call'}]}}};
  const cell=stringValue=>({values:[{userEnteredValue:{stringValue}}]});
  const document={spreadsheetId:'copy',sheets:[{properties:{sheetId:0,title:target.sheetName,gridProperties:{rowCount:100}},data:[
  {startColumn:19,rowData:[{values:[{}, {userEnteredValue:{formulaValue:'=W1'}}]}]},
@@ -62,7 +62,7 @@ test('embedded staffing refresh writes only mapped headers and verifies them bes
  const prepare=workflow.nodes.find(n=>n.name==='Prepare immutable reservation plan');
  const prepared=compile(prepare)({first:()=>({json:document})},()=>({first:()=>({json:run})}))[0].json;
  assert.deepEqual(prepared.plan.request.data.map(d=>d.range),["'Seating Chart Main'!D5","'Seating Chart Main'!G6"]);
- document.sheets[0].data[2].rowData[0]=cell('Stage: Haley');document.sheets[0].data[3].rowData[0]=cell('On-Call 1: Kit');
+ document.sheets[0].data[2].rowData[0]=cell('Stage: Maya');document.sheets[0].data[3].rowData[0]=cell('On-Call 1: Jordan');
  const verify=workflow.nodes.find(n=>n.name==='Verify reservations and protected staff cells');
  const result=compile(verify)({first:()=>({json:document})},name=>({first:()=>({json:name==='Prepare immutable reservation plan'?prepared:run})}))[0].json;
  assert.equal(result.staffVerified,true);assert.equal(result.staffChangedCount,2);assert.equal(result.attendanceUnchanged,true);assert.equal(result.formulasUnchanged,true);

@@ -1,5 +1,16 @@
 # Studio Intelligence Current Status
 
+## October 18, 2026 - staff preview verified, native runner blocked
+
+Assigned Staff maps Scheduled Instructor to Stage, Scheduled Assistant to Floor,
+and Scheduled On-Call Instructor/Assistant to On Call. Collector and private
+staff_ledger migration are deployed. 71 local checks pass. A native manual
+preview changed only two staff headers; T:AC remained unchanged across1000 rows
+and repeat planning produced zero writes. n8n reports Lost connection to server
+(WebSocket1006), so staff activation and native tests remain pending. Staff flag
+and all schedules stay OFF; prior nine-reservation pilot is unchanged.
+03 was restored to a read-only audit. Checkpoint: automation/seating-charts/PILOT_ROLLOUT.md.
+
 ## October 18, 2026 - STM reservation refresh manual pilot verified
 
 Owner approved deployment, database changes and manual tests with schedules OFF.

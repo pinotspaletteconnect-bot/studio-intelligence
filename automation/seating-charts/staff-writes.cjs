@@ -24,6 +24,7 @@ function planStaffRefresh({ source, sheetName, cells, ledger = {}, pending = nul
     const live = cells[cell];
     const value = !desired[cell] && typeof live==='string' && live.trim()===label ? live : label + (desired[cell] ? ' ' + desired[cell] : '');
     if (pending) {
+      if (JSON.stringify(live) === JSON.stringify(pending.expected[cell])) continue;
       const previous = ledger[cell];
       if (typeof live !== 'string' || live !== pending.expected[cell] && live !== previous && !(live.trim() === label && !Object.hasOwn(ledger,cell))) throw Error('Pending staff update conflicts with manual edit');
       continue;

@@ -182,6 +182,51 @@ empty ledger, no refresh runs, and no active lease; no Sheet writes were reached
   execution and private-party forms; other studio connections/mappings; overnight
   time and recurring rollout. Do not describe those as deployed.
 
+## Assigned staff extension - October 18, 2026
+
+Owner identified the Assigned Staff grid and mapping: Instructor=Stage,
+Assistant=Floor, Scheduled On-Call=On Call. Scheduled means the normal role.
+Only confirmed Scheduled/Scheduled On-Call Instructor/Assistant assignments are
+included. Requested/Pending/Unavailable/Cancelled/Moved/Deleted and other roles
+are excluded. First names follow the filled reference; duplicate first names use
+full names. Stage joins multiple instructors; floor/on-call overflow stops review.
+
+Verified STM header anchors: D5 Stage, D6/D7 Floor1/2, G6/G7 On-Call1/2. Names
+share the label cell. Bare label spacing and formatting are preserved. Manual
+header edits/formulas survive; unknown source status/incomplete grid never clears
+names. Source checks jqGrid's visible record total/loading marker and compares
+staff before/after collection. No source assignment changes.
+
+71 local checks pass. Migration002 passed a live rollback trial: only five
+header cells allowed, AB/unmapped/value mismatch rejected, completion requires
+staff readback, browser role cannot read private staff ledger, existing pilot
+revision2/nine rows preserved. Applied staff_ledger and three RPC replacements;
+no permissions, Google accounts, Railway root/config or schedules changed.
+PR91 merged cb124f6037d2c0f976c2b1392879255b7a04af99 and collector deployment
+verified active. New manual02 workflow saved. Pilot staff flag is still OFF.
+
+Concrete blocker: n8n manual execution reports `Lost connection to the server`;
+console shows WebSocket connection code1006. Scoped activation attempts never
+started a database job. Fresh warehouse read confirms revision2, nine guest rows,
+no lease, staff flag disabled and staff ledger empty. 03 restored/saved as the
+read-only pilot audit. Two native n8n staffing tests remain pending; do not call
+the automatic staff extension live-verified. Leave all schedules OFF.
+
+Unblocked preview work completed via the connected native Sheets API after a
+fresh read of the live Assigned Staff grid: only D5 and G6 received staff names.
+The planner generated those exact two writes. Readback verified all five staff
+headers and unchanged T:AC user-entered values/validation across1000 rows; repeat
+staff plan writes0. Preview source/plan/readback evidence is local ignored output,
+not public source control. Proof: `output/seating-charts/stm-staff-preview-header.png`
+and `stm-staff-preview-verification.json`. This manual preview does not advance
+the warehouse ledger or represent an n8n staff run.
+
+Resume: restore the n8n editor connection, then run reviewed
+`database-enable-staff.sql` and verify only this target changed. Run02 twice and
+verify staffVerified, protected cells, stable reservation rows, and repeat0.
+The initial staff ledger is empty; exact source-matching preview values may be
+adopted without writes. Preserve all different/manual header values for review.
+
 Owner's subsequent label request: unnamed seats display the purchaser's first
 name plus `'s guest`. Updated only W2/W4/W5/W6 in the real pilot (one Linda,
 three Addison). Exact T:AC readback confirmed only those four W cells changed;
