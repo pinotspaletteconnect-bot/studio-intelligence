@@ -25,7 +25,7 @@ test('collector applies studio/date/status filters and ties source API class IDs
   await page.route('https://admin.pinotspalette.com/Product/GetProductReservations',r=>r.fulfill({contentType:'application/json',body:JSON.stringify({Data:[{Code:'CODE-1',ClassId:456}],Total:1})}));
   await page.route('https://admin.pinotspalette.com/Product/Reservations',r=>r.fulfill({contentType:'text/html',body:`
   <input id="LocationId" value="1"><span role="listbox" aria-owns="LocationId_listbox">Select</span><ul id="LocationId_listbox"><li onclick="document.querySelector('#LocationId').value='19'">St. Matthews</li></ul>
-  <input id="StatusId" value="100"><span role="listbox" aria-owns="StatusId_listbox">Reserved</span><ul id="StatusId_listbox"><li>Reserved</li></ul>
+  <input id="StatusId" value="100"><span role="listbox" aria-owns="StatusId_listbox">Reserved</span><ul id="StatusId_listbox" style="display:none"><li>Reserved</li></ul>
   <input id="DateFilter_FromDate"><input id="DateFilter_ToDate"><input id="noClass" type="checkbox">
   <button onclick="loadProducts()">Search</button><script>function loadProducts(){fetch('/Product/GetProductReservations').then(r=>r.json()).then(()=>{document.querySelector('#rows').innerHTML='<tr data-uid="volatile"><td>Example Guest</td><td>date</td><td>Actual class</td><td>Cheese</td><td>Reserved</td><td>CODE-1</td><td><a href="/Order/View/123">Manage</a></td></tr>';document.querySelector('.k-pager-info').textContent='1 - 1 of 1 items'})}</script>
   <div id="productReservations"><table><thead><tr>${headers.map(h=>`<th data-field="${h}">${h}</th>`).join('')}</tr></thead><tbody id="rows"></tbody></table><span class="k-pager-info"></span><a class="k-pager-next k-state-disabled" aria-disabled="true">Next</a></div>`}));
