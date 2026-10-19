@@ -17,7 +17,7 @@ async function read(resource) {
 }
 (async () => {
   const [targets, runs] = await Promise.all([
-    read(`seating_chart_targets?id=eq.${target.id}&select=id,enabled,revision,lease_run_id,lease_until,ledger`),
+    read(`seating_chart_targets?id=eq.${target.id}&select=id,enabled,revision,lease_run_id,lease_until,ledger,staff_ledger,config`),
     read(`seating_chart_refresh_runs?target_id=eq.${target.id}&select=run_id,status,target_revision,source,plan,result&order=created_at.asc`),
   ]);
   const completed = runs.filter(r => r.status === 'completed');
@@ -27,6 +27,7 @@ async function read(resource) {
     allProtectedChecksPassed: completed.length > 0 && completed.every(r => r.result.seatingUnchanged === true && r.result.attendanceUnchanged === true && r.result.formulasUnchanged === true) };
   console.log(JSON.stringify({ summary, targets: targets.map(t => ({ id: t.id, enabled: t.enabled, revision: t.revision,
     leaseRunId: t.lease_run_id, leaseUntil: t.lease_until, ledgerCount: t.ledger.length,
+    staffEnabled:t.config.staffUpdatesEnabled===true,staffLedger:t.staff_ledger,
     rowMap: t.ledger.map(r => ({ reservationKey: r.reservationKey, row: r.row, status: r.status })) })),
   runs: runs.map(r => ({ runId: r.run_id, status: r.status, revision: r.target_revision,
     sourceCount: r.source.rows?.length, writeRangeCount: r.plan?.request?.data?.length, result: r.result })) }, null, 2));

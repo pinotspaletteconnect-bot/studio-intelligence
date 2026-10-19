@@ -1,5 +1,17 @@
 # Studio Intelligence Integrations
 
+## October 18, 2026 - seating staff mapping
+
+Scheduled Instructor -> Stage; Scheduled Assistant -> Floor; Scheduled On-Call
+Instructor/Assistant -> On Call. Other statuses are excluded. Collector/state
+extension deployed with71 local checks passing. Manual native preview verified
+two staff writes and unchanged T:AC across1000 rows; repeat planning writes0.
+October19: owner-approved closure of two older tabs restored the native runner.
+Staff updates enabled only for this manual target. Full runs170008/170010 passed
+staff readback, nine stable rows, no writes/reviews, and unchanged T/U/AB.
+Revision4/five staff-ledger entries/no lease verified. All schedules remain OFF.
+See automation/seating-charts/PILOT_ROLLOUT.md.
+
 **Version:** 4.1  
 **Last updated:** July 23, 2026
 

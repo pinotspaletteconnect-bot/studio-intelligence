@@ -1,5 +1,17 @@
 # Studio Intelligence Current Status
 
+## October 19, 2026 - STM staff and reservation manual pilot verified
+
+Owner-approved closure of the two older editor tabs restored the n8n runner.
+Staff updates are enabled only for the existing manual STM target. Native full
+runs170008/170010 passed in40.504s/37.552s: nine stable reservation rows, verified
+staff headers, zero writes/review items, unchanged seating/attendance/formulas.
+Warehouse revision4/five staff-ledger entries/no lease verified.71 local checks
+pass; latest12 staff/workflow checks rerun successfully. Owner confirmed the
+live class staff after initially looking at a different class. All schedules
+remain OFF;03 is saved read-only. Creation/overlap/party/other-studio execution
+remains incomplete. Checkpoint: automation/seating-charts/PILOT_ROLLOUT.md.
+
 ## October 18, 2026 - STM reservation refresh manual pilot verified
 
 Owner approved deployment, database changes and manual tests with schedules OFF.

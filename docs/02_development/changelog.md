@@ -1,5 +1,17 @@
 # Studio Intelligence Changelog
 
+## October 18, 2026 - staff preview and preservation checks
+
+- Added five staff-header mappings with manual-edit/formula preservation, source
+  completeness/status guards and private ledger/readback. 71 local checks pass.
+- Applied migration002 after a successful rollback/access trial.
+- Native manual preview changed two headers; T:AC unchanged across1000 rows,
+  repeat planning0. October19: owner-approved tab cleanup restored the runner.
+- Enabled staff only for the existing manual STM target. Native full runs170008
+  and170010 passed: nine stable rows, verified staff, zero writes/review items,
+  unchanged seating/attendance/formulas. Revision4/five staff-ledger entries/no
+  lease verified. All schedules remain OFF;03 is saved read-only.
+
 ## October 18, 2026 - St. Matthews seating manual pilot
 
 - Added account-isolated collection, private source/row state, and a guarded

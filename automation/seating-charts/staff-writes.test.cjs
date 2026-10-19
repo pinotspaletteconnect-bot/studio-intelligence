@@ -6,8 +6,8 @@ const staff=(name,role,status='Scheduled')=>({name,role,status});
 const blank=()=>({...STAFF_CELLS});
 const plan=(s,cells=blank(),ledger={})=>planStaffRefresh({source:s,sheetName:'Seating Chart Main',cells,ledger});
 test('scheduled instructors are Stage, assistants Floor, scheduled on-call never Floor',()=>{
- const p=plan(source([staff('Haley Zempel','Instructor'),staff('Kit Kongos','Assistant','Scheduled On-Call')]));
- assert.equal(p.expected.D5,'Stage: Haley'); assert.equal(p.expected.G6,'On-Call 1: Kit'); assert.equal(p.expected.D6,'Floor 1:');
+ const p=plan(source([staff('Maya Stage','Instructor'),staff('Jordan Reserve','Assistant','Scheduled On-Call')]));
+ assert.equal(p.expected.D5,'Stage: Maya'); assert.equal(p.expected.G6,'On-Call 1: Jordan'); assert.equal(p.expected.D6,'Floor 1:');
  assert.equal(p.data.length,2); assert.ok(p.data.every(w=>/!(D5|D6|D7|G6|G7)$/.test(w.range)));
 });
 test('normal assistants use Floor; on-call instructors use On Call; unconfirmed shifts are excluded',()=>{
@@ -20,7 +20,7 @@ test('staff edits and formulas survive refresh; unchanged automated names can up
  const q=plan(source([]),{...blank(),D5:'Stage: Old'},{D5:'Stage: Old'});assert.equal(q.expected.D5,'Stage:');assert.equal(q.data.length,1);
 });
 test('repeat refresh writes nothing and retains staff ledger',()=>{
- const s=source([staff('Rachael Macdonald','Instructor'),staff('Sara Sandfort','Assistant','Scheduled On-Call')]);const first=plan(s);
+ const s=source([staff('Taylor Main','Instructor'),staff('Morgan Reserve','Assistant','Scheduled On-Call')]);const first=plan(s);
  const next=plan(s,first.expected,first.lastWritten);assert.equal(next.data.length,0);assert.deepEqual(next.lastWritten,first.lastWritten);
 });
 test('duplicate first names display full names; slot overflow does not truncate staff',()=>{
@@ -37,4 +37,6 @@ test('readback and immutable retry reject unexpected staff edits',()=>{
  assert.throws(()=>verifyStaffReadback(p,{...p.expected,D5:'Stage: Other'}));
  assert.equal(planStaffRefresh({source:s,sheetName:'Seating Chart Main',cells:p.expected,pending:p}),p);
  assert.throws(()=>planStaffRefresh({source:s,sheetName:'Seating Chart Main',cells:{...p.expected,D5:'Stage: Other'},pending:p}));
+ const protectedFormula={...blank(),G7:{formulaValue:'="manual"'}};const preserved=plan(s,protectedFormula);
+ assert.equal(planStaffRefresh({source:s,sheetName:'Seating Chart Main',cells:preserved.expected,pending:preserved}),preserved);
 });

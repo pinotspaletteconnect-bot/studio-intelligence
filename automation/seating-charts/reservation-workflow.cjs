@@ -80,10 +80,10 @@ if(!run.plan){plan.staff=staff;plan.request.data.push(...staff.data);}
 }
 return [{json:{plan,before:cells}}];`);
   rpc('Stage warehouse plan','stage_seating_chart_refresh', '={{ {p_run_id:$("Pilot run settings").first().json.runId,p_plan:$("Prepare immutable reservation plan").first().json.plan} }}');
-  add('Reservation changes exist','n8n-nodes-base.if',{conditions:{options:{caseSensitive:true,leftValue:'',typeValidation:'strict',version:2},combinator:'and',conditions:[{
+  add('Chart changes exist','n8n-nodes-base.if',{conditions:{options:{caseSensitive:true,leftValue:'',typeValidation:'strict',version:2},combinator:'and',conditions:[{
     id:'reservation-write-needed',leftValue:'={{ $("Prepare immutable reservation plan").first().json.plan.request.data.length > 0 }}',rightValue:true,
     operator:{type:'boolean',operation:'true',singleValue:true}}]},options:{}},null,2.2);
-  http('Write only reservation columns','google','POST',`=https://sheets.googleapis.com/v4/spreadsheets/{{ $('Claim warehouse refresh').first().json.target.spreadsheetId }}/values:batchUpdate`,
+  http('Write approved chart cells','google','POST',`=https://sheets.googleapis.com/v4/spreadsheets/{{ $('Claim warehouse refresh').first().json.target.spreadsheetId }}/values:batchUpdate`,
     '={{ $("Prepare immutable reservation plan").first().json.plan.request }}');
   http('Read chart after refresh','google','GET',readUrl);
   code('Verify reservations and protected staff cells',`${library}\n${staffLibrary}\n${cells}\n${staffCells}
@@ -94,7 +94,7 @@ result.reviewCount+=result.staffReviewCount;if(result.reviewCount)result.status=
 return [{json:result}];`);
   rpc('Complete verified warehouse refresh','complete_seating_chart_refresh','={{ {p_run_id:$("Pilot run settings").first().json.runId,p_result:$json} }}');
   nodes.forEach((node,i)=>{if(i+1<nodes.length)connections[node.name]={main:[[{node:nodes[i+1].name,type:'main',index:0}]]};});
-  connections['Reservation changes exist']={main:[[{node:'Write only reservation columns',type:'main',index:0}],[{node:'Read chart after refresh',type:'main',index:0}]]};
+  connections['Chart changes exist']={main:[[{node:'Write approved chart cells',type:'main',index:0}],[{node:'Read chart after refresh',type:'main',index:0}]]};
   return {name:'02 - Seating Charts - STM reservation refresh - DEPLOYMENT PENDING',active:false,nodes,connections,
     settings:{executionOrder:'v1',timezone:studio.timeZone,saveDataSuccessExecution:'none',saveDataErrorExecution:'none',saveManualExecutions:false}};
 }

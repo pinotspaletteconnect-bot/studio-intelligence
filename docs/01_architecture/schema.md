@@ -1,5 +1,13 @@
 # Studio Intelligence Warehouse Schema
 
+## October 18, 2026 - private staff ledger extension
+
+Migration002 adds staff_ledger JSON to the existing seating_chart_targets table
+and replaces claim/stage/complete RPCs. Live rollback/privacy checks passed.
+Only D5/D6/D7/G6/G7 staff headers are additionally allowed, gated by target
+configuration and staff readback. Existing RLS/service-only grants are retained.
+Migration applied; staff flag remains OFF pending native n8n runner recovery.
+
 ## October 18, 2026 - private seating pilot state applied
 
 seating_chart_targets and seating_chart_refresh_runs are current private
