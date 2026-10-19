@@ -18,4 +18,30 @@ test('creation readback verifies all 1000 protected/import rows and detects seat
 test('dirty template inputs stop initial creation instead of clearing staff work',()=>{const {group,plan,doc}=fixture([item('101','6:00 PM','8:00 PM')]);doc.sheets[0].data[1].rowData[0].values[0]={userEnteredValue:{numberValue:11}};assert.throws(()=>buildInitialValues({group,plan,studio,document:doc,now}));});
 test('every embedded workflow compiles and remains manual; copy requests never auto-retry',()=>{new Function(creationLibrary());const walk=w=>{assert.equal(w.active,false);assert.ok(!w.nodes.some(n=>/scheduleTrigger|webhook/.test(n.type)));for(const n of w.nodes){if(n.type.endsWith('.code'))new Function(n.parameters.jsCode);if(n.type.endsWith('.executeWorkflow'))walk(JSON.parse(n.parameters.workflowJson));if(n.name==='Copy studio master')assert.notEqual(n.retryOnFail,true);}};walk(buildCreationWorkflow({studio,selectedClassIds:['101']}));});
 test('native copy recovery refuses ambiguous, missing or previously issued copy outcomes',()=>{const {buildGroupWorkflow}=require('./creation-workflow.cjs');const code=buildGroupWorkflow(studio).nodes.find(n=>n.name==='Resolve copy safely').parameters.jsCode;const run=(context,response)=>new Function('$','$input',code)(()=>({first:()=>({json:context})}),{first:()=>({json:response})});const base={config:studio,plan:{},source:{},state:'planned',fileId:null};assert.equal(run(base,{files:[]})[0].json.needsCopy,true);assert.throws(()=>run({...base,state:'copy-issued'},{files:[]}));assert.throws(()=>run(base,{files:[{id:'a'},{id:'b'}]}));assert.throws(()=>run({...base,fileId:'mapped'},{files:[{id:'different'}]}));assert.equal(run({...base,fileId:'mapped',state:'copied'},{files:[{id:'mapped'}]})[0].json.needsCopy,false);});
+test('saved helper calls keep expressions in their own workflow context and wait for completion',()=>{
+ const {buildGroupWorkflow}=require('./creation-workflow.cjs');
+ const parent=buildCreationWorkflow({studio,authorized:true,groupWorkflowId:'group-helper'});
+ const group=buildGroupWorkflow(studio,{refreshWorkflowId:'refresh-helper'});
+ for(const [workflow,id]of [[parent,'group-helper'],[group,'refresh-helper']]){
+  const call=workflow.nodes.find(n=>n.type.endsWith('.executeWorkflow'));
+  assert.equal(call.parameters.source,'database');
+  assert.equal(call.parameters.workflowId.value,id);
+  assert.equal(call.parameters.workflowJson,undefined);
+  assert.equal(call.parameters.options.waitForSubWorkflow,true);
+  assert.equal(workflow.active,false);
+  assert.ok(!workflow.nodes.some(n=>/scheduleTrigger|webhook/.test(n.type)));
+ }
+});
+test('n8n expression delimiters do not collide with nested object closing braces',()=>{
+ const {buildGroupWorkflow}=require('./creation-workflow.cjs');
+ const group=buildGroupWorkflow(studio,{refreshWorkflowId:'refresh-helper'});
+ const parent=buildCreationWorkflow({studio,authorized:true,groupWorkflowId:'group-helper'});
+ for(const workflow of [parent,group])for(const node of workflow.nodes){
+  for(const value of Object.values(node.parameters))if(typeof value==='string'&&value.startsWith('=')){
+   for(const match of value.matchAll(/\{\{([\s\S]*?)\}\}/g)){
+    assert.doesNotThrow(()=>new Function('return ('+match[1]+')'),node.name);
+   }
+  }
+ }
+});
 module.exports={item,payload,fixture,now};

@@ -1,5 +1,23 @@
 # Studio Intelligence Changelog
 
+
+## October 19, 2026 - STM overlap creation manual rollout verified
+
+- Owner-approved PR93 deployment/Main21-KLR22 binding and private migration003
+  are active; rollback/access/protected-write checks passed before migration.
+- Created three studio-owned files for Oct19, Oct20 staggered class/private-party
+  overlap and Oct23 two-class overlap. Private parties get only information forms.
+- Four public class counts4/5/0/17 passed complete and repeat readback: stable
+  rows, zero repeat writes, actual staff, unchanged seating/attendance/formulas.
+- Fixed nested expression delimiters and shared extra Floor/On-Call names in the
+  second existing label. Replaced helper drafts with clean native canvases.
+- Reviewed an unstaged failed zero-class run, compared fresh source facts and
+  completed the original run without dropping history. Retired drafts/recovery
+  are archived. 03 is read-only. Original pilot revision4/nine guests unchanged.
+- 88 local checks pass. No recurring triggers; schedules remain OFF. Source,
+  nonsecret workflow IDs and proof checkpoint are recorded in PR94 and
+  automation/seating-charts/CREATION_ROLLOUT.md.
+
 ## October 18, 2026 - staff preview and preservation checks
 
 - Added five staff-header mappings with manual-edit/formula preservation, source

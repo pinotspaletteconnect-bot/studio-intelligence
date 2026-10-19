@@ -1,12 +1,29 @@
 # Studio Intelligence Warehouse Schema
 
+
+## October 19, 2026 - private STM workbook creation applied
+
+Migration003 is applied after rollback and access checks. Current private tables:
+seating_chart_creation_settings (studio configuration/manual flag; schedule flag
+constrained false), seating_chart_workbooks (immutable source/plan, copy stages,
+verified file ID, lease/result), and seating_chart_workbook_events (unique studio
+class identity to workbook/tab with actual event intervals). RLS denies browser
+roles; service-only claim_seating_chart_workbook/advance_seating_chart_workbook
+validate connected overlap, studio ownership, duplicate copies, allowed native
+operations, mapped header writes and readback. seating_chart_targets gains a
+workbook_id FK and permits deterministic registered Main/KLR tabs; private parties
+never get reservation targets. Existing pilot and protected T/U/AB rules remain.
+Creation/refresh source snapshots remain private operational data, outside public
+BI views. No retention policy or new browser grants are introduced. Schedules OFF.
+Checkpoint: automation/seating-charts/CREATION_ROLLOUT.md.
+
 ## October 18, 2026 - private staff ledger extension
 
 Migration002 adds staff_ledger JSON to the existing seating_chart_targets table
 and replaces claim/stage/complete RPCs. Live rollback/privacy checks passed.
 Only D5/D6/D7/G6/G7 staff headers are additionally allowed, gated by target
 configuration and staff readback. Existing RLS/service-only grants are retained.
-Migration applied; staff flag remains OFF pending native n8n runner recovery.
+Migration applied. October19: staff enabled and full manual pilot verified; see current_status.md.
 
 ## October 18, 2026 - private seating pilot state applied
 

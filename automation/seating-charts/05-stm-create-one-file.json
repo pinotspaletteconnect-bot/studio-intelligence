@@ -1,0 +1,1108 @@
+{
+  "name": "05 - Seating Charts - STM create one overlap file - HELPER",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-0",
+      "name": "Creation input",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "inputSource": "passthrough"
+      }
+    },
+    {
+      "id": "node-1",
+      "name": "Claim workbook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://hsosjnwjangtqtskofag.supabase.co/rest/v1/rpc/claim_seating_chart_workbook",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {p_studio_id:$json.studio.studioId,p_run_id:\"stm-create-\"+$execution.id,p_group:$json.group,p_plan:$json.plan} }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "A32h7eKkq8JEdg0k",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Workbook already ready",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "condition",
+              "leftValue": "={{ $json.ready === true }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Google account",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "Fmbjd7IWMJeb4vZQ",
+          "name": "St Matthews Seating Charts — Google Drive"
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Verify studio Google account",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const context=$('Claim workbook').first().json;const studio=context.config,plan=context.plan,group=context.source;if($input.first().json.user?.emailAddress!==studio.googleAccountEmail)throw Error('Wrong studio Google account');return [{json:{verified:true}}];"
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Read master",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://www.googleapis.com/drive/v3/files/{{ $('Claim workbook').first().json.config.masterSpreadsheetId }}?fields=id%2Cname%2CmimeType%2Cparents%2Cowners(emailAddress)%2Ccapabilities(canCopy%2CcanEdit)%2CappProperties",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "Fmbjd7IWMJeb4vZQ",
+          "name": "St Matthews Seating Charts — Google Drive"
+        }
+      }
+    },
+    {
+      "id": "node-6",
+      "name": "Verify master",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const context=$('Claim workbook').first().json;const studio=context.config,plan=context.plan,group=context.source;const file=$input.first().json;if(file.id!==studio.masterSpreadsheetId||file.mimeType!=='application/vnd.google-apps.spreadsheet'||file.capabilities?.canCopy!==true||!file.owners?.some(o=>o.emailAddress===studio.googleAccountEmail))throw Error('Master ownership/copy permission mismatch');return [{json:{verified:true}}];"
+      }
+    },
+    {
+      "id": "node-7",
+      "name": "Read folder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1680,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://www.googleapis.com/drive/v3/files/{{ $('Claim workbook').first().json.config.destinationFolderId }}?fields=id%2Cname%2CmimeType%2Cparents%2Cowners(emailAddress)%2Ccapabilities(canCopy%2CcanEdit)%2CappProperties",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "Fmbjd7IWMJeb4vZQ",
+          "name": "St Matthews Seating Charts — Google Drive"
+        }
+      }
+    },
+    {
+      "id": "node-8",
+      "name": "Verify folder",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const context=$('Claim workbook').first().json;const studio=context.config,plan=context.plan,group=context.source;const file=$input.first().json;if(file.id!==studio.destinationFolderId||file.mimeType!=='application/vnd.google-apps.folder'||file.capabilities?.canEdit!==true||!file.owners?.some(o=>o.emailAddress===studio.googleAccountEmail))throw Error('Folder owner/edit permission mismatch');return [{json:{verified:true}}];"
+      }
+    },
+    {
+      "id": "node-9",
+      "name": "Find prior copy",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2160,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://www.googleapis.com/drive/v3/files?q={{ encodeURIComponent(\"trashed = false and appProperties has { key='seatingGroupId' and value='\"+$('Claim workbook').first().json.groupId+\"' }\") }}&pageSize=100&fields=nextPageToken%2CincompleteSearch%2Cfiles(id%2Cname%2CmimeType%2Cparents%2Cowners(emailAddress)%2Ccapabilities(canCopy%2CcanEdit)%2CappProperties)",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "Fmbjd7IWMJeb4vZQ",
+          "name": "St Matthews Seating Charts — Google Drive"
+        }
+      }
+    },
+    {
+      "id": "node-10",
+      "name": "Resolve copy safely",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const context=$('Claim workbook').first().json;const studio=context.config,plan=context.plan,group=context.source;const found=$input.first().json;if(found.nextPageToken||found.incompleteSearch||!Array.isArray(found.files)||found.files.length>1)throw Error('Ambiguous workbook copy; review required');\n if(found.files.length){const file=found.files[0];if(context.fileId&&file.id!==context.fileId)throw Error('Mapped workbook differs');return [{json:{...file,needsCopy:false}}];}\n if(context.state!=='planned'||context.fileId)throw Error('Copy outcome uncertain or mapped file missing; never issue a second copy automatically');return [{json:{needsCopy:true}}];"
+      }
+    },
+    {
+      "id": "node-11",
+      "name": "Copy needed",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2640,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "condition",
+              "leftValue": "={{ $json.needsCopy === true }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "node-12",
+      "name": "Record copy request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2880,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://hsosjnwjangtqtskofag.supabase.co/rest/v1/rpc/advance_seating_chart_workbook",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {p_group_id:$(\"Claim workbook\").first().json.groupId,p_run_id:\"stm-create-\"+$execution.id,p_action:\"copy-issued\",p_data:{} } }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "A32h7eKkq8JEdg0k",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "id": "node-13",
+      "name": "Copy studio master",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3120,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://www.googleapis.com/drive/v3/files/{{ $('Claim workbook').first().json.config.masterSpreadsheetId }}/copy?fields=id%2Cname%2CmimeType%2Cparents%2Cowners(emailAddress)%2Ccapabilities(canCopy%2CcanEdit)%2CappProperties",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {name:$(\"Claim workbook\").first().json.plan.title,parents:[$(\"Claim workbook\").first().json.config.destinationFolderId],appProperties:{seatingGroupId:$(\"Claim workbook\").first().json.groupId,seatingMasterId:$(\"Claim workbook\").first().json.config.masterSpreadsheetId} } }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "Fmbjd7IWMJeb4vZQ",
+          "name": "St Matthews Seating Charts — Google Drive"
+        }
+      }
+    },
+    {
+      "id": "node-14",
+      "name": "Record verified copy",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3360,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://hsosjnwjangtqtskofag.supabase.co/rest/v1/rpc/advance_seating_chart_workbook",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {p_group_id:$(\"Claim workbook\").first().json.groupId,p_run_id:\"stm-create-\"+$execution.id,p_action:\"copied\",p_data:$json} }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "A32h7eKkq8JEdg0k",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "id": "node-15",
+      "name": "Read workbook tabs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3600,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $json.fileId }}?fields=spreadsheetId,properties(timeZone),sheets(properties(sheetId,title,hidden,gridProperties))",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "Fmbjd7IWMJeb4vZQ",
+          "name": "St Matthews Seating Charts — Google Drive"
+        }
+      }
+    },
+    {
+      "id": "node-16",
+      "name": "Prepare event tabs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3840,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const context=$('Claim workbook').first().json;const studio=context.config,plan=context.plan,group=context.source;const document=$input.first().json;if(document.spreadsheetId!==$('Record verified copy').first().json.fileId||document.properties?.timeZone!==studio.timeZone)throw Error('Copy spreadsheet mismatch');\n for(const id of [0,1955136908,studio.privatePartyFormMapping.sheetId])if(!document.sheets?.some(s=>s.properties.sheetId===id))throw Error('Master templates missing');\n const present=plan.tabs.filter(t=>document.sheets.some(s=>s.properties.sheetId===t.sheetId));if(present.length&&present.length!==plan.tabs.length)throw Error('Partial/foreign tab structure; review required');\n if(present.some(t=>document.sheets.find(s=>s.properties.sheetId===t.sheetId).properties.title!==t.sheetName))throw Error('Tab ID/name conflict');\n return [{json:{fileId:document.spreadsheetId,requests:present.length?[]:plan.structure.requests}}];"
+      }
+    },
+    {
+      "id": "node-17",
+      "name": "Event tabs needed",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4080,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "condition",
+              "leftValue": "={{ $json.requests.length > 0 }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "node-18",
+      "name": "Create native event tabs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4320,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $('Prepare event tabs').first().json.fileId }}:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {requests:$(\"Prepare event tabs\").first().json.requests} }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "Fmbjd7IWMJeb4vZQ",
+          "name": "St Matthews Seating Charts — Google Drive"
+        }
+      }
+    },
+    {
+      "id": "node-19",
+      "name": "Read initial event cells",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4560,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $('Prepare event tabs').first().json.fileId }}?{{ $('Claim workbook').first().json.plan.tabs.flatMap(t=>[\"ranges=\"+encodeURIComponent(\"'\"+t.sheetName.replace(/'/g,\"''\")+\"'!A1:AC32\"),...(!t.isPrivate?[\"ranges=\"+encodeURIComponent(\"'\"+t.sheetName.replace(/'/g,\"''\")+\"'!T1:AC1000\")]:[])]).join('&') }}&includeGridData=true&fields=spreadsheetId,sheets(properties(sheetId,title,hidden,gridProperties),data(startRow,startColumn,rowData(values(userEnteredValue,dataValidation))))",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "Fmbjd7IWMJeb4vZQ",
+          "name": "St Matthews Seating Charts — Google Drive"
+        }
+      }
+    },
+    {
+      "id": "node-20",
+      "name": "Verify event tab structure",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4800,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const context=$('Claim workbook').first().json;const studio=context.config,plan=context.plan,group=context.source;const document=$input.first().json;for(const t of plan.tabs){const s=document.sheets?.find(s=>s.properties.sheetId===t.sheetId);if(s?.properties.title!==t.sheetName||s.properties.hidden===true||s.properties.gridProperties.rowCount<1000)throw Error('Event tab structure not verified');}return [{json:{verified:true}}];"
+      }
+    },
+    {
+      "id": "node-21",
+      "name": "Record event structure",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5040,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://hsosjnwjangtqtskofag.supabase.co/rest/v1/rpc/advance_seating_chart_workbook",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {p_group_id:$(\"Claim workbook\").first().json.groupId,p_run_id:\"stm-create-\"+$execution.id,p_action:\"structured\",p_data:$json} }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "A32h7eKkq8JEdg0k",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "id": "node-22",
+      "name": "Prepare initial event values",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5280,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Pure planning only: this module never collects, writes files, or calls APIs.\nconst MINUTE = 60_000;\nconst REFRESH_MINUTES = [1440, 360, 300, 240, 180, 120, 75];\n\nfunction text(value, field) {\n  if (typeof value !== 'string' || !value.trim()) throw new Error(`Missing ${field}`);\n  return value.trim();\n}\n\nfunction instant(value, field) {\n  if (typeof value !== 'string' ||\n      !/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?(?:Z|[+-]\\d{2}:\\d{2})$/.test(value) ||\n      !Number.isFinite(Date.parse(value))) {\n    throw new Error(`${field} must be an ISO timestamp with an explicit offset`);\n  }\n  return Date.parse(value);\n}\n\nfunction localDate(timestamp, timeZone) {\n  const parts = new Intl.DateTimeFormat('en-US', {\n    timeZone, year: 'numeric', month: '2-digit', day: '2-digit',\n  }).formatToParts(new Date(timestamp));\n  const part = name => parts.find(p => p.type === name).value;\n  return `${part('year')}${part('month')}${part('day')}`;\n}\n\nfunction validateEvent(event) {\n  const result = { ...event };\n  for (const field of ['organizationId', 'studioId', 'classId', 'timeZone', 'painting', 'roomLabel']) {\n    result[field] = text(event[field], field);\n  }\n  if (typeof event.isPrivate !== 'boolean') throw new Error('Missing isPrivate');\n  result.start = instant(event.startAt, 'startAt');\n  result.end = instant(event.endAt, 'endAt');\n  if (result.end <= result.start) throw new Error('End time must be after start time');\n  // Validate the configured timezone even if this record forms no group.\n  localDate(result.start, result.timeZone);\n  result.key = JSON.stringify([result.organizationId, result.studioId, result.classId]);\n  return result;\n}\n\nfunction eventLabel(event) {\n  return `${event.painting}${event.isPrivate ? ' PP' : ''} (${event.roomLabel})`;\n}\n\nfunction groupOverlappingEvents(events) {\n  const seen = new Set();\n  const partitions = new Map();\n  for (const input of events) {\n    const event = validateEvent(input);\n    if (seen.has(event.key)) throw new Error('Duplicate source class identity');\n    seen.add(event.key);\n    const partition = JSON.stringify([event.organizationId, event.studioId]);\n    if (!partitions.has(partition)) partitions.set(partition, []);\n    const siblings = partitions.get(partition);\n    if (siblings.length && siblings[0].timeZone !== event.timeZone) {\n      throw new Error('Conflicting timezones for one studio');\n    }\n    siblings.push(event);\n  }\n\n  const groups = [];\n  for (const partition of [...partitions.keys()].sort()) {\n    const ordered = partitions.get(partition).sort((a, b) =>\n      a.start - b.start || a.key.localeCompare(b.key));\n    let group;\n    for (const event of ordered) {\n      // Touching endpoints do not overlap. A chain of overlaps stays together.\n      if (!group || event.start >= group.end) {\n        group = {\n          organizationId: event.organizationId, studioId: event.studioId,\n          timeZone: event.timeZone, start: event.start, end: event.end, events: [],\n        };\n        groups.push(group);\n      }\n      group.events.push(event);\n      group.end = Math.max(group.end, event.end);\n    }\n  }\n  return groups.map(group => ({\n    organizationId: group.organizationId,\n    studioId: group.studioId,\n    timeZone: group.timeZone,\n    startAt: new Date(group.start).toISOString(),\n    endAt: new Date(group.end).toISOString(),\n    title: `${localDate(group.start, group.timeZone)} ${group.events.map(eventLabel).join(', ')}`,\n    // Title and group membership are display/planning data, NOT durable file IDs.\n    eventKeys: group.events.map(event => event.key),\n    events: group.events.map(({ start, end, key, ...event }) => ({\n      ...event, documentType: event.isPrivate ? 'private-party-form' : 'seating-chart',\n    })),\n  }));\n}\n\nfunction refreshMilestones(startAt) {\n  const start = instant(startAt, 'startAt');\n  return [\n    { kind: 'create', minutesBefore: 7 * 24 * 60 },\n    ...REFRESH_MINUTES.map(minutesBefore => ({\n      kind: minutesBefore === 75 ? 'final' : 'refresh', minutesBefore,\n    })),\n  ].map(slot => ({\n    ...slot, dueAt: new Date(start - slot.minutesBefore * MINUTE).toISOString(),\n  }));\n}\n\n\nconst STAFF_CELLS = { D5: 'Stage:', D6: 'Floor 1:', D7: 'Floor 2:', G6: 'On-Call 1:', G7: 'On-Call 2:' };\nconst STAFF_STATUSES = ['Pending','Requested','Requested On-Call','Scheduled On-Call','Scheduled','Unavailable','Cancelled Shift','Moved','Deleted'];\nfunction staffAssignments(source) {\n  if (source?.complete !== true || !Array.isArray(source.rows) || source.rows.length !== source.expectedRowCount) throw Error('Incomplete assigned staff source');\n  const seen = new Set(), rows = source.rows.map(r => {\n    if (!/^\\d+$/.test(r.assignmentId) || seen.has(r.assignmentId) || !r.name?.trim() || !r.role || !STAFF_STATUSES.includes(r.status)) throw Error('Invalid assigned staff source');\n    seen.add(r.assignmentId); return { ...r, name: r.name.trim().replace(/\\s+/g,' ') };\n  });\n  const relevant = rows.filter(r => ['Instructor','Assistant'].includes(r.role) && ['Scheduled','Scheduled On-Call'].includes(r.status));\n  const firstNames = relevant.map(r => r.name.split(' ')[0]);\n  const display = r => firstNames.filter(n => n === r.name.split(' ')[0]).length > 1 ? r.name : r.name.split(' ')[0];\n  relevant.sort((a,b) => a.assignmentId.localeCompare(b.assignmentId,'en',{numeric:true}));\n  const stage = relevant.filter(r => r.role === 'Instructor' && r.status === 'Scheduled').map(display);\n  const floor = relevant.filter(r => r.role === 'Assistant' && r.status === 'Scheduled').map(display);\n  const onCall = relevant.filter(r => r.status === 'Scheduled On-Call').map(display);\n  // The second label holds any additional names; never omit assigned people or\n  // spill into seating/attendance cells when the class has more than two.\n  return { D5: stage.join(', '), D6: floor[0] ?? '', D7: floor.slice(1).join(', '), G6: onCall[0] ?? '', G7: onCall.slice(1).join(', ') };\n}\nfunction planStaffRefresh({ source, sheetName, cells, ledger = {}, pending = null }) {\n  const desired = staffAssignments(source), lastWritten = { ...ledger }, expected = {}, review = [], data = [];\n  for (const [cell,label] of Object.entries(STAFF_CELLS)) {\n    if (!Object.hasOwn(cells,cell)) throw Error('Missing staff destination read');\n    const live = cells[cell];\n    const value = !desired[cell] && typeof live==='string' && live.trim()===label ? live : label + (desired[cell] ? ' ' + desired[cell] : '');\n    if (pending) {\n      if (JSON.stringify(live) === JSON.stringify(pending.expected[cell])) continue;\n      const previous = ledger[cell];\n      if (typeof live !== 'string' || live !== pending.expected[cell] && live !== previous && !(live.trim() === label && !Object.hasOwn(ledger,cell))) throw Error('Pending staff update conflicts with manual edit');\n      continue;\n    }\n    // First adoption is limited to bare template labels or the exact source\n    // value. Later updates require the last automation value to remain intact.\n    if (typeof live !== 'string' || !(live === ledger[cell] || live === value || live.trim() === label && !Object.hasOwn(ledger,cell))) {\n      expected[cell] = live; review.push({ cell, reason: 'manual-staff-edit-preserved' }); continue;\n    }\n    expected[cell] = value; lastWritten[cell] = value;\n    if (live !== value) data.push({ range: `'${sheetName.replace(/'/g,\"''\")}'!${cell}`, values: [[value]] });\n  }\n  return pending ?? { expected, lastWritten, review, data };\n}\nfunction verifyStaffReadback(plan, after) {\n  for (const cell of Object.keys(STAFF_CELLS)) if (JSON.stringify(after[cell]) !== JSON.stringify(plan.expected[cell])) throw Error('Staff header readback mismatch');\n  return { staffVerified: true, staffChangedCount: plan.data.length, staffReviewCount: plan.review.length };\n}\n\n// St. Matthews form anchors verified against the owner-provided filled example.\n// Values must be normalized from verified source facts before reaching here.\nconst FIELD_CELLS = Object.freeze({\n  dateAndTime: 'C3',\n  hostNameAndPhone: 'C4',\n  paintingSummary: 'C5',\n  eventName: 'C8',\n  pricePerSeat: 'C12',\n  paymentArrangement: 'C15',\n  expectedHeadcount: 'C22',\n});\n\nfunction scalar(value) {\n  return value === null || typeof value === 'string' ||\n    (typeof value === 'number' && Number.isFinite(value));\n}\n\nfunction buildPrivatePartyWrites({ isPrivate, sheetName, sourceFields, currentCells, lastWrittenCells = {} }) {\n  if (isPrivate !== true) throw new Error('Private Party forms require a verified private event');\n  if (typeof sheetName !== 'string' || !sheetName.trim()) throw new Error('Missing verified tab name');\n  if (!sourceFields || !currentCells) throw new Error('Missing verified source or current form readback');\n  const data = [];\n  const needsReview = [];\n  const writtenCells = {};\n  const tab = `'${sheetName.replace(/'/g, \"''\")}'`;\n  for (const [field, cell] of Object.entries(FIELD_CELLS)) {\n    const fact = sourceFields[field];\n    if (fact?.verified !== true || fact.value === null || fact.value === undefined || fact.value === '') {\n      needsReview.push({ field, cell, reason: 'source_unverified_or_missing' });\n      continue;\n    }\n    if (!scalar(fact.value)) throw new Error(`Invalid source value for ${field}`);\n    // null means observed empty. Absent means the cell has NOT been read.\n    if (!Object.hasOwn(currentCells, cell)) {\n      needsReview.push({ field, cell, reason: 'current_cell_not_read' });\n      continue;\n    }\n    const current = currentCells[cell];\n    if (!scalar(current)) {\n      needsReview.push({ field, cell, reason: 'formula_or_non_scalar_cell' });\n      continue;\n    }\n    const unchangedOwnedValue = Object.hasOwn(lastWrittenCells, cell) &&\n      current === lastWrittenCells[cell];\n    if (current !== null && current !== '' && !unchangedOwnedValue) {\n      needsReview.push({ field, cell, reason: 'preserve_existing_staff_value' });\n      continue;\n    }\n    if (current === fact.value) continue;\n    data.push({ range: `${tab}!${cell}`, values: [[fact.value]] });\n    writtenCells[cell] = fact.value;\n  }\n  // Persist these values only after successful write/readback, never at plan time.\n  return { request: { valueInputOption: 'RAW', data }, writtenCells, needsReview };\n}\n\n\n\n\n\nconst DAY=86400000;\nconst months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];\nfunction parseDay(value){const m=/^(?:[A-Za-z]{3}, )?(\\d{1,2}) ([A-Za-z]{3}) (\\d{4})$/.exec(value??'');if(!m||!months.includes(m[2]))throw Error('Unverified class date');const iso=`${m[3]}-${String(months.indexOf(m[2])+1).padStart(2,'0')}-${m[1].padStart(2,'0')}`;if(new Date(iso).toISOString().slice(0,10)!==iso)throw Error('Invalid class date');return iso;}\nfunction localInstant(date,time,zone){\n const t=/^(\\d{1,2}):(\\d{2})\\s*(AM|PM)$/i.exec(time??'');if(!t||+t[1]<1||+t[1]>12||+t[2]>59)throw Error('Unverified class time');\n const wanted=[...date.split('-').map(Number),(+t[1]%12)+(t[3].toUpperCase()==='PM'?12:0),+t[2]];\n const fmt=new Intl.DateTimeFormat('en-CA',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});\n const parts=ms=>{const p=fmt.formatToParts(new Date(ms));return ['year','month','day','hour','minute'].map(n=>+p.find(x=>x.type===n).value);};\n const utc=Date.UTC(wanted[0],wanted[1]-1,wanted[2],wanted[3],wanted[4]);let candidate=utc;\n for(let i=0;i<3;i++){const p=parts(candidate);candidate+=utc-Date.UTC(p[0],p[1]-1,p[2],p[3],p[4]);}\n const same=ms=>JSON.stringify(parts(ms))===JSON.stringify(wanted);\n if(!same(candidate)||same(candidate-DAY/24)||same(candidate+DAY/24))throw Error('Missing or ambiguous DST class time');\n return new Date(candidate).toISOString();\n}\nfunction normalizeDiscovery(payload,studio,{now=new Date().toISOString()}={}){\n if(payload.success!==true||payload.accountId!==studio.accountId||payload.studioId!==studio.studioId||payload.source?.complete!==true||payload.source.studioCode!==studio.studioCode||!Array.isArray(payload.source.events))throw Error('Incomplete studio event discovery');\n const raw=payload.source;const stamp=Date.parse(raw.retrievedAt),at=Date.parse(now);\n if(!Number.isFinite(stamp)||stamp<at-600000||stamp>at+60000)throw Error('Stale event source');\n const seen=new Set(),events=[],review=[];\n for(const item of raw.events){\n  if(!/^\\d+$/.test(item.classId)||seen.has(item.classId)||item.locationLabel!==studio.sourceLocationLabel)throw Error('Wrong or duplicate class source');seen.add(item.classId);\n  const date=parseDay(item.dateText);if(date!==item.calendarDate)throw Error('Calendar/detail date mismatch');\n  const room=studio.creation.rooms[item.roomId];\n  const type=studio.creation.classTypes[item.classTypeId];\n  if(!room||!type||type.label!==item.classTypeLabel){review.push({classId:item.classId,reason:'unsupported-room-or-event-type'});continue;}\n  // Unpublished public drafts and requested/inquiry party placeholders are not\n  // operational events. A real assigned painting and both times are required.\n  if(item.isPublished!==true){review.push({classId:item.classId,reason:'not-published'});continue;}\n  if(type.isPrivate&&item.calendarPartyStage==='200200'){review.push({classId:item.classId,reason:'party-date-only-requested'});continue;}\n  const assignedPainting=item.title?.split(' - ').slice(2).join(' - ').trim();\n  const painting=assignedPainting&&!/^coming soon$/i.test(assignedPainting)?assignedPainting:(type.isPrivate?item.privateParty?.eventName:null);\n  if(!painting||!type.isPrivate&&!item.paintingSummary){review.push({classId:item.classId,reason:'painting-not-assigned'});continue;}\n  const startAt=localInstant(date,item.startTimeText,studio.timeZone);let endAt=localInstant(date,item.endTimeText,studio.timeZone);\n  if(Date.parse(endAt)<=Date.parse(startAt))endAt=localInstant(new Date(Date.parse(date)+DAY).toISOString().slice(0,10),item.endTimeText,studio.timeZone);\n  if(Date.parse(endAt)-Date.parse(startAt)>12*3600000)throw Error('Long event needs review');\n  const event={organizationId:String(studio.organizationId),studioId:String(studio.studioId),classId:item.classId,timeZone:studio.timeZone,painting,roomLabel:room.label,sourceRoomId:item.roomId,classTypeId:item.classTypeId,isPrivate:type.isPrivate,startAt,endAt,details:item};\n  events.push(event);\n }\n let groups=groupOverlappingEvents(events).filter(g=>Date.parse(g.endAt)>at&&Date.parse(g.startAt)<=at+7*DAY);\n // A source gap must not silently split an overlap group. Unknown events inside\n // this bounded window hold creation until their eligibility can be reviewed.\n groups=groups.filter(group=>{const blocked=review.filter(r=>r.reason==='unsupported-room-or-event-type').some(r=>{\n  const item=raw.events.find(e=>e.classId===r.classId);try{const start=localInstant(parseDay(item.dateText),item.startTimeText,studio.timeZone),end=localInstant(parseDay(item.dateText),item.endTimeText,studio.timeZone);return Date.parse(start)<Date.parse(group.endAt)&&Date.parse(end)>Date.parse(group.startAt);}catch{return item.calendarDate===new Intl.DateTimeFormat('en-CA',{timeZone:studio.timeZone}).format(new Date(group.startAt));}\n });if(blocked)review.push(...group.events.map(e=>({classId:e.classId,reason:'overlaps-unsupported-event'})));return !blocked;});\n for(const group of groups){\n  if(group.events.length>8)throw Error('Large overlap group needs review');\n  const lastDate=new Intl.DateTimeFormat('en-CA',{timeZone:studio.timeZone}).format(new Date(group.endAt));\n  if(lastDate>=raw.toDate||group.events.some(e=>e.startAt.slice(0,10)<raw.fromDate))throw Error('Overlap group touches discovery boundary');\n  group.groupKey=`stm-v1-${group.events.map(e=>e.classId).sort().join('-')}`;\n  group.sourceRetrievedAt=raw.retrievedAt;\n }\n return {groups,review};\n}\nfunction tabName(event){const time=new Intl.DateTimeFormat('en-US',{timeZone:event.timeZone,hour:'numeric',minute:'2-digit'}).format(new Date(event.startAt)).replace(':','.');return `${event.isPrivate?'PP ':''}${event.roomLabel} ${time} - ${event.classId}`;}\nfunction creationPlan(group,studio){\n const sheets=new Set(),names=new Set();\n const tabs=group.events.map(event=>{\n  const templateSheetId=event.isPrivate?studio.privatePartyFormMapping.sheetId:studio.creation.rooms[event.sourceRoomId]?.templateSheetId;\n  const sheetId=100000000+Number(event.classId),sheetName=tabName(event);\n  if(!Number.isSafeInteger(templateSheetId)||!Number.isSafeInteger(sheetId)||sheetId>=2147483647||sheets.has(sheetId)||names.has(sheetName)||sheetName.length>100||/[\\[\\]*?:/\\\\]/.test(sheetName))throw Error('Invalid event tab mapping');\n  sheets.add(sheetId);names.add(sheetName);\n  return {classId:event.classId,isPrivate:event.isPrivate,sheetId,sheetName,templateSheetId,sourceRoomId:event.sourceRoomId,classTypeId:event.classTypeId,startAt:event.startAt,endAt:event.endAt};\n });\n return {version:1,groupKey:group.groupKey,title:group.title,tabs,\n  structure:{requests:[...tabs.map(t=>({duplicateSheet:{sourceSheetId:t.templateSheetId,newSheetId:t.sheetId,newSheetName:t.sheetName}})),\n   ...[...new Set([0,1955136908,studio.privatePartyFormMapping.sheetId])].map(sheetId=>({updateSheetProperties:{properties:{sheetId,hidden:true},fields:'hidden'}}))]},\n };\n}\nfunction cellValue(v){return v?.formulaValue?{formulaValue:v.formulaValue}:v?.stringValue??v?.numberValue??v?.boolValue??'';}\nfunction cellsFrom(document,sheetId,range){const sheet=document.sheets?.find(s=>s.properties.sheetId===sheetId);if(!sheet)throw Error('Missing mapped tab');const b=sheet.data?.find(d=>(d.startRow??0)===range.row&&(d.startColumn??0)===range.column);if(!b)throw Error('Missing bounded cell read');return Array.from({length:range.rows},(_,i)=>Array.from({length:range.columns},(_,j)=>b.rowData?.[i]?.values?.[j]??{}));}\nfunction headerValue(document,sheetId,cell){const m=/^([A-Z]+)(\\d+)$/.exec(cell);let col=0;for(const ch of m[1])col=col*26+ch.charCodeAt(0)-64;const grid=cellsFrom(document,sheetId,{row:0,column:0,rows:32,columns:29});return cellValue(grid[+m[2]-1][col-1].userEnteredValue);}\nfunction buildInitialValues({group,plan,studio,document,now}){\n const data=[],expected={},staffLedgers={},review=[];\n const add=(tab,cell,value)=>{data.push({range:`'${tab.sheetName.replace(/'/g,\"''\")}'!${cell}`,values:[[value]]});expected[`${tab.sheetId}:${cell}`]=value;};\n const displayDate=at=>new Intl.DateTimeFormat('en-US',{timeZone:studio.timeZone,month:'numeric',day:'numeric',year:'numeric'}).format(new Date(at));\n for(const tab of plan.tabs){\n  const event=group.events.find(e=>e.classId===tab.classId);\n  const sheet=document.sheets?.find(s=>s.properties.sheetId===tab.sheetId);\n  if(sheet?.properties.title!==tab.sheetName)throw Error('Tab ID/name mismatch');\n  if(!event.isPrivate){\n   const grid=cellsFrom(document,tab.sheetId,{row:0,column:19,rows:1000,columns:10});\n   if(grid.some(r=>[r[0],...r.slice(2)].some(c=>cellValue(c.userEnteredValue)!=='')))throw Error('Copied master has seating, attendance or reservation inputs; review required');\n   const clock=at=>new Intl.DateTimeFormat('en-US',{timeZone:studio.timeZone,hour:'numeric',minute:'2-digit'}).format(new Date(at));\n   for(const [cell,value] of Object.entries({A3:displayDate(event.startAt),D3:`${new Intl.DateTimeFormat('en-US',{timeZone:studio.timeZone,weekday:'long'}).format(new Date(event.startAt))}, ${clock(event.startAt)}-${clock(event.endAt)}`,J3:event.painting,P3:`Public/${event.roomLabel}`,R5:event.classId,C6:displayDate(now),C7:'Automatic'}))add(tab,cell,value);\n   const current=Object.fromEntries(['D5','D6','D7','G6','G7'].map(c=>[c,headerValue(document,tab.sheetId,c)]));\n   const staff=planStaffRefresh({source:event.details.assignedStaff,sheetName:tab.sheetName,cells:current,ledger:{}});\n   data.push(...staff.data);staffLedgers[tab.classId]=staff.lastWritten;review.push(...staff.review);\n   for(const [cell,value]of Object.entries(staff.expected))expected[`${tab.sheetId}:${cell}`]=value;\n  }else{\n   const p=event.details.privateParty;if(!p)throw Error('Missing private party facts');\n   const sourceFields={dateAndTime:{verified:true,value:`${displayDate(event.startAt)} ${event.details.startTimeText}-${event.details.endTimeText}`},\n    hostNameAndPhone:{verified:!!p.hostName&&!!p.hostPhone,value:[p.hostName,p.hostPhone].filter(Boolean).join(' - ')},paintingSummary:{verified:true,value:event.details.paintingSummary},eventName:{verified:!!p.eventName,value:p.eventName},pricePerSeat:{verified:/^\\d+(\\.\\d{1,2})?$/.test(p.pricePerSeat??''),value:p.pricePerSeat},paymentArrangement:{verified:!!p.paymentArrangement,value:p.paymentArrangement},expectedHeadcount:{verified:!!p.expectedHeadcount,value:p.expectedHeadcount}};\n   const current=Object.fromEntries(Object.values(FIELD_CELLS).map(c=>[c,headerValue(document,tab.sheetId,c)||null]));\n   const party=buildPrivatePartyWrites({isPrivate:true,sheetName:tab.sheetName,sourceFields,currentCells:current});\n   data.push(...party.request.data);for(const [cell,value]of Object.entries(party.writtenCells))expected[`${tab.sheetId}:${cell}`]=value;\n   review.push(...party.needsReview.map(r=>({classId:event.classId,...r})));\n   // Only known sample placeholders on the brand-new form are cleared.\n   for(const [cell,value]of Object.entries({G2:displayDate(now),H2:'Automatic',C7:'',C19:''}))add(tab,cell,value);\n  }\n }\n return {request:{valueInputOption:'RAW',data},expected,staffLedgers,review};\n}\nfunction verifyInitialValues({before,after,plan,values}){\n for(const [key,wanted]of Object.entries(values.expected)){const [id,cell]=key.split(':');if(JSON.stringify(headerValue(after,+id,cell))!==JSON.stringify(wanted))throw Error('Creation header readback mismatch');}\n for(const tab of plan.tabs.filter(t=>!t.isPrivate)){\n  const a=cellsFrom(before,tab.sheetId,{row:0,column:19,rows:1000,columns:10}),b=cellsFrom(after,tab.sheetId,{row:0,column:19,rows:1000,columns:10});\n  // Header initialization must leave the entire import and protected area intact.\n  if(JSON.stringify(a)!==JSON.stringify(b))throw Error('Creation changed reservation/seating/attendance/formula cells');\n }\n return {verified:true,protectedCellsUnchanged:true,reviewCount:values.review.length};\n}\n\nconst context=$('Claim workbook').first().json;const studio=context.config,plan=context.plan,group=context.source;const document=$('Read initial event cells').first().json;\n const pending=context.valuesPlan;let values;\n if(pending){for(const tab of plan.tabs.filter(t=>!t.isPrivate)){const range={row:0,column:19,rows:1000,columns:10};if(JSON.stringify(cellsFrom(pending.before,tab.sheetId,range))!==JSON.stringify(cellsFrom(document,tab.sheetId,range)))throw Error('Protected cells changed during initial retry');}for(const [key,wanted]of Object.entries(pending.expected)){const [id,cell]=key.split(':');const live=headerValue(document,+id,cell),prior=headerValue(pending.before,+id,cell);if(JSON.stringify(live)!==JSON.stringify(prior)&&JSON.stringify(live)!==JSON.stringify(wanted))throw Error('Initial cell edited manually during retry');}values=pending;}\n else values={...buildInitialValues({group,plan,studio,document,now:new Date().toISOString()}),before:document};\n return [{json:values}];"
+      }
+    },
+    {
+      "id": "node-23",
+      "name": "Stage initial values",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5520,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://hsosjnwjangtqtskofag.supabase.co/rest/v1/rpc/advance_seating_chart_workbook",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {p_group_id:$(\"Claim workbook\").first().json.groupId,p_run_id:\"stm-create-\"+$execution.id,p_action:\"values-staged\",p_data:$(\"Prepare initial event values\").first().json} }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "A32h7eKkq8JEdg0k",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "id": "node-24",
+      "name": "Fill mapped event headers",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5760,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $('Prepare event tabs').first().json.fileId }}/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $(\"Prepare initial event values\").first().json.request }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "Fmbjd7IWMJeb4vZQ",
+          "name": "St Matthews Seating Charts — Google Drive"
+        }
+      }
+    },
+    {
+      "id": "node-25",
+      "name": "Read completed event cells",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        6000,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $('Prepare event tabs').first().json.fileId }}?{{ $('Claim workbook').first().json.plan.tabs.flatMap(t=>[\"ranges=\"+encodeURIComponent(\"'\"+t.sheetName.replace(/'/g,\"''\")+\"'!A1:AC32\"),...(!t.isPrivate?[\"ranges=\"+encodeURIComponent(\"'\"+t.sheetName.replace(/'/g,\"''\")+\"'!T1:AC1000\")]:[])]).join('&') }}&includeGridData=true&fields=spreadsheetId,sheets(properties(sheetId,title,hidden,gridProperties),data(startRow,startColumn,rowData(values(userEnteredValue,dataValidation))))",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "Fmbjd7IWMJeb4vZQ",
+          "name": "St Matthews Seating Charts — Google Drive"
+        }
+      }
+    },
+    {
+      "id": "node-26",
+      "name": "Verify event values and protected cells",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6240,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Pure planning only: this module never collects, writes files, or calls APIs.\nconst MINUTE = 60_000;\nconst REFRESH_MINUTES = [1440, 360, 300, 240, 180, 120, 75];\n\nfunction text(value, field) {\n  if (typeof value !== 'string' || !value.trim()) throw new Error(`Missing ${field}`);\n  return value.trim();\n}\n\nfunction instant(value, field) {\n  if (typeof value !== 'string' ||\n      !/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?(?:Z|[+-]\\d{2}:\\d{2})$/.test(value) ||\n      !Number.isFinite(Date.parse(value))) {\n    throw new Error(`${field} must be an ISO timestamp with an explicit offset`);\n  }\n  return Date.parse(value);\n}\n\nfunction localDate(timestamp, timeZone) {\n  const parts = new Intl.DateTimeFormat('en-US', {\n    timeZone, year: 'numeric', month: '2-digit', day: '2-digit',\n  }).formatToParts(new Date(timestamp));\n  const part = name => parts.find(p => p.type === name).value;\n  return `${part('year')}${part('month')}${part('day')}`;\n}\n\nfunction validateEvent(event) {\n  const result = { ...event };\n  for (const field of ['organizationId', 'studioId', 'classId', 'timeZone', 'painting', 'roomLabel']) {\n    result[field] = text(event[field], field);\n  }\n  if (typeof event.isPrivate !== 'boolean') throw new Error('Missing isPrivate');\n  result.start = instant(event.startAt, 'startAt');\n  result.end = instant(event.endAt, 'endAt');\n  if (result.end <= result.start) throw new Error('End time must be after start time');\n  // Validate the configured timezone even if this record forms no group.\n  localDate(result.start, result.timeZone);\n  result.key = JSON.stringify([result.organizationId, result.studioId, result.classId]);\n  return result;\n}\n\nfunction eventLabel(event) {\n  return `${event.painting}${event.isPrivate ? ' PP' : ''} (${event.roomLabel})`;\n}\n\nfunction groupOverlappingEvents(events) {\n  const seen = new Set();\n  const partitions = new Map();\n  for (const input of events) {\n    const event = validateEvent(input);\n    if (seen.has(event.key)) throw new Error('Duplicate source class identity');\n    seen.add(event.key);\n    const partition = JSON.stringify([event.organizationId, event.studioId]);\n    if (!partitions.has(partition)) partitions.set(partition, []);\n    const siblings = partitions.get(partition);\n    if (siblings.length && siblings[0].timeZone !== event.timeZone) {\n      throw new Error('Conflicting timezones for one studio');\n    }\n    siblings.push(event);\n  }\n\n  const groups = [];\n  for (const partition of [...partitions.keys()].sort()) {\n    const ordered = partitions.get(partition).sort((a, b) =>\n      a.start - b.start || a.key.localeCompare(b.key));\n    let group;\n    for (const event of ordered) {\n      // Touching endpoints do not overlap. A chain of overlaps stays together.\n      if (!group || event.start >= group.end) {\n        group = {\n          organizationId: event.organizationId, studioId: event.studioId,\n          timeZone: event.timeZone, start: event.start, end: event.end, events: [],\n        };\n        groups.push(group);\n      }\n      group.events.push(event);\n      group.end = Math.max(group.end, event.end);\n    }\n  }\n  return groups.map(group => ({\n    organizationId: group.organizationId,\n    studioId: group.studioId,\n    timeZone: group.timeZone,\n    startAt: new Date(group.start).toISOString(),\n    endAt: new Date(group.end).toISOString(),\n    title: `${localDate(group.start, group.timeZone)} ${group.events.map(eventLabel).join(', ')}`,\n    // Title and group membership are display/planning data, NOT durable file IDs.\n    eventKeys: group.events.map(event => event.key),\n    events: group.events.map(({ start, end, key, ...event }) => ({\n      ...event, documentType: event.isPrivate ? 'private-party-form' : 'seating-chart',\n    })),\n  }));\n}\n\nfunction refreshMilestones(startAt) {\n  const start = instant(startAt, 'startAt');\n  return [\n    { kind: 'create', minutesBefore: 7 * 24 * 60 },\n    ...REFRESH_MINUTES.map(minutesBefore => ({\n      kind: minutesBefore === 75 ? 'final' : 'refresh', minutesBefore,\n    })),\n  ].map(slot => ({\n    ...slot, dueAt: new Date(start - slot.minutesBefore * MINUTE).toISOString(),\n  }));\n}\n\n\nconst STAFF_CELLS = { D5: 'Stage:', D6: 'Floor 1:', D7: 'Floor 2:', G6: 'On-Call 1:', G7: 'On-Call 2:' };\nconst STAFF_STATUSES = ['Pending','Requested','Requested On-Call','Scheduled On-Call','Scheduled','Unavailable','Cancelled Shift','Moved','Deleted'];\nfunction staffAssignments(source) {\n  if (source?.complete !== true || !Array.isArray(source.rows) || source.rows.length !== source.expectedRowCount) throw Error('Incomplete assigned staff source');\n  const seen = new Set(), rows = source.rows.map(r => {\n    if (!/^\\d+$/.test(r.assignmentId) || seen.has(r.assignmentId) || !r.name?.trim() || !r.role || !STAFF_STATUSES.includes(r.status)) throw Error('Invalid assigned staff source');\n    seen.add(r.assignmentId); return { ...r, name: r.name.trim().replace(/\\s+/g,' ') };\n  });\n  const relevant = rows.filter(r => ['Instructor','Assistant'].includes(r.role) && ['Scheduled','Scheduled On-Call'].includes(r.status));\n  const firstNames = relevant.map(r => r.name.split(' ')[0]);\n  const display = r => firstNames.filter(n => n === r.name.split(' ')[0]).length > 1 ? r.name : r.name.split(' ')[0];\n  relevant.sort((a,b) => a.assignmentId.localeCompare(b.assignmentId,'en',{numeric:true}));\n  const stage = relevant.filter(r => r.role === 'Instructor' && r.status === 'Scheduled').map(display);\n  const floor = relevant.filter(r => r.role === 'Assistant' && r.status === 'Scheduled').map(display);\n  const onCall = relevant.filter(r => r.status === 'Scheduled On-Call').map(display);\n  // The second label holds any additional names; never omit assigned people or\n  // spill into seating/attendance cells when the class has more than two.\n  return { D5: stage.join(', '), D6: floor[0] ?? '', D7: floor.slice(1).join(', '), G6: onCall[0] ?? '', G7: onCall.slice(1).join(', ') };\n}\nfunction planStaffRefresh({ source, sheetName, cells, ledger = {}, pending = null }) {\n  const desired = staffAssignments(source), lastWritten = { ...ledger }, expected = {}, review = [], data = [];\n  for (const [cell,label] of Object.entries(STAFF_CELLS)) {\n    if (!Object.hasOwn(cells,cell)) throw Error('Missing staff destination read');\n    const live = cells[cell];\n    const value = !desired[cell] && typeof live==='string' && live.trim()===label ? live : label + (desired[cell] ? ' ' + desired[cell] : '');\n    if (pending) {\n      if (JSON.stringify(live) === JSON.stringify(pending.expected[cell])) continue;\n      const previous = ledger[cell];\n      if (typeof live !== 'string' || live !== pending.expected[cell] && live !== previous && !(live.trim() === label && !Object.hasOwn(ledger,cell))) throw Error('Pending staff update conflicts with manual edit');\n      continue;\n    }\n    // First adoption is limited to bare template labels or the exact source\n    // value. Later updates require the last automation value to remain intact.\n    if (typeof live !== 'string' || !(live === ledger[cell] || live === value || live.trim() === label && !Object.hasOwn(ledger,cell))) {\n      expected[cell] = live; review.push({ cell, reason: 'manual-staff-edit-preserved' }); continue;\n    }\n    expected[cell] = value; lastWritten[cell] = value;\n    if (live !== value) data.push({ range: `'${sheetName.replace(/'/g,\"''\")}'!${cell}`, values: [[value]] });\n  }\n  return pending ?? { expected, lastWritten, review, data };\n}\nfunction verifyStaffReadback(plan, after) {\n  for (const cell of Object.keys(STAFF_CELLS)) if (JSON.stringify(after[cell]) !== JSON.stringify(plan.expected[cell])) throw Error('Staff header readback mismatch');\n  return { staffVerified: true, staffChangedCount: plan.data.length, staffReviewCount: plan.review.length };\n}\n\n// St. Matthews form anchors verified against the owner-provided filled example.\n// Values must be normalized from verified source facts before reaching here.\nconst FIELD_CELLS = Object.freeze({\n  dateAndTime: 'C3',\n  hostNameAndPhone: 'C4',\n  paintingSummary: 'C5',\n  eventName: 'C8',\n  pricePerSeat: 'C12',\n  paymentArrangement: 'C15',\n  expectedHeadcount: 'C22',\n});\n\nfunction scalar(value) {\n  return value === null || typeof value === 'string' ||\n    (typeof value === 'number' && Number.isFinite(value));\n}\n\nfunction buildPrivatePartyWrites({ isPrivate, sheetName, sourceFields, currentCells, lastWrittenCells = {} }) {\n  if (isPrivate !== true) throw new Error('Private Party forms require a verified private event');\n  if (typeof sheetName !== 'string' || !sheetName.trim()) throw new Error('Missing verified tab name');\n  if (!sourceFields || !currentCells) throw new Error('Missing verified source or current form readback');\n  const data = [];\n  const needsReview = [];\n  const writtenCells = {};\n  const tab = `'${sheetName.replace(/'/g, \"''\")}'`;\n  for (const [field, cell] of Object.entries(FIELD_CELLS)) {\n    const fact = sourceFields[field];\n    if (fact?.verified !== true || fact.value === null || fact.value === undefined || fact.value === '') {\n      needsReview.push({ field, cell, reason: 'source_unverified_or_missing' });\n      continue;\n    }\n    if (!scalar(fact.value)) throw new Error(`Invalid source value for ${field}`);\n    // null means observed empty. Absent means the cell has NOT been read.\n    if (!Object.hasOwn(currentCells, cell)) {\n      needsReview.push({ field, cell, reason: 'current_cell_not_read' });\n      continue;\n    }\n    const current = currentCells[cell];\n    if (!scalar(current)) {\n      needsReview.push({ field, cell, reason: 'formula_or_non_scalar_cell' });\n      continue;\n    }\n    const unchangedOwnedValue = Object.hasOwn(lastWrittenCells, cell) &&\n      current === lastWrittenCells[cell];\n    if (current !== null && current !== '' && !unchangedOwnedValue) {\n      needsReview.push({ field, cell, reason: 'preserve_existing_staff_value' });\n      continue;\n    }\n    if (current === fact.value) continue;\n    data.push({ range: `${tab}!${cell}`, values: [[fact.value]] });\n    writtenCells[cell] = fact.value;\n  }\n  // Persist these values only after successful write/readback, never at plan time.\n  return { request: { valueInputOption: 'RAW', data }, writtenCells, needsReview };\n}\n\n\n\n\n\nconst DAY=86400000;\nconst months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];\nfunction parseDay(value){const m=/^(?:[A-Za-z]{3}, )?(\\d{1,2}) ([A-Za-z]{3}) (\\d{4})$/.exec(value??'');if(!m||!months.includes(m[2]))throw Error('Unverified class date');const iso=`${m[3]}-${String(months.indexOf(m[2])+1).padStart(2,'0')}-${m[1].padStart(2,'0')}`;if(new Date(iso).toISOString().slice(0,10)!==iso)throw Error('Invalid class date');return iso;}\nfunction localInstant(date,time,zone){\n const t=/^(\\d{1,2}):(\\d{2})\\s*(AM|PM)$/i.exec(time??'');if(!t||+t[1]<1||+t[1]>12||+t[2]>59)throw Error('Unverified class time');\n const wanted=[...date.split('-').map(Number),(+t[1]%12)+(t[3].toUpperCase()==='PM'?12:0),+t[2]];\n const fmt=new Intl.DateTimeFormat('en-CA',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});\n const parts=ms=>{const p=fmt.formatToParts(new Date(ms));return ['year','month','day','hour','minute'].map(n=>+p.find(x=>x.type===n).value);};\n const utc=Date.UTC(wanted[0],wanted[1]-1,wanted[2],wanted[3],wanted[4]);let candidate=utc;\n for(let i=0;i<3;i++){const p=parts(candidate);candidate+=utc-Date.UTC(p[0],p[1]-1,p[2],p[3],p[4]);}\n const same=ms=>JSON.stringify(parts(ms))===JSON.stringify(wanted);\n if(!same(candidate)||same(candidate-DAY/24)||same(candidate+DAY/24))throw Error('Missing or ambiguous DST class time');\n return new Date(candidate).toISOString();\n}\nfunction normalizeDiscovery(payload,studio,{now=new Date().toISOString()}={}){\n if(payload.success!==true||payload.accountId!==studio.accountId||payload.studioId!==studio.studioId||payload.source?.complete!==true||payload.source.studioCode!==studio.studioCode||!Array.isArray(payload.source.events))throw Error('Incomplete studio event discovery');\n const raw=payload.source;const stamp=Date.parse(raw.retrievedAt),at=Date.parse(now);\n if(!Number.isFinite(stamp)||stamp<at-600000||stamp>at+60000)throw Error('Stale event source');\n const seen=new Set(),events=[],review=[];\n for(const item of raw.events){\n  if(!/^\\d+$/.test(item.classId)||seen.has(item.classId)||item.locationLabel!==studio.sourceLocationLabel)throw Error('Wrong or duplicate class source');seen.add(item.classId);\n  const date=parseDay(item.dateText);if(date!==item.calendarDate)throw Error('Calendar/detail date mismatch');\n  const room=studio.creation.rooms[item.roomId];\n  const type=studio.creation.classTypes[item.classTypeId];\n  if(!room||!type||type.label!==item.classTypeLabel){review.push({classId:item.classId,reason:'unsupported-room-or-event-type'});continue;}\n  // Unpublished public drafts and requested/inquiry party placeholders are not\n  // operational events. A real assigned painting and both times are required.\n  if(item.isPublished!==true){review.push({classId:item.classId,reason:'not-published'});continue;}\n  if(type.isPrivate&&item.calendarPartyStage==='200200'){review.push({classId:item.classId,reason:'party-date-only-requested'});continue;}\n  const assignedPainting=item.title?.split(' - ').slice(2).join(' - ').trim();\n  const painting=assignedPainting&&!/^coming soon$/i.test(assignedPainting)?assignedPainting:(type.isPrivate?item.privateParty?.eventName:null);\n  if(!painting||!type.isPrivate&&!item.paintingSummary){review.push({classId:item.classId,reason:'painting-not-assigned'});continue;}\n  const startAt=localInstant(date,item.startTimeText,studio.timeZone);let endAt=localInstant(date,item.endTimeText,studio.timeZone);\n  if(Date.parse(endAt)<=Date.parse(startAt))endAt=localInstant(new Date(Date.parse(date)+DAY).toISOString().slice(0,10),item.endTimeText,studio.timeZone);\n  if(Date.parse(endAt)-Date.parse(startAt)>12*3600000)throw Error('Long event needs review');\n  const event={organizationId:String(studio.organizationId),studioId:String(studio.studioId),classId:item.classId,timeZone:studio.timeZone,painting,roomLabel:room.label,sourceRoomId:item.roomId,classTypeId:item.classTypeId,isPrivate:type.isPrivate,startAt,endAt,details:item};\n  events.push(event);\n }\n let groups=groupOverlappingEvents(events).filter(g=>Date.parse(g.endAt)>at&&Date.parse(g.startAt)<=at+7*DAY);\n // A source gap must not silently split an overlap group. Unknown events inside\n // this bounded window hold creation until their eligibility can be reviewed.\n groups=groups.filter(group=>{const blocked=review.filter(r=>r.reason==='unsupported-room-or-event-type').some(r=>{\n  const item=raw.events.find(e=>e.classId===r.classId);try{const start=localInstant(parseDay(item.dateText),item.startTimeText,studio.timeZone),end=localInstant(parseDay(item.dateText),item.endTimeText,studio.timeZone);return Date.parse(start)<Date.parse(group.endAt)&&Date.parse(end)>Date.parse(group.startAt);}catch{return item.calendarDate===new Intl.DateTimeFormat('en-CA',{timeZone:studio.timeZone}).format(new Date(group.startAt));}\n });if(blocked)review.push(...group.events.map(e=>({classId:e.classId,reason:'overlaps-unsupported-event'})));return !blocked;});\n for(const group of groups){\n  if(group.events.length>8)throw Error('Large overlap group needs review');\n  const lastDate=new Intl.DateTimeFormat('en-CA',{timeZone:studio.timeZone}).format(new Date(group.endAt));\n  if(lastDate>=raw.toDate||group.events.some(e=>e.startAt.slice(0,10)<raw.fromDate))throw Error('Overlap group touches discovery boundary');\n  group.groupKey=`stm-v1-${group.events.map(e=>e.classId).sort().join('-')}`;\n  group.sourceRetrievedAt=raw.retrievedAt;\n }\n return {groups,review};\n}\nfunction tabName(event){const time=new Intl.DateTimeFormat('en-US',{timeZone:event.timeZone,hour:'numeric',minute:'2-digit'}).format(new Date(event.startAt)).replace(':','.');return `${event.isPrivate?'PP ':''}${event.roomLabel} ${time} - ${event.classId}`;}\nfunction creationPlan(group,studio){\n const sheets=new Set(),names=new Set();\n const tabs=group.events.map(event=>{\n  const templateSheetId=event.isPrivate?studio.privatePartyFormMapping.sheetId:studio.creation.rooms[event.sourceRoomId]?.templateSheetId;\n  const sheetId=100000000+Number(event.classId),sheetName=tabName(event);\n  if(!Number.isSafeInteger(templateSheetId)||!Number.isSafeInteger(sheetId)||sheetId>=2147483647||sheets.has(sheetId)||names.has(sheetName)||sheetName.length>100||/[\\[\\]*?:/\\\\]/.test(sheetName))throw Error('Invalid event tab mapping');\n  sheets.add(sheetId);names.add(sheetName);\n  return {classId:event.classId,isPrivate:event.isPrivate,sheetId,sheetName,templateSheetId,sourceRoomId:event.sourceRoomId,classTypeId:event.classTypeId,startAt:event.startAt,endAt:event.endAt};\n });\n return {version:1,groupKey:group.groupKey,title:group.title,tabs,\n  structure:{requests:[...tabs.map(t=>({duplicateSheet:{sourceSheetId:t.templateSheetId,newSheetId:t.sheetId,newSheetName:t.sheetName}})),\n   ...[...new Set([0,1955136908,studio.privatePartyFormMapping.sheetId])].map(sheetId=>({updateSheetProperties:{properties:{sheetId,hidden:true},fields:'hidden'}}))]},\n };\n}\nfunction cellValue(v){return v?.formulaValue?{formulaValue:v.formulaValue}:v?.stringValue??v?.numberValue??v?.boolValue??'';}\nfunction cellsFrom(document,sheetId,range){const sheet=document.sheets?.find(s=>s.properties.sheetId===sheetId);if(!sheet)throw Error('Missing mapped tab');const b=sheet.data?.find(d=>(d.startRow??0)===range.row&&(d.startColumn??0)===range.column);if(!b)throw Error('Missing bounded cell read');return Array.from({length:range.rows},(_,i)=>Array.from({length:range.columns},(_,j)=>b.rowData?.[i]?.values?.[j]??{}));}\nfunction headerValue(document,sheetId,cell){const m=/^([A-Z]+)(\\d+)$/.exec(cell);let col=0;for(const ch of m[1])col=col*26+ch.charCodeAt(0)-64;const grid=cellsFrom(document,sheetId,{row:0,column:0,rows:32,columns:29});return cellValue(grid[+m[2]-1][col-1].userEnteredValue);}\nfunction buildInitialValues({group,plan,studio,document,now}){\n const data=[],expected={},staffLedgers={},review=[];\n const add=(tab,cell,value)=>{data.push({range:`'${tab.sheetName.replace(/'/g,\"''\")}'!${cell}`,values:[[value]]});expected[`${tab.sheetId}:${cell}`]=value;};\n const displayDate=at=>new Intl.DateTimeFormat('en-US',{timeZone:studio.timeZone,month:'numeric',day:'numeric',year:'numeric'}).format(new Date(at));\n for(const tab of plan.tabs){\n  const event=group.events.find(e=>e.classId===tab.classId);\n  const sheet=document.sheets?.find(s=>s.properties.sheetId===tab.sheetId);\n  if(sheet?.properties.title!==tab.sheetName)throw Error('Tab ID/name mismatch');\n  if(!event.isPrivate){\n   const grid=cellsFrom(document,tab.sheetId,{row:0,column:19,rows:1000,columns:10});\n   if(grid.some(r=>[r[0],...r.slice(2)].some(c=>cellValue(c.userEnteredValue)!=='')))throw Error('Copied master has seating, attendance or reservation inputs; review required');\n   const clock=at=>new Intl.DateTimeFormat('en-US',{timeZone:studio.timeZone,hour:'numeric',minute:'2-digit'}).format(new Date(at));\n   for(const [cell,value] of Object.entries({A3:displayDate(event.startAt),D3:`${new Intl.DateTimeFormat('en-US',{timeZone:studio.timeZone,weekday:'long'}).format(new Date(event.startAt))}, ${clock(event.startAt)}-${clock(event.endAt)}`,J3:event.painting,P3:`Public/${event.roomLabel}`,R5:event.classId,C6:displayDate(now),C7:'Automatic'}))add(tab,cell,value);\n   const current=Object.fromEntries(['D5','D6','D7','G6','G7'].map(c=>[c,headerValue(document,tab.sheetId,c)]));\n   const staff=planStaffRefresh({source:event.details.assignedStaff,sheetName:tab.sheetName,cells:current,ledger:{}});\n   data.push(...staff.data);staffLedgers[tab.classId]=staff.lastWritten;review.push(...staff.review);\n   for(const [cell,value]of Object.entries(staff.expected))expected[`${tab.sheetId}:${cell}`]=value;\n  }else{\n   const p=event.details.privateParty;if(!p)throw Error('Missing private party facts');\n   const sourceFields={dateAndTime:{verified:true,value:`${displayDate(event.startAt)} ${event.details.startTimeText}-${event.details.endTimeText}`},\n    hostNameAndPhone:{verified:!!p.hostName&&!!p.hostPhone,value:[p.hostName,p.hostPhone].filter(Boolean).join(' - ')},paintingSummary:{verified:true,value:event.details.paintingSummary},eventName:{verified:!!p.eventName,value:p.eventName},pricePerSeat:{verified:/^\\d+(\\.\\d{1,2})?$/.test(p.pricePerSeat??''),value:p.pricePerSeat},paymentArrangement:{verified:!!p.paymentArrangement,value:p.paymentArrangement},expectedHeadcount:{verified:!!p.expectedHeadcount,value:p.expectedHeadcount}};\n   const current=Object.fromEntries(Object.values(FIELD_CELLS).map(c=>[c,headerValue(document,tab.sheetId,c)||null]));\n   const party=buildPrivatePartyWrites({isPrivate:true,sheetName:tab.sheetName,sourceFields,currentCells:current});\n   data.push(...party.request.data);for(const [cell,value]of Object.entries(party.writtenCells))expected[`${tab.sheetId}:${cell}`]=value;\n   review.push(...party.needsReview.map(r=>({classId:event.classId,...r})));\n   // Only known sample placeholders on the brand-new form are cleared.\n   for(const [cell,value]of Object.entries({G2:displayDate(now),H2:'Automatic',C7:'',C19:''}))add(tab,cell,value);\n  }\n }\n return {request:{valueInputOption:'RAW',data},expected,staffLedgers,review};\n}\nfunction verifyInitialValues({before,after,plan,values}){\n for(const [key,wanted]of Object.entries(values.expected)){const [id,cell]=key.split(':');if(JSON.stringify(headerValue(after,+id,cell))!==JSON.stringify(wanted))throw Error('Creation header readback mismatch');}\n for(const tab of plan.tabs.filter(t=>!t.isPrivate)){\n  const a=cellsFrom(before,tab.sheetId,{row:0,column:19,rows:1000,columns:10}),b=cellsFrom(after,tab.sheetId,{row:0,column:19,rows:1000,columns:10});\n  // Header initialization must leave the entire import and protected area intact.\n  if(JSON.stringify(a)!==JSON.stringify(b))throw Error('Creation changed reservation/seating/attendance/formula cells');\n }\n return {verified:true,protectedCellsUnchanged:true,reviewCount:values.review.length};\n}\n\nconst context=$('Claim workbook').first().json;const studio=context.config,plan=context.plan,group=context.source;const values=$('Prepare initial event values').first().json;const result=verifyInitialValues({before:values.before,after:$input.first().json,plan,values});return [{json:result}];"
+      }
+    },
+    {
+      "id": "node-27",
+      "name": "Complete workbook creation",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        6480,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://hsosjnwjangtqtskofag.supabase.co/rest/v1/rpc/advance_seating_chart_workbook",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {p_group_id:$(\"Claim workbook\").first().json.groupId,p_run_id:\"stm-create-\"+$execution.id,p_action:\"completed\",p_data:$json} }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "A32h7eKkq8JEdg0k",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "id": "node-28",
+      "name": "Class targets to refresh",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6720,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const targets=$input.first().json.targets??[];return targets.length?targets.map(targetId=>({json:{targetId}})):[{json:{privatePartyOnly:true}}];"
+      }
+    },
+    {
+      "id": "node-29",
+      "name": "Class refresh needed",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        6960,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "condition",
+              "leftValue": "={{ typeof $json.targetId === \"string\" }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "node-30",
+      "name": "Fill class reservations safely",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        7200,
+        0
+      ],
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "2T7XR2idkCmpE5dc",
+          "mode": "id"
+        },
+        "mode": "each",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      }
+    },
+    {
+      "id": "node-31",
+      "name": "Creation result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7440,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const claim=$('Claim workbook').first().json;return [{json:{status:'created-and-refreshed',groupId:claim.groupId,classCount:claim.plan.tabs.filter(t=>!t.isPrivate).length,privatePartyCount:claim.plan.tabs.filter(t=>t.isPrivate).length,scheduledUpdates:false,results:$input.all().map(i=>i.json)}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Creation input": {
+      "main": [
+        [
+          {
+            "node": "Claim workbook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claim workbook": {
+      "main": [
+        [
+          {
+            "node": "Workbook already ready",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Workbook already ready": {
+      "main": [
+        [
+          {
+            "node": "Class targets to refresh",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Google account",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google account": {
+      "main": [
+        [
+          {
+            "node": "Verify studio Google account",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify studio Google account": {
+      "main": [
+        [
+          {
+            "node": "Read master",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read master": {
+      "main": [
+        [
+          {
+            "node": "Verify master",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify master": {
+      "main": [
+        [
+          {
+            "node": "Read folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read folder": {
+      "main": [
+        [
+          {
+            "node": "Verify folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify folder": {
+      "main": [
+        [
+          {
+            "node": "Find prior copy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find prior copy": {
+      "main": [
+        [
+          {
+            "node": "Resolve copy safely",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve copy safely": {
+      "main": [
+        [
+          {
+            "node": "Copy needed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Copy needed": {
+      "main": [
+        [
+          {
+            "node": "Record copy request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Record verified copy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Record copy request": {
+      "main": [
+        [
+          {
+            "node": "Copy studio master",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Copy studio master": {
+      "main": [
+        [
+          {
+            "node": "Record verified copy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Record verified copy": {
+      "main": [
+        [
+          {
+            "node": "Read workbook tabs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read workbook tabs": {
+      "main": [
+        [
+          {
+            "node": "Prepare event tabs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare event tabs": {
+      "main": [
+        [
+          {
+            "node": "Event tabs needed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Event tabs needed": {
+      "main": [
+        [
+          {
+            "node": "Create native event tabs",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Read initial event cells",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create native event tabs": {
+      "main": [
+        [
+          {
+            "node": "Read initial event cells",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read initial event cells": {
+      "main": [
+        [
+          {
+            "node": "Verify event tab structure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify event tab structure": {
+      "main": [
+        [
+          {
+            "node": "Record event structure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Record event structure": {
+      "main": [
+        [
+          {
+            "node": "Prepare initial event values",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare initial event values": {
+      "main": [
+        [
+          {
+            "node": "Stage initial values",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stage initial values": {
+      "main": [
+        [
+          {
+            "node": "Fill mapped event headers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fill mapped event headers": {
+      "main": [
+        [
+          {
+            "node": "Read completed event cells",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read completed event cells": {
+      "main": [
+        [
+          {
+            "node": "Verify event values and protected cells",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify event values and protected cells": {
+      "main": [
+        [
+          {
+            "node": "Complete workbook creation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Complete workbook creation": {
+      "main": [
+        [
+          {
+            "node": "Class targets to refresh",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Class targets to refresh": {
+      "main": [
+        [
+          {
+            "node": "Class refresh needed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Class refresh needed": {
+      "main": [
+        [
+          {
+            "node": "Fill class reservations safely",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Creation result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fill class reservations safely": {
+      "main": [
+        [
+          {
+            "node": "Creation result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/New_York",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "none",
+    "saveManualExecutions": false
+  }
+}

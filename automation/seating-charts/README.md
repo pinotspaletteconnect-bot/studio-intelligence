@@ -1,35 +1,33 @@
 # Seating chart automation
 
-October 18, 2026. Local planning helpers plus a one-class manual pilot; no active
-scheduled sync. Existing production workflows/credentials and master
-Sheets remain unchanged. Business owner: Jeff Duff. Scope: STM, SN, JEF, GIL.
-The separate n8n **Seating Charts** folder contains an unpublished, manual-only,
-read-only connection check (`jRuTmUjlinamazss`):
+October 19, 2026. St. Matthews reservation/staff refresh is live-verified in a
+manual pilot. Workbook creation and overlap grouping passed manual end-to-end and repeat tests. All schedules remain OFF. Other studios remain unbound.
+
+The separate n8n **Seating Charts** folder contains manual/called-only workflows:
 https://primary-production-a88c.up.railway.app/projects/YRdV58D9glyGcjK9/folders/qTZHROLCyM8hRNob/workflows
 
-Studio-owned pilot: [20261018 Autumn Mountain Evening (Main) — PILOT PREVIEW](https://docs.google.com/spreadsheets/d/1h0X3zNWCxkG3p7x71LPeFBE-FbC5dLLVj0swto8KwiQ/edit).
-Nine source seats were imported once, including four unnamed guests; readback
-confirmed attendance/seats blank and label formulas intact. This does not prove
-automated refresh or durable guest matching. A separate St. Matthews Google
-credential/client is saved and its full read-only access check passed. Details in
-[PILOT_ROLLOUT.md](PILOT_ROLLOUT.md). All 63 local checks pass (54 planning/ETL,
-nine protected collector/account tests). Owner approved scoped rollout with
-schedules OFF. Two private tables/four RPCs passed live rollback and access
-checks and are applied. Collector route deployed through PR88 from the running
-production branch; one STM manual target is registered. Two complete manual
-refreshes passed: nine reservations kept the same rows and T/U/AB were unchanged.
-Both found the pilot current and wrote zero cells. All n8n seating workflows
-remain unpublished/manual-only; schedules are OFF.
+- 00: read-only Google connection check; 01: isolated preservation test.
+- 02: original manual reservation/staff pilot; 03: read-only creation audit.
+- 04: manual discovery/group creation; 05: saved single-workbook helper;
+  06: saved registered-class reservation/staff helper. No recurring triggers.
 
-The isolated live Google test updated three synthetic guests, preserved T seat
-values, AB attendance and U formulas, and produced zero writes for a repeat
-refresh with reversed source order. Its separate native test copy is
-`18zK3ZhaN_KFx8lMtGqfBlbwPbnpTOLfuwJwp9-G1YqA`; the real pilot was untouched.
-The complete Pinot-to-warehouse-to-Sheets verification path passed twice for the
-real pilot (runs168282/168286, 37.821s/36.177s). Actual changed/additional guest
-writes were exercised by the isolated synthetic test; no real reservation
-changes were needed. Automatic creation/overlap execution and other studios
-remain incomplete. The database03 workflow is now a read-only pilot audit.
+The original [Autumn Mountain Evening pilot](https://docs.google.com/spreadsheets/d/1h0X3zNWCxkG3p7x71LPeFBE-FbC5dLLVj0swto8KwiQ/edit)
+passed two reservation-only and two full staff refreshes. Nine stable guest rows,
+seating T, label formulas U and attendance AB were preserved. Changed/new guest
+writes and repeat zero-write behavior passed separately in an isolated test copy.
+See [PILOT_ROLLOUT.md](PILOT_ROLLOUT.md) for that historical evidence.
+
+The protected all-room collector, private workbook state/migration003, and
+Main21/KLR22 source binding are deployed after explicit owner approval. Manual
+creation tests select today's931956, Tuesday's931957/private936089, and Friday's
+931961/931962. Saved helper IDs and generation steps are in
+[CREATION_ROLLOUT.md](CREATION_ROLLOUT.md). That checkpoint records the verified native files, repeat
+results and safe recovery; do not reapply the migration or blindly repeat a copy.
+
+88 local checks pass (74 automation,14 collector/route/browser-fixture checks).
+Live readback additionally verified 3 files/5 events, 4 public targets, one private
+form, 4/5/0/17 guests, stable rows and zero repeat writes. Seating/attendance and
+formulas are unchanged; no private-party seating target exists.
 
 ## Owner-confirmed behavior
 
@@ -78,7 +76,7 @@ Read-only n8n identity checks found existing Google Sheets/Drive connections
 belonging to different accounts. Do not bind
 or reconnect them by generic label, or alter credentials used by other workflows.
 
-Simple proposed grouping: sort by actual start/end time, combine connected
+Grouping: sort by actual start/end time, combine connected
 overlap chains; back-to-back endpoints form separate files. Date is the earliest
 event's studio-local date. These chain/boundary conventions are implementation
 assumptions for review. Each event keeps its own T-75m cutoff even when sharing
@@ -198,7 +196,7 @@ https://docs.google.com/spreadsheets/d/1oPkUC4VTy-SVZ0TKtbysf2lHzu9XJ9LOeWdtBVo_
 | AC | Source reservation comments |
 
 The sample has no imported header row or imported Order Id column. Keep source
-order/reservation IDs in the proposed internal mapping, not in U. Requests must
+order/reservation IDs in the private row ledger, not in U. Requests must
 write V:AA and AC separately so AB is never included, even as a blank cell.
 Do not clear/rewrite a single V:AC rectangle. Contact columns are evidenced by
 the supplied layout; no customer values from the example are stored here.
@@ -308,17 +306,12 @@ event key changes with painting/time/room edits (see
 `../../staffing-app/CALENDAR_SYNC_PLAN.md`). They can seed discovery but cannot
 serve as durable class identity or the hourly seating roster source.
 
-Before any schema or collector deployment, prepare an approval-ready migration
-and rollback plan. A proposed private operational store would hold:
-
-- authorized organization/studio/Pinot class ID, source metadata and minimal
-  seating roster, including the contact columns evidenced by the supplied chart;
-- workbook ID and per-class numeric sheet ID, independent of filename;
-- per-class start/end, successful refresh milestone, import row extent/digest;
-- run status/counts and sanitized failures without guest details in logs.
-
-These are proposed records, not existing tables or approved DDL. Retention and
-minimum fields await template mapping. Do not place rosters in public BI views.
+The applied private operational store holds studio configuration, source/run
+history, immutable workbook plans/copy stages, unique class-to-tab mappings, and
+reservation-ID-to-row/staff ledgers. Migration003 passed rollback/access checks;
+browser access remains denied. No guest data is exposed in public BI views.
+See the current inventory in ../../docs/01_architecture/schema.md. Retention policy
+and other-studio rollout remain future work.
 
 One shared workflow with four credential-bound studio branches is preferable
 to four separately maintained automations. A small recurring dispatcher plus
@@ -348,8 +341,10 @@ Store the numeric class ID as durable identity. Titles are display names only.
 If changed event times combine or split already-created files, flag for review;
 do not silently move/delete staff work or create duplicate charts. Look ahead
 beyond the seven-day creation boundary enough to resolve overlapping sessions.
-Inquiry/availability placeholders, mobile/virtual events and uncertain times
-need an explicit eligibility rule before automated creation. Do not infer
+STM creation currently permits verified Regular100/PrivateParty200 in configured
+Main21/KLR22 rooms. Inquiry placeholders and unpublished public drafts are excluded;
+unsupported overlapping events hold their group for review. Mobile/virtual events
+and other uncertain types require an explicit eligibility rule. Do not infer
 cancellation just because a class disappears from an incomplete feed.
 
 ## Verification and next action
@@ -363,9 +358,6 @@ rows, literal source text, verified party-field mapping and staff-edit
 preservation, GET-only connection checks and studio account/ownership guards.
 They do not prove production synchronization.
 
-Next: obtain approval for the additive private-state migration and collector
-deployment, register only the existing STM pilot target, and run a manual
-end-to-end refresh. The new collector route is not mounted/deployed. The draft
-workflow fails before any external call until a warehouse target is registered.
-Map remaining studios and overnight time before schedule activation.
-See the narrower live-state checkpoint in `PILOT_ROLLOUT.md`.
+Next: owner review of the three native files in CREATION_ROLLOUT.md, then a
+separate scheduling rollout and remaining-studio mapping. Agree the overnight
+time before activation. Scheduled updates remain OFF.

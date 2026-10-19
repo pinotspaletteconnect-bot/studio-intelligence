@@ -25,7 +25,10 @@ test('repeat refresh writes nothing and retains staff ledger',()=>{
 });
 test('duplicate first names display full names; slot overflow does not truncate staff',()=>{
  assert.equal(staffAssignments(source([staff('Alex A','Assistant'),staff('Alex B','Instructor')])).D6,'Alex A');
- assert.throws(()=>plan(source([staff('A','Assistant'),staff('B','Assistant'),staff('C','Assistant')])));
+ const overflow=plan(source([staff('A','Assistant'),staff('B','Assistant'),staff('C','Assistant'),staff('D','Instructor','Scheduled On-Call'),staff('E','Assistant','Scheduled On-Call'),staff('F','Assistant','Scheduled On-Call')]));
+ assert.equal(overflow.expected.D6,'Floor 1: A');assert.equal(overflow.expected.D7,'Floor 2: B, C');
+ assert.equal(overflow.expected.G6,'On-Call 1: D');assert.equal(overflow.expected.G7,'On-Call 2: E, F');
+ assert.equal(planStaffRefresh({source:source([staff('A','Assistant'),staff('B','Assistant'),staff('C','Assistant'),staff('D','Instructor','Scheduled On-Call'),staff('E','Assistant','Scheduled On-Call'),staff('F','Assistant','Scheduled On-Call')]),sheetName:'Seating Chart Main',cells:overflow.expected,ledger:overflow.lastWritten}).data.length,0);
 });
 test('incomplete source, duplicate assignments and unknown statuses cannot clear names',()=>{
  assert.throws(()=>plan({complete:false,rows:[],expectedRowCount:0}));
