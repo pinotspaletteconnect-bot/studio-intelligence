@@ -25,11 +25,26 @@ Existing ready workbooks are not reinitialized; this file received only the
 bounded C9 correction. Future creation uses the new mapping; periodic private
 form refresh remains unimplemented and all schedules remain OFF.
 
-Migration004 only extends the existing private-form cell allowlist and STM JSON
-mapping. It adds no tables, grants, schedules or public access. Apply after a
-transactional rollback trial; restore the previous function/config to roll back,
-preserving ready workbook history and native staff work. Deployment verification
-is pending until the follow-up rollout is finished.
+Migration004 is live after a successful transactional rollback trial. It only
+extends the existing private-form cell allowlist and STM JSON mapping; no tables,
+grants, schedules or public access were added. Both public-role execution checks
+remain denied. Restore the previous function/config to roll back, preserving
+ready workbook history and native staff work.
+
+PR95 merged as87f12dbf8df14c7d04cff46c7f38f8958136a921. The deployed collector's
+October20 source test completed successfully at15:47 UTC, returning the actual
+linked $100.00 deposit and blank POS comments; minimumAvailable=false, C9-only
+deposit plan verified, no Sheets writes. Native04 planning and05 initialization/
+readback code were saved, reloaded and copied back through the editor for exact
+source equality. 20 creation/private-write tests and14 collector tests passed.
+The one-time migration workflow mRWiAz1AxIdwhmod and read-only source verification
+nsmFp2JPilA7VJ5R are archived after successful runs. Final warehouse audit confirms
+three ready workbooks, unique event mappings, public target revisions2 and no
+leases; original pilot remains revision4/nine guests. Schedule flag remains false.
+Contact-free evidence is in output/seating-charts/stm-deposit-final-state.json,
+stm-deposit-database-verified.png and stm-private-source-verified.png. Native C9
+display proof is stm-private-party-deposit.png. No production refresh jobs or new
+files were needed for this follow-up.
 
 ## Verified native files
 
