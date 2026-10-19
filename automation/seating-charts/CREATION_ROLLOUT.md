@@ -21,6 +21,15 @@ precedence, and blank/unmapped types need review rather than guessing. No source
 minimum is inferred from expected headcount. This follow-up adds one raw party
 type field and a private JSON configuration update; it adds no schema or schedule.
 
+PR96 merged as231584536f034d3425a09b641f5a93c0ca77fdab. The live policy/source
+check pWazCFlw2abBN0YN succeeded at15:58 UTC: actual936089 Bachelorette returned
+adult8/kids10 from private STM configuration, blank comments added no specific
+instructions, only H4 was planned, scheduledUpdates=false and historyIntact=true.
+No Sheets writes occurred in the source check. The direct bounded H4 update was
+read back as8 with C9 still$100.00. 22 creation/private-write and14 source tests
+passed. The successful one-time check was archived. Native screenshot evidence:
+output/seating-charts/stm-private-party-minimum.png and stm-minimum-source-verified.png.
+
 Source now collects only raw linked deposit amount/order/date and POS staff
 comments. Creation ETL validates one explicit amount and maps explicit note
 labels to form anchors, retains all comments in C23, and copies an unambiguous
