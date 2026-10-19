@@ -205,12 +205,10 @@ no permissions, Google accounts, Railway root/config or schedules changed.
 PR91 merged cb124f6037d2c0f976c2b1392879255b7a04af99 and collector deployment
 verified active. New manual02 workflow saved. Pilot staff flag is still OFF.
 
-Concrete blocker: n8n manual execution reports `Lost connection to the server`;
-console shows WebSocket connection code1006. Scoped activation attempts never
-started a database job. Fresh warehouse read confirms revision2, nine guest rows,
-no lease, staff flag disabled and staff ledger empty. 03 restored/saved as the
-read-only pilot audit. Two native n8n staffing tests remain pending; do not call
-the automatic staff extension live-verified. Leave all schedules OFF.
+Historical October18 blocker: n8n manual execution reported Lost connection to
+the server (WebSocket1006). No staff activation job started; staff flag and ledger
+remained disabled/empty, and the helper was restored read-only. Resolved October19
+as verified below.
 
 Unblocked preview work completed via the connected native Sheets API after a
 fresh read of the live Assigned Staff grid: only D5 and G6 received staff names.
@@ -221,11 +219,20 @@ not public source control. Proof: `output/seating-charts/stm-staff-preview-heade
 and `stm-staff-preview-verification.json`. This manual preview does not advance
 the warehouse ledger or represent an n8n staff run.
 
-Resume: restore the n8n editor connection, then run reviewed
-`database-enable-staff.sql` and verify only this target changed. Run02 twice and
-verify staffVerified, protected cells, stable reservation rows, and repeat0.
-The initial staff ledger is empty; exact source-matching preview values may be
-adopted without writes. Preserve all different/manual header values for review.
+October19 follow-up: owner approved closing the two older n8n editor tabs.
+After closing them and reloading, the read-only audit succeeded and the manual
+runner recovered. Enabled staff updates only for the registered STM pilot; all
+schedules remain OFF. Native complete runs stm-pilot-170008 (40.504s) and
+stm-pilot-170010 (37.552s) passed with nine stable reservation rows, staffVerified
+true, zero review items/writes, and seating/attendance/formulas unchanged.
+Warehouse revision4, five staff-ledger entries, no lease held. Existing preview
+values were adopted only after matching fresh source and Google readback. The
+03 helper is restored/saved read-only. Proof: output/seating-charts/
+stm-staff-live-first-pass.png, stm-staff-live-repeat-pass.png and
+stm-staff-live-audit-20261019.json.71 local checks pass; latest12 staff/workflow
+checks rerun successfully. Automatic creation/overlap/party execution and other
+studios remain incomplete. Recurring rollout is a separate owner review.
+
 
 Owner's subsequent label request: unnamed seats display the purchaser's first
 name plus `'s guest`. Updated only W2/W4/W5/W6 in the real pilot (one Linda,

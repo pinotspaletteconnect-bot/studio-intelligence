@@ -17,5 +17,5 @@
   "allowedClassTypeIds": [
     "100"
   ],
-  "staffUpdatesEnabled": false
+  "staffUpdatesEnabled": true
 }

@@ -39,9 +39,12 @@ inactive shifts are excluded. The STM Main header cells are D5, D6/D7 and G6/G7;
 names stay in the existing label cell and manual edits/formulas are preserved.
 Collector/ETL and migration002 are deployed;71 local checks pass. A manual
 native Sheet preview populated two verified staff names and preserved T:AC across
-1000 rows; repeat plan writes0. Automatic staff activation and its n8n tests are
-blocked by the editor's WebSocket/server connection error. The pilot staff flag
-and schedules remain OFF. See the checkpoint for exact resume steps.
+1000 rows; repeat plan writes0. October19: after the owner approved closing the
+two older editor tabs, the manual runner recovered. Staff updates are enabled
+only for this manual target. Two native full runs (170008/170010) passed with
+staffVerified=true, nine stable reservation rows, no review items or writes,
+and unchanged seating/attendance/formulas. Warehouse revision4, five staff-ledger
+entries, no lease. All schedules remain OFF. See the checkpoint for evidence.
 
 - Create charts starting seven days before class; refresh overnight daily,
   at T-24h, then T-6h, T-5h, T-4h, T-3h, T-2h and finally T-75m. No T-1h update.
