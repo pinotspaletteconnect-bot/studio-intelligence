@@ -3,13 +3,14 @@
 // Dedicated fail-closed binding to the existing PTS login. No new credentials,
 // credential rotation, or changes to the existing production collectors.
 function createRosterSessionResolver({ chromium, resolveAccount, env = process.env }) {
-  return async ({ accountId, studioId, classId }) => {
+  return async ({ accountId, studioId, classId,roomId }) => {
     if (!env.PTS_SEATING_ACCOUNT_ID || String(accountId) !== env.PTS_SEATING_ACCOUNT_ID || !env.PTS_SEATING_STUDIOS_JSON) {
       throw Error('Seating source account is not configured');
     }
     const studios = JSON.parse(env.PTS_SEATING_STUDIOS_JSON);
     if (!Array.isArray(studios) || studios.filter(s => s.studioId === studioId).length !== 1) throw Error('Studio is outside the configured seating account');
     const studio = studios.find(s => s.studioId === studioId);
+    if(roomId!==undefined&&!(studio.sourceRoomIds??[studio.sourceRoomId]).includes(roomId))throw Error('Room outside configured seating scope');
     if (!studio.studioCode || !studio.sourceLocationLabel || !studio.sourceRoomId || !studio.allowedClassTypeIds?.length || typeof resolveAccount !== 'function') {
       throw Error('Missing verified source configuration');
     }
@@ -35,7 +36,8 @@ function createRosterSessionResolver({ chromium, resolveAccount, env = process.e
         page.waitForURL(url => !url.pathname.includes('/Account/LogOn')),
         page.getByRole('button', { name: 'Sign In' }).click(),
       ]);
-      return { page, target: { ...studio, accountId, studioId, classId: String(classId) }, close: () => browser.close() };
+      return { page, target: { ...studio, sourceLocationId:mapping.locationId, timeZone:mapping.timeZone,
+        ...(roomId!==undefined?{sourceRoomId:roomId}:{}), accountId, studioId, classId: String(classId) }, close: () => browser.close() };
     } catch { await browser.close(); throw Object.assign(new Error('Source login failed'), { sourceStage: 'source-login' }); }
   };
 }

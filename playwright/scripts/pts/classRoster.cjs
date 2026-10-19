@@ -22,7 +22,7 @@ async function readClass(page, classId) {
     const counts = Array.from(row?.nextElementSibling?.children ?? []).map(c => c.textContent.trim());
     const locationCell = Array.from(document.querySelectorAll('td')).find(c => c.textContent.trim() === 'Location');
     return {
-      title: document.querySelector('h2')?.textContent.trim(),
+      title: Array.from(document.querySelectorAll('h2')).find(e=>e.textContent.trim().startsWith('Class - '))?.textContent.trim(),
       locationLabel: locationCell?.nextElementSibling?.textContent.trim(),
       classTypeId: document.querySelector('#ClassTypeId')?.value,
       classTypeLabel: document.querySelector('#ClassTypeId option:checked')?.textContent.trim(),
@@ -30,6 +30,17 @@ async function readClass(page, classId) {
       dateText: document.querySelector('#ClassDate')?.value,
       startTimeText: document.querySelector('#ClassStartTime')?.value,
       endTimeText: document.querySelector('#ClassEndTime')?.value,
+      paintingSummary: document.querySelector('#PaintingTitleId')?.textContent.trim(),
+      roomLabel: document.querySelector('#RoomId option:checked')?.textContent.trim(),
+      isPublished: document.querySelector('#IsPublished')?.checked,
+      privateParty: document.querySelector('#ClassTypeId option:checked')?.textContent.trim()==='Private Party'?{
+        eventName:document.querySelector('#PartyName')?.value,
+        hostName:[document.querySelector('#PrivatePartyOrganizer_FirstName')?.value,document.querySelector('#PrivatePartyOrganizer_LastName')?.value].filter(Boolean).join(' '),
+        hostPhone:document.querySelector('#PrivatePartyOrganizer_PrimaryPhone')?.value,
+        pricePerSeat:document.querySelector('#Price')?.value,
+        paymentArrangement:document.querySelector('#CollectionMethodTypeId option:checked')?.textContent.trim(),
+        expectedHeadcount:document.querySelector('#PrivatePartyExpectedHeadcount')?.value,
+      }:null,
       reservedCount: /^\d+$/.test(counts[2] ?? '') ? Number(counts[2]) : null,
       assignedStaff: {
         complete: true,

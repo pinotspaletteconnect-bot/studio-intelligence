@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { refreshLibrary } = require('./preservation-test.cjs');
 
-function buildReservationWorkflow({ studio, supabaseUrl, collectorUrl, targetId = null, runId = null }) {
+function buildReservationWorkflow({ studio, supabaseUrl, collectorUrl, targetId = null, runId = null, childMode=false }) {
   if (studio.studioCode !== 'STM' || !studio.n8nGoogleCredentialRef) throw Error('Verified STM connection required');
   const nodes = [], connections = {};
   const add = (name, type, parameters, credentials, version) => nodes.push({ id: `stm-refresh-${nodes.length}`, name, type,
@@ -43,9 +43,10 @@ const block=sheet.data?.find(d=>d.startRow=== (column===3?4:5) && d.startColumn=
 if(!block)throw Error('Missing staff header range');
 const value=block.rowData?.[row-block.startRow]?.values?.[0]?.userEnteredValue;
 staffCells[cell]=value?.formulaValue?{formulaValue:value.formulaValue}:value?.stringValue??value?.numberValue??value?.boolValue??'';}}`;
-  const readUrl = `=https://sheets.googleapis.com/v4/spreadsheets/{{ $('Claim warehouse refresh').first().json.target.spreadsheetId }}?ranges={{ encodeURIComponent("'Seating Chart Main'!T1:AC"+$('Claim warehouse refresh').first().json.target.rowLimit) }}&ranges={{ encodeURIComponent("'Seating Chart Main'!R5") }}&ranges={{ encodeURIComponent("'Seating Chart Main'!D5:D7") }}&ranges={{ encodeURIComponent("'Seating Chart Main'!G6:G7") }}&includeGridData=true&fields=spreadsheetId,sheets(properties(sheetId,title,gridProperties(rowCount,columnCount)),data(startRow,startColumn,rowData(values(userEnteredValue,dataValidation))))`;
-  add('Manual STM reservation refresh', 'n8n-nodes-base.manualTrigger', {});
-  code('Pilot run settings', `const targetId=${JSON.stringify(targetId)};
+  const tabExpression=`"'"+$('Claim warehouse refresh').first().json.target.sheetName.replace(/'/g,"''")+"'!"`;
+  const readUrl = `=https://sheets.googleapis.com/v4/spreadsheets/{{ $('Claim warehouse refresh').first().json.target.spreadsheetId }}?ranges={{ encodeURIComponent(${tabExpression}+"T1:AC"+$('Claim warehouse refresh').first().json.target.rowLimit) }}&ranges={{ encodeURIComponent(${tabExpression}+"R5") }}&ranges={{ encodeURIComponent(${tabExpression}+"D5:D7") }}&ranges={{ encodeURIComponent(${tabExpression}+"G6:G7") }}&includeGridData=true&fields=spreadsheetId,sheets(properties(sheetId,title,gridProperties(rowCount,columnCount)),data(startRow,startColumn,rowData(values(userEnteredValue,dataValidation))))`;
+  add('Manual STM reservation refresh',childMode?'n8n-nodes-base.executeWorkflowTrigger':'n8n-nodes-base.manualTrigger',childMode?{inputSource:'passthrough'}:{});
+  code('Pilot run settings', `const targetId=${childMode?'$input.first().json.targetId':JSON.stringify(targetId)};
 if(!/^[a-f0-9-]{36}$/.test(targetId||''))throw Error('Pilot deployment pending: register the approved warehouse target first');
 return [{json:{targetId,runId:${JSON.stringify(runId)}||'stm-pilot-'+$execution.id}}];`);
   http('Load warehouse target', 'warehouse', 'GET', `=${supabaseUrl}/rest/v1/seating_chart_targets?id=eq.{{ $json.targetId }}&select=studio_id,config,enabled`);
@@ -55,7 +56,7 @@ const record=items[0], target=record.config; validateTarget(target);
 if(!record.enabled||record.studio_id!==target.studioId||target.googleAccountEmail!==${JSON.stringify(studio.googleAccountEmail)}||target.masterSpreadsheetId!==${JSON.stringify(studio.masterSpreadsheetId)}||!Number.isSafeInteger(target.accountId))throw Error('Warehouse source/account configuration mismatch');
 return [{json:target}];`);
   http('Collect class reservations', 'collector', 'POST', `${collectorUrl}/pts/class-roster`,
-    '={{ {accountId:$json.accountId,studioId:$json.studioId,classId:$json.classId} }}');
+    '={{ {accountId:$json.accountId,studioId:$json.studioId,classId:$json.classId,...($json.documentGroupId?{roomId:$json.sourceRoomId}:{})} }}');
   code('Validate and identify source seats', `${identityLibrary}
 const payload=$input.first().json,target=$('Validate STM pilot target').first().json;
 if(payload.success!==true||payload.accountId!==target.accountId||payload.studioId!==target.studioId||payload.source?.classId!==target.classId||payload.source?.studioCode!==target.studioCode)throw Error('Wrong or incomplete source account/class');

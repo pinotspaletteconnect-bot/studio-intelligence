@@ -1,0 +1,90 @@
+{
+  "studioCode": "STM",
+  "timeZone": "America/New_York",
+  "organizationId": 1,
+  "studioId": 1,
+  "googleAccountEmail": "pinotsstmatthews@gmail.com",
+  "sourceLocationLabel": "Matthews",
+  "sourceRoomId": "21",
+  "allowedClassTypeIds": [
+    "100"
+  ],
+  "n8nGoogleCredentialRef": "Fmbjd7IWMJeb4vZQ",
+  "destinationFolderId": "1-WqB2lVbK6e1j6Y0mCojZjPoCvmaJ4L7",
+  "masterSpreadsheetId": "1ktf-zV74f--JWaaPlrrtYgmbLVGI6ZJI9JdArrYootA",
+  "rooms": {
+    "Main Studio": {
+      "label": "Main",
+      "templateSheetId": 0
+    },
+    "King Louie Private Room": {
+      "label": "KLR",
+      "templateSheetId": 1955136908
+    }
+  },
+  "importStartCell": "V1",
+  "importHasHeader": false,
+  "fieldMapping": {
+    "perks": "V",
+    "guest": "W",
+    "guestEmail": "X",
+    "purchaser": "Y",
+    "purchaserEmail": "Z",
+    "purchaserPhone": "AA",
+    "comments": "AC"
+  },
+  "preserveColumns": {
+    "T": "manual seat numbers",
+    "U": "guest label formulas",
+    "AB": "attendance / Checked In"
+  },
+  "privatePartyFormMapping": {
+    "sheetId": 1452226892,
+    "sheetName": "Private Party",
+    "fields": {
+      "dateAndTime": "C3",
+      "hostNameAndPhone": "C4",
+      "paintingSummary": "C5",
+      "eventName": "C8",
+      "pricePerSeat": "C12",
+      "paymentArrangement": "C15",
+      "expectedHeadcount": "C22"
+    },
+    "preserveStaffEdits": true,
+    "unverifiedDetails": "review-without-guessing"
+  },
+  "staffHeaderMapping": {
+    "stage": "D5",
+    "floor": [
+      "D6",
+      "D7"
+    ],
+    "onCall": [
+      "G6",
+      "G7"
+    ]
+  },
+  "accountId": 1,
+  "creation": {
+    "rooms": {
+      "21": {
+        "label": "Main",
+        "templateSheetId": 0
+      },
+      "22": {
+        "label": "KLR",
+        "templateSheetId": 1955136908
+      }
+    },
+    "classTypes": {
+      "100": {
+        "label": "Regular",
+        "isPrivate": false
+      },
+      "200": {
+        "label": "Private Party",
+        "isPrivate": true
+      }
+    }
+  }
+}
