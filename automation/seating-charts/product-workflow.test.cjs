@@ -23,3 +23,13 @@ test('chart protection covers seating, reservation imports, attendance and valid
  assert.notDeepEqual(chartProductState(changed,target).protectedCells,before.protectedCells);
  const wrong=structuredClone(doc);wrong.sheets[0].data[0].rowData[4].values[17].userEnteredValue={numberValue:999};assert.throws(()=>chartProductState(wrong,target));
 });
+
+test('combined update passes a verified product reference to guests and still refreshes guests after a product failure',()=>{
+ const w=buildCombinedWorkflow({reservationWorkflowId:'guest',productWorkflowId:'products'}),prepare=w.nodes.find(n=>n.name==='Prepare guest input from products'),finish=w.nodes.find(n=>n.name==='Combined verified class result');
+ const input={targetId:'target',scheduledStartAt:'2026-10-23T23:00:00Z'},product={productRunId:'stm-products-1',protectedCellsUnchanged:true};
+ const compiled=new Function('$input','$',prepare.parameters.jsCode);
+ const good=compiled({first:()=>({json:product})},()=>({first:()=>({json:input})}))[0].json;assert.equal(good.productRunId,product.productRunId);assert.equal(good.productFailed,false);
+ const failed=compiled({first:()=>({json:{error:'safe source failure'}})},()=>({first:()=>({json:input})}))[0].json;assert.equal(failed.productFailed,true);assert.equal(failed.targetId,'target');assert.equal(failed.productRunId,undefined);
+ assert.equal(w.connections['Refresh class product reservations'].main[1][0].node,prepare.name);
+ assert.throws(()=>new Function('$input','$',finish.parameters.jsCode)({first:()=>({json:{seatingUnchanged:true}})},()=>({first:()=>({json:failed})})),/reservations and staff refreshed/);
+});

@@ -1,5 +1,28 @@
 # Studio Intelligence Current Status
 
+## October 19, 2026 - STM seating repairs and product perks verified
+
+Spooky Gnome now uses KLR with its original exact hidden backup. The approved
+room mapping correction is applied. Main W8:X8 was unmerged in the master and12
+registered charts without changing existing import values or protected work;
+held927728 was recovered through the same immutable run and verified13 guests.
+PR101/102 are deployed: existing Reserved filters and duplicate calendar month
+controls are handled reliably. Fresh source-only discovery reads25 complete
+events, reuses existing files, and has only unsupported event931231 for review.
+All11 current public targets passed combined manual protected-cell checks.
+Friday Main now has21 guests. Ghosty Girly imported8 and repeated with0 writes
+after narrowly reconciling identical purchaser display rows with actual unnamed
+order reservations. Native06/08/09 append CAN/CP/CPM by exact order and quantity,
+retaining existing perks. Today's four guests have CPM; repeats write0. The
+staff-edited product summary2 versus Admin4 is preserved for review. Seating,
+attendance, formulas and actual staff verified unchanged.96 automation tests and
+10 isolated collector checks pass. No new schema, grants or credentials.
+STM schedules remain ON at the approved timing; other studios remain off/unbound.
+Private-party forms still refresh only at creation. See
+automation/seating-charts/REPAIRS_ROLLOUT.md. Earlier checkpoints below are
+historical; their room/import/product holds are superseded by this evidence.
+
+
 ## October 19, 2026 - St. Matthews seating schedules ON
 
 PR99 (01fbb389) is deployed. Private migration006 passed transactional access,

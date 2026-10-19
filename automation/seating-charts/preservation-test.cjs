@@ -6,8 +6,9 @@ function refreshLibrary() {
   const strip = file => fs.readFileSync(path.join(__dirname, file), 'utf8')
     .replace(/^'use strict';\s*/m, '')
     .replace(/^const \{ buildRosterRowWrites(?:, guestDisplayName)? \} = require\('.\/roster-writes.cjs'\);\s*/m, '')
-    .replace(/^module\.exports = .*;\s*$/m, '');
-  return `const structuredClone = value => JSON.parse(JSON.stringify(value));\n${strip('roster-writes.cjs')}\n${strip('refresh.cjs')}\n`;
+    .replace(/^const \{ appendPerks \} = require\('.\/product-perks.cjs'\);\s*/m, '')
+    .replace(/^module\.exports\s*=\s*.*;\s*$/m, '');
+  return `const structuredClone = value => JSON.parse(JSON.stringify(value));\n${strip('roster-writes.cjs')}\n${strip('product-perks.cjs')}\n${strip('refresh.cjs')}\n`;
 }
 
 function buildPreservationTest(studio) {

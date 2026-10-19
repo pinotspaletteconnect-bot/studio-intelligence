@@ -30,6 +30,7 @@ function buildProductWorkflow(studio){
  http('Read chart after products','google','GET',read);
  code('Verify products and protected cells',`${lib}\nconst run=$('Claim private product refresh').first().json,after=chartProductState($input.first().json,run.target),p=$('Prepare immutable product plan').first().json;return [{json:verifyProductWrites({plan:p.plan,before:p.before.cells,after:after.cells,protectedBefore:p.before.protectedCells,protectedAfter:after.protectedCells})}];`);
  rpc('Complete private product refresh','complete_seating_product_refresh','={{ {p_run_id:$("Product run settings").first().json.runId,p_result:$json} }}');
+ code('Return verified product reference',`return [{json:{...$input.first().json,productRunId:$('Product run settings').first().json.runId}}];`);
  nodes.slice(0,-1).forEach((n,i)=>connections[n.name]={main:[[{node:nodes[i+1].name,type:'main',index:0}]]});
  connections['Product changes exist'].main[1]=[{node:'Read chart after products',type:'main',index:0}];
  return {name:'08 - Seating Charts - STM products refresh - HELPER',active:false,nodes,connections,settings:{executionOrder:'v1',timezone:studio.timeZone,saveDataSuccessExecution:'none',saveDataErrorExecution:'none',saveManualExecutions:false}};
@@ -38,19 +39,22 @@ function buildCombinedWorkflow({reservationWorkflowId,productWorkflowId}){
  const nodes=[{id:'input',name:'Combined class update input',type:'n8n-nodes-base.executeWorkflowTrigger',typeVersion:1,position:[0,0],parameters:{inputSource:'passthrough'}}];
  const call=(name,id)=>nodes.push({id:'combined-'+nodes.length,name,type:'n8n-nodes-base.executeWorkflow',typeVersion:1.2,position:[nodes.length*250,0],parameters:{source:'database',workflowId:{__rl:true,value:id,mode:'id'},workflowInputs:{mappingMode:'defineBelow',value:{},matchingColumns:[],schema:[],attemptToConvertTypes:false,convertFieldsToString:true},mode:'each',options:{waitForSubWorkflow:true}}});
  const code=(name,jsCode)=>nodes.push({id:'combined-'+nodes.length,name,type:'n8n-nodes-base.code',typeVersion:2,position:[nodes.length*250,0],parameters:{jsCode}});
- call('Refresh reservations and staff',reservationWorkflowId);
- code('Pass registered product target',`return [{json:{targetId:$('Combined class update input').first().json.targetId,scheduledStartAt:$('Combined class update input').first().json.scheduledStartAt}}];`);
  call('Refresh class product reservations',productWorkflowId);
- code('Combined verified class result',`return [{json:{reservations:$('Refresh reservations and staff').first().json,products:$input.first().json,scheduledUpdates:!!$('Combined class update input').first().json.scheduledStartAt}}];`);
+ nodes.at(-1).onError='continueErrorOutput';
+ code('Prepare guest input from products',`const input=$('Combined class update input').first().json,p=$input.first().json;const ok=typeof p.productRunId==='string';return [{json:{targetId:input.targetId,scheduledStartAt:input.scheduledStartAt,productRunId:ok?p.productRunId:undefined,productFailed:!ok,productResult:ok?p:null}}];`);
+ call('Refresh reservations and staff',reservationWorkflowId);
+ code('Combined verified class result',`const p=$('Prepare guest input from products').first().json;if(p.productFailed)throw Error('Products require review; reservations and staff refreshed separately');return [{json:{reservations:$input.first().json,products:p.productResult,scheduledUpdates:!!p.scheduledStartAt}}];`);
  const connections={};nodes.slice(0,-1).forEach((n,i)=>connections[n.name]={main:[[{node:nodes[i+1].name,type:'main',index:0}]]});
+ connections['Refresh class product reservations'].main[1]=[{node:'Prepare guest input from products',type:'main',index:0}];
  return {name:'09 - Seating Charts - STM combined class refresh - HELPER',active:false,nodes,connections,settings:{executionOrder:'v1',timezone:'America/New_York',saveDataSuccessExecution:'none',saveDataErrorExecution:'none',saveManualExecutions:false}};
 }
 function buildManualProductWorkflow({productWorkflowId,targetId}){
  const w=buildCombinedWorkflow({reservationWorkflowId:'unused',productWorkflowId});
  w.name='07 - Seating Charts - STM products refresh - MANUAL TEST';
- w.nodes=w.nodes.filter(n=>!['Refresh reservations and staff','Combined verified class result'].includes(n.name));
- w.nodes[0].type='n8n-nodes-base.manualTrigger';w.nodes[0].parameters={};
- w.nodes.find(n=>n.name==='Pass registered product target').parameters.jsCode=`return [{json:{targetId:${JSON.stringify(targetId)}}}];`;
+ const input=w.nodes[0],product=w.nodes.find(n=>n.name==='Refresh class product reservations');
+ input.type='n8n-nodes-base.manualTrigger';input.parameters={};delete product.onError;
+ product.position=[500,0];
+ w.nodes=[input,{id:'manual-product-target',name:'Pass registered product target',type:'n8n-nodes-base.code',typeVersion:2,position:[250,0],parameters:{jsCode:`return [{json:{targetId:${JSON.stringify(targetId)}}}];`}},product];
  w.connections={};w.nodes.slice(0,-1).forEach((n,i)=>w.connections[n.name]={main:[[{node:w.nodes[i+1].name,type:'main',index:0}]]});return w;
 }
 if(require.main===module){const studio=require('./stm-creation-settings.json'),ids=require('./stm-creation-workflows.json');

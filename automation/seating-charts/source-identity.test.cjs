@@ -25,3 +25,14 @@ test('source-generated seating comments do not masquerade as reservation identit
   const ambiguous = structuredClone(source); ambiguous.rows[1][8] = 'Different request';
   assert.throws(() => identifyReservations(ambiguous), /Ambiguous/);
 });
+
+test('repeated purchaser display reconciles only identical rows with verified unnamed order guests',()=>{
+  const row=['10','C','Buyer','synthetic@example.invalid','Buyer','synthetic@example.invalid','','No','same request'];
+  const s={...source,expectedRowCount:2,rows:[row,[...row]],reservations:[{...identity(20,'Buyer'),guestEmail:'synthetic@example.invalid'},identity(21)]};
+  const result=identifyReservations(s);
+  assert.deepEqual(result.map(r=>[r.reservationKey,r.guest,r.guestEmail]),[['20','Buyer','synthetic@example.invalid'],['21','','']]);
+  assert.ok(result.every(r=>r.perks==='C'&&r.comments==='same request'));
+  assert.throws(()=>identifyReservations({...s,rows:[row,[...row.slice(0,1),'A',...row.slice(2)]]}),/disagree/);
+  assert.throws(()=>identifyReservations({...s,reservations:[s.reservations[0],identity(21,'Different guest')]}),/disagree/);
+  assert.throws(()=>identifyReservations({...s,rows:[row]}),/incomplete/);
+});

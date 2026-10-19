@@ -111,7 +111,9 @@
                 "Create your own Scented Candle - Standard"
               ],
               "namesCell": "J23",
-              "totalCell": "R23"
+              "totalCell": "R23",
+              "perkCode": "CAN",
+              "perkScope": "quantity"
             },
             {
               "key": "cheese",
@@ -119,7 +121,9 @@
                 "PRE-ORDER: Artisan Cheese Plate (+$22 on arrival) - 1 Serving"
               ],
               "namesCell": "J24",
-              "totalCell": "R24"
+              "totalCell": "R24",
+              "perkCode": "CP",
+              "perkScope": "quantity"
             },
             {
               "key": "cheeseAndMeat",
@@ -127,7 +131,9 @@
                 "PRE-ORDER: Artisan Cheese Plate w/ Salami (+$25 on arrival) - 1 Serving"
               ],
               "namesCell": "J25",
-              "totalCell": "R25"
+              "totalCell": "R25",
+              "perkCode": "CPM",
+              "perkScope": "quantity"
             }
           ],
           "1955136908": [
@@ -137,7 +143,9 @@
                 "Create your own Scented Candle - Standard"
               ],
               "namesCell": "J19",
-              "totalCell": "R19"
+              "totalCell": "R19",
+              "perkCode": "CAN",
+              "perkScope": "quantity"
             },
             {
               "key": "cheese",
@@ -145,7 +153,9 @@
                 "PRE-ORDER: Artisan Cheese Plate (+$22 on arrival) - 1 Serving"
               ],
               "namesCell": "J20",
-              "totalCell": "R20"
+              "totalCell": "R20",
+              "perkCode": "CP",
+              "perkScope": "quantity"
             },
             {
               "key": "cheeseAndMeat",
@@ -153,7 +163,9 @@
                 "PRE-ORDER: Artisan Cheese Plate w/ Salami (+$25 on arrival) - 1 Serving"
               ],
               "namesCell": "J21",
-              "totalCell": "R21"
+              "totalCell": "R21",
+              "perkCode": "CPM",
+              "perkScope": "quantity"
             }
           ]
         }

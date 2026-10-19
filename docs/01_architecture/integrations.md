@@ -1,5 +1,23 @@
 # Studio Intelligence Integrations
 
+## October 19, 2026 - STM seating repairs and additive product perks verified
+
+PR101 fixes selected Reserved filters; PR102 fixes remembered-month calendar
+navigation with duplicate month controls. Both are deployed. Spooky Gnome now
+uses KLR with its exact original tab backed up and hidden. The Main template's
+W8:X8 import merge was fixed in the master and12 registered charts, preserving
+all existing values, seating and attendance. Held927728 was recovered through
+its original immutable run. All11 current public targets passed combined manual
+checks; Ghosty Girly8 guests/repeat0 and Friday Main21 guests are verified.
+Native06/08/09 collect products first, pass a verified private snapshot reference,
+and append CAN/CP/CPM according to exact order quantities. Existing perks and
+staff product-box edits are retained. Today has a retained manual2-versus-source4
+product-box review. Fresh discovery returned25 complete events and0 new groups;
+only unsupported event931231 remains an expected eligibility review. STM timing
+stays ON; other studios remain off/unbound.96 automation and10 collector checks
+pass. See automation/seating-charts/REPAIRS_ROLLOUT.md. Earlier checkpoints below
+describe historical holds and OFF states, superseded by this repair evidence.
+
 ## October 19, 2026 - STM seating scheduler active
 
 Native10 reVzWFzk7REJ1Fsp is published after approved PR99/migration006. STM

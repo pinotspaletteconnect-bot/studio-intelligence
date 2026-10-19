@@ -37,6 +37,8 @@ test('generated n8n planner uses fresh bounded cell metadata and preserves real 
   const result=compile(node)({first:()=>({json:document})},()=>({first:()=>({json:run})}))[0].json;
   assert.deepEqual(result.before[0][1],{formulaValue:'=W1'});
   assert.deepEqual(result.plan.request.data.map(r=>r.range),["'Seating Chart Main'!V1:AA1","'Seating Chart Main'!AC1"]);
+  document.sheets[0].merges=[{startRowIndex:0,endRowIndex:1,startColumnIndex:22,endColumnIndex:24}];
+  assert.throws(()=>compile(node)({first:()=>({json:document})},()=>({first:()=>({json:run})})),/Merged import/);delete document.sheets[0].merges;
   document.sheets[0].data[1].rowData[0].values[0].userEnteredValue.numberValue=999;
   assert.throws(()=>compile(node)({first:()=>({json:document})},()=>({first:()=>({json:run})})),/class ID mismatch/);
 });
@@ -66,4 +68,17 @@ test('embedded staffing refresh writes only mapped headers and verifies them bes
  const verify=workflow.nodes.find(n=>n.name==='Verify reservations and protected staff cells');
  const result=compile(verify)({first:()=>({json:document})},name=>({first:()=>({json:name==='Prepare immutable reservation plan'?prepared:run})}))[0].json;
  assert.equal(result.staffVerified,true);assert.equal(result.staffChangedCount,2);assert.equal(result.attendanceUnchanged,true);assert.equal(result.formulasUnchanged,true);
+});
+
+test('product perks require a fresh completed snapshot for the same registered class before guest planning',()=>{
+ const node=workflow.nodes.find(n=>n.name==='Append reservation product perks');
+ const source={classId:'123',studioCode:'STM',rows:[{sourceOrderId:'10',guest:'Buyer',purchaser:'Buyer'}]},settings={targetId:'target',productRunId:'stm-products-1'};
+ const record={run_id:settings.productRunId,target_id:'target',status:'completed',source:{classId:'123',studioCode:'STM',complete:true,isPrivate:false,retrievedAt:new Date().toISOString(),expectedRowCount:1,rows:[{sourceOrderId:'10',voucherCode:'unit-1',classId:'123',status:'Reserved',item:'Candle'}]},target:{productMapping:[['Candle','CAN'],['Cheese','CP'],['Meat','CPM']].map(([name,perkCode])=>({sourceNames:[name],perkCode,perkScope:'purchaser'}))}};
+ const selector=name=>({first:()=>({json:name==='Pilot run settings'?settings:source})});
+ const result=compile(node)({all:()=>[{json:record}]},selector)[0].json;
+ assert.deepEqual(result.rows[0].productPerks,['CAN']);assert.equal(result.productRunId,settings.productRunId);
+ assert.throws(()=>compile(node)({all:()=>[{json:{...record,target_id:'other'}}]},selector),/Unverified/);
+ assert.throws(()=>compile(node)({all:()=>[{json:{...record,source:{...record.source,retrievedAt:'2020-01-01'}}}]},selector),/Unverified/);
+ const noRef=compile(node)({all:()=>[{json:{}}]},name=>({first:()=>({json:name==='Pilot run settings'?{targetId:'target'}:source})}))[0].json;
+ assert.deepEqual(noRef,source);
 });

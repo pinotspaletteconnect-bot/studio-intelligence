@@ -454,6 +454,19 @@
           "name": "Supabase account"
         }
       }
+    },
+    {
+      "id": "product-22",
+      "name": "Return verified product reference",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5060,
+        0
+      ],
+      "parameters": {
+        "jsCode": "return [{json:{...$input.first().json,productRunId:$('Product run settings').first().json.runId}}];"
+      }
     }
   ],
   "connections": {
@@ -689,6 +702,17 @@
         [
           {
             "node": "Complete private product refresh",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Complete private product refresh": {
+      "main": [
+        [
+          {
+            "node": "Return verified product reference",
             "type": "main",
             "index": 0
           }

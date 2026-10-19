@@ -14,12 +14,12 @@
       "parameters": {}
     },
     {
-      "id": "combined-2",
+      "id": "manual-product-target",
       "name": "Pass registered product target",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        500,
+        250,
         0
       ],
       "parameters": {
@@ -27,12 +27,12 @@
       }
     },
     {
-      "id": "combined-3",
+      "id": "combined-1",
       "name": "Refresh class product reservations",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        750,
+        500,
         0
       ],
       "parameters": {
