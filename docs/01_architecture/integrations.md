@@ -1,5 +1,16 @@
 # Studio Intelligence Integrations
 
+
+## October 19, 2026 - STM manual workbook creation deployment
+
+Protected PTS all-room calendar/class discovery, manual n8n creation orchestration,
+private workbook state/mapping and native Google master copying are deployed.
+Today and Tuesday's staggered class/private-party group passed creation/refresh
+readback; Friday's two-class import and repeat tests remain in progress. Private
+parties receive only information forms. No seating/attendance writes. 88 local
+checks pass; schedules remain OFF and other studios remain incomplete.
+Checkpoint: automation/seating-charts/CREATION_ROLLOUT.md.
+
 ## October 18, 2026 - seating staff mapping
 
 Scheduled Instructor -> Stage; Scheduled Assistant -> Floor; Scheduled On-Call

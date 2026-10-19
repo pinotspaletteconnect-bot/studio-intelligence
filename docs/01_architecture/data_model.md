@@ -1,5 +1,16 @@
 # Studio Intelligence Data Model
 
+
+## October 19, 2026 - seating operational grain
+
+Private seating creation state is studio/group, with one immutable workbook plan
+per connected overlap group and one durable class-to-workbook/tab mapping. Public
+class refresh targets retain reservation-ID-to-row ledgers; private parties use
+mapped information forms and have no seating roster target. Source collection
+returns actual class facts; n8n owns grouping, validation, orchestration and
+Google writes; Supabase owns configuration/history/idempotency. Native Google
+files remain the staff workspace. Schedules remain OFF during manual testing.
+
 **Version:** 4.1  
 **Last updated:** July 23, 2026
 

@@ -1,5 +1,19 @@
 # Studio Intelligence Current Status
 
+
+## October 19, 2026 - STM overlap creation deployed; manual tests in progress
+
+PR93 is merged and the additive collector is active. Main21/KLR22 binding and
+private migration003/manual-only settings are applied. Native04/05/06 workflows
+are in the separate Seating Charts folder. 06 is published solely for nested
+calls (no schedule/webhook); 04/05 remain manual/called-only. Today931956 and
+Tuesday931957/private936089 have studio-owned native files with verified headers,
+4/5 imported reservations, actual staff and unchanged T/U/AB. Friday's two-class
+file is created; an actual three-on-call assignment exposed a display limit.
+Extra names now share the second existing label; no roles/statuses/cells changed.
+88 local checks pass. Friday import and repeat tests are still in progress.
+Schedules remain OFF. Checkpoint: automation/seating-charts/CREATION_ROLLOUT.md.
+
 ## October 19, 2026 - STM staff and reservation manual pilot verified
 
 Owner-approved closure of the two older editor tabs restored the n8n runner.

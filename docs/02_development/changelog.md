@@ -1,5 +1,18 @@
 # Studio Intelligence Changelog
 
+
+## October 19, 2026 - STM overlap creation manual rollout
+
+- Merged/deployed PR93 and Main21/KLR22 configuration after explicit owner approval.
+- Applied private workbook migration003 after rollback/access checks.
+- Created manual04 and saved05/06 helpers. Fixed nested expression delimiters;
+  published only the called-only06 helper. No recurring triggers.
+- Today and Tuesday's class/private-party file passed actual reservation/staff
+  readback (4/5 guests), no reviews, unchanged seating/attendance/formulas.
+- Verified Friday's three Scheduled On-Call assignments in the actual class;
+  extra names now share the second label instead of stopping or dropping people.
+- 88 local checks pass. Friday/repeat validation remains in progress. Schedules OFF.
+
 ## October 18, 2026 - staff preview and preservation checks
 
 - Added five staff-header mappings with manual-edit/formula preservation, source

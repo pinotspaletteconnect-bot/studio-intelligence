@@ -11,13 +11,13 @@ function factory(name,trigger='child'){
  const http=(name,auth,method,url,body)=>add(name,'n8n-nodes-base.httpRequest',{method,url,authentication:auth==='collector'?'genericCredentialType':'predefinedCredentialType',[auth==='collector'?'genericAuthType':'nodeCredentialType']:Object.keys(creds[auth])[0],...(body?{sendBody:true,specifyBody:'json',jsonBody:body}:{}),options:{timeout:auth==='collector'?600000:60000}},creds[auth]);
  const rpc=(name,fn,body)=>http(name,'warehouse','POST',`https://hsosjnwjangtqtskofag.supabase.co/rest/v1/rpc/${fn}`,body);
  const branch=(name,condition)=>add(name,'n8n-nodes-base.if',{conditions:{options:{caseSensitive:true,typeValidation:'strict',version:2},combinator:'and',conditions:[{id:'condition',leftValue:condition,rightValue:true,operator:{type:'boolean',operation:'true',singleValue:true}}]},options:{}},null,2.2);
- const call=(name,workflow)=>add(name,'n8n-nodes-base.executeWorkflow',{source:'parameter',workflowJson:JSON.stringify(workflow),mode:'each',options:{waitForSubWorkflow:true}},null,1.2);
+ const call=(name,workflow)=>add(name,'n8n-nodes-base.executeWorkflow',{...(typeof workflow==='string'?{source:'database',workflowId:{__rl:true,value:workflow,mode:'id'}}:{source:'parameter',workflowJson:JSON.stringify(workflow)}),mode:'each',options:{waitForSubWorkflow:true}},null,1.2);
  const connect=(a,b,index=0)=>{connections[a]??={main:[]};connections[a].main[index]=[{node:b,type:'main',index:0}];};
  const finish=()=>({name,active:false,nodes,connections,settings:{executionOrder:'v1',timezone:'America/New_York',saveDataSuccessExecution:'none',saveDataErrorExecution:'none',saveManualExecutions:false}});
  add('Creation input',trigger==='manual'?'n8n-nodes-base.manualTrigger':'n8n-nodes-base.executeWorkflowTrigger',trigger==='manual'?{}:{inputSource:'passthrough'});
  return {nodes,code,http,rpc,branch,call,connect,finish};
 }
-function buildGroupWorkflow(studio){
+function buildGroupWorkflow(studio,{refreshWorkflowId}={}){
  const f=factory('STM create one overlap workbook'),{code,http,rpc,branch,call,connect}=f;
  const lib=creationLibrary(),ctx=`const context=$('Claim workbook').first().json;const studio=context.config,plan=context.plan,group=context.source;`;
  rpc('Claim workbook','claim_seating_chart_workbook','={{ {p_studio_id:$json.studio.studioId,p_run_id:"stm-create-"+$execution.id,p_group:$json.group,p_plan:$json.plan} }}');
@@ -34,9 +34,9 @@ function buildGroupWorkflow(studio){
  if(found.files.length){const file=found.files[0];if(context.fileId&&file.id!==context.fileId)throw Error('Mapped workbook differs');return [{json:{...file,needsCopy:false}}];}
  if(context.state!=='planned'||context.fileId)throw Error('Copy outcome uncertain or mapped file missing; never issue a second copy automatically');return [{json:{needsCopy:true}}];`);
  branch('Copy needed','={{ $json.needsCopy === true }}');
- rpc('Record copy request','advance_seating_chart_workbook','={{ {p_group_id:$("Claim workbook").first().json.groupId,p_run_id:"stm-create-"+$execution.id,p_action:"copy-issued",p_data:{}} }}');
+ rpc('Record copy request','advance_seating_chart_workbook','={{ {p_group_id:$("Claim workbook").first().json.groupId,p_run_id:"stm-create-"+$execution.id,p_action:"copy-issued",p_data:{} } }}');
  http('Copy studio master','google','POST',`=https://www.googleapis.com/drive/v3/files/{{ $('Claim workbook').first().json.config.masterSpreadsheetId }}/copy?fields=${encodeURIComponent(fields)}`,
-  '={{ {name:$("Claim workbook").first().json.plan.title,parents:[$("Claim workbook").first().json.config.destinationFolderId],appProperties:{seatingGroupId:$("Claim workbook").first().json.groupId,seatingMasterId:$("Claim workbook").first().json.config.masterSpreadsheetId}} }}');
+  '={{ {name:$("Claim workbook").first().json.plan.title,parents:[$("Claim workbook").first().json.config.destinationFolderId],appProperties:{seatingGroupId:$("Claim workbook").first().json.groupId,seatingMasterId:$("Claim workbook").first().json.config.masterSpreadsheetId} } }}');
  rpc('Record verified copy','advance_seating_chart_workbook','={{ {p_group_id:$("Claim workbook").first().json.groupId,p_run_id:"stm-create-"+$execution.id,p_action:"copied",p_data:$json} }}');
  http('Read workbook tabs','google','GET',"=https://sheets.googleapis.com/v4/spreadsheets/{{ $json.fileId }}?fields=spreadsheetId,properties(timeZone),sheets(properties(sheetId,title,hidden,gridProperties))");
  code('Prepare event tabs',`${ctx}const document=$input.first().json;if(document.spreadsheetId!==$('Record verified copy').first().json.fileId||document.properties?.timeZone!==studio.timeZone)throw Error('Copy spreadsheet mismatch');
@@ -62,7 +62,7 @@ function buildGroupWorkflow(studio){
  rpc('Complete workbook creation','advance_seating_chart_workbook','={{ {p_group_id:$("Claim workbook").first().json.groupId,p_run_id:"stm-create-"+$execution.id,p_action:"completed",p_data:$json} }}');
  code('Class targets to refresh','const targets=$input.first().json.targets??[];return targets.length?targets.map(targetId=>({json:{targetId}})):[{json:{privatePartyOnly:true}}];');
  branch('Class refresh needed','={{ typeof $json.targetId === "string" }}');
- call('Fill class reservations safely',buildReservationWorkflow({studio,supabaseUrl:'https://hsosjnwjangtqtskofag.supabase.co',collectorUrl:'https://studio-intelligence-production.up.railway.app',childMode:true}));
+ call('Fill class reservations safely',refreshWorkflowId??buildReservationWorkflow({studio,supabaseUrl:'https://hsosjnwjangtqtskofag.supabase.co',collectorUrl:'https://studio-intelligence-production.up.railway.app',childMode:true}));
  code('Creation result',`const claim=$('Claim workbook').first().json;return [{json:{status:'created-and-refreshed',groupId:claim.groupId,classCount:claim.plan.tabs.filter(t=>!t.isPrivate).length,privatePartyCount:claim.plan.tabs.filter(t=>t.isPrivate).length,scheduledUpdates:false,results:$input.all().map(i=>i.json)}}];`);
  const sequence=['Creation input','Claim workbook','Workbook already ready','Google account','Verify studio Google account','Read master','Verify master','Read folder','Verify folder','Find prior copy','Resolve copy safely','Copy needed','Record copy request','Copy studio master','Record verified copy','Read workbook tabs','Prepare event tabs','Event tabs needed','Create native event tabs','Read initial event cells','Verify event tab structure','Record event structure','Prepare initial event values','Stage initial values','Fill mapped event headers','Read completed event cells','Verify event values and protected cells','Complete workbook creation','Class targets to refresh','Class refresh needed','Fill class reservations safely','Creation result'];
  sequence.slice(0,-1).forEach((a,i)=>connect(a,sequence[i+1]));
@@ -72,16 +72,22 @@ function buildGroupWorkflow(studio){
  connect('Class refresh needed','Fill class reservations safely',0);connect('Class refresh needed','Creation result',1);
  return f.finish();
 }
-function buildCreationWorkflow({studio,selectedClassIds=[],authorized=false}){
+function buildCreationWorkflow({studio,selectedClassIds=[],authorized=false,groupWorkflowId}){
  const f=factory('04 - Seating Charts - STM create overlap files - MANUAL TEST','manual'),{code,http,call,connect}=f;
  code('Manual creation settings',`if(${JSON.stringify(authorized)}!==true)throw Error('Manual creation deployment pending');const now=new Date();const date=new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York'}).format(now);const base=Date.parse(date+'T12:00:00Z');const day=n=>new Date(base+n*86400000).toISOString().slice(0,10);return [{json:{fromDate:day(-1),toDate:day(9),selectedClassIds:${JSON.stringify(selectedClassIds)}}}];`);
  http('Load studio creation settings','warehouse','GET','https://hsosjnwjangtqtskofag.supabase.co/rest/v1/seating_chart_creation_settings?studio_id=eq.1&select=studio_id,config,enabled,schedule_enabled');
  code('Require manual STM settings',`const records=$input.all();if(records.length!==1)throw Error('One studio configuration required');const row=records[0].json;if(!row.enabled||row.schedule_enabled||row.studio_id!==1||row.config.studioCode!=='STM'||row.config.accountId!==1||row.config.googleAccountEmail!==${JSON.stringify(studio.googleAccountEmail)}||row.config.masterSpreadsheetId!==${JSON.stringify(studio.masterSpreadsheetId)})throw Error('Unverified manual studio settings');return [{json:row.config}];`);
  http('Discover current classes and parties','collector','POST','https://studio-intelligence-production.up.railway.app/pts/seating-events','={{ {accountId:$json.accountId,studioId:$json.studioId,fromDate:$("Manual creation settings").first().json.fromDate,toDate:$("Manual creation settings").first().json.toDate} }}');
  code('Plan complete overlap groups',`${creationLibrary()}\nconst studio=$('Require manual STM settings').first().json;const settings=$('Manual creation settings').first().json;const planned=normalizeDiscovery($input.first().json,studio);const groups=planned.groups.filter(g=>!settings.selectedClassIds.length||g.events.some(e=>settings.selectedClassIds.includes(e.classId)));if(settings.selectedClassIds.some(id=>!groups.some(g=>g.events.some(e=>e.classId===id))))throw Error('Selected test class not in a complete eligible group');return groups.map(group=>({json:{studio,group,plan:creationPlan(group,studio)}}));`);
- call('Create each overlap workbook',buildGroupWorkflow(studio));
+ call('Create each overlap workbook',groupWorkflowId??buildGroupWorkflow(studio));
  code('Manual creation summary',`return [{json:{status:'manual-creation-completed',scheduledUpdates:false,groups:$input.all().map(i=>i.json)}}];`);
  f.nodes.slice(0,-1).forEach((n,i)=>connect(n.name,f.nodes[i+1].name));return f.finish();
 }
-if(require.main===module){const studio=JSON.parse(fs.readFileSync(path.join(__dirname,'stm-creation-settings.json'),'utf8'));fs.writeFileSync(path.join(__dirname,'04-stm-create-overlap-files.json'),JSON.stringify(buildCreationWorkflow({studio,selectedClassIds:process.argv.slice(2).filter(x=>/^\d+$/.test(x)),authorized:process.argv.includes('--authorized')}),null,2)+'\n');}
+if(require.main===module){const studio=JSON.parse(fs.readFileSync(path.join(__dirname,'stm-creation-settings.json'),'utf8'));const config=path.join(__dirname,'stm-creation-workflows.json');const ids=fs.existsSync(config)?JSON.parse(fs.readFileSync(config,'utf8')):{};
+ const authorized=process.argv.includes('--authorized');if(authorized&&(!ids.groupWorkflowId||!ids.refreshWorkflowId))throw Error('Save the private helper workflows before enabling manual creation');
+ const write=(name,w)=>fs.writeFileSync(path.join(__dirname,name),JSON.stringify(w,null,2)+'\n');
+ write('04-stm-create-overlap-files.json',buildCreationWorkflow({studio,selectedClassIds:process.argv.slice(2).filter(x=>/^\d+$/.test(x)),authorized,groupWorkflowId:ids.groupWorkflowId}));
+ const group=buildGroupWorkflow(studio,{refreshWorkflowId:ids.refreshWorkflowId});group.name='05 - Seating Charts - STM create one overlap file - HELPER';write('05-stm-create-one-file.json',group);
+ const refresh=buildReservationWorkflow({studio,supabaseUrl:'https://hsosjnwjangtqtskofag.supabase.co',collectorUrl:'https://studio-intelligence-production.up.railway.app',childMode:true});refresh.name='06 - Seating Charts - STM refresh registered class - HELPER';write('06-stm-refresh-registered-class.json',refresh);
+}
 module.exports={creationLibrary,buildGroupWorkflow,buildCreationWorkflow};

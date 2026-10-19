@@ -14,8 +14,9 @@ function staffAssignments(source) {
   const stage = relevant.filter(r => r.role === 'Instructor' && r.status === 'Scheduled').map(display);
   const floor = relevant.filter(r => r.role === 'Assistant' && r.status === 'Scheduled').map(display);
   const onCall = relevant.filter(r => r.status === 'Scheduled On-Call').map(display);
-  if (floor.length > 2 || onCall.length > 2) throw Error('Staff assignments exceed template slots; review required');
-  return { D5: stage.join(', '), D6: floor[0] ?? '', D7: floor[1] ?? '', G6: onCall[0] ?? '', G7: onCall[1] ?? '' };
+  // The second label holds any additional names; never omit assigned people or
+  // spill into seating/attendance cells when the class has more than two.
+  return { D5: stage.join(', '), D6: floor[0] ?? '', D7: floor.slice(1).join(', '), G6: onCall[0] ?? '', G7: onCall.slice(1).join(', ') };
 }
 function planStaffRefresh({ source, sheetName, cells, ledger = {}, pending = null }) {
   const desired = staffAssignments(source), lastWritten = { ...ledger }, expected = {}, review = [], data = [];
