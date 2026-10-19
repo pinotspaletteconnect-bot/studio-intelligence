@@ -66,7 +66,9 @@ async function readOrderReservations(page, orderId, classId) {
   for (const detail of details) {
     // The source renders the asynchronous grid without paging. Its active row
     // count is cross-checked against the full seating table by ETL.
-    await page.locator(`#${detail.gridId} input[name="reservationCheckbox"]`).first().waitFor();
+    // Order detail sections start collapsed, but their complete grids load in
+    // the DOM. Wait for attachment; visibility would time out on valid orders.
+    await page.locator(`#${detail.gridId} input[name="reservationCheckbox"]`).first().waitFor({ state: 'attached' });
     const value = await page.locator(`#${detail.gridId}`).evaluate((grid, commentsId) => ({
       comments: document.getElementById(commentsId)?.value,
       hasPaging: !!grid.querySelector('.k-pager-wrap'),
