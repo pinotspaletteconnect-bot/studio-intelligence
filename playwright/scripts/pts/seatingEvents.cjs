@@ -46,7 +46,8 @@ async function readCalendar(page,target,fromDate,toDate){
   for(let i=0;i<25;i++){
    current=await page.evaluate(calendarDOM);
    if(current.month===month)break;
-   await page.getByRole('button',{name:current.month<month?'Next Month':'Previous Month',exact:true}).click();
+   // The source renders identical month controls above and below the calendar.
+   await page.getByRole('button',{name:current.month<month?'Next Month':'Previous Month',exact:true}).first().click();
    await page.waitForFunction(previous=>document.querySelector('#lblDate')?.textContent.trim()!==previous,current.monthLabel??new Date(current.month+'-01T12:00:00Z').toLocaleString('en-US',{month:'long',year:'numeric',timeZone:'UTC'}));
    await page.waitForLoadState('networkidle',{timeout:30000});
   }
