@@ -250,11 +250,18 @@ No personal contact details or form contents are persisted in source files.
 | C4 | PrivatePartyOrganizer.FirstName/LastName + PrimaryPhone |
 | C5 | Assigned painting name; verified duration/size only when available; do not use unselected painting requests |
 | C8 | PartyName (display/event name) |
+| C9 | One explicit linked Deposit Information amount, verbatim; HasDeposit alone is insufficient |
 | C12 | Price (source per-seat price, not deposit/payment total) |
 | C15 | CollectionMethodTypeId selected text, verbatim; Paying All Together does not identify the payer |
 | C22 | PrivatePartyExpectedHeadcount (expected guests, not attended count or minimum paid seats) |
+| H4 | Explicit minimum paid painter/seat count from POS staff comments; never expected headcount |
+| C13 | Full minimum statement and explicit seat notes |
+| C7 / C10 | Explicit door times / deposit application instructions from POS staff comments |
+| C16 / C17 | Explicit music / food instructions from POS staff comments |
+| C18 / C19 / C20 | Explicit bar order / currency charge / payment instructions |
+| C21 / C23 | Explicit extra-time instructions / complete POS staff comments for context |
 
-`private-party-writes.cjs` plans these seven individual RAW cell writes only.
+`private-party-writes.cjs` plans these individual RAW cell writes only.
 It rejects non-private events; `roster-writes.cjs` rejects private parties and
 unknown event types. Planner output routes each event to its document type.
 Source values must be verified and destination cells freshly read. Fill empty
@@ -264,12 +271,17 @@ successful write/readback. Do not auto-clear fields when source facts disappear.
 
 Additional fields remain manual pending authoritative source mapping: assigned
 artists (and status/role filtering), TV/physical master, door access window,
-deposit received/application, minimum paid seats, total charges, food, music,
-bar, extra time and notes. The HasDeposit checkbox proves no received amount.
+total charges and details not explicitly stated in POS staff comments. The
+HasDeposit checkbox proves no received amount. A missing/multiple/malformed linked
+deposit is reviewed without inventing a zero or financial total. Notes use
+conservative explicit-label matching; the complete original comment is retained
+in C23. Ambiguous minimums stay in notes and leave H4 for review. A minimum count
+does not determine a dollar charge or an attended count.
 Do not calculate total charges from expected headcount. Do not copy template
 sample dates, preparer, door-time or $XXX.XX placeholders as event facts; show
 these for review during initial-copy cleanup. The payment/registration list
-G7:I30 and paid totals are outside this writer; attendance/seating remain manual.
+G7:I30 and paid totals are outside this writer; H4 is the sole newly authorized
+minimum field. Attendance/seating remain manual.
 
 If more than one private event shares a workbook, use a separately mapped copy
 of the Private Party form for each event, with its numeric sheet ID associated

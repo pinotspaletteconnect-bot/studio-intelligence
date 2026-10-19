@@ -40,6 +40,15 @@ async function readClass(page, classId) {
         pricePerSeat:document.querySelector('#Price')?.value,
         paymentArrangement:document.querySelector('#CollectionMethodTypeId option:checked')?.textContent.trim(),
         expectedHeadcount:document.querySelector('#PrivatePartyExpectedHeadcount')?.value,
+        posStaffComments:document.querySelector('#StaffComments')?.value,
+        // Read the linked deposit record, not HasDeposit (a sign-up label).
+        // Return raw facts only; ETL validates the amount before writing a form.
+        depositRecords:Array.from(document.querySelectorAll('b')).filter(e=>e.textContent.trim()==='Deposit Information')
+          .flatMap(e=>Array.from(e.closest('table')?.querySelectorAll('tr')??[]).filter(r=>r.children[0]?.textContent.trim()==='Amount (Go To Deposit)').map(r=>({
+            amountText:r.children[1]?.textContent.trim(),
+            orderId:/^\/Order\/View\/(\d+)$/.exec(r.querySelector('a')?.getAttribute('href')??'')?.[1]??null,
+            dateText:r.nextElementSibling?.children[0]?.textContent.trim()==='Date'?r.nextElementSibling.children[1]?.textContent.trim():null,
+          }))),
       }:null,
       reservedCount: /^\d+$/.test(counts[2] ?? '') ? Number(counts[2]) : null,
       assignedStaff: {

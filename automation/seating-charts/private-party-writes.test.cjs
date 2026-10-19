@@ -2,7 +2,7 @@
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { FIELD_CELLS, buildPrivatePartyWrites: build } = require('./private-party-writes.cjs');
+const { FIELD_CELLS, buildPrivatePartyWrites: build, verifiedDepositFact, partyNoteFacts } = require('./private-party-writes.cjs');
 const base = { isPrivate: true, sheetName: 'Private Party' };
 
 test('class events cannot receive Private Party form writes', () => {
@@ -17,10 +17,7 @@ test('only verified party facts target the mapped form cells', () => {
   sourceFields.depositReceived = { verified: true, value: 100 };
   const currentCells = Object.fromEntries(Object.values(FIELD_CELLS).map(cell => [cell, null]));
   const result = build({ ...base, sourceFields, currentCells });
-  assert.deepEqual(result.request.data.map(d => d.range), [
-    "'Private Party'!C3", "'Private Party'!C4", "'Private Party'!C5",
-    "'Private Party'!C8", "'Private Party'!C12", "'Private Party'!C15", "'Private Party'!C22",
-  ]);
+  assert.deepEqual(result.request.data.map(d => d.range), Object.values(FIELD_CELLS).map(cell=>`'Private Party'!${cell}`));
   assert.equal(result.request.valueInputOption, 'RAW');
   assert.equal(result.needsReview.length, 0);
 });
@@ -44,7 +41,42 @@ test('missing facts do not clear fields or turn expected guests into attendance'
     pricePerSeat: { verified: true, value: null },
   }, currentCells: { C22: 10, C12: 39 } });
   assert.deepEqual(result.request.data, []);
-  assert.equal(result.needsReview.length, 7);
+  assert.equal(result.needsReview.length, 8);
+});
+
+test('deposit uses one explicit linked amount, including zero, without inferring payments', () => {
+  const record={amountText:'$100.00',orderId:'12345',dateText:'9/7/2026 4:06:14 PM'};
+  for(const amountText of ['$100.00','$0.00','$1,000.25'])
+    assert.deepEqual(verifiedDepositFact([{...record,amountText}]),{verified:true,value:amountText});
+  for(const records of [undefined,[],[record,record],[{...record,orderId:null}],[{...record,dateText:''}],
+    ...['100.00','$100.00 refunded','$-100.00','$1,00.00','$1e3.00'].map(amountText=>[{...record,amountText}])])
+    assert.deepEqual(verifiedDepositFact(records),{verified:false,value:null});
+  const sourceFields={depositReceived:verifiedDepositFact([record])};
+  const result=build({...base,sourceFields,currentCells:{C9:null}});
+  assert.deepEqual(result.request.data,[{range:"'Private Party'!C9",values:[['$100.00']]}]);
+  assert.equal(build({...base,sourceFields,currentCells:{C9:'Manager note'}}).request.data.length,0);
+  assert.equal(build({...base,sourceFields,currentCells:{C9:{formulaValue:'=example()'}}}).request.data.length,0);
+});
+
+test('POS staff notes preserve exact minimums and route only explicit facts to matching form cells',()=>{
+  const comments='Minimum needs to pay for 12 painters, even if fewer attend.\nFood: Bringing pizza\nMusic: 90s\nBar charge: $75.00\nApply deposit: Host seats\nPlease call host on arrival';
+  const facts=partyNoteFacts(comments);
+  assert.equal(facts.seatNotes.value,'Minimum needs to pay for 12 painters, even if fewer attend.');
+  assert.deepEqual(facts.minimumNeedsToPay,{verified:true,value:12});
+  assert.deepEqual(partyNoteFacts('Minimum payment $500').minimumNeedsToPay,{verified:false,value:null});
+  assert.deepEqual(partyNoteFacts('Minimum 12 paid seats\nMinimum 14 paid seats').minimumNeedsToPay,{verified:false,value:null});
+  assert.equal(facts.food.value,'Bringing pizza');assert.equal(facts.music.value,'90s');
+  assert.equal(facts.barCharge.value,'$75.00');assert.equal(facts.applyDeposit.value,'Host seats');
+  assert.equal(facts.otherNotes.value,comments);
+  assert.equal(facts.expectedHeadcount,undefined);assert.equal(facts.depositReceived,undefined);
+  assert.equal(partyNoteFacts('Bar charge: perhaps $75').barCharge,undefined);
+  assert.deepEqual(partyNoteFacts(''),{});
+  const currentCells=Object.fromEntries(Object.values(FIELD_CELLS).map(cell=>[cell,null]));
+  currentCells.C17='Manager food instructions';
+  const planned=build({...base,sourceFields:facts,currentCells});
+  assert.ok(planned.request.data.some(d=>d.range.endsWith('!C13')));
+  assert.ok(!planned.request.data.some(d=>/!C(?:9|12|14|17|22)$/.test(d.range)));
+  assert.ok(planned.needsReview.some(r=>r.cell==='C17'&&r.reason==='preserve_existing_staff_value'));
 });
 
 test('unread cells and formulas are never overwritten', () => {
