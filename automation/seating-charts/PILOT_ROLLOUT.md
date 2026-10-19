@@ -142,6 +142,46 @@ uses a Vault reference. Production source snapshot has `resolvePtsAccount` and
 No legacy-credential fallback or broker configuration changes are needed.
 Eight local collector/account-isolation tests pass (62 total local checks).
 
+Applied and independently verified: two tables with RLS, four RPCs, no anon or
+authenticated browser access, service role enabled. Registered target
+`b338bb62-58b2-4824-b38f-88e677d42fa2` for studio/account1, class931955,
+the existing pilot copy, sheet0, rowLimit1000, explicit strict adoption.
+02 is now `STM reservation refresh - MANUAL PILOT`, target-bound and unpublished.
+Collector deployed through PR88 (`33c66760f16560075097da67eab0755e3ca7aebf`)
+from actual production baseline714df0a on `codex/auth-onboarding`, not stale main.
+Two non-secret Railway variables bind only STM; broker/queue reused unchanged.
+First manual run failed at source collection (502) before any warehouse claim
+or Google write. PR89 adds allow-listed failure-stage names, never raw errors
+or guest/session data; merged `eec02e15fb3e03b7bf901a7a31569d139b1aeeae`.
+Diagnostic deployment identified `order-reservations`: the reservation grids
+are already loaded but an order detail section starts collapsed. PR90 changes
+the wait from visible to attached (no source edits), adds diagnostic privacy
+coverage, and is merged as `5bf1e08ff5cfeed1618069d651d1fa55aa121e8a`.
+63 local checks pass. Fixed deployment is active.
+Scheduled updates remain OFF. Audit after both failed attempts confirms revision0,
+empty ledger, no refresh runs, and no active lease; no Sheet writes were reached.
+
+## Final verified manual result
+
+- Completed real source/warehouse/Google runs: `stm-pilot-168282` (37.821s),
+  `stm-pilot-168286` (36.177s). Both returned `updated`, activeCount9,
+  changedCount0, reviewCount0, seatingUnchanged/attendanceUnchanged/formulasUnchanged=true.
+- Warehouse revision2, nine ledger entries, identical reservation-to-row maps
+  across both plans and final ledger, no lease held. Full source snapshots and
+  immutable plans persisted privately before Google verification.
+- Zero real cell writes were appropriate: the existing pilot already matched
+  fresh source, including four purchaser-first-name guest labels. Actual
+  update/addition writes and protected-cell preservation were verified separately
+  in the synthetic native copy; no seating/attendance were set in the real chart.
+- 02 remains unpublished/manual-only. No schedule nodes or recurring updates.
+  03 now contains only `database-pilot-audit.sql` for read-only verification.
+- Proof: `output/seating-charts/stm-manual-pilot-first-pass.png`,
+  `stm-manual-pilot-repeat-pass.png`, `stm-collector-deployed.png`,
+  `verification-20261018.json`. Run `verify-pilot-state.cjs` for a fresh metadata-only audit.
+- Remaining larger scope: automated native workbook creation, overlap/tab
+  execution and private-party forms; other studio connections/mappings; overnight
+  time and recurring rollout. Do not describe those as deployed.
+
 Owner's subsequent label request: unnamed seats display the purchaser's first
 name plus `'s guest`. Updated only W2/W4/W5/W6 in the real pilot (one Linda,
 three Addison). Exact T:AC readback confirmed only those four W cells changed;

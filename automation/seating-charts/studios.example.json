@@ -7,8 +7,8 @@
     {
       "studioCode": "STM",
       "timeZone": "America/New_York",
-      "organizationId": null,
-      "studioId": null,
+      "organizationId": 1,
+      "studioId": 1,
       "googleAccountEmail": "pinotsstmatthews@gmail.com",
       "sourceLocationLabel": "Matthews",
       "sourceRoomId": "21",

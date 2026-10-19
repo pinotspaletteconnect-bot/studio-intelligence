@@ -1,5 +1,5 @@
 {
-  "name": "02 - Seating Charts - STM reservation refresh - DEPLOYMENT PENDING",
+  "name": "02 - Seating Charts - STM reservation refresh - MANUAL PILOT",
   "active": false,
   "nodes": [
     {
@@ -23,7 +23,7 @@
         0
       ],
       "parameters": {
-        "jsCode": "const targetId=null;\nif(!/^[a-f0-9-]{36}$/.test(targetId||''))throw Error('Pilot deployment pending: register the approved warehouse target first');\nreturn [{json:{targetId,runId:null||'stm-pilot-'+$execution.id}}];"
+        "jsCode": "const targetId=\"b338bb62-58b2-4824-b38f-88e677d42fa2\";\nif(!/^[a-f0-9-]{36}$/.test(targetId||''))throw Error('Pilot deployment pending: register the approved warehouse target first');\nreturn [{json:{targetId,runId:null||'stm-pilot-'+$execution.id}}];"
       }
     },
     {
