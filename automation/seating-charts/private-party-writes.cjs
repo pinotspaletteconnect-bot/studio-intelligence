@@ -69,6 +69,16 @@ function partyNoteFacts(comments) {
   return fields;
 }
 
+function minimumPaidSeatsFact(party, policy, noteFacts = partyNoteFacts(party?.posStaffComments)) {
+  // An explicit exception (including an ambiguous one) takes precedence over
+  // defaults. Never derive the minimum from expected headcount or attendance.
+  if (Object.hasOwn(noteFacts, 'minimumNeedsToPay')) return noteFacts.minimumNeedsToPay;
+  const category = policy?.partyTypes?.[party?.partyType];
+  const count = ['adult','kids'].includes(category) ? policy?.[category] : null;
+  return { verified: Number.isSafeInteger(count) && count > 0,
+    value: Number.isSafeInteger(count) && count > 0 ? count : null };
+}
+
 function scalar(value) {
   return value === null || typeof value === 'string' ||
     (typeof value === 'number' && Number.isFinite(value));
@@ -114,4 +124,4 @@ function buildPrivatePartyWrites({ isPrivate, sheetName, sourceFields, currentCe
   return { request: { valueInputOption: 'RAW', data }, writtenCells, needsReview };
 }
 
-module.exports = { FIELD_CELLS, buildPrivatePartyWrites, verifiedDepositFact, partyNoteFacts };
+module.exports = { FIELD_CELLS, buildPrivatePartyWrites, verifiedDepositFact, partyNoteFacts, minimumPaidSeatsFact };

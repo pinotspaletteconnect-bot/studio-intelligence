@@ -7,7 +7,10 @@ deposit was filled/read back in native form C9. New private forms copy explicit
 POS staff notes to matching fields, retain full comments in C23, and place an
 unambiguous minimum paid-seat count in H4 plus its full statement in C13.
 Expected headcount never supplies that minimum. This party's comments and
-minimum source are blank; owner clarification is pending.
+minimum source are blank. Owner confirmed defaults: adult8/kids10; Tuesday is
+Bachelorette (adult), so H4 now shows8. Blank POS notes add no specific
+instructions; explicit minimum notes override defaults, while unmapped party
+types remain for review. Defaults are private STM configuration.
 
 20 creation/private-write and14 source tests pass. Native04/05 saved code matches
 source exactly; migration rollback/access checks pass. Three ready workbooks and

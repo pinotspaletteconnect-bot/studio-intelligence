@@ -1,7 +1,7 @@
 'use strict';
 const {groupOverlappingEvents}=require('./planner.cjs');
 const {planStaffRefresh}=require('./staff-writes.cjs');
-const {buildPrivatePartyWrites,FIELD_CELLS,verifiedDepositFact,partyNoteFacts}=require('./private-party-writes.cjs');
+const {buildPrivatePartyWrites,FIELD_CELLS,verifiedDepositFact,partyNoteFacts,minimumPaidSeatsFact}=require('./private-party-writes.cjs');
 const DAY=86400000;
 const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function parseDay(value){const m=/^(?:[A-Za-z]{3}, )?(\d{1,2}) ([A-Za-z]{3}) (\d{4})$/.exec(value??'');if(!m||!months.includes(m[2]))throw Error('Unverified class date');const iso=`${m[3]}-${String(months.indexOf(m[2])+1).padStart(2,'0')}-${m[1].padStart(2,'0')}`;if(new Date(iso).toISOString().slice(0,10)!==iso)throw Error('Invalid class date');return iso;}
@@ -96,6 +96,7 @@ function buildInitialValues({group,plan,studio,document,now}){
     hostNameAndPhone:{verified:!!p.hostName&&!!p.hostPhone,value:[p.hostName,p.hostPhone].filter(Boolean).join(' - ')},paintingSummary:{verified:true,value:event.details.paintingSummary},eventName:{verified:!!p.eventName,value:p.eventName},pricePerSeat:{verified:/^\d+(\.\d{1,2})?$/.test(p.pricePerSeat??''),value:p.pricePerSeat},paymentArrangement:{verified:!!p.paymentArrangement,value:p.paymentArrangement},expectedHeadcount:{verified:!!p.expectedHeadcount,value:p.expectedHeadcount}};
    sourceFields.depositReceived=verifiedDepositFact(p.depositRecords);
    Object.assign(sourceFields,partyNoteFacts(p.posStaffComments));
+   sourceFields.minimumNeedsToPay=minimumPaidSeatsFact(p,studio.privatePartyFormMapping.minimumPaidSeats,sourceFields);
    const current=Object.fromEntries(Object.values(FIELD_CELLS).map(c=>[c,headerValue(document,tab.sheetId,c)??null]));
    // Known sample values on a brand-new form may be replaced by actual notes.
    if(current.C19==='$XXX.XX')current.C19=null;
