@@ -1,6 +1,7 @@
 'use strict';
 
 const { buildRosterRowWrites, guestDisplayName } = require('./roster-writes.cjs');
+const { appendPerks } = require('./product-perks.cjs');
 const FIELDS = ['perks', 'guest', 'guestEmail', 'purchaser', 'purchaserEmail', 'purchaserPhone', 'comments'];
 const text = value => value == null ? '' : String(value);
 const valuesOf = row => FIELDS.map(key => {
@@ -69,7 +70,7 @@ function planRefresh({ target, source, ledger, cells }) {
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
   const seen = new Set();
   const writes = [];
-  const review = [];
+  const review = [...(source.productPerksReview??[])];
   const allocate = () => {
     // Do not reuse a removed guest's row or appropriate an existing manual row.
     for (let row = 1; row <= target.rowLimit; row++) {
@@ -91,9 +92,10 @@ function planRefresh({ target, source, ledger, cells }) {
     }
     const live = imported(entry.row);
     if ([...current(entry.row).slice(2, 8), current(entry.row)[9]].some(v => v && typeof v === 'object')) throw Error('Formula found in an owned import cell; review required');
+    desired[0]=appendPerks(live[0],desired[0],seat.productPerks??[]);
     // A previous write may have succeeded before its acknowledgement was lost.
-    if (!same(live, entry.lastWritten) && !same(live, desired)) throw Error('Imported guest data was changed manually; review required');
-    if (!same(live, desired)) writes.push({ ...seat, row: entry.row });
+    if (!same(live.slice(1), entry.lastWritten.slice(1)) && !same(live.slice(1), desired.slice(1))) throw Error('Imported guest data was changed manually; review required');
+    if (!same(live, desired)) writes.push({ ...seat, perks:desired[0],row: entry.row });
     entry.lastWritten = desired; entry.status = 'active';
   }
   for (const entry of nextLedger) {

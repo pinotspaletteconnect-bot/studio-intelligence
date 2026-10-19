@@ -50,6 +50,13 @@ test('staff changes in imported fields stop before any write', () => {
   const { cells, ledger } = seeded(); cells[0][9] = 'Manager note';
   assert.throws(() => planRefresh({ target, source: source([seat(11)]), ledger, cells }), /manually/);
 });
+
+test('product perks append to staff perks, survive later source-only refreshes and preserve seats and attendance',()=>{
+ const {cells,ledger}=seeded();cells[0][2]='C; A';const before=structuredClone(cells);
+ const next=planRefresh({target,source:source([{...seat(11),perks:'C',productPerks:['CPM']},seat(12,'')]),ledger,cells});
+ apply(cells,next.request);assert.equal(cells[0][2],'C; A, CPM');assert.equal(verifyReadback({target,before,after:cells,plan:next}).attendanceUnchanged,true);
+ const repeat=planRefresh({target,source:source([seat(11),seat(12,'')]),ledger:next.ledger,cells});assert.equal(repeat.request.data.length,0);assert.equal(repeat.ledger[0].lastWritten[0],'C; A, CPM');
+});
 test('new guests skip manual rows, and a full chart never shifts any rows', () => {
   const cells = blank(); cells[0][8] = true; cells[1][0] = 'Seat 1'; cells[2][9] = 'Manual note';
   const plan = planRefresh({ target, source: source([seat(1)]), ledger: [], cells });

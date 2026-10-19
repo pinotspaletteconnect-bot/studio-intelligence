@@ -1,5 +1,23 @@
 # St. Matthews schedules - October 19, 2026
 
+## Verified repairs and live scheduled confirmation
+
+The historical holds below are superseded by [REPAIRS_ROLLOUT.md](REPAIRS_ROLLOUT.md).
+Spooky Gnome's KLR correction has an exact hidden backup. The master/import merge,
+held927728, selected product filter, duplicate month controls and Ghosty Girly
+identity mismatch are repaired. All11 registered current classes passed combined
+protected checks. Scheduled170636 passed today's T-2h milestone with four guests,
+zero writes, verified staff and unchanged seats/formulas/attendance. Discovery
+170644 completed with0 new files and only Painting It Forward931231's type
+eligibility review. That additional type awaits the owner's decision. Today's
+manually edited product summary2 versus source4 remains preserved for review.
+Fourteen historical failure results now reference subsequent verified recovery
+runs; original statuses/results/times remain intact. Both temporary repair
+workflows are archived. STM schedules remain ON at the policy below; other
+studios remain off/unbound.96 automation and10 collector checks passed.
+
+## Original activation checkpoint
+
 Owner authorized scheduled STM creation/updates and preparation of other studios.
 Policy: creation within seven days, overnight at02:00 America/New_York, T-24h,
 T-6h/-5h/-4h/-3h/-2h and final T-75m. No T-1h run. Each registered class keeps

@@ -1,5 +1,17 @@
 # Studio Intelligence Data Model
 
+## October 19, 2026 - additive product perks use existing private state
+
+No new schema or BI grain is added. Existing studio product mappings now include
+perkCode and perkScope=quantity for Main/KLR. The product helper completes its
+private order/voucher snapshot before the guest helper loads that exact fresh
+run/target reference. Guest source JSON retains productRunId, per-row product
+codes and unresolved allocation review; the normal reservation-ID ledger stores
+the appended perks literal. Equal/full-order quantities mark all guests; partial
+multi-unit allocation retains the buyer and flags ambiguity. Existing perks are
+never replaced. Products no longer run after guest completion. Protected cells,
+private access and immutable plan/completion boundaries remain unchanged.
+
 ## October 19, 2026 - private scheduled seating work
 
 Migration006 adds private seating_chart_schedule_runs at studio/milestone grain,

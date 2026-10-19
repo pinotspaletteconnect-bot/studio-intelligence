@@ -32,6 +32,7 @@ function buildReservationWorkflow({ studio, supabaseUrl, collectorUrl, targetId 
 const target=run.target; const document=$input.first().json;
 const sheet=document.sheets?.find(s=>s.properties.sheetId===target.sheetId);
 if(document.spreadsheetId!==target.spreadsheetId||sheet?.properties.title!==target.sheetName||sheet.properties.gridProperties.rowCount<target.rowLimit)throw Error('Spreadsheet/tab shape mismatch');
+if((sheet.merges??[]).some(m=>(m.startRowIndex??0)<target.rowLimit&&m.endRowIndex>0&&(((m.startColumnIndex??0)<27&&m.endColumnIndex>21)||((m.startColumnIndex??0)<29&&m.endColumnIndex>28))))throw Error('Merged import cells require review before reservation writes');
 const grid=sheet.data?.find(d=>(d.startRow??0)===0&&d.startColumn===19);
 const classCell=sheet.data?.find(d=>d.startRow===4&&d.startColumn===17)?.rowData?.[0]?.values?.[0]?.userEnteredValue;
 if(String(classCell?.stringValue??classCell?.numberValue??'')!==target.classId)throw Error('Chart header class ID mismatch');
@@ -45,11 +46,13 @@ if(!block)throw Error('Missing staff header range');
 const value=block.rowData?.[row-block.startRow]?.values?.[0]?.userEnteredValue;
 staffCells[cell]=value?.formulaValue?{formulaValue:value.formulaValue}:value?.stringValue??value?.numberValue??value?.boolValue??'';}}`;
   const tabExpression=`"'"+$('Claim warehouse refresh').first().json.target.sheetName.replace(/'/g,"''")+"'!"`;
-  const readUrl = `=https://sheets.googleapis.com/v4/spreadsheets/{{ $('Claim warehouse refresh').first().json.target.spreadsheetId }}?ranges={{ encodeURIComponent(${tabExpression}+"T1:AC"+$('Claim warehouse refresh').first().json.target.rowLimit) }}&ranges={{ encodeURIComponent(${tabExpression}+"R5") }}&ranges={{ encodeURIComponent(${tabExpression}+"D5:D7") }}&ranges={{ encodeURIComponent(${tabExpression}+"G6:G7") }}&includeGridData=true&fields=spreadsheetId,sheets(properties(sheetId,title,gridProperties(rowCount,columnCount)),data(startRow,startColumn,rowData(values(userEnteredValue,dataValidation))))`;
+  const readUrl = `=https://sheets.googleapis.com/v4/spreadsheets/{{ $('Claim warehouse refresh').first().json.target.spreadsheetId }}?ranges={{ encodeURIComponent(${tabExpression}+"T1:AC"+$('Claim warehouse refresh').first().json.target.rowLimit) }}&ranges={{ encodeURIComponent(${tabExpression}+"R5") }}&ranges={{ encodeURIComponent(${tabExpression}+"D5:D7") }}&ranges={{ encodeURIComponent(${tabExpression}+"G6:G7") }}&includeGridData=true&fields=spreadsheetId,sheets(properties(sheetId,title,gridProperties(rowCount,columnCount)),merges,data(startRow,startColumn,rowData(values(userEnteredValue,dataValidation))))`;
   add('Manual STM reservation refresh',childMode?'n8n-nodes-base.executeWorkflowTrigger':'n8n-nodes-base.manualTrigger',childMode?{inputSource:'passthrough'}:{});
   code('Pilot run settings', `const targetId=${childMode?'$input.first().json.targetId':JSON.stringify(targetId)};
 if(!/^[a-f0-9-]{36}$/.test(targetId||''))throw Error('Pilot deployment pending: register the approved warehouse target first');
-return [{json:{targetId,runId:${JSON.stringify(runId)}||'stm-pilot-'+$execution.id}}];`);
+const productRunId=${childMode?'$input.first().json.productRunId':'null'};
+if(productRunId!=null&&!/^[A-Za-z0-9_-]{1,200}$/.test(productRunId))throw Error('Invalid product snapshot reference');
+return [{json:{targetId,productRunId,runId:${JSON.stringify(runId)}||'stm-pilot-'+$execution.id}}];`);
   http('Load warehouse target', 'warehouse', 'GET', `=${supabaseUrl}/rest/v1/seating_chart_targets?id=eq.{{ $json.targetId }}&select=studio_id,config,enabled`);
   code('Validate STM pilot target', `${library}
 const items=$input.all().map(i=>i.json); if(items.length!==1)throw Error('Exactly one pilot target required');
@@ -68,6 +71,15 @@ if(raw.details?.locationLabel!==target.sourceLocationLabel||raw.details?.roomId!
 const rows=identifyReservations(raw);
 return [{json:{classId:raw.classId,studioCode:raw.studioCode,isPrivate:false,complete:true,expectedRowCount:rows.length,retrievedAt:raw.retrievedAt,rows,
 ...(target.staffUpdatesEnabled?{assignedStaff:raw.details.assignedStaff}:{})}}];`);
+  http('Load verified product snapshot','warehouse','GET',`=${supabaseUrl}/rest/v1/seating_chart_product_runs?run_id=eq.{{ encodeURIComponent($('Pilot run settings').first().json.productRunId??'none') }}&target_id=eq.{{ $('Pilot run settings').first().json.targetId }}&select=run_id,target_id,status,source,target`);
+  nodes.at(-1).alwaysOutputData=true;
+  code('Append reservation product perks',`${library}
+const source=$('Validate and identify source seats').first().json,input=$('Pilot run settings').first().json;
+if(!input.productRunId)return [{json:source}];
+const records=$input.all().map(i=>i.json),r=records[0];
+if(records.length!==1||r.run_id!==input.productRunId||r.target_id!==input.targetId||r.status!=='completed'||r.source?.classId!==source.classId||r.source?.studioCode!==source.studioCode||!Number.isFinite(Date.parse(r.source?.retrievedAt))||Math.abs(Date.now()-Date.parse(r.source.retrievedAt))>600000)throw Error('Unverified product snapshot reference');
+const decorated=attachProductPerks(source.rows,r.source,r.target.productMapping);
+return [{json:{...source,rows:decorated.rows,productRunId:input.productRunId,productPerksReview:decorated.review}}];`);
   rpc('Claim warehouse refresh','claim_seating_chart_refresh', '={{ {p_target_id:$("Pilot run settings").first().json.targetId,p_run_id:$("Pilot run settings").first().json.runId,p_source:$json} }}');
   code('Require unfinished refresh', 'if($input.first().json.completed)return [];return $input.all();');
   http('Verify studio Google identity','google','GET','https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)');

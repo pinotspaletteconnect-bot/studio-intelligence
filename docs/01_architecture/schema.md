@@ -1,5 +1,15 @@
 # Studio Intelligence Warehouse Schema
 
+## October 19, 2026 - STM repair configuration; no new schema
+
+Existing config.productReservations.templates entries gain perkCode CAN/CP/CPM
+and perkScope=quantity. Private guest source JSON carries a completed product-run
+reference and allocation review; existing row ledgers retain merged perks.
+No tables, RPC signatures, grants, credentials or BI facts changed. The approved
+one-time931961 Main-to-KLR source/plan/target correction is applied, with prior
+state retained; never replay database-stm-confirmed-klr-room.sql. Schedules remain
+ON for STM only. Native readback and all11 class checks preserved protected work.
+
 ## October 19, 2026 - private schedule migration006 applied
 
 seating_chart_schedule_runs stores studio/job_key, kind, optional target/start,
