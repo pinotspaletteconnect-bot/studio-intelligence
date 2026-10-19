@@ -9,7 +9,9 @@ https://primary-production-a88c.up.railway.app/projects/YRdV58D9glyGcjK9/folders
 - 00: read-only Google connection check; 01: isolated preservation test.
 - 02: original manual reservation/staff pilot; 03: read-only creation audit.
 - 04: manual discovery/group creation; 05: saved single-workbook helper;
-  06: saved registered-class reservation/staff helper. No recurring triggers.
+  06: saved registered-class reservation/staff helper.
+- 07: manual product refresh;08: called-only product helper;09: combined class
+  refresh (06 then08), now called by05. No recurring triggers.
 
 The original [Autumn Mountain Evening pilot](https://docs.google.com/spreadsheets/d/1h0X3zNWCxkG3p7x71LPeFBE-FbC5dLLVj0swto8KwiQ/edit)
 passed two reservation-only and two full staff refreshes. Nine stable guest rows,
@@ -28,6 +30,11 @@ results and safe recovery; do not reapply the migration or blindly repeat a copy
 Live readback additionally verified 3 files/5 events, 4 public targets, one private
 form, 4/5/0/17 guests, stable rows and zero repeat writes. Seating/attendance and
 formulas are unchanged; no private-party seating target exists.
+
+Reserved product imports and Main/KLR product boxes are live-tested for today's
+Main class: four units, two initial cell writes, repeat zero writes, combined
+refresh verified with seating/attendance/formulas unchanged. See
+[PRODUCTS_ROLLOUT.md](PRODUCTS_ROLLOUT.md) for IDs, boundaries and recovery.
 
 ## Owner-confirmed behavior
 

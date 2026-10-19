@@ -1,5 +1,17 @@
 # Studio Intelligence Integrations
 
+## October 19, 2026 - STM reserved products to seating charts
+
+The protected /pts/class-products collector reads actual class/studio identity and
+complete Reserved merchandise grid pages, matching source ClassId or an exact
+unique order class link. It does not fulfill products or change payments. Manual
+n8n07/08/09 and private migration005 are deployed and live-tested: four units,
+exactly two summary-cell writes, repeat0, combined guest/staff/product validation
+and unchanged seating/attendance/formulas. KLR master has equivalent product
+boxes. Only STM manual/called-only refresh is verified; schedules and other
+studios remain OFF. See automation/seating-charts/PRODUCTS_ROLLOUT.md.
+
+
 
 ## October 19, 2026 - STM manual workbook creation verified
 

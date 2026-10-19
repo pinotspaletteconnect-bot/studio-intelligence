@@ -1,0 +1,158 @@
+{
+  "name": "09 - Seating Charts - STM combined class refresh - HELPER",
+  "active": false,
+  "nodes": [
+    {
+      "id": "input",
+      "name": "Combined class update input",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "inputSource": "passthrough"
+      }
+    },
+    {
+      "id": "combined-1",
+      "name": "Refresh reservations and staff",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        250,
+        0
+      ],
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "2T7XR2idkCmpE5dc",
+          "mode": "id"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "mode": "each",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      }
+    },
+    {
+      "id": "combined-2",
+      "name": "Pass registered product target",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        0
+      ],
+      "parameters": {
+        "jsCode": "return [{json:{targetId:$('Combined class update input').first().json.targetId}}];"
+      }
+    },
+    {
+      "id": "combined-3",
+      "name": "Refresh class product reservations",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        750,
+        0
+      ],
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "BLcMG5WWcf5huXpi",
+          "mode": "id"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "mode": "each",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      }
+    },
+    {
+      "id": "combined-4",
+      "name": "Combined verified class result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "jsCode": "return [{json:{reservations:$('Refresh reservations and staff').first().json,products:$input.first().json,scheduledUpdates:false}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Combined class update input": {
+      "main": [
+        [
+          {
+            "node": "Refresh reservations and staff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Refresh reservations and staff": {
+      "main": [
+        [
+          {
+            "node": "Pass registered product target",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pass registered product target": {
+      "main": [
+        [
+          {
+            "node": "Refresh class product reservations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Refresh class product reservations": {
+      "main": [
+        [
+          {
+            "node": "Combined verified class result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/New_York",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "none",
+    "saveManualExecutions": false
+  }
+}

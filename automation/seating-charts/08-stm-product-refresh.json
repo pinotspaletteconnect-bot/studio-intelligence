@@ -1,0 +1,706 @@
+{
+  "name": "08 - Seating Charts - STM products refresh - HELPER",
+  "active": false,
+  "nodes": [
+    {
+      "id": "product-0",
+      "name": "Product refresh input",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "inputSource": "passthrough"
+      }
+    },
+    {
+      "id": "product-1",
+      "name": "Product run settings",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        230,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const input=$input.first().json;if(!/^[a-f0-9-]{36}$/.test(input.targetId??''))throw Error('Registered product target required');return [{json:{targetId:input.targetId,runId:input.runId??'stm-products-'+$execution.id}}];"
+      }
+    },
+    {
+      "id": "product-2",
+      "name": "Load registered class",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        460,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://hsosjnwjangtqtskofag.supabase.co/rest/v1/seating_chart_targets?id=eq.{{ $json.targetId }}&select=studio_id,enabled,config",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "A32h7eKkq8JEdg0k",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "id": "product-3",
+      "name": "Require registered STM class",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        690,
+        0
+      ],
+      "parameters": {
+        "jsCode": "function validateTarget(target) {\n  const legacy=target?.sheetId===0&&target.sheetName==='Seating Chart Main';\n  const created=/^[a-f0-9-]{36}$/.test(target?.documentGroupId??'')&&[0,1955136908].includes(target.templateSheetId)&&target.sheetId===100000000+Number(target.classId)&&typeof target.sheetName==='string'&&target.sheetName.length<=100;\n  if (target?.studioCode !== 'STM' || target.isPrivate !== false || !(legacy||created)) {\n    throw Error('This refresh requires a registered St Matthews class tab');\n  }\n  if (!target.spreadsheetId || target.spreadsheetId === target.masterSpreadsheetId || !target.masterSpreadsheetId ||\n      !/^\\d+$/.test(target.classId) || !Number.isSafeInteger(target.rowLimit) || target.rowLimit < 1) {\n    throw Error('Missing verified pilot copy or class configuration');\n  }\n}\nfunction productSummary(source,mapping){\n if(source?.complete!==true||source.isPrivate!==false||!/^\\d+$/.test(source.classId??'')||!Array.isArray(source.rows)||source.rows.length!==source.expectedRowCount)throw Error('Incomplete class product source');\n if(!Array.isArray(mapping)||mapping.length!==3)throw Error('Verified three-box product mapping required');\n const seen=new Set(),groups=mapping.map(m=>({...m,customers:new Map(),total:0}));\n for(const unit of source.rows){\n  const key=unit.sourceOrderId+':'+unit.voucherCode;\n  if(!/^\\d+$/.test(unit.sourceOrderId??'')||!unit.voucherCode?.trim()||seen.has(key)||unit.classId!==source.classId||unit.status!=='Reserved'||typeof unit.customer!=='string'||!unit.customer.trim()||typeof unit.item!=='string')throw Error('Invalid or duplicate product unit');\n  seen.add(key);\n  const normalized=unit.item.replace(/\\s+/g,' ').trim();\n  const matches=groups.filter(g=>g.sourceNames.includes(normalized));\n  if(matches.length!==1)throw Error('Unmapped product; review source item before changing totals');\n  const group=matches[0],name=unit.customer.trim().replace(/\\s+/g,' '),identity=name.toLocaleLowerCase('en-US');\n  const existing=group.customers.get(identity)??{name,count:0};existing.count++;group.customers.set(identity,existing);group.total++;\n }\n return groups.map(g=>({namesCell:g.namesCell,totalCell:g.totalCell,total:g.total,names:[...g.customers.values()].sort((a,b)=>a.name.localeCompare(b.name,'en-US')).map(c=>`${c.name} (${c.count})`).join(', ')}));\n}\nfunction planProductWrites({source,mapping,sheetName,cells,ledger={},pending=null}){\n const groups=productSummary(source,mapping),lastWritten={...ledger},expected={},review=[],data=[],tab=\"'\"+sheetName.replace(/'/g,\"''\")+\"'!\";\n const allowed=new Set(['J19','R19','J20','R20','J21','R21','J23','R23','J24','R24','J25','R25']);\n if(new Set(groups.flatMap(g=>[g.namesCell,g.totalCell])).size!==6)throw Error('Product mapping overlaps');\n for(const group of groups){\n  const wanted={[group.namesCell]:group.names,[group.totalCell]:group.total};\n  for(const cell of Object.keys(wanted))if(!allowed.has(cell)||!Object.hasOwn(cells,cell))throw Error('Unread or unsupported product destination');\n  const safe=Object.entries(wanted).every(([cell,value])=>{\n   const live=cells[cell];if(live!==null&&typeof live==='object')return false;\n   return Object.hasOwn(ledger,cell)?live===ledger[cell]||live===value:live===''||live===null||live===value||(cell===group.totalCell&&live===0);\n  });\n  if(pending){\n   for(const cell of Object.keys(wanted)){\n    if(!Object.hasOwn(pending.expected,cell))continue;\n    const live=cells[cell],old=ledger[cell]??(cell===group.totalCell?0:'');\n    if(JSON.stringify(live)!==JSON.stringify(pending.expected[cell])&&live!==old)throw Error('Pending product plan conflicts with staff edit');\n   }\n   continue;\n  }\n  if(!safe){review.push({namesCell:group.namesCell,totalCell:group.totalCell,reason:'preserve_staff_product_edit'});continue;}\n  for(const [cell,value]of Object.entries(wanted)){\n   expected[cell]=value;lastWritten[cell]=value;\n   if(cells[cell]!==value)data.push({range:tab+cell,values:[[value]]});\n  }\n }\n return pending??{request:{valueInputOption:'RAW',data},lastWritten,expected,review,unitCount:source.rows.length};\n}\nfunction verifyProductWrites({plan,before,after,protectedBefore,protectedAfter}){\n if(JSON.stringify(protectedBefore)!==JSON.stringify(protectedAfter))throw Error('Product update changed seating, attendance or formulas');\n for(const [cell,value]of Object.entries(plan.expected))if(JSON.stringify(after[cell])!==JSON.stringify(value))throw Error('Product readback mismatch');\n for(const cell of Object.keys(before))if(!Object.hasOwn(plan.expected,cell)&&JSON.stringify(before[cell])!==JSON.stringify(after[cell]))throw Error('Unplanned product cell changed');\n return {productsVerified:true,protectedCellsUnchanged:true,unitCount:plan.unitCount,writeCount:plan.request.data.length,reviewCount:plan.review.length};\n}\nfunction chartProductState(document,target){\n const sheet=document.sheets?.find(s=>s.properties.sheetId===target.sheetId);\n if(sheet?.properties.title!==target.sheetName)throw Error('Wrong product chart tab');\n const matrix=Array.from({length:1000},()=>Array.from({length:29},()=>({})));\n for(const block of sheet.data??[])for(let r=0;r<(block.rowData?.length??0);r++)for(let c=0;c<(block.rowData[r].values?.length??0);c++){\n  const row=(block.startRow??0)+r,col=(block.startColumn??0)+c;if(row<1000&&col<29)matrix[row][col]=block.rowData[r].values[c]??{};\n }\n const scalar=c=>c.userEnteredValue?.formulaValue?{formulaValue:c.userEnteredValue.formulaValue}:c.userEnteredValue?.stringValue??c.userEnteredValue?.numberValue??c.userEnteredValue?.boolValue??'';\n if(String(scalar(matrix[4][17]))!==target.classId)throw Error('Product chart class ID header mismatch');\n const mapping=target.productMapping,cells={};\n for(const m of mapping)for(const cell of [m.namesCell,m.totalCell]){\n  const match=/^([JR])(\\d+)$/.exec(cell);if(!match)throw Error('Unsupported product anchor');\n  const row=Number(match[2])-1,col=match[1]==='J'?9:17;\n  cells[cell]=scalar(matrix[row][col]);\n  // Exclude only the six permitted literal values; their validation remains\n  // protected, as do all other seating, staff, formula and attendance cells.\n  matrix[row][col]={...matrix[row][col],userEnteredValue:undefined};\n }\n return {cells,protectedCells:matrix.map(row=>row.map(c=>[c.userEnteredValue??null,c.dataValidation??null]))};\n}\n\nconst rows=$input.all().map(i=>i.json);if(rows.length!==1)throw Error('One registered product target required');const t=rows[0].config;validateTarget(t);if(!rows[0].enabled||rows[0].studio_id!==1||t.studioId!==1||t.accountId!==1||t.googleAccountEmail!==\"pinotsstmatthews@gmail.com\"||t.masterSpreadsheetId!==\"1ktf-zV74f--JWaaPlrrtYgmbLVGI6ZJI9JdArrYootA\")throw Error('Wrong product studio or owner');return [{json:t}];"
+      }
+    },
+    {
+      "id": "product-4",
+      "name": "Load product studio mapping",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        920,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://hsosjnwjangtqtskofag.supabase.co/rest/v1/seating_chart_creation_settings?studio_id=eq.1&select=enabled,schedule_enabled,config",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "A32h7eKkq8JEdg0k",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "id": "product-5",
+      "name": "Require manual product mapping",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1150,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const rows=$input.all().map(i=>i.json);if(rows.length!==1||!rows[0].enabled||rows[0].schedule_enabled||rows[0].config.productReservations?.enabled!==true)throw Error('Product schedule or mapping not authorized');const target=$('Require registered STM class').first().json;const mapping=rows[0].config.productReservations.templates[String(target.templateSheetId??target.sheetId)];if(!Array.isArray(mapping)||mapping.length!==3)throw Error('Unmapped product template');return [{json:{...target,productMapping:mapping}}];"
+      }
+    },
+    {
+      "id": "product-6",
+      "name": "Collect current class products",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1380,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://studio-intelligence-production.up.railway.app/pts/class-products",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {accountId:$json.accountId,studioId:$json.studioId,classId:$json.classId,...($json.documentGroupId?{roomId:$json.sourceRoomId}:{})} }}",
+        "options": {
+          "timeout": 600000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "li7hEi0wisqrbFlP",
+          "name": "Studio Intelligence Collector"
+        }
+      }
+    },
+    {
+      "id": "product-7",
+      "name": "Verify complete product source",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1610,
+        0
+      ],
+      "parameters": {
+        "jsCode": "function validateTarget(target) {\n  const legacy=target?.sheetId===0&&target.sheetName==='Seating Chart Main';\n  const created=/^[a-f0-9-]{36}$/.test(target?.documentGroupId??'')&&[0,1955136908].includes(target.templateSheetId)&&target.sheetId===100000000+Number(target.classId)&&typeof target.sheetName==='string'&&target.sheetName.length<=100;\n  if (target?.studioCode !== 'STM' || target.isPrivate !== false || !(legacy||created)) {\n    throw Error('This refresh requires a registered St Matthews class tab');\n  }\n  if (!target.spreadsheetId || target.spreadsheetId === target.masterSpreadsheetId || !target.masterSpreadsheetId ||\n      !/^\\d+$/.test(target.classId) || !Number.isSafeInteger(target.rowLimit) || target.rowLimit < 1) {\n    throw Error('Missing verified pilot copy or class configuration');\n  }\n}\nfunction productSummary(source,mapping){\n if(source?.complete!==true||source.isPrivate!==false||!/^\\d+$/.test(source.classId??'')||!Array.isArray(source.rows)||source.rows.length!==source.expectedRowCount)throw Error('Incomplete class product source');\n if(!Array.isArray(mapping)||mapping.length!==3)throw Error('Verified three-box product mapping required');\n const seen=new Set(),groups=mapping.map(m=>({...m,customers:new Map(),total:0}));\n for(const unit of source.rows){\n  const key=unit.sourceOrderId+':'+unit.voucherCode;\n  if(!/^\\d+$/.test(unit.sourceOrderId??'')||!unit.voucherCode?.trim()||seen.has(key)||unit.classId!==source.classId||unit.status!=='Reserved'||typeof unit.customer!=='string'||!unit.customer.trim()||typeof unit.item!=='string')throw Error('Invalid or duplicate product unit');\n  seen.add(key);\n  const normalized=unit.item.replace(/\\s+/g,' ').trim();\n  const matches=groups.filter(g=>g.sourceNames.includes(normalized));\n  if(matches.length!==1)throw Error('Unmapped product; review source item before changing totals');\n  const group=matches[0],name=unit.customer.trim().replace(/\\s+/g,' '),identity=name.toLocaleLowerCase('en-US');\n  const existing=group.customers.get(identity)??{name,count:0};existing.count++;group.customers.set(identity,existing);group.total++;\n }\n return groups.map(g=>({namesCell:g.namesCell,totalCell:g.totalCell,total:g.total,names:[...g.customers.values()].sort((a,b)=>a.name.localeCompare(b.name,'en-US')).map(c=>`${c.name} (${c.count})`).join(', ')}));\n}\nfunction planProductWrites({source,mapping,sheetName,cells,ledger={},pending=null}){\n const groups=productSummary(source,mapping),lastWritten={...ledger},expected={},review=[],data=[],tab=\"'\"+sheetName.replace(/'/g,\"''\")+\"'!\";\n const allowed=new Set(['J19','R19','J20','R20','J21','R21','J23','R23','J24','R24','J25','R25']);\n if(new Set(groups.flatMap(g=>[g.namesCell,g.totalCell])).size!==6)throw Error('Product mapping overlaps');\n for(const group of groups){\n  const wanted={[group.namesCell]:group.names,[group.totalCell]:group.total};\n  for(const cell of Object.keys(wanted))if(!allowed.has(cell)||!Object.hasOwn(cells,cell))throw Error('Unread or unsupported product destination');\n  const safe=Object.entries(wanted).every(([cell,value])=>{\n   const live=cells[cell];if(live!==null&&typeof live==='object')return false;\n   return Object.hasOwn(ledger,cell)?live===ledger[cell]||live===value:live===''||live===null||live===value||(cell===group.totalCell&&live===0);\n  });\n  if(pending){\n   for(const cell of Object.keys(wanted)){\n    if(!Object.hasOwn(pending.expected,cell))continue;\n    const live=cells[cell],old=ledger[cell]??(cell===group.totalCell?0:'');\n    if(JSON.stringify(live)!==JSON.stringify(pending.expected[cell])&&live!==old)throw Error('Pending product plan conflicts with staff edit');\n   }\n   continue;\n  }\n  if(!safe){review.push({namesCell:group.namesCell,totalCell:group.totalCell,reason:'preserve_staff_product_edit'});continue;}\n  for(const [cell,value]of Object.entries(wanted)){\n   expected[cell]=value;lastWritten[cell]=value;\n   if(cells[cell]!==value)data.push({range:tab+cell,values:[[value]]});\n  }\n }\n return pending??{request:{valueInputOption:'RAW',data},lastWritten,expected,review,unitCount:source.rows.length};\n}\nfunction verifyProductWrites({plan,before,after,protectedBefore,protectedAfter}){\n if(JSON.stringify(protectedBefore)!==JSON.stringify(protectedAfter))throw Error('Product update changed seating, attendance or formulas');\n for(const [cell,value]of Object.entries(plan.expected))if(JSON.stringify(after[cell])!==JSON.stringify(value))throw Error('Product readback mismatch');\n for(const cell of Object.keys(before))if(!Object.hasOwn(plan.expected,cell)&&JSON.stringify(before[cell])!==JSON.stringify(after[cell]))throw Error('Unplanned product cell changed');\n return {productsVerified:true,protectedCellsUnchanged:true,unitCount:plan.unitCount,writeCount:plan.request.data.length,reviewCount:plan.review.length};\n}\nfunction chartProductState(document,target){\n const sheet=document.sheets?.find(s=>s.properties.sheetId===target.sheetId);\n if(sheet?.properties.title!==target.sheetName)throw Error('Wrong product chart tab');\n const matrix=Array.from({length:1000},()=>Array.from({length:29},()=>({})));\n for(const block of sheet.data??[])for(let r=0;r<(block.rowData?.length??0);r++)for(let c=0;c<(block.rowData[r].values?.length??0);c++){\n  const row=(block.startRow??0)+r,col=(block.startColumn??0)+c;if(row<1000&&col<29)matrix[row][col]=block.rowData[r].values[c]??{};\n }\n const scalar=c=>c.userEnteredValue?.formulaValue?{formulaValue:c.userEnteredValue.formulaValue}:c.userEnteredValue?.stringValue??c.userEnteredValue?.numberValue??c.userEnteredValue?.boolValue??'';\n if(String(scalar(matrix[4][17]))!==target.classId)throw Error('Product chart class ID header mismatch');\n const mapping=target.productMapping,cells={};\n for(const m of mapping)for(const cell of [m.namesCell,m.totalCell]){\n  const match=/^([JR])(\\d+)$/.exec(cell);if(!match)throw Error('Unsupported product anchor');\n  const row=Number(match[2])-1,col=match[1]==='J'?9:17;\n  cells[cell]=scalar(matrix[row][col]);\n  // Exclude only the six permitted literal values; their validation remains\n  // protected, as do all other seating, staff, formula and attendance cells.\n  matrix[row][col]={...matrix[row][col],userEnteredValue:undefined};\n }\n return {cells,protectedCells:matrix.map(row=>row.map(c=>[c.userEnteredValue??null,c.dataValidation??null]))};\n}\n\nconst p=$input.first().json,t=$('Require manual product mapping').first().json,s=p.source;if(p.success!==true||p.accountId!==t.accountId||p.studioId!==t.studioId||s?.classId!==t.classId||s.studioCode!==t.studioCode||s.details?.roomId!==t.sourceRoomId||s.details?.locationLabel!==t.sourceLocationLabel||!t.allowedClassTypeIds.includes(s.details?.classTypeId))throw Error('Wrong product class source');productSummary(s,t.productMapping);return [{json:s}];"
+      }
+    },
+    {
+      "id": "product-8",
+      "name": "Claim private product refresh",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1840,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://hsosjnwjangtqtskofag.supabase.co/rest/v1/rpc/claim_seating_product_refresh",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {p_target_id:$(\"Product run settings\").first().json.targetId,p_run_id:$(\"Product run settings\").first().json.runId,p_source:$json} }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "A32h7eKkq8JEdg0k",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "id": "product-9",
+      "name": "Require unfinished product run",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2070,
+        0
+      ],
+      "parameters": {
+        "jsCode": "if($input.first().json.completed)return [];return $input.all();"
+      }
+    },
+    {
+      "id": "product-10",
+      "name": "Check product Google identity",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2300,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "Fmbjd7IWMJeb4vZQ",
+          "name": "St Matthews Seating Charts — Google Drive"
+        }
+      }
+    },
+    {
+      "id": "product-11",
+      "name": "Require product Google identity",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2530,
+        0
+      ],
+      "parameters": {
+        "jsCode": "if($input.first().json.user?.emailAddress!==\"pinotsstmatthews@gmail.com\")throw Error('Wrong product Google account');return [{json:{verified:true}}];"
+      }
+    },
+    {
+      "id": "product-12",
+      "name": "Read product chart ownership",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2760,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://www.googleapis.com/drive/v3/files/{{ $('Claim private product refresh').first().json.target.spreadsheetId }}?fields=id,mimeType,owners(emailAddress),capabilities(canEdit)",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "Fmbjd7IWMJeb4vZQ",
+          "name": "St Matthews Seating Charts — Google Drive"
+        }
+      }
+    },
+    {
+      "id": "product-13",
+      "name": "Verify product chart ownership",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2990,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const t=$('Claim private product refresh').first().json.target,f=$input.first().json;if(f.id!==t.spreadsheetId||f.id===t.masterSpreadsheetId||f.mimeType!=='application/vnd.google-apps.spreadsheet'||f.capabilities?.canEdit!==true||!f.owners?.some(o=>o.emailAddress===t.googleAccountEmail))throw Error('Wrong product chart ownership');return [{json:{verified:true}}];"
+      }
+    },
+    {
+      "id": "product-14",
+      "name": "Read chart before products",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3220,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $('Claim private product refresh').first().json.target.spreadsheetId }}?ranges={{ encodeURIComponent(\"'\"+$('Claim private product refresh').first().json.target.sheetName.replace(/'/g,\"''\")+\"'!A1:AC1000\") }}&includeGridData=true&fields=spreadsheetId,sheets(properties(sheetId,title),data(startRow,startColumn,rowData(values(userEnteredValue,dataValidation))))",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "Fmbjd7IWMJeb4vZQ",
+          "name": "St Matthews Seating Charts — Google Drive"
+        }
+      }
+    },
+    {
+      "id": "product-15",
+      "name": "Prepare immutable product plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3450,
+        0
+      ],
+      "parameters": {
+        "jsCode": "function validateTarget(target) {\n  const legacy=target?.sheetId===0&&target.sheetName==='Seating Chart Main';\n  const created=/^[a-f0-9-]{36}$/.test(target?.documentGroupId??'')&&[0,1955136908].includes(target.templateSheetId)&&target.sheetId===100000000+Number(target.classId)&&typeof target.sheetName==='string'&&target.sheetName.length<=100;\n  if (target?.studioCode !== 'STM' || target.isPrivate !== false || !(legacy||created)) {\n    throw Error('This refresh requires a registered St Matthews class tab');\n  }\n  if (!target.spreadsheetId || target.spreadsheetId === target.masterSpreadsheetId || !target.masterSpreadsheetId ||\n      !/^\\d+$/.test(target.classId) || !Number.isSafeInteger(target.rowLimit) || target.rowLimit < 1) {\n    throw Error('Missing verified pilot copy or class configuration');\n  }\n}\nfunction productSummary(source,mapping){\n if(source?.complete!==true||source.isPrivate!==false||!/^\\d+$/.test(source.classId??'')||!Array.isArray(source.rows)||source.rows.length!==source.expectedRowCount)throw Error('Incomplete class product source');\n if(!Array.isArray(mapping)||mapping.length!==3)throw Error('Verified three-box product mapping required');\n const seen=new Set(),groups=mapping.map(m=>({...m,customers:new Map(),total:0}));\n for(const unit of source.rows){\n  const key=unit.sourceOrderId+':'+unit.voucherCode;\n  if(!/^\\d+$/.test(unit.sourceOrderId??'')||!unit.voucherCode?.trim()||seen.has(key)||unit.classId!==source.classId||unit.status!=='Reserved'||typeof unit.customer!=='string'||!unit.customer.trim()||typeof unit.item!=='string')throw Error('Invalid or duplicate product unit');\n  seen.add(key);\n  const normalized=unit.item.replace(/\\s+/g,' ').trim();\n  const matches=groups.filter(g=>g.sourceNames.includes(normalized));\n  if(matches.length!==1)throw Error('Unmapped product; review source item before changing totals');\n  const group=matches[0],name=unit.customer.trim().replace(/\\s+/g,' '),identity=name.toLocaleLowerCase('en-US');\n  const existing=group.customers.get(identity)??{name,count:0};existing.count++;group.customers.set(identity,existing);group.total++;\n }\n return groups.map(g=>({namesCell:g.namesCell,totalCell:g.totalCell,total:g.total,names:[...g.customers.values()].sort((a,b)=>a.name.localeCompare(b.name,'en-US')).map(c=>`${c.name} (${c.count})`).join(', ')}));\n}\nfunction planProductWrites({source,mapping,sheetName,cells,ledger={},pending=null}){\n const groups=productSummary(source,mapping),lastWritten={...ledger},expected={},review=[],data=[],tab=\"'\"+sheetName.replace(/'/g,\"''\")+\"'!\";\n const allowed=new Set(['J19','R19','J20','R20','J21','R21','J23','R23','J24','R24','J25','R25']);\n if(new Set(groups.flatMap(g=>[g.namesCell,g.totalCell])).size!==6)throw Error('Product mapping overlaps');\n for(const group of groups){\n  const wanted={[group.namesCell]:group.names,[group.totalCell]:group.total};\n  for(const cell of Object.keys(wanted))if(!allowed.has(cell)||!Object.hasOwn(cells,cell))throw Error('Unread or unsupported product destination');\n  const safe=Object.entries(wanted).every(([cell,value])=>{\n   const live=cells[cell];if(live!==null&&typeof live==='object')return false;\n   return Object.hasOwn(ledger,cell)?live===ledger[cell]||live===value:live===''||live===null||live===value||(cell===group.totalCell&&live===0);\n  });\n  if(pending){\n   for(const cell of Object.keys(wanted)){\n    if(!Object.hasOwn(pending.expected,cell))continue;\n    const live=cells[cell],old=ledger[cell]??(cell===group.totalCell?0:'');\n    if(JSON.stringify(live)!==JSON.stringify(pending.expected[cell])&&live!==old)throw Error('Pending product plan conflicts with staff edit');\n   }\n   continue;\n  }\n  if(!safe){review.push({namesCell:group.namesCell,totalCell:group.totalCell,reason:'preserve_staff_product_edit'});continue;}\n  for(const [cell,value]of Object.entries(wanted)){\n   expected[cell]=value;lastWritten[cell]=value;\n   if(cells[cell]!==value)data.push({range:tab+cell,values:[[value]]});\n  }\n }\n return pending??{request:{valueInputOption:'RAW',data},lastWritten,expected,review,unitCount:source.rows.length};\n}\nfunction verifyProductWrites({plan,before,after,protectedBefore,protectedAfter}){\n if(JSON.stringify(protectedBefore)!==JSON.stringify(protectedAfter))throw Error('Product update changed seating, attendance or formulas');\n for(const [cell,value]of Object.entries(plan.expected))if(JSON.stringify(after[cell])!==JSON.stringify(value))throw Error('Product readback mismatch');\n for(const cell of Object.keys(before))if(!Object.hasOwn(plan.expected,cell)&&JSON.stringify(before[cell])!==JSON.stringify(after[cell]))throw Error('Unplanned product cell changed');\n return {productsVerified:true,protectedCellsUnchanged:true,unitCount:plan.unitCount,writeCount:plan.request.data.length,reviewCount:plan.review.length};\n}\nfunction chartProductState(document,target){\n const sheet=document.sheets?.find(s=>s.properties.sheetId===target.sheetId);\n if(sheet?.properties.title!==target.sheetName)throw Error('Wrong product chart tab');\n const matrix=Array.from({length:1000},()=>Array.from({length:29},()=>({})));\n for(const block of sheet.data??[])for(let r=0;r<(block.rowData?.length??0);r++)for(let c=0;c<(block.rowData[r].values?.length??0);c++){\n  const row=(block.startRow??0)+r,col=(block.startColumn??0)+c;if(row<1000&&col<29)matrix[row][col]=block.rowData[r].values[c]??{};\n }\n const scalar=c=>c.userEnteredValue?.formulaValue?{formulaValue:c.userEnteredValue.formulaValue}:c.userEnteredValue?.stringValue??c.userEnteredValue?.numberValue??c.userEnteredValue?.boolValue??'';\n if(String(scalar(matrix[4][17]))!==target.classId)throw Error('Product chart class ID header mismatch');\n const mapping=target.productMapping,cells={};\n for(const m of mapping)for(const cell of [m.namesCell,m.totalCell]){\n  const match=/^([JR])(\\d+)$/.exec(cell);if(!match)throw Error('Unsupported product anchor');\n  const row=Number(match[2])-1,col=match[1]==='J'?9:17;\n  cells[cell]=scalar(matrix[row][col]);\n  // Exclude only the six permitted literal values; their validation remains\n  // protected, as do all other seating, staff, formula and attendance cells.\n  matrix[row][col]={...matrix[row][col],userEnteredValue:undefined};\n }\n return {cells,protectedCells:matrix.map(row=>row.map(c=>[c.userEnteredValue??null,c.dataValidation??null]))};\n}\n\nconst run=$('Claim private product refresh').first().json,state=chartProductState($input.first().json,run.target);const plan=planProductWrites({source:run.source,mapping:run.target.productMapping,sheetName:run.target.sheetName,cells:state.cells,ledger:run.ledger,pending:run.plan});return [{json:{plan,before:state}}];"
+      }
+    },
+    {
+      "id": "product-16",
+      "name": "Stage private product plan",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3680,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://hsosjnwjangtqtskofag.supabase.co/rest/v1/rpc/stage_seating_product_refresh",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {p_run_id:$(\"Product run settings\").first().json.runId,p_plan:$(\"Prepare immutable product plan\").first().json.plan} }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "A32h7eKkq8JEdg0k",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "id": "product-17",
+      "name": "Product changes exist",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3910,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "product-write",
+              "leftValue": "={{ $(\"Prepare immutable product plan\").first().json.plan.request.data.length > 0 }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "product-18",
+      "name": "Write mapped product cells",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4140,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $('Claim private product refresh').first().json.target.spreadsheetId }}/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $(\"Prepare immutable product plan\").first().json.plan.request }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "Fmbjd7IWMJeb4vZQ",
+          "name": "St Matthews Seating Charts — Google Drive"
+        }
+      }
+    },
+    {
+      "id": "product-19",
+      "name": "Read chart after products",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4370,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $('Claim private product refresh').first().json.target.spreadsheetId }}?ranges={{ encodeURIComponent(\"'\"+$('Claim private product refresh').first().json.target.sheetName.replace(/'/g,\"''\")+\"'!A1:AC1000\") }}&includeGridData=true&fields=spreadsheetId,sheets(properties(sheetId,title),data(startRow,startColumn,rowData(values(userEnteredValue,dataValidation))))",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "Fmbjd7IWMJeb4vZQ",
+          "name": "St Matthews Seating Charts — Google Drive"
+        }
+      }
+    },
+    {
+      "id": "product-20",
+      "name": "Verify products and protected cells",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4600,
+        0
+      ],
+      "parameters": {
+        "jsCode": "function validateTarget(target) {\n  const legacy=target?.sheetId===0&&target.sheetName==='Seating Chart Main';\n  const created=/^[a-f0-9-]{36}$/.test(target?.documentGroupId??'')&&[0,1955136908].includes(target.templateSheetId)&&target.sheetId===100000000+Number(target.classId)&&typeof target.sheetName==='string'&&target.sheetName.length<=100;\n  if (target?.studioCode !== 'STM' || target.isPrivate !== false || !(legacy||created)) {\n    throw Error('This refresh requires a registered St Matthews class tab');\n  }\n  if (!target.spreadsheetId || target.spreadsheetId === target.masterSpreadsheetId || !target.masterSpreadsheetId ||\n      !/^\\d+$/.test(target.classId) || !Number.isSafeInteger(target.rowLimit) || target.rowLimit < 1) {\n    throw Error('Missing verified pilot copy or class configuration');\n  }\n}\nfunction productSummary(source,mapping){\n if(source?.complete!==true||source.isPrivate!==false||!/^\\d+$/.test(source.classId??'')||!Array.isArray(source.rows)||source.rows.length!==source.expectedRowCount)throw Error('Incomplete class product source');\n if(!Array.isArray(mapping)||mapping.length!==3)throw Error('Verified three-box product mapping required');\n const seen=new Set(),groups=mapping.map(m=>({...m,customers:new Map(),total:0}));\n for(const unit of source.rows){\n  const key=unit.sourceOrderId+':'+unit.voucherCode;\n  if(!/^\\d+$/.test(unit.sourceOrderId??'')||!unit.voucherCode?.trim()||seen.has(key)||unit.classId!==source.classId||unit.status!=='Reserved'||typeof unit.customer!=='string'||!unit.customer.trim()||typeof unit.item!=='string')throw Error('Invalid or duplicate product unit');\n  seen.add(key);\n  const normalized=unit.item.replace(/\\s+/g,' ').trim();\n  const matches=groups.filter(g=>g.sourceNames.includes(normalized));\n  if(matches.length!==1)throw Error('Unmapped product; review source item before changing totals');\n  const group=matches[0],name=unit.customer.trim().replace(/\\s+/g,' '),identity=name.toLocaleLowerCase('en-US');\n  const existing=group.customers.get(identity)??{name,count:0};existing.count++;group.customers.set(identity,existing);group.total++;\n }\n return groups.map(g=>({namesCell:g.namesCell,totalCell:g.totalCell,total:g.total,names:[...g.customers.values()].sort((a,b)=>a.name.localeCompare(b.name,'en-US')).map(c=>`${c.name} (${c.count})`).join(', ')}));\n}\nfunction planProductWrites({source,mapping,sheetName,cells,ledger={},pending=null}){\n const groups=productSummary(source,mapping),lastWritten={...ledger},expected={},review=[],data=[],tab=\"'\"+sheetName.replace(/'/g,\"''\")+\"'!\";\n const allowed=new Set(['J19','R19','J20','R20','J21','R21','J23','R23','J24','R24','J25','R25']);\n if(new Set(groups.flatMap(g=>[g.namesCell,g.totalCell])).size!==6)throw Error('Product mapping overlaps');\n for(const group of groups){\n  const wanted={[group.namesCell]:group.names,[group.totalCell]:group.total};\n  for(const cell of Object.keys(wanted))if(!allowed.has(cell)||!Object.hasOwn(cells,cell))throw Error('Unread or unsupported product destination');\n  const safe=Object.entries(wanted).every(([cell,value])=>{\n   const live=cells[cell];if(live!==null&&typeof live==='object')return false;\n   return Object.hasOwn(ledger,cell)?live===ledger[cell]||live===value:live===''||live===null||live===value||(cell===group.totalCell&&live===0);\n  });\n  if(pending){\n   for(const cell of Object.keys(wanted)){\n    if(!Object.hasOwn(pending.expected,cell))continue;\n    const live=cells[cell],old=ledger[cell]??(cell===group.totalCell?0:'');\n    if(JSON.stringify(live)!==JSON.stringify(pending.expected[cell])&&live!==old)throw Error('Pending product plan conflicts with staff edit');\n   }\n   continue;\n  }\n  if(!safe){review.push({namesCell:group.namesCell,totalCell:group.totalCell,reason:'preserve_staff_product_edit'});continue;}\n  for(const [cell,value]of Object.entries(wanted)){\n   expected[cell]=value;lastWritten[cell]=value;\n   if(cells[cell]!==value)data.push({range:tab+cell,values:[[value]]});\n  }\n }\n return pending??{request:{valueInputOption:'RAW',data},lastWritten,expected,review,unitCount:source.rows.length};\n}\nfunction verifyProductWrites({plan,before,after,protectedBefore,protectedAfter}){\n if(JSON.stringify(protectedBefore)!==JSON.stringify(protectedAfter))throw Error('Product update changed seating, attendance or formulas');\n for(const [cell,value]of Object.entries(plan.expected))if(JSON.stringify(after[cell])!==JSON.stringify(value))throw Error('Product readback mismatch');\n for(const cell of Object.keys(before))if(!Object.hasOwn(plan.expected,cell)&&JSON.stringify(before[cell])!==JSON.stringify(after[cell]))throw Error('Unplanned product cell changed');\n return {productsVerified:true,protectedCellsUnchanged:true,unitCount:plan.unitCount,writeCount:plan.request.data.length,reviewCount:plan.review.length};\n}\nfunction chartProductState(document,target){\n const sheet=document.sheets?.find(s=>s.properties.sheetId===target.sheetId);\n if(sheet?.properties.title!==target.sheetName)throw Error('Wrong product chart tab');\n const matrix=Array.from({length:1000},()=>Array.from({length:29},()=>({})));\n for(const block of sheet.data??[])for(let r=0;r<(block.rowData?.length??0);r++)for(let c=0;c<(block.rowData[r].values?.length??0);c++){\n  const row=(block.startRow??0)+r,col=(block.startColumn??0)+c;if(row<1000&&col<29)matrix[row][col]=block.rowData[r].values[c]??{};\n }\n const scalar=c=>c.userEnteredValue?.formulaValue?{formulaValue:c.userEnteredValue.formulaValue}:c.userEnteredValue?.stringValue??c.userEnteredValue?.numberValue??c.userEnteredValue?.boolValue??'';\n if(String(scalar(matrix[4][17]))!==target.classId)throw Error('Product chart class ID header mismatch');\n const mapping=target.productMapping,cells={};\n for(const m of mapping)for(const cell of [m.namesCell,m.totalCell]){\n  const match=/^([JR])(\\d+)$/.exec(cell);if(!match)throw Error('Unsupported product anchor');\n  const row=Number(match[2])-1,col=match[1]==='J'?9:17;\n  cells[cell]=scalar(matrix[row][col]);\n  // Exclude only the six permitted literal values; their validation remains\n  // protected, as do all other seating, staff, formula and attendance cells.\n  matrix[row][col]={...matrix[row][col],userEnteredValue:undefined};\n }\n return {cells,protectedCells:matrix.map(row=>row.map(c=>[c.userEnteredValue??null,c.dataValidation??null]))};\n}\n\nconst run=$('Claim private product refresh').first().json,after=chartProductState($input.first().json,run.target),p=$('Prepare immutable product plan').first().json;return [{json:verifyProductWrites({plan:p.plan,before:p.before.cells,after:after.cells,protectedBefore:p.before.protectedCells,protectedAfter:after.protectedCells})}];"
+      }
+    },
+    {
+      "id": "product-21",
+      "name": "Complete private product refresh",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4830,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://hsosjnwjangtqtskofag.supabase.co/rest/v1/rpc/complete_seating_product_refresh",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {p_run_id:$(\"Product run settings\").first().json.runId,p_result:$json} }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "A32h7eKkq8JEdg0k",
+          "name": "Supabase account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Product refresh input": {
+      "main": [
+        [
+          {
+            "node": "Product run settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Product run settings": {
+      "main": [
+        [
+          {
+            "node": "Load registered class",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load registered class": {
+      "main": [
+        [
+          {
+            "node": "Require registered STM class",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Require registered STM class": {
+      "main": [
+        [
+          {
+            "node": "Load product studio mapping",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load product studio mapping": {
+      "main": [
+        [
+          {
+            "node": "Require manual product mapping",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Require manual product mapping": {
+      "main": [
+        [
+          {
+            "node": "Collect current class products",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect current class products": {
+      "main": [
+        [
+          {
+            "node": "Verify complete product source",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify complete product source": {
+      "main": [
+        [
+          {
+            "node": "Claim private product refresh",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claim private product refresh": {
+      "main": [
+        [
+          {
+            "node": "Require unfinished product run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Require unfinished product run": {
+      "main": [
+        [
+          {
+            "node": "Check product Google identity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check product Google identity": {
+      "main": [
+        [
+          {
+            "node": "Require product Google identity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Require product Google identity": {
+      "main": [
+        [
+          {
+            "node": "Read product chart ownership",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read product chart ownership": {
+      "main": [
+        [
+          {
+            "node": "Verify product chart ownership",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify product chart ownership": {
+      "main": [
+        [
+          {
+            "node": "Read chart before products",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read chart before products": {
+      "main": [
+        [
+          {
+            "node": "Prepare immutable product plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare immutable product plan": {
+      "main": [
+        [
+          {
+            "node": "Stage private product plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stage private product plan": {
+      "main": [
+        [
+          {
+            "node": "Product changes exist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Product changes exist": {
+      "main": [
+        [
+          {
+            "node": "Write mapped product cells",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Read chart after products",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write mapped product cells": {
+      "main": [
+        [
+          {
+            "node": "Read chart after products",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read chart after products": {
+      "main": [
+        [
+          {
+            "node": "Verify products and protected cells",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify products and protected cells": {
+      "main": [
+        [
+          {
+            "node": "Complete private product refresh",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/New_York",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "none",
+    "saveManualExecutions": false
+  }
+}
