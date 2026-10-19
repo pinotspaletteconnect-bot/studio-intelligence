@@ -3,13 +3,14 @@
 // Dedicated fail-closed binding to the existing PTS login. No new credentials,
 // credential rotation, or changes to the existing production collectors.
 function createRosterSessionResolver({ chromium, resolveAccount, env = process.env }) {
-  return async ({ accountId, studioId, classId,roomId }) => {
+  return async ({ accountId, studioId, classId,roomId,classTypeId }) => {
     if (!env.PTS_SEATING_ACCOUNT_ID || String(accountId) !== env.PTS_SEATING_ACCOUNT_ID || !env.PTS_SEATING_STUDIOS_JSON) {
       throw Error('Seating source account is not configured');
     }
     const studios = JSON.parse(env.PTS_SEATING_STUDIOS_JSON);
     if (!Array.isArray(studios) || studios.filter(s => s.studioId === studioId).length !== 1) throw Error('Studio is outside the configured seating account');
     const studio = studios.find(s => s.studioId === studioId);
+    if(classTypeId!==undefined&&(typeof classTypeId!=='string'||!/^\d+$/.test(classTypeId)))throw Error('Invalid expected class type');
     if(roomId!==undefined&&!(studio.sourceRoomIds??[studio.sourceRoomId]).includes(roomId))throw Error('Room outside configured seating scope');
     if (!studio.studioCode || !studio.sourceLocationLabel || !studio.sourceRoomId || !studio.allowedClassTypeIds?.length || typeof resolveAccount !== 'function') {
       throw Error('Missing verified source configuration');
@@ -37,7 +38,11 @@ function createRosterSessionResolver({ chromium, resolveAccount, env = process.e
         page.getByRole('button', { name: 'Sign In' }).click(),
       ]);
       return { page, target: { ...studio, sourceLocationId:mapping.locationId, timeZone:mapping.timeZone,
-        ...(roomId!==undefined?{sourceRoomId:roomId}:{}), accountId, studioId, classId: String(classId) }, close: () => browser.close() };
+        ...(roomId!==undefined?{sourceRoomId:roomId}:{}),
+        // n8n obtains the expected type from the registered warehouse target.
+        // It is verified against the actual class, never used to change it.
+        ...(classTypeId!==undefined?{allowedClassTypeIds:[classTypeId]}:{}),
+        accountId, studioId, classId: String(classId) }, close: () => browser.close() };
     } catch { await browser.close(); throw Object.assign(new Error('Source login failed'), { sourceStage: 'source-login' }); }
   };
 }

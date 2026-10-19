@@ -60,7 +60,7 @@ const record=items[0], target=record.config; validateTarget(target);
 if(!record.enabled||record.studio_id!==target.studioId||target.googleAccountEmail!==${JSON.stringify(studio.googleAccountEmail)}||target.masterSpreadsheetId!==${JSON.stringify(studio.masterSpreadsheetId)}||!Number.isSafeInteger(target.accountId))throw Error('Warehouse source/account configuration mismatch');
 return [{json:target}];`);
   http('Collect class reservations', 'collector', 'POST', `${collectorUrl}/pts/class-roster`,
-    '={{ {accountId:$json.accountId,studioId:$json.studioId,classId:$json.classId,...($json.documentGroupId?{roomId:$json.sourceRoomId}:{})} }}');
+    '={{ {accountId:$json.accountId,studioId:$json.studioId,classId:$json.classId,...($json.documentGroupId?{roomId:$json.sourceRoomId,classTypeId:$json.allowedClassTypeIds[0]}:{})} }}');
   code('Validate and identify source seats', `${identityLibrary}
 const payload=$input.first().json,target=$('Validate STM pilot target').first().json;
 if(payload.success!==true||payload.accountId!==target.accountId||payload.studioId!==target.studioId||payload.source?.classId!==target.classId||payload.source?.studioCode!==target.studioCode)throw Error('Wrong or incomplete source account/class');

@@ -33,7 +33,7 @@ async function readClass(page, classId) {
       paintingSummary: document.querySelector('#PaintingTitleId')?.textContent.trim(),
       roomLabel: document.querySelector('#RoomId option:checked')?.textContent.trim(),
       isPublished: document.querySelector('#IsPublished')?.checked,
-      privateParty: document.querySelector('#ClassTypeId option:checked')?.textContent.trim()==='Private Party'?{
+      privateParty: ['Private Party','Mobile Party'].includes(document.querySelector('#ClassTypeId option:checked')?.textContent.trim())?{
         eventName:document.querySelector('#PartyName')?.value,
         partyType:document.querySelector('#PartyTypesId option:checked')?.textContent.trim(),
         hostName:[document.querySelector('#PrivatePartyOrganizer_FirstName')?.value,document.querySelector('#PrivatePartyOrganizer_LastName')?.value].filter(Boolean).join(' '),
@@ -70,7 +70,12 @@ function assertClass(details, target) {
   if (details.locationLabel !== target.sourceLocationLabel ||
       details.roomId !== target.sourceRoomId ||
       !target.allowedClassTypeIds?.includes(details.classTypeId) ||
-      details.classTypeLabel !== 'Regular' || !Number.isSafeInteger(details.reservedCount) || details.reservedCount < 0) {
+      // Native party/holiday kinds never have a class seating roster. Other
+      // class eligibility is configured in the warehouse and sent as the
+      // expected type by n8n; the actual source must match it exactly.
+      ['200','300','500'].includes(details.classTypeId) || !details.classTypeLabel ||
+      ['Private Party','Mobile Party','Holiday'].includes(details.classTypeLabel) ||
+      !Number.isSafeInteger(details.reservedCount) || details.reservedCount < 0) {
     throw Error('Class location, public class type or reserved count could not be verified');
   }
 }
