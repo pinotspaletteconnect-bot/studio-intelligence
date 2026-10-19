@@ -24,6 +24,7 @@ function buildReservationWorkflow({ studio, supabaseUrl, collectorUrl, targetId 
   };
   const rpc = (name, fn, body) => http(name, 'warehouse', 'POST', `${supabaseUrl}/rest/v1/rpc/${fn}`, body);
   const library = refreshLibrary();
+  const staffLibrary = fs.readFileSync(path.join(__dirname,'staff-writes.cjs'),'utf8').replace(/^'use strict';\s*/m,'').replace(/^module\.exports = .*;\s*$/m,'');
   const identityLibrary = ['seating-source.cjs','source-identity.cjs'].map(file => fs.readFileSync(path.join(__dirname,file),'utf8')
     .replace(/^'use strict';\s*/m,'').replace(/^const \{ normalizeSeatingTable \} = require\(.*\);\s*/m,'').replace(/^module\.exports = .*;\s*$/m,'')).join('\n');
   const cells = `const run=$('Claim warehouse refresh').first().json;
@@ -36,7 +37,13 @@ if(String(classCell?.stringValue??classCell?.numberValue??'')!==target.classId)t
 if(!grid)throw Error('Missing bounded chart read');
 const cells=Array.from({length:target.rowLimit},(_,i)=>Array.from({length:10},(_,j)=>{const v=grid.rowData?.[i]?.values?.[j]?.userEnteredValue;
 return v?.formulaValue?{formulaValue:v.formulaValue}:v?.stringValue??v?.numberValue??v?.boolValue??'';}));`;
-  const readUrl = `=https://sheets.googleapis.com/v4/spreadsheets/{{ $('Claim warehouse refresh').first().json.target.spreadsheetId }}?ranges={{ encodeURIComponent("'Seating Chart Main'!T1:AC"+$('Claim warehouse refresh').first().json.target.rowLimit) }}&ranges={{ encodeURIComponent("'Seating Chart Main'!R5") }}&includeGridData=true&fields=spreadsheetId,sheets(properties(sheetId,title,gridProperties(rowCount,columnCount)),data(startRow,startColumn,rowData(values(userEnteredValue,dataValidation))))`;
+  const staffCells = `const staffCells={};if(target.staffUpdatesEnabled){
+for(const [cell,row,column] of [['D5',4,3],['D6',5,3],['D7',6,3],['G6',5,6],['G7',6,6]]){
+const block=sheet.data?.find(d=>d.startRow=== (column===3?4:5) && d.startColumn===column);
+if(!block)throw Error('Missing staff header range');
+const value=block.rowData?.[row-block.startRow]?.values?.[0]?.userEnteredValue;
+staffCells[cell]=value?.formulaValue?{formulaValue:value.formulaValue}:value?.stringValue??value?.numberValue??value?.boolValue??'';}}`;
+  const readUrl = `=https://sheets.googleapis.com/v4/spreadsheets/{{ $('Claim warehouse refresh').first().json.target.spreadsheetId }}?ranges={{ encodeURIComponent("'Seating Chart Main'!T1:AC"+$('Claim warehouse refresh').first().json.target.rowLimit) }}&ranges={{ encodeURIComponent("'Seating Chart Main'!R5") }}&ranges={{ encodeURIComponent("'Seating Chart Main'!D5:D7") }}&ranges={{ encodeURIComponent("'Seating Chart Main'!G6:G7") }}&includeGridData=true&fields=spreadsheetId,sheets(properties(sheetId,title,gridProperties(rowCount,columnCount)),data(startRow,startColumn,rowData(values(userEnteredValue,dataValidation))))`;
   add('Manual STM reservation refresh', 'n8n-nodes-base.manualTrigger', {});
   code('Pilot run settings', `const targetId=${JSON.stringify(targetId)};
 if(!/^[a-f0-9-]{36}$/.test(targetId||''))throw Error('Pilot deployment pending: register the approved warehouse target first');
@@ -55,7 +62,8 @@ if(payload.success!==true||payload.accountId!==target.accountId||payload.studioI
 const raw=payload.source;
 if(raw.details?.locationLabel!==target.sourceLocationLabel||raw.details?.roomId!==target.sourceRoomId||!target.allowedClassTypeIds?.includes(raw.details?.classTypeId))throw Error('Source room/type/location configuration mismatch');
 const rows=identifyReservations(raw);
-return [{json:{classId:raw.classId,studioCode:raw.studioCode,isPrivate:false,complete:true,expectedRowCount:rows.length,retrievedAt:raw.retrievedAt,rows}}];`);
+return [{json:{classId:raw.classId,studioCode:raw.studioCode,isPrivate:false,complete:true,expectedRowCount:rows.length,retrievedAt:raw.retrievedAt,rows,
+...(target.staffUpdatesEnabled?{assignedStaff:raw.details.assignedStaff}:{})}}];`);
   rpc('Claim warehouse refresh','claim_seating_chart_refresh', '={{ {p_target_id:$("Pilot run settings").first().json.targetId,p_run_id:$("Pilot run settings").first().json.runId,p_source:$json} }}');
   code('Require unfinished refresh', 'if($input.first().json.completed)return [];return $input.all();');
   http('Verify studio Google identity','google','GET','https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)');
@@ -64,8 +72,13 @@ return [{json:{classId:raw.classId,studioCode:raw.studioCode,isPrivate:false,com
   code('Require studio-owned chart copy', `const target=$('Claim warehouse refresh').first().json.target,file=$input.first().json;
 if(file.id!==target.spreadsheetId||file.id===target.masterSpreadsheetId||file.mimeType!=='application/vnd.google-apps.spreadsheet'||file.capabilities?.canEdit!==true||!file.owners?.some(o=>o.emailAddress===target.googleAccountEmail))throw Error('Chart ownership or edit permission mismatch');return [{json:{verified:true}}];`);
   http('Read chart before refresh','google','GET',readUrl);
-  code('Prepare immutable reservation plan', `${library}\n${cells}
-const plan=prepareRun(run,cells);return [{json:{plan,before:cells}}];`);
+  code('Prepare immutable reservation plan', `${library}\n${staffLibrary}\n${cells}\n${staffCells}
+const plan=prepareRun(run,cells);
+if(target.staffUpdatesEnabled){
+const staff=planStaffRefresh({source:run.source.assignedStaff,sheetName:target.sheetName,cells:staffCells,ledger:run.staffLedger??{},pending:run.plan?.staff});
+if(!run.plan){plan.staff=staff;plan.request.data.push(...staff.data);}
+}
+return [{json:{plan,before:cells}}];`);
   rpc('Stage warehouse plan','stage_seating_chart_refresh', '={{ {p_run_id:$("Pilot run settings").first().json.runId,p_plan:$("Prepare immutable reservation plan").first().json.plan} }}');
   add('Reservation changes exist','n8n-nodes-base.if',{conditions:{options:{caseSensitive:true,leftValue:'',typeValidation:'strict',version:2},combinator:'and',conditions:[{
     id:'reservation-write-needed',leftValue:'={{ $("Prepare immutable reservation plan").first().json.plan.request.data.length > 0 }}',rightValue:true,
@@ -73,9 +86,12 @@ const plan=prepareRun(run,cells);return [{json:{plan,before:cells}}];`);
   http('Write only reservation columns','google','POST',`=https://sheets.googleapis.com/v4/spreadsheets/{{ $('Claim warehouse refresh').first().json.target.spreadsheetId }}/values:batchUpdate`,
     '={{ $("Prepare immutable reservation plan").first().json.plan.request }}');
   http('Read chart after refresh','google','GET',readUrl);
-  code('Verify reservations and protected staff cells',`${library}\n${cells}
+  code('Verify reservations and protected staff cells',`${library}\n${staffLibrary}\n${cells}\n${staffCells}
 const prepared=$('Prepare immutable reservation plan').first().json;
-const result=verifyReadback({target,before:prepared.before,after:cells,plan:prepared.plan});return [{json:result}];`);
+const result=verifyReadback({target,before:prepared.before,after:cells,plan:prepared.plan});
+if(target.staffUpdatesEnabled){Object.assign(result,verifyStaffReadback(prepared.plan.staff,staffCells));
+result.reviewCount+=result.staffReviewCount;if(result.reviewCount)result.status='updated-needs-review';}
+return [{json:result}];`);
   rpc('Complete verified warehouse refresh','complete_seating_chart_refresh','={{ {p_run_id:$("Pilot run settings").first().json.runId,p_result:$json} }}');
   nodes.forEach((node,i)=>{if(i+1<nodes.length)connections[node.name]={main:[[{node:nodes[i+1].name,type:'main',index:0}]]};});
   connections['Reservation changes exist']={main:[[{node:'Write only reservation columns',type:'main',index:0}],[{node:'Read chart after refresh',type:'main',index:0}]]};

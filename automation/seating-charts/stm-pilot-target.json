@@ -16,5 +16,6 @@
   "sourceRoomId": "21",
   "allowedClassTypeIds": [
     "100"
-  ]
+  ],
+  "staffUpdatesEnabled": true
 }

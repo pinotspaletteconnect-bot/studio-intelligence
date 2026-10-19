@@ -1,7 +1,10 @@
 {
   "status": "draft-not-connected",
   "automationFolderName": "Seating Charts",
-  "eventDocuments": { "class": "seating-chart", "privateParty": "private-party-form" },
+  "eventDocuments": {
+    "class": "seating-chart",
+    "privateParty": "private-party-form"
+  },
   "overnightLocalTime": null,
   "studios": [
     {
@@ -12,13 +15,21 @@
       "googleAccountEmail": "pinotsstmatthews@gmail.com",
       "sourceLocationLabel": "Matthews",
       "sourceRoomId": "21",
-      "allowedClassTypeIds": ["100"],
+      "allowedClassTypeIds": [
+        "100"
+      ],
       "n8nGoogleCredentialRef": "Fmbjd7IWMJeb4vZQ",
       "destinationFolderId": "1-WqB2lVbK6e1j6Y0mCojZjPoCvmaJ4L7",
       "masterSpreadsheetId": "1ktf-zV74f--JWaaPlrrtYgmbLVGI6ZJI9JdArrYootA",
       "rooms": {
-        "Main Studio": { "label": "Main", "templateSheetId": 0 },
-        "King Louie Private Room": { "label": "KLR", "templateSheetId": 1955136908 }
+        "Main Studio": {
+          "label": "Main",
+          "templateSheetId": 0
+        },
+        "King Louie Private Room": {
+          "label": "KLR",
+          "templateSheetId": 1955136908
+        }
       },
       "importStartCell": "V1",
       "importHasHeader": false,
@@ -31,7 +42,11 @@
         "purchaserPhone": "AA",
         "comments": "AC"
       },
-      "preserveColumns": { "T": "manual seat numbers", "U": "guest label formulas", "AB": "attendance / Checked In" },
+      "preserveColumns": {
+        "T": "manual seat numbers",
+        "U": "guest label formulas",
+        "AB": "attendance / Checked In"
+      },
       "privatePartyFormMapping": {
         "sheetId": 1452226892,
         "sheetName": "Private Party",
@@ -46,9 +61,27 @@
         },
         "preserveStaffEdits": true,
         "unverifiedDetails": "review-without-guessing"
+      },
+      "staffHeaderMapping": {
+        "stage": "D5",
+        "floor": [
+          "D6",
+          "D7"
+        ],
+        "onCall": [
+          "G6",
+          "G7"
+        ]
       }
     },
-    { "studioCode": "SN", "timeZone": "America/New_York", "masterSpreadsheetId": null, "googleAccountEmail": null, "n8nGoogleCredentialRef": null, "destinationFolderId": null },
+    {
+      "studioCode": "SN",
+      "timeZone": "America/New_York",
+      "masterSpreadsheetId": null,
+      "googleAccountEmail": null,
+      "n8nGoogleCredentialRef": null,
+      "destinationFolderId": null
+    },
     {
       "studioCode": "JEF",
       "timeZone": "America/New_York",
@@ -58,14 +91,25 @@
       "destinationFolderId": null,
       "inspectionAccess": "signed-in-studio-browser; connector-permission-denied",
       "sheetTemplates": {
-        "main": { "sheetId": 0, "sheetName": "1_SC_Main" },
-        "riverside": { "sheetId": 114549077, "sheetName": "2_SC_Riverside Room" },
-        "privateParty": { "sheetId": 735735840, "sheetName": "3_Private P." }
+        "main": {
+          "sheetId": 0,
+          "sheetName": "1_SC_Main"
+        },
+        "riverside": {
+          "sheetId": 114549077,
+          "sheetName": "2_SC_Riverside Room"
+        },
+        "privateParty": {
+          "sheetId": 735735840,
+          "sheetName": "3_Private P."
+        }
       },
       "sourceRoomMapping": null,
       "importStartCell": "AB2",
       "importHasHeader": true,
-      "fieldMapping": { "perks": "AB" },
+      "fieldMapping": {
+        "perks": "AB"
+      },
       "fieldMappingStatus": "partial",
       "privatePartyFormMapping": null
     },
@@ -77,18 +121,42 @@
       "n8nGoogleCredentialRef": null,
       "destinationFolderId": null,
       "sheetTemplates": {
-        "main": { "sheetId": 0, "sheetName": "1. SC_Main", "rowCount": 711, "columnCount": 41 },
-        "reserva": { "sheetId": 517262747, "sheetName": "2. SC_Reserva", "rowCount": 1009, "columnCount": 52 },
-        "privateParty": { "sheetId": 735735840, "sheetName": "3. SC_Private Party", "rowCount": 1007, "columnCount": 25 }
+        "main": {
+          "sheetId": 0,
+          "sheetName": "1. SC_Main",
+          "rowCount": 711,
+          "columnCount": 41
+        },
+        "reserva": {
+          "sheetId": 517262747,
+          "sheetName": "2. SC_Reserva",
+          "rowCount": 1009,
+          "columnCount": 52
+        },
+        "privateParty": {
+          "sheetId": 735735840,
+          "sheetName": "3. SC_Private Party",
+          "rowCount": 1007,
+          "columnCount": 25
+        }
       },
       "sourceRoomMapping": null,
       "observedImportHeaderRow": 1,
       "importStartCell": null,
       "fieldMapping": {
-        "perks": "V", "guest": "W", "guestEmail": "X", "purchaser": "Y",
-        "purchaserEmail": "Z", "purchaserPhone": "AA", "comments": "AC"
+        "perks": "V",
+        "guest": "W",
+        "guestEmail": "X",
+        "purchaser": "Y",
+        "purchaserEmail": "Z",
+        "purchaserPhone": "AA",
+        "comments": "AC"
       },
-      "preserveColumns": { "T": "manual seat numbers", "U": "guest label formulas", "AB": "attendance / Checked In" },
+      "preserveColumns": {
+        "T": "manual seat numbers",
+        "U": "guest label formulas",
+        "AB": "attendance / Checked In"
+      },
       "privatePartyFormMapping": null
     }
   ]
