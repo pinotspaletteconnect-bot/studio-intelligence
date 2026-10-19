@@ -12,7 +12,7 @@ function createClassRosterRouter({ resolveSession, collect = collectClassRoster,
   const router = express.Router();
   router.post('/', requireCollectorAuth, async (req, res) => {
     if (!/^\d+$/.test(String(req.body?.classId ?? '')) || !Number.isSafeInteger(req.body?.studioId) ||
-        !Number.isSafeInteger(req.body?.accountId) || Object.keys(req.body).some(k => !['classId', 'studioId', 'accountId'].includes(k))) {
+        !Number.isSafeInteger(req.body?.accountId) || (req.body.roomId!==undefined&&!/^\d+$/.test(req.body.roomId)) || Object.keys(req.body).some(k => !['classId', 'studioId', 'accountId','roomId'].includes(k))) {
       return res.status(400).json({ success: false, error: 'Invalid class source request' });
     }
     return runQueued(req.body.accountId, async () => {

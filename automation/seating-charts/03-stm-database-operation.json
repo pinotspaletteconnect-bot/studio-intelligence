@@ -1,5 +1,5 @@
 {
-  "name": "03 - Seating Charts - STM database pilot-audit",
+  "name": "03 - Seating Charts - STM database creation-audit",
   "active": false,
   "nodes": [
     {
@@ -24,7 +24,7 @@
       ],
       "parameters": {
         "operation": "executeQuery",
-        "query": "-- Read-only pilot summary; never returns guest contact data.\nselect t.id as target_id,t.studio_id,t.enabled,t.revision,t.config->'staffUpdatesEnabled' as staff_enabled,\n  jsonb_array_length(t.ledger) as ledger_count,t.lease_run_id,\n  r.run_id,r.status,jsonb_array_length(r.source->'rows') as source_count,\n  jsonb_array_length(r.plan->'request'->'data') as write_range_count,r.result\nfrom public.seating_chart_targets t\nleft join public.seating_chart_refresh_runs r on r.target_id=t.id\nwhere t.studio_id=1 and t.config->>'classId'='931955'\norder by r.created_at;\n",
+        "query": "-- Read-only metadata; no guest or host contact data.\nselect s.studio_id,s.enabled,s.schedule_enabled,\n coalesce((select jsonb_agg(jsonb_build_object('group_id',w.id,'state',w.state,'file_id',w.file_id,\n 'event_count',(select count(*)from public.seating_chart_workbook_events d where d.workbook_id=w.id),\n 'private_count',(select count(*)from public.seating_chart_workbook_events d where d.workbook_id=w.id and d.is_private),\n 'target_count',(select count(*)from public.seating_chart_targets t where t.workbook_id=w.id),\n 'lease_held',w.lease_run_id is not null,'result',w.result))from public.seating_chart_workbooks w where w.studio_id=s.studio_id),'[]')as workbooks\nfrom public.seating_chart_creation_settings s where s.studio_id=1;\n",
         "options": {
           "queryBatching": "single",
           "connectionTimeout": 30

@@ -10,8 +10,10 @@ const valuesOf = row => FIELDS.map(key => {
 });
 
 function validateTarget(target) {
-  if (target?.studioCode !== 'STM' || target.isPrivate !== false || target.sheetId !== 0 || target.sheetName !== 'Seating Chart Main') {
-    throw Error('This pilot supports verified St Matthews Main classes only');
+  const legacy=target?.sheetId===0&&target.sheetName==='Seating Chart Main';
+  const created=/^[a-f0-9-]{36}$/.test(target?.documentGroupId??'')&&[0,1955136908].includes(target.templateSheetId)&&target.sheetId===100000000+Number(target.classId)&&typeof target.sheetName==='string'&&target.sheetName.length<=100;
+  if (target?.studioCode !== 'STM' || target.isPrivate !== false || !(legacy||created)) {
+    throw Error('This refresh requires a registered St Matthews class tab');
   }
   if (!target.spreadsheetId || target.spreadsheetId === target.masterSpreadsheetId || !target.masterSpreadsheetId ||
       !/^\d+$/.test(target.classId) || !Number.isSafeInteger(target.rowLimit) || target.rowLimit < 1) {
