@@ -83,8 +83,9 @@ async function collectClassProducts({page,target}){
   const signature=rs=>JSON.stringify(rs.map(r=>[r.sourceOrderId,r.voucherCode,r.customer,r.classLabel,r.item,r.status,r.classId??'']).sort());
   if(signature(first)!==signature(last))throw Error('Products changed during collection');
   stage='class-after';const after=await readClass(page,target.classId);assertClass(after,target);
-  if(before.title!==after.title||before.dateText!==after.dateText||before.roomId!==after.roomId)throw Error('Class changed during collection');
-  return {classId:target.classId,studioCode:target.studioCode,isPrivate:false,complete:true,expectedRowCount:rows.length,retrievedAt:new Date().toISOString(),details:{title:before.title,locationLabel:before.locationLabel,roomId:before.roomId,classTypeId:before.classTypeId},rows};
+  if(JSON.stringify(productClassFacts(before))!==JSON.stringify(productClassFacts(after)))throw Error('Class changed during collection');
+  return {classId:target.classId,studioCode:target.studioCode,isPrivate:false,complete:true,expectedRowCount:rows.length,retrievedAt:new Date().toISOString(),details:productClassFacts(before),rows};
  }catch{throw Object.assign(new Error('Class product collection failed'),{sourceStage:stage});}
 }
-module.exports={productGridDOM,productPage,filterDate,readProducts,collectClassProducts};
+function productClassFacts(details){return Object.fromEntries(['title','locationLabel','roomId','classTypeId','dateText','startTimeText','endTimeText','isPublished'].map(k=>[k,details[k]]));}
+module.exports={productGridDOM,productPage,filterDate,readProducts,collectClassProducts,productClassFacts};

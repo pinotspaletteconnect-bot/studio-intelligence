@@ -23,6 +23,7 @@ function buildReservationWorkflow({ studio, supabaseUrl, collectorUrl, targetId 
       ...(body ? { sendBody: true, specifyBody: 'json', jsonBody: body } : {}), options: { timeout: auth === 'collector' ? 180000 : 30000 } }, creds);
   };
   const rpc = (name, fn, body) => http(name, 'warehouse', 'POST', `${supabaseUrl}/rest/v1/rpc/${fn}`, body);
+  const scheduleGuard=require('./scheduled-source.cjs').scheduledSourceGuard.toString();
   const library = refreshLibrary();
   const staffLibrary = fs.readFileSync(path.join(__dirname,'staff-writes.cjs'),'utf8').replace(/^'use strict';\s*/m,'').replace(/^module\.exports = .*;\s*$/m,'');
   const identityLibrary = ['seating-source.cjs','source-identity.cjs'].map(file => fs.readFileSync(path.join(__dirname,file),'utf8')
@@ -61,6 +62,8 @@ return [{json:target}];`);
 const payload=$input.first().json,target=$('Validate STM pilot target').first().json;
 if(payload.success!==true||payload.accountId!==target.accountId||payload.studioId!==target.studioId||payload.source?.classId!==target.classId||payload.source?.studioCode!==target.studioCode)throw Error('Wrong or incomplete source account/class');
 const raw=payload.source;
+${scheduleGuard}
+scheduledSourceGuard(raw.details,$('Manual STM reservation refresh').first().json.scheduledStartAt);
 if(raw.details?.locationLabel!==target.sourceLocationLabel||raw.details?.roomId!==target.sourceRoomId||!target.allowedClassTypeIds?.includes(raw.details?.classTypeId))throw Error('Source room/type/location configuration mismatch');
 const rows=identifyReservations(raw);
 return [{json:{classId:raw.classId,studioCode:raw.studioCode,isPrivate:false,complete:true,expectedRowCount:rows.length,retrievedAt:raw.retrievedAt,rows,

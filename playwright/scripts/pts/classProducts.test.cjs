@@ -1,6 +1,11 @@
 'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const {productPage,productGridDOM,filterDate}=require('./classProducts.cjs');
+test('product source exposes actual schedule facts and detects time/publication changes',()=>{
+ const {productClassFacts}=require('./classProducts.cjs'),d={title:'Class',locationLabel:'Matthews',roomId:'21',classTypeId:'100',dateText:'Mon, 19 Oct 2026',startTimeText:'6:30 PM',endTimeText:'8:30 PM',isPublished:true,privateContact:'excluded'};
+ const facts=productClassFacts(d);assert.equal(facts.startTimeText,'6:30 PM');assert.equal(facts.isPublished,true);assert.equal(facts.privateContact,undefined);
+ assert.notDeepEqual(productClassFacts({...d,startTimeText:'7:00 PM'}),facts);assert.notDeepEqual(productClassFacts({...d,isPublished:false}),facts);
+});
 const headers=['Customer','ReservedDate','ClassDate','Product','Status','Code','Actions'];
 const snapshot={loading:false,headers,footer:'1 - 2 of 2 items',next:false,rows:[1,2].map(n=>({orderId:'123',cells:['Example Guest','date','Class label','Cheese - 1 Serving','Reserved','TEST-'+n,'Manage']}))};
 test('product grid accepts each rendered unit and rejects missing counts, changed columns and inactive status',()=>{
