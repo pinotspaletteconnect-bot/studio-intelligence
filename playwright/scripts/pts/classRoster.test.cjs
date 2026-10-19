@@ -14,6 +14,8 @@ before(async () => {
   app.use('/pts/class-roster', createClassRosterRouter({
     resolveSession: async input => {
       calls++;
+      if (input.classId === '998') throw Object.assign(new Error('Private diagnostic must stay private'), { sourceStage: 'source-login' });
+      if (input.classId === '999') throw Object.assign(new Error('Private diagnostic must stay private'), { sourceStage: 'private-guest-name' });
       if (input.accountId !== 1 || input.studioId !== 1) throw Error('Private diagnostic that must not be returned');
       return { page: {}, target: { ...input, classId: String(input.classId) }, close: async () => closed++ };
     },
@@ -36,6 +38,15 @@ test('arbitrary source URLs, credentials and invalid IDs are rejected', async ()
 test('wrong account/studio fails with sanitized diagnostics and no source response', async () => {
   const response = await request({ accountId: 2, studioId: 1, classId: '123' });
   assert.equal(response.status, 502); assert.doesNotMatch(await response.text(), /Private diagnostic/);
+});
+
+test('diagnostics expose only allow-listed stage names, never raw exception text', async () => {
+  const known = await request({ accountId: 1, studioId: 1, classId: '998' });
+  const knownBody = await known.json(); assert.equal(knownBody.sourceStage, 'source-login');
+  assert.doesNotMatch(JSON.stringify(knownBody), /Private diagnostic/);
+  const unknown = await request({ accountId: 1, studioId: 1, classId: '999' });
+  const unknownBody = await unknown.json(); assert.equal(unknownBody.sourceStage, undefined);
+  assert.doesNotMatch(JSON.stringify(unknownBody), /Private diagnostic|private-guest-name/);
 });
 test('authorized source returns a scoped result and always closes its browser', async () => {
   const initial = closed; const response = await request({ accountId: 1, studioId: 1, classId: '123' });
