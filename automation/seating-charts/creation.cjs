@@ -26,6 +26,7 @@ function normalizeDiscovery(payload,studio,{now=new Date().toISOString()}={}){
   const date=parseDay(item.dateText);if(date!==item.calendarDate)throw Error('Calendar/detail date mismatch');
   const room=studio.creation.rooms[item.roomId];
   const type=studio.creation.classTypes[item.classTypeId];
+  if(type?.label===item.classTypeLabel&&type.isClass===false)continue;
   if(!room||!type||type.label!==item.classTypeLabel){review.push({classId:item.classId,reason:'unsupported-room-or-event-type'});continue;}
   // Unpublished public drafts and requested/inquiry party placeholders are not
   // operational events. A real assigned painting and both times are required.

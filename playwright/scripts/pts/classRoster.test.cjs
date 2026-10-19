@@ -31,7 +31,7 @@ test('new route rejects unauthenticated collection before opening a browser', as
   const initial = calls; assert.equal((await request({ accountId: 1, studioId: 1, classId: '123' }, false)).status, 401); assert.equal(calls, initial);
 });
 test('arbitrary source URLs, credentials and invalid IDs are rejected', async () => {
-  for (const extra of [{ url: 'https://example.invalid' }, { password: 'synthetic' }, { classId: '../Order/Delete' }]) {
+  for (const extra of [{ url: 'https://example.invalid' }, { password: 'synthetic' }, { classId: '../Order/Delete' }, {classTypeId:'../private'}, {classTypeId:700}]) {
     assert.equal((await request({ accountId: 1, studioId: 1, classId: '123', ...extra })).status, 400);
   }
 });
@@ -59,6 +59,14 @@ test('class type/location/count guards reject private and mismapped classes', ()
   assert.doesNotThrow(() => assertClass(good, target));
   for (const change of [{ locationLabel: 'Other studio' }, { roomId: '22' }, { classTypeId: '200' }, { classTypeLabel: 'Private Party' }, { reservedCount: null }]) assert.throws(() => assertClass({ ...good, ...change }, target));
 });
+
+test('configured class kinds include fundraisers, children and virtual classes but never parties or holidays',()=>{
+ const target={sourceLocationLabel:'Synthetic studio',sourceRoomId:'21',allowedClassTypeIds:['100','400','600','700','800','1000','1100','200','300','500']};
+ const details={locationLabel:target.sourceLocationLabel,roomId:'21',reservedCount:5};
+ for(const [classTypeId,classTypeLabel] of [['400','Marketing Event'],['600','Little Brushes'],['700','Painting It Forward'],['800','Virtual Event'],['1000','Little Brushes Virtual Event'],['1100','Little Brushes In Studio']])assert.doesNotThrow(()=>assertClass({...details,classTypeId,classTypeLabel},target));
+ for(const [classTypeId,classTypeLabel] of [['200','Private Party'],['300','Mobile Party'],['500','Holiday'],['1200','New unknown type']])assert.throws(()=>assertClass({...details,classTypeId,classTypeLabel},target));
+ assert.throws(()=>assertClass({...details,classTypeId:'700',classTypeLabel:'Painting It Forward'},{...target,allowedClassTypeIds:['100']}));
+});
 test('source session binding stops absent/wrong accounts before launching Playwright', async () => {
   let launches = 0; const chromium = { launch: async () => { launches++; throw Error('Must not launch'); } };
   for (const env of [{}, { PTS_SEATING_ACCOUNT_ID: '1', PTS_SEATING_STUDIOS_JSON: '[]' }]) {
@@ -83,7 +91,8 @@ test('source session uses the existing account broker instead of legacy environm
     PTS_SEATING_STUDIOS_JSON:JSON.stringify([{studioId:1,studioCode:'STM',sourceLocationLabel:'Matthews',sourceRoomId:'21',allowedClassTypeIds:['100']}])};
   const resolve=createRosterSessionResolver({env,chromium:{launch:async()=>({newContext:async()=>({newPage:async()=>page}),close:async()=>{closed=true;}})},
     resolveAccount:async id=>{requestedAccount=id;return {studios:[{studioId:1,code:'STM'}],credentials:{username:'synthetic-broker-user',password:'synthetic-broker-password'}};}});
-  const session=await resolve({accountId:1,studioId:1,classId:'123'});
+  const session=await resolve({accountId:1,studioId:1,classId:'123',classTypeId:'700'});
+  assert.deepEqual(session.target.allowedClassTypeIds,['700']);
   assert.equal(requestedAccount,1); assert.deepEqual(filled,[['#UserName','synthetic-broker-user'],['#Password','synthetic-broker-password']]);
   await session.close();assert.equal(closed,true);
 });

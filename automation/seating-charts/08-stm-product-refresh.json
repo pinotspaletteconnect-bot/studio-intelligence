@@ -120,7 +120,7 @@
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ {accountId:$json.accountId,studioId:$json.studioId,classId:$json.classId,...($json.documentGroupId?{roomId:$json.sourceRoomId}:{})} }}",
+        "jsonBody": "={{ {accountId:$json.accountId,studioId:$json.studioId,classId:$json.classId,...($json.documentGroupId?{roomId:$json.sourceRoomId,classTypeId:$json.allowedClassTypeIds[0]}:{})} }}",
         "options": {
           "timeout": 600000
         }
