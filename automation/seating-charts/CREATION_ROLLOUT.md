@@ -1,116 +1,125 @@
-# St. Matthews workbook creation - manual rollout
+# St. Matthews workbook creation - verified manual rollout
 
-Owner requested creation of St. Matthews files, grouping overlapping classes and
-private parties, with scheduled updates OFF until manual testing is complete.
-The earlier scoped St. Matthews deployment/database/manual-test approval remains
-in effect. No credential changes, paid services or shared scheduler changes.
+Owner approved PR93 merge/deployment, Main/KLR binding, database changes and
+manual creation tests for today, Tuesday's staggered class/private party, and
+Friday's two classes. Scheduled updates remain OFF. Other studios are unbound.
 
-## Implementation
+## Verified native files
 
-- Protected `/pts/seating-events` collector reads the all-room/all-party-stage
-  monthly calendar, bounded to yesterday through nine days ahead. It resolves
-  stable class IDs and independently reads actual class dates, start/end times,
-  rooms, type, painting, assigned staff and mapped party fields. Source has no
-  warehouse/Google writes. Existing account broker/queue is reused.
-- n8n normalizes studio-local timestamps, rejects ambiguous DST times, forms
-  connected overlap groups, and creates groups whose first event is within seven
-  days. Touching endpoints stay separate. Requested party dates and unpublished
-  public drafts are excluded. Unsupported overlapping events hold their group
-  for review rather than silently splitting it.
-- Manual workflow04 calls saved helper05 for one group at a time;05 calls saved
-  helper06 for one class refresh at a time. IDs are recorded in
-  `stm-creation-workflows.json`. All triggers are manual/called-only; no schedule or
-  webhook. Current test selects931956(today),931957(Tuesday) and931961(Friday),
-  retaining the entire overlap group around each selected class.
-- Each group gets one native whole-master copy in the studio-owned Seating
-  Charts folder. Each public class duplicates its mapped room seating tab; each
-  private party duplicates only the party form. Three unused base template tabs
-  are hidden, preserving native dependencies, and operational Bar/Checklists stay.
-  Additional classes/parties get distinct class-ID tab names/IDs even in one room.
-- Only mapped headers/verified party facts are initialized; known template
-  sample dates, preparer and two placeholders are replaced/cleared on new forms.
-  Private party registration/payment lists, seating, attendance and agreements
-  remain manual. Whole-copy formatting, formulas and validation are preserved.
-- Three private RLS tables hold studio creation configuration, immutable group
-  source/plan/copy state, and unique class-to-workbook/tab mappings. Two service-
-  only RPCs guard ownership, leases, connected membership, duplicate copies,
-  allowed native tab operations and mapped header writes/readback. Existing
-  refresh targets gain a workbook FK and permit only registered creation tabs;
-  the original pilot guard remains valid. No existing guest state is rewritten.
-- Before `files.copy`, copy-issued state is saved. A lost acknowledgement is
-  recovered only through one matching tagged, studio-owned file in the correct
-  folder. An uncertain/missing/duplicate copy stops for review. A repeat ready
-  group reuses its file. Changed overlap membership/time/title stops for review;
-  it never moves/deletes staff work or silently makes another file.
-- After verified initialization, public class targets are registered and the
-  existing stable-row reservation/staff path fills them. Private parties never
-  get reservation targets. Existing source rows, seats, attendance and formulas
-  remain protected. The collector room override is allowed only by configured
-  studio room IDs; retain Main21 and add KLR22 in the existing nonsecret binding.
+| Date | Actual events | Imported class reservations | Native file |
+| --- | --- | --- | --- |
+| Oct19 | 931956 Thicc Boo-ty, Main6:30-8:30PM | 4 | https://docs.google.com/spreadsheets/d/1UQzMpm6XIHbU7A41V31RDNOA_jiB5Te8Eq1ITbAUXVY/edit |
+| Oct20 | 936089 Strolling with My Boo PP, KLR6-8PM;931957 Bitten, Main6:30-8:30PM | 5; party form only | https://docs.google.com/spreadsheets/d/1vkA2BaSFy3yx5UPZ_PB_3wEB4K5HsEPKohmgDVAQJ3Q/edit |
+| Oct23 | 931961 Spooky Gnome and931962 Van Gogh's Starry Night-Halloween, both7-9PM | 0 /17 | https://docs.google.com/spreadsheets/d/1RTRvFZ8FO4a2ndWxpT0KCytd6YHAMoXHZSKin0QMY6o/edit |
 
-## Verification state
+All native IDs/URLs/tabs were read back through Google metadata. Both Friday
+classes currently have Main room21 in Pinot Admin; use those actual source room
+labels, never infer KLR. Each event has its own deterministic class-ID tab even
+when room/start time match. Tuesday's party has only an information form and no
+seating/refresh target. All seven mapped facts passed readback, including its
+actual14-18 expected headcount and payment arrangement; no agreements guessed.
 
-88 local checks passed:74 automation and14 collector/route/browser-fixture tests.
-The rollback-only SQL trial passed duplicate copy, ownership/folder, protected
-cells, overlap membership, native tab operations and completion/readback guards.
-Post-rollback checks confirmed the new tables absent and original revision4/nine
-guest pilot unchanged. Repaired a CASE-expression delimiter and an ambiguous SQL
-alias found by that trial. Migration003 and manual STM settings are now applied;
-browser access denied and schedule_enabled=false verified. Original pilot remains separate.
+Warehouse verification: 3 ready workbooks,5 unique event mappings,4 public
+refresh targets, no private target, all revision2/no leases. Complete/repeat
+source counts4/5/0/17, stable reservation rows, no reviews, verified staff and
+unchanged T seating, U formulas, AB attendance. Latest runs170060/170062/170097/
+170096 respectively wrote0 ranges. The original Oct18 pilot remains revision4,
+nine guests/no lease. No master or existing seating/attendance values were changed.
 
-Explicit subsequent owner approval: merge/deploy PR93, apply the staged Main/KLR
-room binding and run the manual creation tests; owner also asked for today's
-files. PR93 merged as eae6fe18b987cfa7def766d36e8587e19ee1a689. The single
-nonsecret room change deployed successfully in31844371-6472-481c-bd7e-92f8d4217aa4.
-Native04 created in Seating Charts as Rf2H0au3hRWenZvh, helper05 as
-sHhijJbugRZtvVtv, helper06 as7bM6CPBwnpu9estC. 04/05 remain unpublished.
-06 is published with only an Execute Workflow input trigger so nested calls are
-allowed by n8n2.36.7. It has no schedule/webhook; publication creates no timer.
-Live calendar discovery verified the three selected complete groups. Two attempts
-stopped at `Record copy request`, before any Drive copy, due to adjacent object
-braces colliding with n8n expression delimiters. Corrected those expressions and
-added a regression check. Each stopped attempt's exact planned/no-file lease was
-released with a guarded SQL update; source/mapping/history were preserved.
-The next attempt completed today's native file/header readback, then stopped
-because nested helper06 needed publication. No reservation write had started;
-the ready workbook had no lease. After enabling the called-only helper, the
-manual request was resumed using the existing file. Today and Tuesday then
-completed creation plus reservation/staff readback (4/5 guests, no reviews,
-T/U/AB unchanged). Friday copied/duplicated its two Main templates, then safely
-stopped before header writes because actual class931961 has three Scheduled
-On-Call staff. Verified those rows in the actual Pinot class. The second existing
-Floor/On-Call label now joins additional names instead of rejecting/truncating
-them; roles/statuses and five allowed cells remain unchanged. Targeted19 checks
-and all74 automation checks pass. Guarded recovery releases only Friday's exact
-structured/file-matched/no-values-plan lease; no file is copied again.
-Creation/reservation and repeat-run verification are still in progress.
-03 is restored/saved as the read-only creation audit. Do not reapply migration003.
+## Deployment and native workflow references
 
-## Rollout and rollback
+- PR93 merged as eae6fe18b987cfa7def766d36e8587e19ee1a689; collector deployment
+  31844371-6472-481c-bd7e-92f8d4217aa4 verified active. Only the existing nonsecret
+  STM binding gained Main21/KLR22 sourceRoomIds. Root/auth/broker/queue unchanged.
+- Migration003 applied after rollback/access/duplicate/protected-write checks.
+  Creation config enabled for manual STM; schedule_enabled=false is constrained.
+- Dedicated n8n Seating Charts folder qTZHROLCyM8hRNob contains00-06 only.
+  03 read-only audit: hVfq61G6UAg7udZU;04 manual entry:32VYzTjZNo1cY6Zj;
+  05 workbook helper:MCK8as1xFrAc8SaN;06 refresh helper:2T7XR2idkCmpE5dc.
+- 06 is published solely for nested Execute Workflow calls. It has no scheduler
+  or webhook. All other entries are manual/called-only and unpublished. Native06
+  failed/success/manual execution retention is disabled;04/05 manual test
+  execution data uses private instance defaults. No public reporting grants.
+- Clean native canvases verified:04 has8 nodes,05 has32,06 has20,03 has2.
+  Final04 saved selector was reloaded/read back as931956/931957/931961. An extra
+  combined rerun was stopped by automatic input review when old Friday-only
+  output remained visible. Saved inputs were subsequently verified; no extra
+  combined execution was needed after all four repeat checks passed.
+- Runtime fixes/source artifacts and evidence are recorded in follow-up PR94.
+  `stm-creation-workflows.json` stores nonsecret IDs. Generate with
+  `node automation/seating-charts/creation-workflow.cjs --authorized 931956 931957 931961`.
+  Paste into an EMPTY canvas only; verify native node counts after save. A canvas
+  paste adds nodes rather than replacing a workflow and does not apply settings.
 
-1. Repair/run `build-creation-rollback-trial.cjs` through the existing03 helper.
-   Verify private access, structure/write guards, one public target/no private
-   target, duplicate/lease/membership checks, rollback and prior pilot unchanged.
-2. Apply migration003 after that trial. Seed `stm-creation-settings.json` with
-   manual creation disabled, then enable only the approved manual scope. No
-   schema/data deletion; grants for browsers remain denied.
-3. Deploy additive collector changes from the actual production branch, retaining
-   Railway root/authentication and existing routes. Add nonsecret sourceRoomIds
-  21/22 to the existing STM binding. Existing Main requests remain compatible.
-4. Save06 and05 in the separate n8n Seating Charts folder, then record their IDs
-   in `stm-creation-workflows.json`. Publish only called-only06 for nested calls.
-   Generate04 with `node automation/seating-charts/creation-workflow.cjs
-   --authorized 931956 931957 931961`, save04 and configure authorized manual
-   execution and select the complete Oct20 group (public931957/private936089).
-   Verify native file ownership/folder/title, one class tab and one party form,
-   mapped facts, formulas/validation, unchanged seating/attendance and stable rows.
-5. Repeat the same manual request; verify one file/mapping, unchanged row IDs,
-   zero unnecessary writes. Also exercise a two-public-class overlap and a
-   private-only group before declaring those paths live-verified.
-6. Restore03 to a read-only audit and save evidence/checkpoint. Leave04 and all
-   other seating workflows manual/called-only. Scheduled updates stay OFF.
+## Source, grouping and write boundaries
 
-Rollback disables only the creation setting/workflow and the new collector
-route if necessary. Preserve files, source snapshots, targets and history;
-do not drop tables or delete charts automatically. Unknown copy/write outcomes
-require inspecting existing state rather than blindly retrying them.
+The protected collector discovers actual all-room calendar IDs and independently
+reads class dates/times/room/type/painting/assigned staff and party facts. It has
+no Google or warehouse writes. n8n normalizes studio-local instants (DST guards),
+combines connected overlaps even with different starts, and creates groups whose
+first event is within7 days. Endpoint-touching events stay separate. Requested
+party dates/unpublished public drafts are excluded; unsupported overlapping
+events hold their group for review. Current types100/200 and rooms21/22 only.
+
+Each group gets one native studio master copy in its studio-owned folder. Public
+classes duplicate their mapped seating base, private parties only the party form.
+Three base templates are hidden; Bar/Opening/Closing tabs and native dependencies
+remain. RAW initialization is restricted to mapped headers/party anchors. Whole
+T:AC1000 is verified unchanged before reservation import; subsequent imports
+allow only V:AA/AC and five protected-by-ledger staff labels. No U/T/AB writes.
+
+Private configuration/workbook/event tables and service-only RPCs enforce studio
+ownership, immutable connected membership/plan, unique class mappings, copy-issued
+state before Drive copy, one tagged-copy recovery, allowed tab operations and
+write/readback gates. Changed existing membership/time/title needs review; never
+move/delete staff work or blindly issue another copy. Public reservations keep
+stable actual seat-ID row ledgers; blank guest names use purchaser-first-name +
+"'s guest". No private party reservation collection/target is created.
+
+Actual class931961 has three Scheduled On-Call staff. Additional Floor/On-Call
+names share the second existing field, retaining every person and role/status.
+Native readback confirmed Haleigh plus Sara/Kit in On-Call, and Rachael on Floor;
+no scheduled Stage instructor is invented. Manual staff edits/formulas survive.
+
+## Test and recovery audit
+
+88 local checks pass:74 automation and14 collector/route/browser-fixture checks.
+The live rollback trial covered ownership/folder, copy/lease/replay/membership,
+native structure, mapped write allowlists, T/U/AB rejection and completion gates.
+Native files and all four actual class refreshes additionally passed repeat
+checks. Isolated synthetic tests from the original pilot exercise changed/new
+reservations and guest labels without touching staff seating/attendance.
+
+Early attempts stopped before Drive copy on adjacent JSON object braces colliding
+with n8n expression delimiters. Fixed expressions and added regression coverage.
+Guarded planned/no-file lease recovery preserved source/mapping/history. A later
+Friday attempt stopped before header writes on the three-on-call limit; recovered
+only the exact structured/file-matched/no-values-plan lease after fixing display.
+
+An older published06 draft still contained the prior limit. Replaced workflows
+with clean canvases and archived retired03/04/05/06 drafts (EQAXEtyVz6PdtSsD,
+Rf2H0au3hRWenZvh,sHhijJbugRZtvVtv,7bM6CPBwnpu9estC). Failed zero-class run170065
+had no staged plan/writes. The failure RPC first cleared its lease; after review,
+a guarded transition restored claimed status. A one-time21-node manual recovery
+compared fresh normalized source facts to the unchanged stored snapshot using
+recursive key ordering, then resumed/staged/read back/completed that same run.
+Both JSON-key reorder and actual-fact-change guards were tested. Native recovery
+qSbkzl79mpY3uKRb passed in23.13s. The earlier comparison-only draft GgemNKmHBBq6fsCZ
+and completed recovery are archived, preserving history. No data/files deleted.
+
+Contact-free proof is saved under the main workspace output/seating-charts/:
+`stm-creation-final-audit.json`, `stm-shared-class-party-created.png`, and the
+rollback proof `stm-creation-database-rollback.png`.
+
+## Remaining rollout and rollback
+
+Owner review of these files comes next. Overnight/relative dispatch scheduling,
+private-only live-file testing and other studios remain future work; local
+private-only tests pass but no standalone private-party file was live-tested.
+No recurring trigger exists. Agree the overnight time and approve the scheduler
+rollout/migration before activation. Do not reapply migration003.
+
+Rollback disables only creation/manual invocation and unpublishes called-only06
+if needed. Preserve files, source snapshots, targets and history. Uncertain
+copy/write outcomes require inspecting existing state, never blind retry or
+schema/file deletion. Database03 remains a read-only audit.

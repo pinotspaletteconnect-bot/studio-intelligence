@@ -1,17 +1,22 @@
 # Studio Intelligence Changelog
 
 
-## October 19, 2026 - STM overlap creation manual rollout
+## October 19, 2026 - STM overlap creation manual rollout verified
 
-- Merged/deployed PR93 and Main21/KLR22 configuration after explicit owner approval.
-- Applied private workbook migration003 after rollback/access checks.
-- Created manual04 and saved05/06 helpers. Fixed nested expression delimiters;
-  published only the called-only06 helper. No recurring triggers.
-- Today and Tuesday's class/private-party file passed actual reservation/staff
-  readback (4/5 guests), no reviews, unchanged seating/attendance/formulas.
-- Verified Friday's three Scheduled On-Call assignments in the actual class;
-  extra names now share the second label instead of stopping or dropping people.
-- 88 local checks pass. Friday/repeat validation remains in progress. Schedules OFF.
+- Owner-approved PR93 deployment/Main21-KLR22 binding and private migration003
+  are active; rollback/access/protected-write checks passed before migration.
+- Created three studio-owned files for Oct19, Oct20 staggered class/private-party
+  overlap and Oct23 two-class overlap. Private parties get only information forms.
+- Four public class counts4/5/0/17 passed complete and repeat readback: stable
+  rows, zero repeat writes, actual staff, unchanged seating/attendance/formulas.
+- Fixed nested expression delimiters and shared extra Floor/On-Call names in the
+  second existing label. Replaced helper drafts with clean native canvases.
+- Reviewed an unstaged failed zero-class run, compared fresh source facts and
+  completed the original run without dropping history. Retired drafts/recovery
+  are archived. 03 is read-only. Original pilot revision4/nine guests unchanged.
+- 88 local checks pass. No recurring triggers; schedules remain OFF. Source,
+  nonsecret workflow IDs and proof checkpoint are recorded in PR94 and
+  automation/seating-charts/CREATION_ROLLOUT.md.
 
 ## October 18, 2026 - staff preview and preservation checks
 

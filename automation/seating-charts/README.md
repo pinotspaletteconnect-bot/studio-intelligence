@@ -1,8 +1,7 @@
 # Seating chart automation
 
 October 19, 2026. St. Matthews reservation/staff refresh is live-verified in a
-manual pilot. Workbook creation and overlap grouping are deployed and under
-manual testing. All schedules remain OFF. Other studios remain unbound.
+manual pilot. Workbook creation and overlap grouping passed manual end-to-end and repeat tests. All schedules remain OFF. Other studios remain unbound.
 
 The separate n8n **Seating Charts** folder contains manual/called-only workflows:
 https://primary-production-a88c.up.railway.app/projects/YRdV58D9glyGcjK9/folders/qTZHROLCyM8hRNob/workflows
@@ -22,11 +21,13 @@ The protected all-room collector, private workbook state/migration003, and
 Main21/KLR22 source binding are deployed after explicit owner approval. Manual
 creation tests select today's931956, Tuesday's931957/private936089, and Friday's
 931961/931962. Saved helper IDs and generation steps are in
-[CREATION_ROLLOUT.md](CREATION_ROLLOUT.md). That checkpoint records current live
+[CREATION_ROLLOUT.md](CREATION_ROLLOUT.md). That checkpoint records the verified native files, repeat
 results and safe recovery; do not reapply the migration or blindly repeat a copy.
 
 88 local checks pass (74 automation,14 collector/route/browser-fixture checks).
-Local checks alone do not prove completed native workbook creation.
+Live readback additionally verified 3 files/5 events, 4 public targets, one private
+form, 4/5/0/17 guests, stable rows and zero repeat writes. Seating/attendance and
+formulas are unchanged; no private-party seating target exists.
 
 ## Owner-confirmed behavior
 
@@ -195,7 +196,7 @@ https://docs.google.com/spreadsheets/d/1oPkUC4VTy-SVZ0TKtbysf2lHzu9XJ9LOeWdtBVo_
 | AC | Source reservation comments |
 
 The sample has no imported header row or imported Order Id column. Keep source
-order/reservation IDs in the proposed internal mapping, not in U. Requests must
+order/reservation IDs in the private row ledger, not in U. Requests must
 write V:AA and AC separately so AB is never included, even as a blank cell.
 Do not clear/rewrite a single V:AC rectangle. Contact columns are evidenced by
 the supplied layout; no customer values from the example are stored here.
@@ -305,17 +306,12 @@ event key changes with painting/time/room edits (see
 `../../staffing-app/CALENDAR_SYNC_PLAN.md`). They can seed discovery but cannot
 serve as durable class identity or the hourly seating roster source.
 
-Before any schema or collector deployment, prepare an approval-ready migration
-and rollback plan. A proposed private operational store would hold:
-
-- authorized organization/studio/Pinot class ID, source metadata and minimal
-  seating roster, including the contact columns evidenced by the supplied chart;
-- workbook ID and per-class numeric sheet ID, independent of filename;
-- per-class start/end, successful refresh milestone, import row extent/digest;
-- run status/counts and sanitized failures without guest details in logs.
-
-These are proposed records, not existing tables or approved DDL. Retention and
-minimum fields await template mapping. Do not place rosters in public BI views.
+The applied private operational store holds studio configuration, source/run
+history, immutable workbook plans/copy stages, unique class-to-tab mappings, and
+reservation-ID-to-row/staff ledgers. Migration003 passed rollback/access checks;
+browser access remains denied. No guest data is exposed in public BI views.
+See the current inventory in ../../docs/01_architecture/schema.md. Retention policy
+and other-studio rollout remain future work.
 
 One shared workflow with four credential-bound studio branches is preferable
 to four separately maintained automations. A small recurring dispatcher plus
@@ -345,8 +341,10 @@ Store the numeric class ID as durable identity. Titles are display names only.
 If changed event times combine or split already-created files, flag for review;
 do not silently move/delete staff work or create duplicate charts. Look ahead
 beyond the seven-day creation boundary enough to resolve overlapping sessions.
-Inquiry/availability placeholders, mobile/virtual events and uncertain times
-need an explicit eligibility rule before automated creation. Do not infer
+STM creation currently permits verified Regular100/PrivateParty200 in configured
+Main21/KLR22 rooms. Inquiry placeholders and unpublished public drafts are excluded;
+unsupported overlapping events hold their group for review. Mobile/virtual events
+and other uncertain types require an explicit eligibility rule. Do not infer
 cancellation just because a class disappears from an incomplete feed.
 
 ## Verification and next action
@@ -360,6 +358,6 @@ rows, literal source text, verified party-field mapping and staff-edit
 preservation, GET-only connection checks and studio account/ownership guards.
 They do not prove production synchronization.
 
-Next: complete the native creation/readback/repeat tests documented in
-CREATION_ROLLOUT.md. Map the remaining studios and agree the overnight time
-before any schedule activation. Scheduled updates remain OFF.
+Next: owner review of the three native files in CREATION_ROLLOUT.md, then a
+separate scheduling rollout and remaining-studio mapping. Agree the overnight
+time before activation. Scheduled updates remain OFF.

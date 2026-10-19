@@ -1,18 +1,24 @@
 # Studio Intelligence Current Status
 
 
-## October 19, 2026 - STM overlap creation deployed; manual tests in progress
+## October 19, 2026 - STM overlap creation manual tests verified
 
-PR93 is merged and the additive collector is active. Main21/KLR22 binding and
-private migration003/manual-only settings are applied. Native04/05/06 workflows
-are in the separate Seating Charts folder. 06 is published solely for nested
-calls (no schedule/webhook); 04/05 remain manual/called-only. Today931956 and
-Tuesday931957/private936089 have studio-owned native files with verified headers,
-4/5 imported reservations, actual staff and unchanged T/U/AB. Friday's two-class
-file is created; an actual three-on-call assignment exposed a display limit.
-Extra names now share the second existing label; no roles/statuses/cells changed.
-88 local checks pass. Friday import and repeat tests are still in progress.
-Schedules remain OFF. Checkpoint: automation/seating-charts/CREATION_ROLLOUT.md.
+Owner-approved PR93 collector/Main21-KLR22 deployment and private migration003
+are active. Three native files cover Oct19 class931956, Oct20 private936089 with
+class931957, and Oct23 classes931961/931962. Four public targets imported4/5/0/17
+reservations; private parties get only an information form. All four complete and
+repeat checks passed: same files/rows, zero repeat writes, actual staff readback,
+unchanged seating T/formulas U/attendance AB, no reviews or leases, revision2.
+Original pilot remains revision4/nine guests/no lease. 88 local checks pass.
+
+Clean native03/04/05/06 workflows are in Seating Charts; superseded drafts and
+one-time recovery are archived with history preserved. 06 is published only for
+nested calls, with no scheduler/webhook;04 saved selector reloaded/read back the
+three approved IDs. Staff overflow shares the second existing name label without
+omitting people. Follow-up source/evidence: PR94 and
+
+automation/seating-charts/CREATION_ROLLOUT.md. Schedules remain OFF. Private-only
+live-file testing, scheduled dispatch and other studios remain future work.
 
 ## October 19, 2026 - STM staff and reservation manual pilot verified
 
