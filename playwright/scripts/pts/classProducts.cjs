@@ -28,15 +28,19 @@ async function readProducts(page,target,details){
  try{
  await page.goto(BASE+'/Product/Reservations',{waitUntil:'domcontentloaded'});
  sourceStage='products-grid-location';
- await page.locator('span[aria-owns="LocationId_listbox"]').click();
- const options=await page.locator('#LocationId_listbox li').allTextContents();
- const normalize=s=>s.trim().replace(/^St\.\s*/i,'');
- const matches=options.filter(s=>normalize(s)===target.sourceLocationLabel);
- if(matches.length!==1)throw Error('Product studio label mismatch');
- await page.locator('#LocationId_listbox').getByText(matches[0],{exact:true}).click();
+ if(await page.locator('#LocationId').inputValue()!==String(target.sourceLocationId)){
+  await page.locator('span[aria-owns="LocationId_listbox"]').click();
+  const options=await page.locator('#LocationId_listbox li').allTextContents();
+  const normalize=s=>s.trim().replace(/^St\.\s*/i,'');
+  const matches=options.filter(s=>normalize(s)===target.sourceLocationLabel);
+  if(matches.length!==1)throw Error('Product studio label mismatch');
+  await page.locator('#LocationId_listbox').getByText(matches[0],{exact:true}).click();
+ }
  sourceStage='products-grid-status';
- await page.locator('span[aria-owns="StatusId_listbox"]').click();
- await page.locator('#StatusId_listbox').getByText('Reserved',{exact:true}).click();
+ if(await page.locator('#StatusId').inputValue()!=='100'){
+  await page.locator('span[aria-owns="StatusId_listbox"]').click();
+  await page.locator('#StatusId_listbox').getByText('Reserved',{exact:true}).click();
+ }
  sourceStage='products-grid-dates';
  const date=filterDate(details.dateText);
  await page.locator('#DateFilter_FromDate').fill(date);await page.locator('#DateFilter_ToDate').fill(date);await page.locator('#noClass').uncheck();
