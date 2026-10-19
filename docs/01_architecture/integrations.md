@@ -1,5 +1,20 @@
 # Studio Intelligence Integrations
 
+## October 19, 2026 - STM seating scheduler active
+
+Native10 reVzWFzk7REJ1Fsp is published after approved PR99/migration006. STM
+alone has seven-day discovery, 02:00 America/New_York, T-24h and T-6/-5/-4/-3/-2h,
+then final T-75m. Source publication/date/time guards run before reservation and
+product claims. Manual170284 plus automatic170293/170306 verified protected
+seating, formulas and attendance; Friday Main gained two new reservations.
+Room changes hold the affected class for review. Seven additional ready files
+were created and reused without duplicates, but new-chart product refreshes and
+one staged guest run require diagnosis/recovery; the rollout is not fully healthy.
+The confirmed Spooky Gnome KLR layout correction is pending. Other studios remain
+off/unbound. Private-party forms currently refresh only during initial creation.
+See automation/seating-charts/SCHEDULE_ROLLOUT.md; earlier OFF notes are historical.
+
+
 ## October 19, 2026 - STM reserved products to seating charts
 
 The protected /pts/class-products collector reads actual class/studio identity and

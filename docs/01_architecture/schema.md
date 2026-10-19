@@ -1,5 +1,20 @@
 # Studio Intelligence Warehouse Schema
 
+## October 19, 2026 - private schedule migration006 applied
+
+seating_chart_schedule_runs stores studio/job_key, kind, optional target/start,
+due instant, execution_id, running/completed/needs-review status, result and
+timestamps. RLS and revoked browser grants match other private seating state.
+Unique studio/job keys deduplicate milestones; a partial unique running-studio
+index permits one lane. Service-only claim_seating_schedule and
+complete_seating_schedule own claims and evidence-checked completion. STM
+schedule_enabled may now be true only for verified studio1/NY configuration;
+prior schedule-only creation/product guards were narrowly relaxed. Existing
+ownership, mapped-cell and protected readback guards remain. Other studios stay
+off. Migration006 is applied and must not be replayed. Rollback unpublishes10
+and disables the STM schedule flag while preserving files, history and audits.
+
+
 ## October 19, 2026 - private product refresh migration005 applied
 
 seating_chart_product_runs stores target/run identity, immutable source and

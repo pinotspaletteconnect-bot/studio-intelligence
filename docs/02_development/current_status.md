@@ -1,5 +1,27 @@
 # Studio Intelligence Current Status
 
+## October 19, 2026 - St. Matthews seating schedules ON
+
+PR99 (01fbb389) is deployed. Private migration006 passed transactional access,
+concurrency and protected-result checks; native05/06/08/09/10 are published.
+STM alone is enabled: seven-day creation discovery every15 minutes, 02:00 local
+refresh, T-24h, T-6h/-5h/-4h/-3h/-2h and final T-75m. One studio lane, durable
+milestone keys and per-class cutoff prevent overlapping jobs and replay bursts.
+Manual170284 and automatic170306 completed with protected cells unchanged;
+automatic170293 added two Friday Main guests (19 total) without changing seats,
+formulas or attendance. Spooky Gnome931961 is held separately after its source
+room changed; owner confirmed KLR, but replacing the blank seating layout awaits
+specific approval. Discovery170315 created seven ready files but its follow-up
+refresh failed; later discoveries reused them without duplicate copies. Seven
+new class refreshes need review. Five guest/staff targets completed safely twice,
+while products have no new claims; class927728 retains a staged reservation run
+and must not be blindly retried. The rollout is enabled but not fully healthy.
+Private party forms are
+filled at creation; periodic party-form refresh is not implemented. Other studios
+remain OFF and need dedicated Google accounts plus differing layout tests.
+See automation/seating-charts/SCHEDULE_ROLLOUT.md for evidence and recovery.
+
+
 ## October 19, 2026 - STM product refresh manual pilot verified
 
 Protected /pts/class-products collector (PR97), private migration005 and native

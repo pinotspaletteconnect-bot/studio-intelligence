@@ -1,9 +1,12 @@
 # Seating chart automation
 
-October 19, 2026. St. Matthews reservation/staff refresh is live-verified in a
-manual pilot. Workbook creation and overlap grouping passed manual end-to-end and repeat tests. All schedules remain OFF. Other studios remain unbound.
+October 19, 2026. St. Matthews schedules are ON after deployment and a successful
+combined pilot. Automatic refreshes added two new Friday Main guests while
+preserving seats, formulas and attendance. See [SCHEDULE_ROLLOUT.md](SCHEDULE_ROLLOUT.md)
+for timing, audit evidence, the isolated room-change hold and discovery status.
+Other studios remain off and unbound pending separate connections/layout tests.
 
-The separate n8n **Seating Charts** folder contains manual/called-only workflows:
+The separate n8n **Seating Charts** folder contains the dedicated workflows:
 https://primary-production-a88c.up.railway.app/projects/YRdV58D9glyGcjK9/folders/qTZHROLCyM8hRNob/workflows
 
 - 00: read-only Google connection check; 01: isolated preservation test.
@@ -11,7 +14,9 @@ https://primary-production-a88c.up.railway.app/projects/YRdV58D9glyGcjK9/folders
 - 04: manual discovery/group creation; 05: saved single-workbook helper;
   06: saved registered-class reservation/staff helper.
 - 07: manual product refresh;08: called-only product helper;09: combined class
-  refresh (06 then08), now called by05. No recurring triggers.
+  refresh (06 then08), now called by05 and10.
+- 10: published STM minute dispatcher; seven-day discovery, overnight and class
+  milestones. Only private due work can call the protected helpers.
 
 The original [Autumn Mountain Evening pilot](https://docs.google.com/spreadsheets/d/1h0X3zNWCxkG3p7x71LPeFBE-FbC5dLLVj0swto8KwiQ/edit)
 passed two reservation-only and two full staff refreshes. Nine stable guest rows,
