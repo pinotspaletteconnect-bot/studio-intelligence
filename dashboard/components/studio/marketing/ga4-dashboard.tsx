@@ -118,6 +118,20 @@ export function Ga4Dashboard() {
     {error && <Card><CardContent className="py-16 text-center text-sm text-muted-foreground">{error}</CardContent></Card>}
     {!loading && !error && data && !data.hasData && <Card><CardContent className="flex min-h-72 flex-col items-center justify-center gap-3 text-center"><span className="rounded-full bg-blue-50 p-4 text-blue-700"><Globe2 className="size-7" /></span><div><h2 className="text-lg font-semibold">North America GA4 data is awaiting its first load</h2><p className="mt-1 max-w-xl text-sm text-muted-foreground">The dedicated reporting model is {data.configured ? "ready" : "not deployed yet"}. This page will not substitute global GA4 totals because doing so would violate the selected geographic scope.</p></div></CardContent></Card>}
     {!loading && !error && data?.configured && data.studios.length > 0 && <Ga4StudioComparison data={data} />}
+    {!loading && !error && data?.configured && <Card>
+      <CardHeader><CardTitle>GoHighLevel</CardTitle><CardDescription>GA4 traffic from utm_source=gohighlevel across the selected studios and dates. North America only.</CardDescription></CardHeader>
+      <CardContent className="space-y-4">
+        {data.goHighLevel.length === 0 ? <div><p className="font-medium">No GoHighLevel data yet</p><p className="mt-1 text-sm text-muted-foreground">No matching traffic has been imported for these studios and dates. Results will appear as tagged traffic is recorded by GA4 and imported into Sasha.</p></div> : <>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">{([
+            ["Sessions", number.format(data.goHighLevelTotals.sessions)],
+            ["New users", number.format(data.goHighLevelTotals.newUsers)],
+            ["Key events", number.format(data.goHighLevelTotals.keyEvents)],
+            ["Attributed revenue", currency.format(data.goHighLevelTotals.revenue)],
+          ] as const).map(([label, value]) => <div key={label}><p className="text-sm text-muted-foreground">{label}</p><p className="mt-1 text-xl font-semibold tabular-nums">{value}</p></div>)}</div>
+          <DataTable title="GoHighLevel by medium" description="Every recorded medium for this source; key events may include actions other than purchases." headers={["Medium", "Sessions", "New users", "Key events", "Revenue"]} rows={data.goHighLevel.map(row => [row.secondary || "—", number.format(row.sessions), number.format(row.newUsers), number.format(row.keyEvents), currency.format(row.revenue)])} />
+        </>}
+      </CardContent>
+    </Card>}
     {!loading && !error && data?.hasData && <>
       <section><div className="mb-3"><h2 className="text-lg font-semibold">Performance snapshot</h2><p className="text-sm text-muted-foreground">Current period compared with the selected comparison period.</p></div><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <KpiCard label="Avg. daily active users" description="Average number of distinct users who engaged with the site each day in the selected period." kpi={data.kpis.activeUsers} icon={Users} /><KpiCard label="Sessions" description="Total website visits; one user can create multiple sessions." kpi={data.kpis.sessions} icon={Activity} /><KpiCard label="New users" description="Users who visited the website for the first time during the selected period." kpi={data.kpis.newUsers} icon={Sparkles} /><KpiCard label="Engagement rate" description="Percentage of sessions that lasted longer than 10 seconds, had a key event, or included at least two page or screen views." kpi={data.kpis.engagementRate} format="percent" icon={MousePointerClick} /><KpiCard label="Views per daily user" description="Total page views divided by the summed daily active-user count." kpi={data.kpis.pageViewsPerUser} format="decimal" icon={Activity} />

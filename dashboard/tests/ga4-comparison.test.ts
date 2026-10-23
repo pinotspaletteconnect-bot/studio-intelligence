@@ -12,6 +12,22 @@ function setup(rows: Row[], keys: Row[] = []) {
   return db
 }
 describe("GA4 studio comparison", () => {
+  it("keeps GoHighLevel visible beyond top sources, across mediums and authorized studios", async () => {
+    const source = (studio_id: number, name: string, medium: string, sessions: number) => ({ studio_id, report_date: date, breakdown_type: "source_medium", dimension_value: name, dimension_secondary: medium, sessions, new_users: 1, key_events: 2, total_revenue: "10" })
+    setup([daily(1, date, 20), daily(2, date, 20)], [
+      ...Array.from({ length: 16 }, (_, i) => source(1, `other-${i}`, "referral", 100)),
+      source(1, "GoHighLevel", "email", 2), source(2, "gohighlevel", "sms", 3),
+      source(3, "gohighlevel", "email", 999), source(1, "gohighlevel-other", "email", 999),
+    ])
+    const report = await getGa4NorthAmericaDashboard("all", date, date, [1, 2])
+    expect(report.goHighLevel).toHaveLength(2)
+    expect(report.goHighLevelTotals).toEqual({ sessions: 5, newUsers: 2, keyEvents: 4, revenue: 20 })
+    expect(report.sources.some(row => row.name.toLowerCase() === "gohighlevel")).toBe(false)
+    const single = await getGa4NorthAmericaDashboard("2", date, date, [1, 2])
+    expect(single.goHighLevelTotals.sessions).toBe(3)
+    const empty = await getGa4NorthAmericaDashboard("all", prior, prior, [1, 2])
+    expect(empty.goHighLevel).toEqual([])
+  })
   it("separates studio metrics, uses each baseline, and paginates within authorized scope", async () => {
     setup([daily(1, date, 20), daily(1, prior, 10), daily(2, date, 40), daily(2, prior, 80), daily(3, date, 999)])
     const report = await getGa4NorthAmericaDashboard("all", date, date, [1, 2])
