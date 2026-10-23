@@ -101,6 +101,8 @@ export type Ga4NorthAmericaDashboard = {
   devices: Ga4Breakdown[]
   operatingSystems: Ga4Breakdown[]
   sources: Ga4Breakdown[]
+  goHighLevel: Ga4Breakdown[]
+  goHighLevelTotals: { sessions: number; newUsers: number; keyEvents: number; revenue: number }
   pages: Array<{ name: string; views: number; activeUsers: number; keyEvents: number; revenue: number }>
   events: Array<{ name: string; count: number; activeUsers: number; revenue: number }>
 }
@@ -226,7 +228,7 @@ export async function getGa4NorthAmericaDashboard(
   const [currentResult, previousResult, breakdownResult, currentKeyEventsResult, previousKeyEventsResult, contentResult, eventResult] = await Promise.all([
     fetchAllRows(currentDailyQuery.order("studio_id").order("report_date")),
     fetchAllRows(previousDailyQuery.order("studio_id").order("report_date")),
-    breakdownQuery.range(0, 9999),
+    fetchAllRows(breakdownQuery.order("studio_id").order("report_date").order("breakdown_type").order("dimension_value").order("dimension_secondary")),
     fetchAllRows(currentKeyEventsQuery.order("studio_id").order("report_date").order("dimension_value").order("dimension_secondary")),
     fetchAllRows(previousKeyEventsQuery.order("studio_id").order("report_date").order("dimension_value").order("dimension_secondary")),
     contentQuery.range(0, 9999), eventQuery.range(0, 9999),
@@ -291,6 +293,8 @@ export async function getGa4NorthAmericaDashboard(
     events.set(row.event_name, item)
   }
   const breakdownRows = (breakdownResult.data ?? []) as BreakdownRow[]
+  const goHighLevel = groupBreakdowns(breakdownRows.filter(row => row.dimension_value.toLowerCase() === "gohighlevel"), "source_medium", Number.POSITIVE_INFINITY)
+  const goHighLevelTotals = goHighLevel.reduce((sum, row) => ({ sessions: sum.sessions + row.sessions, newUsers: sum.newUsers + row.newUsers, keyEvents: sum.keyEvents + row.keyEvents, revenue: sum.revenue + row.revenue }), { sessions: 0, newUsers: 0, keyEvents: 0, revenue: 0 })
 
   return {
     scope: "North America", period: { startDate, endDate }, comparisonPeriod: { startDate: comparisonStart, endDate: comparisonEnd }, configured: !missingTables, hasData: currentRows.length > 0,
@@ -299,6 +303,7 @@ export async function getGa4NorthAmericaDashboard(
     trends: [...daily.values()].sort((a, b) => a.date.localeCompare(b.date)),
     countries: groupBreakdowns(breakdownRows, "country"), cities: groupBreakdowns(breakdownRows, "city", 12), devices: groupBreakdowns(breakdownRows, "device_category"),
     operatingSystems: groupBreakdowns(breakdownRows, "operating_system"), sources: groupBreakdowns(breakdownRows, "source_medium", 15),
+    goHighLevel, goHighLevelTotals,
     pages: [...content.values()].sort((a, b) => b.views - a.views).slice(0, 12), events: [...events.values()].sort((a, b) => b.count - a.count).slice(0, 12),
   }
 }
