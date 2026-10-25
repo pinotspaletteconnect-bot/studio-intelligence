@@ -1,0 +1,750 @@
+{
+  "name": "Facebook Reporting Health — Production Email Alerts",
+  "active": false,
+  "nodes": [
+    {
+      "id": "6f6eab18-a5ed-4377-a6f8-2c22c78353a1",
+      "name": "Manual Preview — Never Email",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        220
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "63d6077e-6d50-4e40-a021-accca78f53d7",
+      "name": "Daily 6 AM Eastern",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 6 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "29a82067-0ffb-4fed-9b3c-1961f1857417",
+      "name": "Facebook Import Error",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        440
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "e8d265cc-40a9-4c5d-823b-5535fab0faed",
+      "name": "Check Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "jsCode": "return [{json:{organizationId:1,accountId:1,expectedDate:$now.setZone('America/New_York').minus({days:1}).toISODate(),now:$now.toISO(),dryRun:$execution.mode!=='production'}}];"
+      }
+    },
+    {
+      "id": "99cd7edb-2712-468c-a928-6483e7d8ed52",
+      "name": "Read Active Facebook Targets",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        460,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://hsosjnwjangtqtskofag.supabase.co/rest/v1/meta_collection_targets",
+        "authentication": "predefinedCredentialType",
+        "options": {
+          "timeout": 60000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        },
+        "nodeCredentialType": "supabaseApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "select",
+              "value": "account_id,organization_id,studio_id,asset_type,asset_id"
+            },
+            {
+              "name": "organization_id",
+              "value": "eq.1"
+            },
+            {
+              "name": "account_id",
+              "value": "eq.1"
+            },
+            {
+              "name": "limit",
+              "value": "1000"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "count=exact"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "A32h7eKkq8JEdg0k",
+          "name": "Supabase account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "d346d144-08a4-494c-bb5d-38431fab8786",
+      "name": "Read Facebook Connection Health",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        680,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://hsosjnwjangtqtskofag.supabase.co/rest/v1/meta_integration_accounts",
+        "authentication": "predefinedCredentialType",
+        "options": {
+          "timeout": 60000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        },
+        "nodeCredentialType": "supabaseApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "select",
+              "value": "id,connection_status,token_expires_at"
+            },
+            {
+              "name": "organization_id",
+              "value": "eq.1"
+            },
+            {
+              "name": "id",
+              "value": "eq.1"
+            },
+            {
+              "name": "is_active",
+              "value": "eq.true"
+            },
+            {
+              "name": "limit",
+              "value": "1000"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "count=exact"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "A32h7eKkq8JEdg0k",
+          "name": "Supabase account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "9a1dcdb3-3d4c-4405-8810-6531bcae982d",
+      "name": "Read Studio Names",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://hsosjnwjangtqtskofag.supabase.co/rest/v1/studios",
+        "authentication": "predefinedCredentialType",
+        "options": {
+          "timeout": 60000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        },
+        "nodeCredentialType": "supabaseApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "select",
+              "value": "id,studio_name"
+            },
+            {
+              "name": "organization_id",
+              "value": "eq.1"
+            },
+            {
+              "name": "limit",
+              "value": "1000"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "count=exact"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "A32h7eKkq8JEdg0k",
+          "name": "Supabase account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "ef82ff59-8f0e-4442-82ca-65fb9772b796",
+      "name": "Verify Facebook Ads Source",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://studio-intelligence-production.up.railway.app/meta/download",
+        "authentication": "genericCredentialType",
+        "options": {
+          "timeout": 60000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        },
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {accountId:1,since:$('Check Context').first().json.expectedDate,until:$('Check Context').first().json.expectedDate} }}"
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "li7hEi0wisqrbFlP",
+          "name": "Studio Intelligence Collector"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "6a16484d-03db-42f3-9d0a-282fcffe77aa",
+      "name": "Verify Facebook Page Source",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1340,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://studio-intelligence-production.up.railway.app/meta/page-insights/download",
+        "authentication": "genericCredentialType",
+        "options": {
+          "timeout": 60000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        },
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"accountId\":1}"
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "li7hEi0wisqrbFlP",
+          "name": "Studio Intelligence Collector"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "2424dbd7-2f73-4069-88e3-7e9041a4f326",
+      "name": "Read Yesterday Ads Warehouse",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1560,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://hsosjnwjangtqtskofag.supabase.co/rest/v1/meta_ads_daily",
+        "authentication": "predefinedCredentialType",
+        "options": {
+          "timeout": 60000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        },
+        "nodeCredentialType": "supabaseApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "select",
+              "value": "studio_id,account_id,date_start,ad_id,spend"
+            },
+            {
+              "name": "organization_id",
+              "value": "eq.1"
+            },
+            {
+              "name": "date_start",
+              "value": "={{ 'eq.'+$('Check Context').first().json.expectedDate }}"
+            },
+            {
+              "name": "limit",
+              "value": "1000"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "count=exact"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "A32h7eKkq8JEdg0k",
+          "name": "Supabase account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "aee726da-2b2c-4a63-8e74-49dadc8e16ad",
+      "name": "Read Yesterday Page Warehouse",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1780,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://hsosjnwjangtqtskofag.supabase.co/rest/v1/meta_page_insights_daily",
+        "authentication": "predefinedCredentialType",
+        "options": {
+          "timeout": 60000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        },
+        "nodeCredentialType": "supabaseApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "select",
+              "value": "studio_id,page_id,insight_date,metric,period,value"
+            },
+            {
+              "name": "organization_id",
+              "value": "eq.1"
+            },
+            {
+              "name": "insight_date",
+              "value": "={{ 'eq.'+$('Check Context').first().json.expectedDate }}"
+            },
+            {
+              "name": "limit",
+              "value": "1000"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "count=exact"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "A32h7eKkq8JEdg0k",
+          "name": "Supabase account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "2e9a1d86-34fa-47d7-98fd-5d02fe81b8c5",
+      "name": "Assess Facebook Freshness",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2050,
+        0
+      ],
+      "parameters": {
+        "jsCode": "'use strict';\nconst SETTINGS_URL='https://proud-manifestation-production-3f2d.up.railway.app/settings#meta-connections';\nfunction assessFreshness(input, previous={}) {\n  const issues=[];const badFeeds=new Set();const add=(feed,text)=>{badFeeds.add(feed);issues.push(text);};\n  function body(name,array=true){const r=input[name];if(!r||r.error||r.statusCode<200||r.statusCode>=300||!Number.isInteger(r.statusCode)||(array?!Array.isArray(r.body):!r.body||typeof r.body!=='object')){add(name.startsWith('ads')?'ads':name.startsWith('pages')?'pages':'monitor',name+' could not be verified');return array?[]:null;}const total=String(r.headers?.['content-range']??'').match(/\\/(\\d+)$/);if(array&&(r.body.length>=1000||total&&Number(total[1])>r.body.length))add('monitor',name+' query is incomplete');return r.body;}\n  const targets=body('targets');const accounts=body('accounts');const studios=body('studios');const adsRows=body('adsWarehouse');const pagesRows=body('pagesWarehouse');const ads=body('adsSource',false);const pages=body('pagesSource',false);\n  const names=new Map(studios.map(s=>[s.id,s.studio_name]));const active=targets.filter(t=>t.organization_id===input.organizationId&&t.account_id===input.accountId);\n  if(!active.some(t=>t.asset_type==='ad_account')||!active.some(t=>t.asset_type==='page'))add('monitor','Facebook reporting mappings are missing');\n  const account=accounts.find(a=>a.id===input.accountId);let expiryWarning='';\n  if(!account||account.connection_status!=='connected')add('monitor','Facebook connection needs attention');\n  if(account?.token_expires_at){const expiry=Date.parse(account.token_expires_at);if(!Number.isFinite(expiry))add('monitor','Facebook credential expiration could not be verified');else if(expiry<=Date.parse(input.now)+7*86400000){expiryWarning=account.token_expires_at;issues.push('Facebook needs reconnecting soon; credential expires '+account.token_expires_at.slice(0,10));}}\n  const adsUnavailable=!ads||!Array.isArray(ads.accounts);\n  const pagesUnavailable=!pages||pages.success!==true||!Array.isArray(pages.records);\n  if(adsUnavailable)add('ads','Facebook Ads source access failed');if(pagesUnavailable)add('pages','Facebook Page Insights source access failed');\n  for(const target of active){const name=names.get(target.studio_id)||'Studio '+target.studio_id;\n    if(target.asset_type==='ad_account'&&!adsUnavailable){const source=ads.accounts.find(a=>a.account?.id===target.asset_id);if(!source||source.success!==true||!Array.isArray(source.insights)){add('ads',name+': Ads source access failed');continue;}const delivered=source.insights.filter(r=>r.date_start===input.expectedDate);if(source.insights.some(r=>r.date_start!==input.expectedDate)||source.insights.length>=25){add('ads',name+': Ads source coverage needs verification');continue;}const stored=adsRows.filter(r=>r.studio_id===target.studio_id&&r.account_id===target.asset_id&&r.date_start===input.expectedDate);const keys=new Set(stored.map(r=>r.ad_id));if(keys.size!==stored.length||stored.some(r=>r.spend===null||!Number.isFinite(Number(r.spend))))add('ads',name+': stored Ads records are incomplete');if(delivered.some(r=>!keys.has(r.ad_id)))add('ads',name+': Ads data did not reach the warehouse for '+input.expectedDate);\n    }else if(target.asset_type==='page'&&!pagesUnavailable){const source=pages.records.filter(r=>r.page_id===target.asset_id);if(source.some(r=>r.error)){add('pages',name+': Page Insights source access failed');continue;}const daily=source.filter(r=>r.period==='day'&&String(r.insight_date).slice(0,10)===input.expectedDate);if(!daily.length){add('pages',name+': no daily Page Insights returned for '+input.expectedDate);continue;}const stored=pagesRows.filter(r=>r.studio_id===target.studio_id&&r.page_id===target.asset_id&&r.insight_date===input.expectedDate);const keys=new Set(stored.map(r=>r.metric+':'+r.period));if(keys.size!==stored.length||stored.some(r=>r.value===null||!Number.isFinite(Number(r.value))))add('pages',name+': stored Page Insights are incomplete');if(daily.some(r=>!keys.has(r.metric+':'+r.period)))add('pages',name+': Page Insights did not reach the warehouse for '+input.expectedDate);}\n  }\n  const feeds=[...badFeeds].sort();const signature=feeds.length||expiryWarning?JSON.stringify({feeds,expiryWarning}):'';\n  const action=signature&&signature!==previous.signature?'alert':!signature&&previous.signature?'recovered':'quiet';\n  return {action,signature,issueFeeds:feeds,expectedDate:input.expectedDate,issues:[...new Set(issues)],subject:action==='recovered'?'SASHA: Facebook reporting recovered':'SASHA: Facebook reporting needs attention',text:action==='recovered'?'Facebook Ads and Page Insights are verified for '+input.expectedDate+'. The reporting gap has cleared.': 'Facebook reporting needs attention for '+input.expectedDate+'.\\n\\n'+[...new Set(issues)].map(s=>'- '+s).join('\\n')+'\\n\\nMissing data is not verified zero spending. Review the import executions; reconnect Facebook here if needed:\\n'+SETTINGS_URL};\n}\nfunction assessImportError(event,previous={}){const feed={'z5Mww3blBHS89UYu':'ads','7OMm5L5fprv3Lh5o':'pages'}[event?.workflow?.id];if(!feed)return {action:'quiet',signature:previous.signature||'',issueFeeds:previous.issueFeeds||[],issues:[]};if((previous.issueFeeds||[]).includes(feed))return {action:'quiet',signature:previous.signature||'',issueFeeds:previous.issueFeeds,issues:[]};const feeds=[...new Set([...(previous.issueFeeds||[]),feed])].sort();let expiryWarning='';try{expiryWarning=JSON.parse(previous.signature||'{}').expiryWarning||'';}catch{}const signature=JSON.stringify({feeds,expiryWarning});return {action:signature===previous.signature?'quiet':'alert',signature,issueFeeds:feeds,issues:[feed+' import failed'],subject:'SASHA: Facebook import failed',text:'The scheduled Facebook '+(feed==='ads'?'Ads':'Page Insights')+' import failed. Recent dashboard data may be incomplete; missing data is not verified zero spending.\\n\\nReview the failed workflow in n8n. If Facebook requires reconnection, use:\\n'+SETTINGS_URL};}\n\r\n\nconst context=$('Check Context').first().json;const result=assessFreshness({...context,targets:$('Read Active Facebook Targets').first().json,accounts:$('Read Facebook Connection Health').first().json,studios:$('Read Studio Names').first().json,adsSource:$('Verify Facebook Ads Source').first().json,pagesSource:$('Verify Facebook Page Source').first().json,adsWarehouse:$('Read Yesterday Ads Warehouse').first().json,pagesWarehouse:$('Read Yesterday Page Warehouse').first().json},$getWorkflowStaticData('global'));return [{json:{...result,dryRun:context.dryRun,checkedAt:context.now}}];"
+      }
+    },
+    {
+      "id": "1bfc8336-cca4-44c1-b0c0-d9c9a44343e6",
+      "name": "Assess Failed Facebook Import",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        440
+      ],
+      "parameters": {
+        "jsCode": "'use strict';\nconst SETTINGS_URL='https://proud-manifestation-production-3f2d.up.railway.app/settings#meta-connections';\nfunction assessFreshness(input, previous={}) {\n  const issues=[];const badFeeds=new Set();const add=(feed,text)=>{badFeeds.add(feed);issues.push(text);};\n  function body(name,array=true){const r=input[name];if(!r||r.error||r.statusCode<200||r.statusCode>=300||!Number.isInteger(r.statusCode)||(array?!Array.isArray(r.body):!r.body||typeof r.body!=='object')){add(name.startsWith('ads')?'ads':name.startsWith('pages')?'pages':'monitor',name+' could not be verified');return array?[]:null;}const total=String(r.headers?.['content-range']??'').match(/\\/(\\d+)$/);if(array&&(r.body.length>=1000||total&&Number(total[1])>r.body.length))add('monitor',name+' query is incomplete');return r.body;}\n  const targets=body('targets');const accounts=body('accounts');const studios=body('studios');const adsRows=body('adsWarehouse');const pagesRows=body('pagesWarehouse');const ads=body('adsSource',false);const pages=body('pagesSource',false);\n  const names=new Map(studios.map(s=>[s.id,s.studio_name]));const active=targets.filter(t=>t.organization_id===input.organizationId&&t.account_id===input.accountId);\n  if(!active.some(t=>t.asset_type==='ad_account')||!active.some(t=>t.asset_type==='page'))add('monitor','Facebook reporting mappings are missing');\n  const account=accounts.find(a=>a.id===input.accountId);let expiryWarning='';\n  if(!account||account.connection_status!=='connected')add('monitor','Facebook connection needs attention');\n  if(account?.token_expires_at){const expiry=Date.parse(account.token_expires_at);if(!Number.isFinite(expiry))add('monitor','Facebook credential expiration could not be verified');else if(expiry<=Date.parse(input.now)+7*86400000){expiryWarning=account.token_expires_at;issues.push('Facebook needs reconnecting soon; credential expires '+account.token_expires_at.slice(0,10));}}\n  const adsUnavailable=!ads||!Array.isArray(ads.accounts);\n  const pagesUnavailable=!pages||pages.success!==true||!Array.isArray(pages.records);\n  if(adsUnavailable)add('ads','Facebook Ads source access failed');if(pagesUnavailable)add('pages','Facebook Page Insights source access failed');\n  for(const target of active){const name=names.get(target.studio_id)||'Studio '+target.studio_id;\n    if(target.asset_type==='ad_account'&&!adsUnavailable){const source=ads.accounts.find(a=>a.account?.id===target.asset_id);if(!source||source.success!==true||!Array.isArray(source.insights)){add('ads',name+': Ads source access failed');continue;}const delivered=source.insights.filter(r=>r.date_start===input.expectedDate);if(source.insights.some(r=>r.date_start!==input.expectedDate)||source.insights.length>=25){add('ads',name+': Ads source coverage needs verification');continue;}const stored=adsRows.filter(r=>r.studio_id===target.studio_id&&r.account_id===target.asset_id&&r.date_start===input.expectedDate);const keys=new Set(stored.map(r=>r.ad_id));if(keys.size!==stored.length||stored.some(r=>r.spend===null||!Number.isFinite(Number(r.spend))))add('ads',name+': stored Ads records are incomplete');if(delivered.some(r=>!keys.has(r.ad_id)))add('ads',name+': Ads data did not reach the warehouse for '+input.expectedDate);\n    }else if(target.asset_type==='page'&&!pagesUnavailable){const source=pages.records.filter(r=>r.page_id===target.asset_id);if(source.some(r=>r.error)){add('pages',name+': Page Insights source access failed');continue;}const daily=source.filter(r=>r.period==='day'&&String(r.insight_date).slice(0,10)===input.expectedDate);if(!daily.length){add('pages',name+': no daily Page Insights returned for '+input.expectedDate);continue;}const stored=pagesRows.filter(r=>r.studio_id===target.studio_id&&r.page_id===target.asset_id&&r.insight_date===input.expectedDate);const keys=new Set(stored.map(r=>r.metric+':'+r.period));if(keys.size!==stored.length||stored.some(r=>r.value===null||!Number.isFinite(Number(r.value))))add('pages',name+': stored Page Insights are incomplete');if(daily.some(r=>!keys.has(r.metric+':'+r.period)))add('pages',name+': Page Insights did not reach the warehouse for '+input.expectedDate);}\n  }\n  const feeds=[...badFeeds].sort();const signature=feeds.length||expiryWarning?JSON.stringify({feeds,expiryWarning}):'';\n  const action=signature&&signature!==previous.signature?'alert':!signature&&previous.signature?'recovered':'quiet';\n  return {action,signature,issueFeeds:feeds,expectedDate:input.expectedDate,issues:[...new Set(issues)],subject:action==='recovered'?'SASHA: Facebook reporting recovered':'SASHA: Facebook reporting needs attention',text:action==='recovered'?'Facebook Ads and Page Insights are verified for '+input.expectedDate+'. The reporting gap has cleared.': 'Facebook reporting needs attention for '+input.expectedDate+'.\\n\\n'+[...new Set(issues)].map(s=>'- '+s).join('\\n')+'\\n\\nMissing data is not verified zero spending. Review the import executions; reconnect Facebook here if needed:\\n'+SETTINGS_URL};\n}\nfunction assessImportError(event,previous={}){const feed={'z5Mww3blBHS89UYu':'ads','7OMm5L5fprv3Lh5o':'pages'}[event?.workflow?.id];if(!feed)return {action:'quiet',signature:previous.signature||'',issueFeeds:previous.issueFeeds||[],issues:[]};if((previous.issueFeeds||[]).includes(feed))return {action:'quiet',signature:previous.signature||'',issueFeeds:previous.issueFeeds,issues:[]};const feeds=[...new Set([...(previous.issueFeeds||[]),feed])].sort();let expiryWarning='';try{expiryWarning=JSON.parse(previous.signature||'{}').expiryWarning||'';}catch{}const signature=JSON.stringify({feeds,expiryWarning});return {action:signature===previous.signature?'quiet':'alert',signature,issueFeeds:feeds,issues:[feed+' import failed'],subject:'SASHA: Facebook import failed',text:'The scheduled Facebook '+(feed==='ads'?'Ads':'Page Insights')+' import failed. Recent dashboard data may be incomplete; missing data is not verified zero spending.\\n\\nReview the failed workflow in n8n. If Facebook requires reconnection, use:\\n'+SETTINGS_URL};}\n\r\n\nconst result=assessImportError($input.first().json,$getWorkflowStaticData('global'));return [{json:{...result,dryRun:$execution.mode!=='production',checkedAt:$now.toISO()}}];"
+      }
+    },
+    {
+      "id": "53ccf905-dc3e-46f2-a655-359d29a769a9",
+      "name": "Email Only Real Changes",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2290,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a3dda83c-f2c1-40c8-831c-005392245846",
+              "leftValue": "={{ $json.dryRun === false && $json.action !== \"quiet\" }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "569b446b-6aa0-4769-81dd-2bd7482f1210",
+      "name": "Send Owner Facebook Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2530,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.microsoft.com/v1.0/users/jeff.duff@pinotspalette.com/sendMail",
+        "authentication": "predefinedCredentialType",
+        "options": {
+          "timeout": 60000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": false,
+              "responseFormat": "text"
+            }
+          }
+        },
+        "nodeCredentialType": "microsoftOutlookOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {message:{subject:$json.subject,body:{contentType:'Text',content:$json.text},toRecipients:[{emailAddress:{address:'jeff.duff@pinotspalette.com'}}]},saveToSentItems:true} }}"
+      },
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "AoL1twbYDe2JYTec",
+          "name": "Jeff.Duff Microsoft Outlook"
+        }
+      }
+    },
+    {
+      "id": "baac210f-e373-4930-8db9-e9de25958b5c",
+      "name": "Record Accepted Notification",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2780,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const response=$input.first().json;if(response.statusCode!==202)throw new Error('Email provider did not accept notification');const item=$('Email Only Real Changes').first().json;const state=$getWorkflowStaticData('global');state.signature=item.signature;state.issueFeeds=item.issueFeeds;state.lastSentAt=item.checkedAt;state.lastCheckedAt=item.checkedAt;return [{json:{action:item.action,emailAccepted:true,checkedAt:item.checkedAt}}];"
+      }
+    },
+    {
+      "id": "9f94f7b1-66c0-49d0-b1fd-fc79b6b22ca8",
+      "name": "Quiet Or Preview",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2530,
+        220
+      ],
+      "parameters": {
+        "jsCode": "const item=$input.first().json;if(!item.dryRun){$getWorkflowStaticData('global').lastCheckedAt=item.checkedAt;}return [{json:{...item,emailSent:false,preview:item.dryRun}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Manual Preview — Never Email": {
+      "main": [
+        [
+          {
+            "node": "Check Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily 6 AM Eastern": {
+      "main": [
+        [
+          {
+            "node": "Check Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Context": {
+      "main": [
+        [
+          {
+            "node": "Read Active Facebook Targets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Active Facebook Targets": {
+      "main": [
+        [
+          {
+            "node": "Read Facebook Connection Health",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Facebook Connection Health": {
+      "main": [
+        [
+          {
+            "node": "Read Studio Names",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Studio Names": {
+      "main": [
+        [
+          {
+            "node": "Verify Facebook Ads Source",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Facebook Ads Source": {
+      "main": [
+        [
+          {
+            "node": "Verify Facebook Page Source",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Facebook Page Source": {
+      "main": [
+        [
+          {
+            "node": "Read Yesterday Ads Warehouse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Yesterday Ads Warehouse": {
+      "main": [
+        [
+          {
+            "node": "Read Yesterday Page Warehouse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Yesterday Page Warehouse": {
+      "main": [
+        [
+          {
+            "node": "Assess Facebook Freshness",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Facebook Import Error": {
+      "main": [
+        [
+          {
+            "node": "Assess Failed Facebook Import",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assess Facebook Freshness": {
+      "main": [
+        [
+          {
+            "node": "Email Only Real Changes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assess Failed Facebook Import": {
+      "main": [
+        [
+          {
+            "node": "Email Only Real Changes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Only Real Changes": {
+      "main": [
+        [
+          {
+            "node": "Send Owner Facebook Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Quiet Or Preview",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Owner Facebook Alert": {
+      "main": [
+        [
+          {
+            "node": "Record Accepted Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/New_York",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all"
+  },
+  "pinData": {}
+}
