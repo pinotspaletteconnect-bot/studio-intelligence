@@ -30,12 +30,20 @@ function calendarDOM(){
  return {month:`${match[2]}-${String(month+1).padStart(2,'0')}`,locationId:document.querySelector('#LocationSelect')?.value,roomId:document.querySelector('#RoomSelect')?.value,partyStage:document.querySelector('#PartyStageSelect')?.value,events};
 }
 async function readCalendar(page,target,fromDate,toDate){
+ const ready=()=>page.waitForFunction(()=>{
+  const search=document.querySelector('#searchBtn');
+  return search&&!search.disabled&&search.textContent.trim()==='Search'&&document.querySelectorAll('td[class*="fc-day"]').length>=28;
+ },null,{timeout:60000});
  await page.goto(`${BASE}/Class/CalendarView`,{waitUntil:'domcontentloaded'});
+ // The grid and month label precede the delayed event request. Network idle and
+ // two immediate DOM reads can both observe an empty, still-loading calendar.
+ await ready();
  await page.locator('#LocationSelect').selectOption(String(target.sourceLocationId));
  await page.locator('#RoomSelect').selectOption('-1');
  await page.locator('#PartyStageSelect').selectOption('0');
  await page.getByRole('button',{name:'Search',exact:true}).click();
  await page.waitForLoadState('networkidle',{timeout:30000});
+ await ready();
  await page.locator('#lblDate').waitFor();
  // Search reloads the source page. Wait for the calendar's rendered grid, then
  // take two equal observations to avoid adopting a partially rendered event set.
@@ -50,6 +58,7 @@ async function readCalendar(page,target,fromDate,toDate){
    await page.getByRole('button',{name:current.month<month?'Next Month':'Previous Month',exact:true}).first().click();
    await page.waitForFunction(previous=>document.querySelector('#lblDate')?.textContent.trim()!==previous,current.monthLabel??new Date(current.month+'-01T12:00:00Z').toLocaleString('en-US',{month:'long',year:'numeric',timeZone:'UTC'}));
    await page.waitForLoadState('networkidle',{timeout:30000});
+   await ready();
   }
   if(current.month!==month||current.locationId!==String(target.sourceLocationId)||current.roomId!=='-1'||current.partyStage!=='0')throw Error('Calendar filters/month unverified');
   const stable=await page.evaluate(calendarDOM);if(JSON.stringify(stable)!==JSON.stringify(current))throw Error('Calendar changed during reading');
