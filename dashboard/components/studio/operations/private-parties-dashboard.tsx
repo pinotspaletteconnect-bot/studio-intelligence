@@ -1,0 +1,122 @@
+"use client"
+
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useEffect, useRef, useState } from "react"
+import { useApp } from "@/contexts/app-context"
+import { StudioSelect } from "@/components/studio/shared/studio-select"
+import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { businessDate } from "@/lib/date-range"
+import type { PrivatePartiesData } from "@/lib/services/private-parties"
+
+const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" })
+const stages = [
+  ["Open new leads", "Inquiry + Date Requested", "new"],
+  ["Awaiting deposit", "Date Approved", "deposit_requested"],
+  ["Booked upcoming", "Manage Party", "booked"],
+  ["Completed", "Close Party / Party Closed", "completed"],
+  ["Lost", "Dispositioned", "lost"],
+]
+
+export function PrivatePartiesDashboard() {
+  const router = useRouter()
+  const { selectedStudio, setSelectedStudio, dateRange, setCustomDateRange } = useApp()
+  const initialized = useRef(false)
+  const [today] = useState(() => businessDate())
+  const [start, setStart] = useState(() => `${businessDate().slice(0, 7)}-01`)
+  const [end, setEnd] = useState(() => businessDate())
+  const [data, setData] = useState<PrivatePartiesData | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const leadSummary=!loading&&!error?data?.leads.summary:null
+
+  useEffect(() => {
+    let studio = selectedStudio
+    let from = dateRange.startDate
+    let to = dateRange.endDate
+    if (!initialized.current) {
+      initialized.current = true
+      studio = "all"
+      from = `${today.slice(0, 7)}-01`
+      to = today
+      setSelectedStudio(studio)
+      setCustomDateRange(from, to)
+    }
+    const controller = new AbortController()
+    async function load() {
+      setLoading(true)
+      setError(null)
+      try {
+        const params = new URLSearchParams({ studioId: studio, startDate: from, endDate: to })
+        const response = await fetch(`/api/operations/private-parties?${params}`, { signal: controller.signal })
+        if (response.status === 401) { router.push("/login"); return }
+        if (response.status === 403) { router.push("/access-pending"); return }
+        const result = await response.json()
+        if (!response.ok) throw new Error(result.error || "Unable to load private parties.")
+        if (!controller.signal.aborted) setData(result)
+      } catch (failure) {
+        if (!controller.signal.aborted) setError(failure instanceof Error ? failure.message : "Unable to load private parties.")
+      } finally {
+        if (!controller.signal.aborted) setLoading(false)
+      }
+    }
+    void load()
+    return () => controller.abort()
+  }, [selectedStudio, dateRange.startDate, dateRange.endDate, setSelectedStudio, setCustomDateRange, today, router])
+
+  function chooseThisMonth() {
+    const first = `${today.slice(0, 7)}-01`
+    setStart(first); setEnd(today); setCustomDateRange(first, today)
+  }
+
+  return <div className="min-w-0 space-y-6">
+    <div className="flex flex-wrap items-start justify-between gap-4 rounded-xl border bg-card p-5">
+      <div><h1 className="text-2xl font-bold">Private Parties</h1><p className="text-sm text-muted-foreground">Leads, conversions, and party value across your studios.</p></div>
+      <StudioSelect />
+      <div className="flex w-full flex-wrap items-end gap-3">
+        <label className="text-sm">From<Input type="date" value={start} min="2024-01-01" max={end} onChange={(event) => setStart(event.target.value)} /></label>
+        <label className="text-sm">Through<Input type="date" value={end} min={start} max={today} onChange={(event) => setEnd(event.target.value)} /></label>
+        <Button disabled={!start || !end || start < "2024-01-01" || start > end || end > today} onClick={() => setCustomDateRange(start, end)}>Apply</Button>
+        <Button variant="outline" onClick={chooseThisMonth}>This month</Button>
+        <p className="w-full text-xs text-muted-foreground">Applied: {dateRange.startDate} – {dateRange.endDate}. Choose earlier dates to explore available history.</p>
+      </div>
+    </div>
+
+    <section aria-labelledby="party-leads" className="space-y-4">
+      <h2 id="party-leads" className="text-xl font-semibold">Leads & conversion</h2>
+      {!loading&&!error&&data?.leads.status!=="complete"&&<div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">Historical import coverage: {data?.leads.studiosCovered??0} of {data?.leads.studiosRequested??0} studios complete. Portfolio conversion stays unavailable until every selected studio is reconciled. Lead history begins January 1, 2024.</div>}
+      <div className="grid gap-3 sm:grid-cols-3">{[
+        ["Leads received",leadSummary?leadSummary.received.toLocaleString():"—"],
+        ["Verified lead conversion",leadSummary?.conversionRate==null?"—":`${leadSummary.conversionRate.toFixed(1)}%`],
+        ["Estimated converted party value",leadSummary&&leadSummary.valuedBookings?money.format(leadSummary.estimatedBookedValue):"—"],
+      ].map(([label,value])=><Card key={label}><CardContent><p className="text-sm font-medium">{label}</p><p className="mt-2 text-3xl font-semibold tabular-nums">{value}</p></CardContent></Card>)}</div>
+      {leadSummary&&<p className="text-xs text-muted-foreground">{leadSummary.converted} of {leadSummary.received} leads received in this period have booked as of the latest import. Estimates use quoted price × expected attendance for {leadSummary.valuedBookings} converted parties; {leadSummary.unvaluedBookings} have no usable quote. Estimates are not collected revenue.</p>}
+      {Boolean(data?.leads.unknownDateCount)&&<p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">{data?.leads.unknownDateCount} imported leads have no verifiable original inquiry date. They are excluded from date-filtered lead counts and conversion rates. These rates describe the dated lead cohort.</p>}
+      <p className="text-sm text-muted-foreground">Current stages of leads received in the selected period</p>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">{stages.map(([label, source,key]) => <Card key={label}><CardContent><p className="text-sm font-medium">{label}</p><p className="my-2 text-3xl tabular-nums">{leadSummary?leadSummary.stages[key]:"—"}</p><p className="text-xs text-muted-foreground">{source}</p></CardContent></Card>)}</div>
+      {leadSummary&&leadSummary.stages.unknown>0&&<p className="text-xs text-muted-foreground">{leadSummary.stages.unknown} older leads have no current Party Planner stage. Legacy Confirmed status is retained as booking evidence.</p>}
+      {data?.leads.coverage.length? <details className="rounded-xl border bg-card p-4 text-sm"><summary className="cursor-pointer font-medium">Import freshness and historical limits</summary><div className="mt-3 space-y-2 text-muted-foreground">{data.leads.coverage.map(row=><p key={row.studio_id}>Studio {row.studio_id}: {row.loaded_count} leads reconciled; imported {row.completed_at}. History from {row.history_from}; {row.unknown_date_count??0} without a verified original date.</p>)}<p>The source does not expose historical stage-change timestamps. Conversion shows verified bookings, including completed parties and legacy Confirmed records, as of import. A lost lead is counted as converted only when earlier booking evidence exists. Historical bookings by booking date and deposit-request conversion are unavailable.</p></div></details>:null}
+      {data&&data.studios.some(studio=>studio.leads)&&<div className="overflow-x-auto rounded-xl border bg-card p-4"><h3 className="mb-3 font-semibold">Lead conversion by studio</h3><table className="w-full min-w-[560px] text-sm"><thead><tr className="border-b text-left"><th className="py-3">Studio</th><th className="text-right">Dated leads</th><th className="text-right">Converted</th><th className="text-right">Conversion</th><th className="text-right">Estimated value</th></tr></thead><tbody>{data.studios.map(studio=><tr key={studio.id} className="border-b last:border-0"><td className="py-3">{studio.name}</td><td className="text-right">{studio.leads?.received??"—"}</td><td className="text-right">{studio.leads?.converted??"—"}</td><td className="text-right">{studio.leads?.conversionRate==null?"—":`${studio.leads.conversionRate.toFixed(1)}%`}</td><td className="text-right">{studio.leads?.valuedBookings?money.format(studio.leads.estimatedBookedValue):"—"}</td></tr>)}</tbody></table></div>}
+      {data?.leads.monthly.length? <div className="overflow-x-auto rounded-xl border bg-card p-4"><h3 className="mb-3 font-semibold">Lead conversion by inquiry month</h3><table className="w-full min-w-[440px] text-sm"><thead><tr className="border-b text-left"><th className="py-3">Month</th><th className="text-right">Leads</th><th className="text-right">Converted</th><th className="text-right">Conversion</th></tr></thead><tbody>{data.leads.monthly.map(month=><tr key={month.month} className="border-b last:border-0"><td className="py-3">{month.month}</td><td className="text-right">{month.received}</td><td className="text-right">{month.converted}</td><td className="text-right">{month.conversionRate?.toFixed(1)}%</td></tr>)}</tbody></table></div>:null}
+      <details className="rounded-xl border bg-card p-4 text-sm"><summary className="cursor-pointer font-medium">How leads, conversions, and value are measured</summary><div className="mt-3 space-y-2 text-muted-foreground"><p>Incoming leads are counted once by their original inquiry date, including leads that have since booked or completed. Inquiry and Date Requested are the current new-lead stages.</p><p>Date Approved means a deposit has been requested. Manage Party means booked; Close Party means completed. Dispositioned leads are lost. A completed party remains a successful booking conversion.</p><p>Conversion is the share of leads received in the selected period that eventually book, measured through the latest import. Recent periods may still have open leads. Cancellations after booking must be reported separately.</p><p>Booking value and estimated pipeline value require verified lead records. Historical party sales below are class sales plus fees by event date; product sales are excluded. Deposit amounts are not used as a substitute for revenue.</p></div></details>
+    </section>
+
+    <section aria-labelledby="party-sales" className="space-y-4" aria-busy={loading}>
+      <div><h2 id="party-sales" className="text-xl font-semibold">Historical party sales</h2><p className="text-sm text-muted-foreground">Available completed-day Class Sales history. These counts are separate from lead stages.</p></div>
+      {loading ? <p role="status" className="rounded-xl border bg-card p-6">Loading party history…</p> : error ? <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-6 text-red-900">{error}</p> : data ? <>
+        <p className="text-xs text-muted-foreground">Sales through {data.period.salesThrough}. Dates with records in this selection: {data.coverage.firstDate ?? "none"}{data.coverage.lastDate ? ` – ${data.coverage.lastDate}` : ""}. This does not certify complete import coverage.</p>
+        <div className="grid gap-3 sm:grid-cols-3">{[
+          ["Reported parties", data.sales.hasSales ? data.sales.events.toLocaleString() : "—"],
+          ["Party revenue", data.sales.hasSales ? money.format(data.sales.revenue) : "—"],
+          ["Average party value", data.sales.averageValue === null ? "—" : money.format(data.sales.averageValue)],
+        ].map(([label, value]) => <Card key={label}><CardContent><p className="text-sm text-muted-foreground">{label}</p><p className="mt-2 text-3xl font-semibold tabular-nums">{value}</p></CardContent></Card>)}</div>
+        {!data.sales.hasSales && <p className="text-sm text-muted-foreground">No party-sales records are available for this selection. Missing history does not mean there were no parties.</p>}
+        <div className="overflow-x-auto rounded-xl border bg-card p-4"><h3 className="mb-3 font-semibold">Studio comparison</h3><table className="w-full min-w-[520px] text-sm"><thead><tr className="border-b text-left"><th className="py-3">Studio</th><th className="text-right">Parties</th><th className="text-right">Revenue</th><th className="text-right">Average value</th></tr></thead><tbody>{data.studios.map((studio) => <tr key={studio.id} className="border-b last:border-0"><td className="py-3">{studio.name}</td><td className="text-right tabular-nums">{studio.hasSales ? studio.events : "—"}</td><td className="text-right tabular-nums">{studio.hasSales ? money.format(studio.revenue) : "—"}</td><td className="text-right tabular-nums">{studio.averageValue === null ? "—" : money.format(studio.averageValue)}</td></tr>)}</tbody></table></div>
+        {data.monthly.length > 0 && <div className="overflow-x-auto rounded-xl border bg-card p-4"><h3 className="mb-3 font-semibold">Monthly history</h3><table className="w-full min-w-[440px] text-sm"><thead><tr className="border-b text-left"><th className="py-3">Month</th><th className="text-right">Parties</th><th className="text-right">Revenue</th><th className="text-right">Average value</th></tr></thead><tbody>{data.monthly.map((month) => <tr key={month.month} className="border-b last:border-0"><td className="py-3">{month.month}</td><td className="text-right tabular-nums">{month.events}</td><td className="text-right tabular-nums">{money.format(month.revenue)}</td><td className="text-right tabular-nums">{month.averageValue === null ? "—" : money.format(month.averageValue)}</td></tr>)}</tbody></table></div>}
+        <Link href="/operations/private-parties/events" className="inline-block text-sm underline">View individual party sales</Link>
+      </> : null}
+    </section>
+  </div>
+}
