@@ -7,7 +7,7 @@ const state = vi.hoisted(() => ({ client: null as unknown }))
 vi.mock("@/lib/supabase/server", () => ({ get supabase() { return state.client } }))
 vi.mock("@/lib/auth/session", () => ({ getUserAccessContext: vi.fn() }))
 
-const routes = ["marketing/summary", "operations/summary", "operations/daily-detail", "operations/candle-detail", "operations/art-supplies-detail", "operations/private-party-detail", "operations/mobile-events-detail", "operations/upcoming-classes"]
+const routes = ["marketing/summary", "operations/summary", "operations/daily-detail", "operations/candle-detail", "operations/art-supplies-detail", "operations/private-party-detail", "operations/private-parties", "operations/mobile-events-detail", "operations/upcoming-classes"]
 const context: UserAccessContext = { userId: "user-a", email: "a@example.test", fullName: null, onboardingComplete: true, legalAccepted: true, organizationId: 1, role: "viewer", allowedStudioIds: [1] }
 beforeEach(() => { state.client = warehouse({}).client })
 

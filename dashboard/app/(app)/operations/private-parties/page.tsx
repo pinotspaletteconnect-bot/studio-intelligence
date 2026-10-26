@@ -1,5 +1,5 @@
-import { ClassEventSalesDetail } from "@/components/studio/operations/class-event-sales-detail"
+import { PrivatePartiesDashboard } from "@/components/studio/operations/private-parties-dashboard"
 
 export default function PrivatePartyDetailPage() {
-  return <div className="p-4 md:p-6"><ClassEventSalesDetail kind="private-parties" /></div>
+  return <PrivatePartiesDashboard />
 }

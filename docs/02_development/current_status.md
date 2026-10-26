@@ -1,3 +1,11 @@
+# October 26 — Private-party history imported; approved page release
+
+All five studios have reconciled 2024+ private-party history: 4,196 records,
+401 unknown inquiry dates retained outside dated conversion. Dedicated page
+shows inquiry cohorts, conversion, estimated converted value and party sales.
+Owner approved deployment; production-compatible release in progress.
+See `private_party_reporting_rollout.md`.
+
 # October 26, 2026 - Seat-sales comparison correction
 
 Prepared class-event fallback for missing studio/dates; Gilbert October1-25
