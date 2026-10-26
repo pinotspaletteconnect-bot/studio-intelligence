@@ -43,6 +43,8 @@ type ClassTypeRow = {
   capacity?: number | string | null
   class_sales: number | string | null
   fee_sales: number | string | null
+  product_sales?: number | string | null
+  net_sales?: number | string | null
 }
 
 type ClassLeadTimeRow = {
@@ -345,7 +347,7 @@ export async function getOperationsDashboard(
     supabase
       .from("pts_class_sales_reporting")
       .select(
-        "studio_id,event_date,painting,class_time,reporting_class_type,seats_sold,capacity,class_sales,fee_sales,lead_time_average"
+        "studio_id,event_date,painting,class_time,reporting_class_type,seats_sold,capacity,class_sales,fee_sales,product_sales,net_sales,lead_time_average"
       )
       .gte("event_date", periodStart)
       .lte("event_date", periodEnd),
@@ -480,7 +482,10 @@ export async function getOperationsDashboard(
     allCurrentClassTypeRows.map((row) => `${row.studio_id}:${row.event_date}`)
   )
   const classLeadTimeRows = (classTypesResult.data ?? []).filter((row) => row.lead_time_average !== null) as ClassLeadTimeRow[]
-  const studioIds = [...new Set(dailyRows.map((row) => row.studio_id))]
+  const studioIds = [...new Set([
+    ...dailyRows.map((row) => row.studio_id),
+    ...allCurrentClassTypeRows.map((row) => row.studio_id),
+  ])]
   const studioNames = new Map<number, string>()
   const studioTimeZones = new Map<number, string>()
 
@@ -500,6 +505,31 @@ export async function getOperationsDashboard(
     isReportablePtsClass(row, studioTimeZones.get(row.studio_id)) &&
     hasHistoricalPartyEvidence(row)
   )
+  // A failed Daily Sales import must not hide successfully imported classes.
+  // Fill only absent studio/dates; existing daily and historical facts retain
+  // precedence, and product detail is reconciled separately below.
+  const missingClassDays = new Map<string, DailyOperationsRow>()
+  for (const row of currentClassTypeRows) {
+    if (!row.event_date) continue
+    const key = `${row.studio_id}:${row.event_date}`
+    if (dailyRowsByStudioDate.has(key)) continue
+    const day = missingClassDays.get(key) ?? {
+      studio_id: row.studio_id, report_date: row.event_date,
+      class_event_count: 0, seats_sold: 0, capacity: 0,
+      class_sales: 0, fee_sales: 0, product_sales: 0,
+      food_and_beverage_sales: 0, other_product_sales: 0,
+      unmapped_product_sales: 0, total_sales: 0,
+    }
+    day.class_event_count = numberValue(day.class_event_count) + 1
+    day.seats_sold = numberValue(day.seats_sold) + numberValue(row.seats_sold)
+    day.capacity = numberValue(day.capacity) + numberValue(row.capacity)
+    day.class_sales = numberValue(day.class_sales) + numberValue(row.class_sales)
+    day.fee_sales = numberValue(day.fee_sales) + numberValue(row.fee_sales)
+    day.product_sales = numberValue(day.product_sales) + numberValue(row.product_sales)
+    day.total_sales = numberValue(day.total_sales) + numberValue(row.net_sales)
+    missingClassDays.set(key, day)
+  }
+  dailyRows.push(...missingClassDays.values())
   const classTypeRows = [
     ...((historicalClassTypesResult.data ?? []) as ClassTypeRow[]).filter(
       (row) => !currentClassStudioDates.has(`${row.studio_id}:${row.report_date}`)

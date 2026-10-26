@@ -1,3 +1,10 @@
+# October 26, 2026 - Seat-sales comparison correction
+
+Prepared class-event fallback for missing studio/dates; Gilbert October1-25
+553 seats versus same-weekday prior695, YTD7065 versus prior8112.
+Reporting tests and lint pass. Deployment authorized October26; validation
+and release in progress. See gilbert_seat_sales_gap_20261026.md.
+
 # Studio Intelligence Current Status
 
 ## October 19, 2026 - STM seating repairs and product perks verified

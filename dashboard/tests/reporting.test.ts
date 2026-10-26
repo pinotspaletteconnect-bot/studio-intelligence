@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { getMarketingDashboard } from "@/lib/services/marketing"
-import { getOperationsDashboard, getDailyOperatingDetail, getClassEventSalesDetail, getCandleSalesDetail } from "@/lib/services/operations"
+import { getOperationsDashboard, getOperationsDashboardWithComparison, getDailyOperatingDetail, getClassEventSalesDetail, getCandleSalesDetail } from "@/lib/services/operations"
 import { getHomebaseLabor } from "@/lib/services/homebase-labor"
 import { getUpcomingClasses } from "@/lib/services/upcoming-classes"
 import { warehouse, type Row } from "./warehouse"
@@ -46,6 +46,54 @@ describe("marketing totals", () => {
 })
 
 describe("operations reconciliation", () => {
+  it("includes class-only dates in year-over-year seats without duplicating overlapping history", async () => {
+    useWarehouse({
+      pts_operations_daily: [
+        { studio_id: 1, report_date: "2025-10-22", seats_sold: 692, total_sales: 25000 },
+        { studio_id: 1, report_date: "2026-10-20", seats_sold: 999, total_sales: 99999 },
+      ],
+      pts_daily_operations_reporting: [
+        { studio_id: 1, report_date: "2026-10-20", class_reported_seats_sold: 485, class_reported_net_sales: 19000 },
+      ],
+      pts_class_sales_reporting: [
+        { id: 1, studio_id: 1, event_date: "2026-10-20", seats_sold: 485, net_sales: 19000 },
+        { id: 2, studio_id: 1, event_date: "2026-10-21", seats_sold: 15, capacity: 20, class_sales: 600, fee_sales: 5, product_sales: 10, net_sales: 615 },
+        { id: 3, studio_id: 1, event_date: "2026-10-24", seats_sold: 30, net_sales: 1200 },
+        { id: 4, studio_id: 1, event_date: "2026-10-24", seats_sold: 23, net_sales: 920 },
+        { id: 5, studio_id: 2, event_date: "2026-10-24", seats_sold: 999, net_sales: 99999 },
+      ],
+      pts_product_sales_daily_reporting: [
+        { id: 1, studio_id: 1, report_date: "2026-10-21", department: "Food & Beverage", net_sales: 10 },
+      ],
+    })
+    const result = await getOperationsDashboardWithComparison("all", "2026-10-01", "2026-10-25", "priorYearWeek", undefined, undefined, state.ids)
+    expect(result.kpis.seatsSold).toBe(553)
+    expect(result.comparison?.kpis.seatsSold).toBe(692)
+    expect(result.comparison?.changes.seatsSold?.absolute).toBe(-139)
+    expect(result.daily.find((row) => row.date === "2026-10-24")?.seatsSold).toBe(53)
+    expect(result.studioKpis[0].values.seatsSold).toBe(553)
+    expect(result.studioSales[0].seatsSold).toBe(553)
+    expect(result.kpis.totalSales).toBe(21735)
+    expect(result.kpis.foodBeverageSales).toBe(10)
+  })
+
+  it("filters class-only dates with the studio timezone and preserves historical precedence", async () => {
+    useWarehouse({
+      studios: [{ id: 1, studio_name: "Studio One", timezone: "America/Phoenix" }],
+      pts_operations_daily: [{ studio_id: 1, report_date: date, seats_sold: 10 }],
+      pts_class_sales_reporting: [
+        { id: 1, studio_id: 1, event_date: date, seats_sold: 12 },
+        { id: 2, studio_id: 1, event_date: "2026-08-02", painting: "Available for private party", seats_sold: 100 },
+        { id: 3, studio_id: 1, event_date: "2026-08-02", class_time: "2026-08-02T08:00:00Z", seats_sold: 100 },
+        { id: 4, studio_id: 1, event_date: "2026-08-02", class_time: "2026-08-03T01:00:00Z", seats_sold: 0 },
+      ],
+    })
+    const result = await getOperationsDashboard("all", date, "2026-08-02", state.ids)
+    expect(result.kpis.seatsSold).toBe(10)
+    expect(result.daily.find((row) => row.date === "2026-08-02")?.seatsSold).toBe(0)
+    expect(result.studioSales[0].studioName).toBe("Studio One")
+  })
+
   it("prefers current facts on overlap and preserves history for other studios", async () => {
     useWarehouse({
       pts_operations_daily: [{ studio_id: 1, report_date: date, total_sales: 500 }, { studio_id: 2, report_date: date, total_sales: 40 }],
