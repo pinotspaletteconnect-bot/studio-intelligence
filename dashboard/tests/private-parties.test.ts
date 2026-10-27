@@ -38,9 +38,11 @@ describe("private-party history", () => {
       studios: [{ id: 1, studio_name: "One", timezone: "America/New_York" }],
       pts_class_sales_reporting: [
         { id: 1, studio_id: 1, event_date: "2026-10-01", painting: "Available for Private Party", class_sales: 0 },
-        { id: 2, studio_id: 1, event_date: "2026-10-02", painting: "No Painting Selected", capacity: 0, seats_sold: 0, class_sales: 0 },
+        { id: 2, studio_id: 1, event_date: "2026-10-02", painting: "No Painting Selected", capacity: 200, seats_sold: 0, class_sales: 0 },
         { id: 3, studio_id: 1, event_date: "2026-10-03", painting: "Real party", class_time: "2026-10-03T06:00:00Z", class_sales: 50 },
         { id: 4, studio_id: 1, event_date: "2026-10-04", painting: "No Painting Selected", seats_sold: 4, class_sales: 200 },
+        { id: 5, studio_id: 1, event_date: "2026-10-05", painting: "Coming Soon", capacity: 24, seats_sold: 0, class_sales: 0 },
+        { id: 6, studio_id: 1, event_date: "2026-10-06", painting: "Spooky Trio", capacity: 800, seats_sold: 0, class_sales: 0 },
       ].map(row => ({ reporting_class_type: "Private Party", ...row })),
       pts_class_type_sales_daily_reporting: [
         { studio_id: 1, report_date: "2026-10-01", reporting_class_type: "Private Party", class_event_count: 1, class_sales: 99 },
@@ -80,7 +82,7 @@ describe("private-party history", () => {
     await expect(getPrivateParties("2", "2026-10-01", "2026-10-26", state.ids)).rejects.toMatchObject({ status: 403 })
   })
   it("keeps missing history distinct from zero-value parties", async () => {
-    useWarehouse({ pts_class_sales_reporting: [{ id: 1, studio_id: 1, event_date: "2026-10-01", reporting_class_type: "Private Party", class_sales: 0 }] })
+    useWarehouse({ pts_class_sales_reporting: [{ id: 1, studio_id: 1, event_date: "2026-10-01", reporting_class_type: "Private Party", seats_sold: 2, class_sales: 0 }] })
     const result = await getPrivateParties("all", "2026-10-01", "2026-10-26", state.ids)
     expect(result.studios[0]).toMatchObject({ hasSales: true, averageValue: 0 })
     expect(result.studios[1]).toMatchObject({ hasSales: false, averageValue: null })

@@ -1,3 +1,21 @@
+# Exclude capacity-only private-party marketing listings - October 27, 2026
+
+Found four October source-classified private-party listings with capacity but
+zero guests, class sales and fees. Prior filter counted capacity as evidence for
+No Painting Selected and accepted any other title, admitting Coming Soon and
+Spooky Trio as well. Shared historical private-party filter now requires recorded
+guests, class sales or fees, independent of title; capacity alone is insufficient.
+Attended free and fee-only parties remain. Mobile Events logic stays unchanged.
+The rule applies to party details, dedicated party history and operations class
+summaries. Current detail coverage continues to block historical fallback from
+restoring excluded records. Aggregate-only older sales lack event-level evidence
+and remain subject to the existing coverage disclosure.
+October four-studio verification:25 parties instead of29; revenue10074.24 stays
+unchanged; average402.97. Excluded IDs33080,41305,45163,37324. Lead pipeline and
+conversion rules, schemas, source data and daily workflows are unchanged.
+37 reporting/access tests, lint, production build and read-only live reporting
+verification pass. Deployment pending.
+
 # Minimum-guest refresh verified - October 27, 2026
 
 Reconciled production refresh completed2026-10-27T12:55:51UTC for all5 studios:

@@ -140,7 +140,7 @@ export function PrivatePartiesDashboard() {
     </section>
 
     <section aria-labelledby="party-sales" className="space-y-4" aria-busy={loading}>
-      <div><h2 id="party-sales" className="text-xl font-semibold">Historical party sales</h2><p className="text-sm text-muted-foreground">Available completed-day Class Sales history. These counts are separate from lead stages.</p></div>
+      <div><h2 id="party-sales" className="text-xl font-semibold">Historical party sales</h2><p className="text-sm text-muted-foreground">Available completed-day Class Sales history. Parties require recorded guests, class sales or fees; capacity alone does not count. Empty marketing listings are excluded. These counts are separate from lead stages.</p></div>
       {loading ? <p role="status" className="rounded-xl border bg-card p-6">Loading party history…</p> : error ? <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-6 text-red-900">{error}</p> : data ? <>
         <p className="text-xs text-muted-foreground">Sales through {data.period.salesThrough}. Dates with records in this selection: {data.coverage.firstDate ?? "none"}{data.coverage.lastDate ? ` – ${data.coverage.lastDate}` : ""}. This does not certify complete import coverage.</p>
         <div className="grid gap-3 sm:grid-cols-3">{[
