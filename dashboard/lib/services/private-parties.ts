@@ -70,9 +70,11 @@ export type PrivatePartyLead = {
 }
 
 export function summarizePartyLeads(rows: PrivatePartyLead[]) {
-  const converted=rows.filter(row=>row.converted)
+  const qualified = rows.filter(row => row.source_disposition?.trim().toLowerCase() !== "inactive")
+  const excludedInactive = rows.length - qualified.length
+  const converted=qualified.filter(row=>row.converted)
   const valued=converted.filter(row=>row.estimated_value!==null)
-  const lost = rows.filter(row => row.stage === "lost")
+  const lost = qualified.filter(row => row.stage === "lost")
   const reasonCounts = new Map<string, number>()
   for (const row of lost) {
     const recorded = row.source_disposition?.trim().replace(/\s+/g, " ")
@@ -81,8 +83,8 @@ export function summarizePartyLeads(rows: PrivatePartyLead[]) {
   }
   const lossReasons = [...reasonCounts].map(([reason, count]) => ({ reason, count, shareOfLost: count / lost.length * 100 }))
     .sort((a, b) => b.count - a.count || a.reason.localeCompare(b.reason))
-  const stages=Object.fromEntries(['new','deposit_requested','booked','completed','lost','unknown'].map(stage=>[stage,rows.filter(row=>row.stage===stage).length]))
-  return { received:rows.length, converted:converted.length, conversionRate:rows.length?converted.length/rows.length*100:null,
+  const stages=Object.fromEntries(['new','deposit_requested','booked','completed','lost','unknown'].map(stage=>[stage,qualified.filter(row=>row.stage===stage).length]))
+  return { received:rows.length, qualifiedReceived:qualified.length, excludedInactive, converted:converted.length, conversionRate:qualified.length?converted.length/qualified.length*100:null,
     stages, lossReasons, estimatedBookedValue:valued.reduce((sum,row)=>sum+numberValue(row.estimated_value),0),
     valuedBookings:valued.length, unvaluedBookings:converted.length-valued.length }
 }
@@ -184,7 +186,7 @@ export async function getPrivateParties(studioId: string, start: string, end: st
     const previousLeads = previous.leads.summary
     return { yearsAgo: years, period: previous.period, leads: previousLeads, sales: previous.sales,
       changes: {
-        leads: partyMetricChange(currentLeads?.received ?? null, previousLeads?.received ?? null),
+        leads: partyMetricChange(currentLeads?.qualifiedReceived ?? null, previousLeads?.qualifiedReceived ?? null),
         parties: partyMetricChange(current.sales.hasSales ? current.sales.events : null, previous.sales.hasSales ? previous.sales.events : null),
         averageGuests: partyMetricChange(current.sales.averageGuests, previous.sales.averageGuests),
         averageRevenue: partyMetricChange(current.sales.averageValue, previous.sales.averageValue),
