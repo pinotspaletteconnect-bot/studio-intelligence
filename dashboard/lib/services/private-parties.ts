@@ -178,6 +178,7 @@ export async function getPrivateParties(studioId: string, start: string, end: st
         leads: partyMetricChange(currentLeads?.received ?? null, previousLeads?.received ?? null),
         parties: partyMetricChange(current.sales.hasSales ? current.sales.events : null, previous.sales.hasSales ? previous.sales.events : null),
         averageGuests: partyMetricChange(current.sales.averageGuests, previous.sales.averageGuests),
+        averageRevenue: partyMetricChange(current.sales.averageValue, previous.sales.averageValue),
         revenue: partyMetricChange(current.sales.hasSales ? current.sales.revenue : null, previous.sales.hasSales ? previous.sales.revenue : null),
         conversionPoints: currentLeads?.conversionRate != null && previousLeads?.conversionRate != null
           ? currentLeads.conversionRate - previousLeads.conversionRate : null,

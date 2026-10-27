@@ -1,3 +1,13 @@
+# Average revenue per party comparison - October 27, 2026
+
+Added Average revenue per party row to the combined prior-year card. Reuses the
+existing weighted service average (recorded class sales plus fees divided by
+reported parties), with service-calculated percent and dollar differences for
+one/two years prior. Missing history stays unavailable; zero prior averages do
+not create a percentage. Unpaid named-painting parties remain in the denominator,
+as the caption explains.37 reporting/access checks pass, including average
+comparison and missing baseline. No collection, schema, schedule or access changes.
+
 # Average party volume comparison - October 27, 2026
 
 Added Average guests per party to the shared prior-year comparison card, with
