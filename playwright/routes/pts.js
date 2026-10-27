@@ -22,33 +22,51 @@ const router = express.Router();
 const { resolvePtsAccount } = require("../services/ptsCredentials");
 const { collectPrivatePartyStudio } = require("../scripts/pts/privateParties.cjs");
 
-router.post("/private-party-leads", requireCollectorAuth, async (req, res) => {
+const { createPrivatePartyJobs } = require("../services/privatePartyJobs.cjs");
+const privatePartyJobs = createPrivatePartyJobs({ collect: (input, progress) =>
+    runPtsReportQueued(input.accountId, async () => {
+        progress({ phase: "resolving_account" });
+        const account = await resolvePtsAccount(input.accountId);
+        const studio = account.studios.find(target => Number(target.studioId) === input.studioId);
+        if (!studio) throw Error("Private-party studio is not mapped to account");
+        progress({ phase: "enumerating" });
+        const result = await collectPrivatePartyStudio({ credentials: account.credentials,
+            target: { studio_id: input.studioId, account_id: input.accountId, pts_location_id: studio.locationId },
+            knownLeads: input.knownLeads,
+            onList: async list => progress({ phase: "collecting", completed: 0, total: list.count }),
+            onLead: async (_row, completed, total) => progress({ phase: "collecting", completed, total }),
+        });
+        return { body: { mode: "daily_refresh", studioId: input.studioId, accountId: input.accountId,
+            sourceCount: result.sourceCount, historyFrom: result.historyFrom, rows: result.rows } };
+    })
+});
+router.post("/private-party-leads", requireCollectorAuth, (req, res) => {
     const accountId = Number(req.body?.accountId);
     const studioId = Number(req.body?.studioId);
+    const requestId = req.body?.requestId;
     const knownLeads = req.body?.knownLeads ?? [];
     if (!Number.isSafeInteger(accountId) || accountId <= 0 ||
-        !Number.isSafeInteger(studioId) || studioId <= 0 || !Array.isArray(knownLeads) || knownLeads.length > 30000 ||
+        !Number.isSafeInteger(studioId) || studioId <= 0 || typeof requestId !== "string" || !/^[A-Za-z0-9_-]{1,160}$/.test(requestId) ||
+        !Array.isArray(knownLeads) || knownLeads.length > 30000 ||
         knownLeads.some(row => !Number.isSafeInteger(Number(row.source_lead_id)) || Number(row.source_lead_id) <= 0 ||
             row.received_date !== null && !/^\d{4}-\d{2}-\d{2}$/.test(row.received_date))) {
         return res.status(400).json({ success: false, error: "Invalid private-party collection request" });
     }
     try {
-        const result = await runPtsReportQueued(accountId, async () => {
-            const account = await resolvePtsAccount(accountId);
-            const studio = account.studios.find(target => Number(target.studioId) === studioId);
-            if (!studio) throw Error("Private-party studio is not mapped to account");
-            return collectPrivatePartyStudio({ credentials: account.credentials,
-                target: { studio_id: studioId, account_id: accountId, pts_location_id: studio.locationId },
-                knownLeads: knownLeads.map(row => ({ source_lead_id: Number(row.source_lead_id),
-                    received_date: row.received_date, received_date_basis: row.received_date_basis })),
-            });
-        });
-        return res.json({ body: { mode: "daily_refresh", studioId, accountId, sourceCount: result.sourceCount,
-            historyFrom: result.historyFrom, rows: result.rows } });
+        return res.status(202).json(privatePartyJobs.start({accountId,studioId,requestId,
+            knownLeads: knownLeads.map(row => ({ source_lead_id: Number(row.source_lead_id),
+                received_date: row.received_date, received_date_basis: row.received_date_basis }))}));
     } catch {
-        console.error("PTS private-party collection failed", { accountId, studioId });
-        return res.status(502).json({ success: false, error: "Private-party collection failed; no complete snapshot returned" });
+        return res.status(409).json({ error: "Collection request conflicts with an existing job or capacity limit" });
     }
+});
+router.get("/private-party-leads/jobs/:jobId", requireCollectorAuth, (req, res) => {
+    const job = privatePartyJobs.get(req.params.jobId);
+    return job ? res.json(job) : res.status(404).json({error:"Collection job unavailable; retry this refresh"});
+});
+router.get("/private-party-leads/jobs/:jobId/result", requireCollectorAuth, (req, res) => {
+    const result = privatePartyJobs.result(req.params.jobId);
+    return result ? res.json(result) : res.status(409).json({error:"Complete source snapshot unavailable"});
 });
 
 

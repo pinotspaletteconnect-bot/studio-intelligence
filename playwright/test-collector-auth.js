@@ -31,6 +31,13 @@ test("all collection routes reject unauthenticated requests", async () => {
         assert.equal((await fetch(base + path, { method: "POST" })).status, 401, path);
     }
 });
+test("private-party job status and result reads require collector authentication", async () => {
+    for (const path of ["/pts/private-party-leads/jobs/missing", "/pts/private-party-leads/jobs/missing/result"]) {
+        assert.equal((await fetch(base + path)).status, 401);
+        assert.equal((await fetch(base + path, { headers: { authorization: `Bearer ${TOKEN}` } })).status, path.endsWith("/result") ? 409 : 404);
+    }
+});
+
 test("Meta discovery and configuration are protected; liveness stays public", async () => {
     for (const path of ["/meta/config", "/meta/accounts", "/meta/pages", "/meta/businesses", "/meta/auth", "/meta/page-insights/health"]) {
         assert.equal((await fetch(base + path)).status, 401, path);
