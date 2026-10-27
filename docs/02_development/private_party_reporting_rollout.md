@@ -1,3 +1,13 @@
+# Minimum-guest refresh verified - October 27, 2026
+
+Reconciled production refresh completed2026-10-27T12:55:51UTC for all5 studios:
+1115/1156/860/257/811 rows (4199 total), all source/loaded/identity counts match.
+Independent verification of the five St. Matthews October conversions confirms
+minimum counts10,10,10,8,15 and estimated values300,300,300,312,585: total1797.
+All five now have usable values and no parsing warnings. Daily scheduling remains
+unchanged; the collector fix is deployed in PR114. Combined comparison card PR115
+is ready to merge now that the source refresh has completed.
+
 # Minimum-guest private-party values - October 27, 2026
 
 Owner requested range/open-ended attendance support using minimum guests.
