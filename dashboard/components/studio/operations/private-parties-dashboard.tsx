@@ -24,6 +24,12 @@ function changeLabel(change: { difference: number; percent: number | null } | nu
   return change.percent === null ? `${amount}; prior period was zero` : `${change.percent > 0 ? "+" : ""}${change.percent.toFixed(1)}% (${amount})`
 }
 
+function moneyChangeLabel(change: { difference: number; percent: number | null } | null) {
+  if (!change) return "Comparison unavailable"
+  const percent = change.percent === null ? "No percentage baseline" : `${change.percent > 0 ? "+" : ""}${change.percent.toFixed(1)}%`
+  return `${percent} (${money.format(change.difference)})`
+}
+
 export function PrivatePartiesDashboard() {
   const router = useRouter()
   const { selectedStudio, setSelectedStudio, dateRange, setCustomDateRange } = useApp()
@@ -98,7 +104,7 @@ export function PrivatePartiesDashboard() {
       <h2 id="party-year-comparison" className="text-xl font-semibold">Same period in previous years</h2>
       <p className="text-sm text-muted-foreground">Same calendar dates and selected studios, back to 2024. Sales use the same completed-day cutoff in each year. Current pipeline counts are today’s snapshot and are not compared with past years.</p>
       {data.comparisons.length ? <div className="overflow-x-auto rounded-xl border bg-card p-4">
-        <table className="w-full min-w-[900px] text-sm"><caption className="mb-3 text-left text-xs text-muted-foreground">Changes compare the selected period with each prior period. Average guests per party = recorded guest seats ÷ reported parties, including unpaid parties with no guests recorded yet. Party sales stop at the matched completed-day cutoff shown below each date range.</caption><thead><tr className="border-b text-left">
+        <table className="w-full min-w-[900px] text-sm"><caption className="mb-3 text-left text-xs text-muted-foreground">Changes compare the selected period with each prior period. Average guests per party = recorded guest seats ÷ reported parties, including unpaid parties with no guests recorded yet. Average revenue per party = recorded party revenue ÷ reported parties, including unpaid parties. Party sales stop at the matched completed-day cutoff shown below each date range.</caption><thead><tr className="border-b text-left">
           <th scope="col" className="py-3 pr-4">Metric</th>
           <th scope="col" className="px-3 text-right align-top">Selected period<span className="mt-1 block text-xs font-normal text-muted-foreground">{data.period.startDate} – {data.period.endDate}</span><span className="block text-xs font-normal text-muted-foreground">Sales through {data.period.salesThrough}</span></th>
           {data.comparisons.map(previous => <Fragment key={previous.yearsAgo}>
@@ -109,7 +115,8 @@ export function PrivatePartiesDashboard() {
           { label: "Leads received", current: leadSummary?.received ?? "—", previous: data.comparisons.map(previous => [previous.leads?.received ?? "—", changeLabel(previous.changes.leads)]) },
           { label: "Reported parties", current: data.sales.hasSales ? data.sales.events : "—", previous: data.comparisons.map(previous => [previous.sales.hasSales ? previous.sales.events : "—", changeLabel(previous.changes.parties)]) },
           { label: "Average guests per party", current: data.sales.averageGuests == null ? "—" : data.sales.averageGuests.toFixed(1), previous: data.comparisons.map(previous => [previous.sales.averageGuests == null ? "—" : previous.sales.averageGuests.toFixed(1), changeLabel(previous.changes.averageGuests, 1)]) },
-          { label: "Party revenue", current: data.sales.hasSales ? money.format(data.sales.revenue) : "—", previous: data.comparisons.map(previous => [previous.sales.hasSales ? money.format(previous.sales.revenue) : "—", previous.changes.revenue ? `${previous.changes.revenue.percent === null ? "No percentage baseline" : `${previous.changes.revenue.percent > 0 ? "+" : ""}${previous.changes.revenue.percent.toFixed(1)}%`} (${money.format(previous.changes.revenue.difference)})` : "Comparison unavailable"]) },
+          { label: "Party revenue", current: data.sales.hasSales ? money.format(data.sales.revenue) : "—", previous: data.comparisons.map(previous => [previous.sales.hasSales ? money.format(previous.sales.revenue) : "—", moneyChangeLabel(previous.changes.revenue)]) },
+          { label: "Average revenue per party", current: data.sales.averageValue == null ? "—" : money.format(data.sales.averageValue), previous: data.comparisons.map(previous => [previous.sales.averageValue == null ? "—" : money.format(previous.sales.averageValue), moneyChangeLabel(previous.changes.averageRevenue)]) },
           { label: "Lead conversion to date", current: leadSummary?.conversionRate == null ? "—" : `${leadSummary.conversionRate.toFixed(1)}%`, previous: data.comparisons.map(previous => [previous.leads?.conversionRate == null ? "—" : `${previous.leads.conversionRate.toFixed(1)}%`, previous.changes.conversionPoints == null ? "Comparison unavailable" : `${previous.changes.conversionPoints > 0 ? "+" : ""}${previous.changes.conversionPoints.toFixed(1)} percentage points`]) },
         ].map(row => <tr key={row.label} className="border-b last:border-0"><th scope="row" className="py-3 pr-4 text-left font-normal">{row.label}</th><td className="px-3 text-right tabular-nums">{row.current}</td>{row.previous.map(([value, change], index) => <Fragment key={data.comparisons[index].yearsAgo}><td className="border-l px-3 text-right tabular-nums">{value}</td><td className="px-3 text-right tabular-nums">{change}</td></Fragment>)}</tr>)}</tbody></table>
       </div> : <p className="rounded-xl border p-4 text-sm">No comparable earlier period within the available history beginning January 1, 2024.</p>}
