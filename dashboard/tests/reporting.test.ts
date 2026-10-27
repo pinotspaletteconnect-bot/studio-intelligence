@@ -116,7 +116,7 @@ describe("operations reconciliation", () => {
     expect((await getDailyOperatingDetail(undefined, date, state.ids)).totals.classes).toBe(1205)
     expect((await getClassEventSalesDetail("Private Party", undefined, date, date, state.ids)).totals.revenue).toBe(12050)
   })
-  it("excludes capacity-only marketing holds from private-party summary and details, retaining attended free and fee-only parties", async () => {
+  it("excludes empty marketing placeholders while retaining real unpaid, attended free and fee-only parties", async () => {
     useWarehouse({ pts_class_sales_reporting: [
       { id: 1, studio_id: 1, event_date: date, painting: "No Painting Selected", capacity: 200, seats_sold: 0, class_sales: 0, fee_sales: 0 },
       { id: 2, studio_id: 1, event_date: date, painting: "Coming Soon", capacity: 24, seats_sold: 0, class_sales: 0, fee_sales: 0 },
@@ -125,10 +125,10 @@ describe("operations reconciliation", () => {
       { id: 5, studio_id: 1, event_date: date, painting: "No Painting Selected", seats_sold: 0, class_sales: 0, fee_sales: 50 },
     ].map(row => ({ ...row, reporting_class_type: "Private Party" })) }, [1])
     const detail = await getClassEventSalesDetail("Private Party", undefined, date, date, [1])
-    expect(detail.totals).toEqual({ events: 2, seatsSold: 8, revenue: 50 })
-    expect(detail.studios[0].classes.map(row => row.id).sort()).toEqual([4, 5])
+    expect(detail.totals).toEqual({ events: 3, seatsSold: 8, revenue: 50 })
+    expect(detail.studios[0].classes.map(row => row.id).sort()).toEqual([3, 4, 5])
     const summary = await getOperationsDashboard("all", date, date, [1])
-    expect(summary.kpis.privatePartyEvents).toBe(2)
+    expect(summary.kpis.privatePartyEvents).toBe(3)
   })
   it("paginates upcoming classes and keeps missing booking data unknown", async () => {
     useWarehouse({ pts_upcoming_classes_current: Array.from({ length: 1101 }, (_, id) => ({ studio_id: 1, source_event_key: String(id), event_date: date, snapshot_date: date, seats_sold: 2, capacity: 4, class_sales: 10 })) })

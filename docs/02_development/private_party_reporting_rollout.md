@@ -1,3 +1,17 @@
+# Retain real unpaid parties; confirmed marketing placeholders only - October 27, 2026
+
+Owner confirmed Gilbert10/25, Short North10/17 and St. Matthews10/3 are marketing
+listings, but Jeffersonville10/10 Spooky Trio is a real unpaid party. Correction
+to PR116: selected-painting parties remain even with no recorded guests/revenue.
+Only empty No Painting Selected / Coming Soon placeholders require actual guest,
+class-sale or fee evidence; capacity alone is insufficient. No title-to-customer
+mapping or payment assumptions. The shared filter applies to details and summaries.
+Live read-only regression checks explicitly exclude33080/41305/45163 and retain
+37324. October four-studio count26, revenue10074.24, average387.47. The earlier25
+count was overbroad and is superseded by this owner-confirmed interpretation.
+37 reporting/access tests, live detail/summary reconciliation, lint/build pass.
+No lead, warehouse, source-party, scheduling or authentication changes.
+
 # Exclude capacity-only private-party marketing listings - October 27, 2026
 
 Found four October source-classified private-party listings with capacity but

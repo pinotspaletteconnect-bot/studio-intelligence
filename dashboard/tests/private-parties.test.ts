@@ -49,7 +49,7 @@ describe("private-party history", () => {
       ],
     }, [1])
     const result = await getPrivateParties("all", "2026-10-01", "2026-10-26", state.ids)
-    expect(result.sales).toMatchObject({ events: 1, revenue: 200, averageValue: 200 })
+    expect(result.sales).toMatchObject({ events: 2, revenue: 200, averageValue: 100 })
   })
   it("reconciles overlapping source histories by studio/date and weights average value", async () => {
     useWarehouse({

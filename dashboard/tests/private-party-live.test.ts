@@ -47,7 +47,8 @@ it.skipIf(process.env.SI_VERIFY_LIVE !== "1")("reads reconciled private-party co
         expect(detail.totals.events).toBe(report.sales.events)
         expect(detail.totals.revenue).toBeCloseTo(report.sales.revenue, 2)
         const ids = detail.studios.flatMap(studio => studio.classes.map(row => row.id))
-        for (const excluded of [33080, 41305, 45163, 37324]) expect(ids).not.toContain(excluded)
+        for (const excluded of [33080, 41305, 45163]) expect(ids).not.toContain(excluded)
+        expect(ids).toContain(37324)
       }
     }
   }
