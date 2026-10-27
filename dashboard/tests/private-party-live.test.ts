@@ -41,6 +41,14 @@ it.skipIf(process.env.SI_VERIFY_LIVE !== "1")("reads reconciled private-party co
     for (const start of ["2026-10-01", "2024-01-01"]) {
       const report = await getPrivateParties("all", start, "2026-10-26", scope)
       evidence.push({ scope, start, leads: report.leads.summary, sales: report.sales })
+      if (scope.length === 4 && start === "2026-10-01") {
+        const { getClassEventSalesDetail } = await import("@/lib/services/operations")
+        const detail = await getClassEventSalesDetail("Private Party", undefined, start, report.period.salesThrough, scope)
+        expect(detail.totals.events).toBe(report.sales.events)
+        expect(detail.totals.revenue).toBeCloseTo(report.sales.revenue, 2)
+        const ids = detail.studios.flatMap(studio => studio.classes.map(row => row.id))
+        for (const excluded of [33080, 41305, 45163, 37324]) expect(ids).not.toContain(excluded)
+      }
     }
   }
   const { writeFileSync } = await import("node:fs")

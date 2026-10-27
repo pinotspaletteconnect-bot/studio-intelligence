@@ -33,7 +33,13 @@ export function hasHistoricalPartyEvidence(row: {
   class_sales?: number | string | null
   fee_sales?: number | string | null
 }) {
-  if (row.reporting_class_type !== "Private Party" && row.reporting_class_type !== "Mobile Events") {
+  // Capacity describes available places, not evidence of an attended private party.
+  // Apply this to every painting title so named marketing holds are excluded too.
+  if (row.reporting_class_type === "Private Party") {
+    return [row.seats_sold, row.class_sales, row.fee_sales]
+      .some((value) => Number(value ?? 0) !== 0)
+  }
+  if (row.reporting_class_type !== "Mobile Events") {
     return true
   }
   if (!/^\s*no\s+painting\s+selected\s*$/i.test(row.painting ?? "")) return true
