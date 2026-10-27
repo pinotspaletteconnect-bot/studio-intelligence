@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { getPrivateParties, summarizePartyLeads } from "@/lib/services/private-parties"
+import { getPrivateParties, summarizePartyLeads, previousYearDate, partyMetricChange } from "@/lib/services/private-parties"
 import { warehouse, type Row } from "./warehouse"
 
 const state = vi.hoisted(() => ({ client: null as unknown, ids: [1, 2] }))
@@ -123,5 +123,40 @@ describe("private-party history", () => {
     expect(result.leads.summary).toMatchObject({ received: 1, converted: 1, estimatedBookedValue: 100 })
     expect(result.leads.unknownDateCount).toBe(3)
     expect(result.leads.coverage.map(row => row.studio_id)).toEqual([1])
+  })
+})
+
+
+describe("same-period year comparisons", () => {
+  it("clamps leap days and handles missing and zero baselines", () => {
+    expect(previousYearDate("2024-02-29", 1)).toBe("2023-02-28")
+    expect(previousYearDate("2026-10-26", 2)).toBe("2024-10-26")
+    expect(partyMetricChange(12, 10)).toEqual({ difference: 2, percent: 20 })
+    expect(partyMetricChange(5, 0)).toEqual({ difference: 5, percent: null })
+    expect(partyMetricChange(5, null)).toBeNull()
+  })
+  it("matches partial-month sales cutoff, inquiry cohorts and authorized studios", async () => {
+    useWarehouse({
+      pts_private_party_history_coverage: [{ studio_id: 1, history_from: "2024-01-01" }],
+      pts_private_party_leads_reporting: [
+        { studio_id: 1, source_lead_id: 1, received_date: "2026-09-01", converted: true, stage: "booked" },
+        { studio_id: 1, source_lead_id: 2, received_date: "2026-10-01", converted: false, stage: "new" },
+        { studio_id: 1, source_lead_id: 3, received_date: "2025-10-01", converted: true, stage: "completed" },
+        { studio_id: 2, source_lead_id: 4, received_date: "2025-10-01", converted: true, stage: "completed" },
+      ],
+      pts_class_sales_reporting: [
+        { id: 1, studio_id: 1, event_date: "2026-10-25", class_sales: 200 },
+        { id: 2, studio_id: 1, event_date: "2025-10-25", class_sales: 100 },
+        { id: 3, studio_id: 1, event_date: "2025-10-26", class_sales: 900 },
+        { id: 4, studio_id: 2, event_date: "2025-10-25", class_sales: 9000 },
+      ].map(row => ({ ...row, reporting_class_type: "Private Party" })),
+    }, [1])
+    const result = await getPrivateParties("all", "2026-10-01", "2026-10-26", [1])
+    expect(result.leads.summary).toMatchObject({ received: 1, converted: 0 })
+    expect(result.comparisons).toHaveLength(2)
+    expect(result.comparisons[0]).toMatchObject({ period: { startDate: "2025-10-01", endDate: "2025-10-26", salesThrough: "2025-10-25" }, leads: { received: 1, converted: 1 }, sales: { events: 1, revenue: 100 }, changes: { revenue: { difference: 100, percent: 100 }, conversionPoints: -100 } })
+    expect(result.comparisons[1].changes.parties).toBeNull()
+    const oldest = await getPrivateParties("all", "2024-10-01", "2024-10-26", [1])
+    expect(oldest.comparisons).toEqual([])
   })
 })

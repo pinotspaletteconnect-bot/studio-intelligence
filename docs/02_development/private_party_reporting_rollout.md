@@ -1,3 +1,15 @@
+# Private-party explanations and prior-year comparisons - October 27, 2026
+
+Prepared: inquiry-month attribution example and same-calendar-date comparisons
+one and two years earlier, limited to history since 2024. Service-calculated
+changes cover leads, parties, actual revenue and conversion percentage points.
+Completed-day sales cutoffs match across years; leap days clamp to February 28.
+Older cohorts have longer to convert; these are eventual conversions known today,
+not past as-of rates. Missing sales remain unavailable; zero baselines have no
+percentage change. Current pipeline and organization authorization are unchanged.
+Verified: 36 reporting/access tests, lint, production webpack build and live
+read-only prior-year cohort counts. No schema, collector or schedule changes.
+
 # Daily private-party refresh verified - October 26, 2026
 
 First background refresh succeeded in 11m38s; completed 2026-10-27 01:25:04 UTC

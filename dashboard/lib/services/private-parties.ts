@@ -77,13 +77,13 @@ export function summarizePartyLeads(rows: PrivatePartyLead[]) {
     valuedBookings:valued.length, unvaluedBookings:converted.length-valued.length }
 }
 
-export async function getPrivateParties(studioId: string, start: string, end: string, allowedStudioIds: number[] = []) {
+async function getPrivatePartyPeriod(studioId: string, start: string, end: string, allowedStudioIds: number[] = [], salesCutoff?: string) {
   const { periodStart, periodEnd } = resolveReportPeriod(start, end)
   assertStudioAccess({ allowedStudioIds }, studioId)
   const selectedIds = studioId === "all" ? allowedStudioIds : [Number(studioId)]
   const client = supabase
   const completedThrough = offsetDate(businessDate(), -1)
-  const salesEnd = periodEnd < completedThrough ? periodEnd : completedThrough
+  const salesEnd = salesCutoff ?? (periodEnd < completedThrough ? periodEnd : completedThrough)
   const scope = <T>(query: T): T =>
     (query as T & { in: (field: string, values: number[]) => T }).in("studio_id", selectedIds)
   const [current, historical, studiosResult, leadResult, coverageResult, pipelineResult] = await Promise.all([
@@ -149,6 +149,39 @@ export async function getPrivateParties(studioId: string, start: string, end: st
     monthly: [...monthly].map(([month, values]) => ({ month, ...summarize(values) })),
     coverage: { firstDate: rows.at(0)?.date ?? null, lastDate: rows.at(-1)?.date ?? null },
   }
+}
+
+/** Match calendar dates, clamping February 29 to February 28 in a non-leap year. */
+export function previousYearDate(value: string, years: number) {
+  const [year, month, day] = value.split("-").map(Number)
+  const targetYear = year - years
+  const lastDay = new Date(Date.UTC(targetYear, month, 0)).getUTCDate()
+  return `${targetYear}-${String(month).padStart(2, "0")}-${String(Math.min(day, lastDay)).padStart(2, "0")}`
+}
+
+export function partyMetricChange(current: number | null, previous: number | null) {
+  if (current === null || previous === null) return null
+  return { difference: current - previous, percent: previous === 0 ? null : (current - previous) / previous * 100 }
+}
+
+export async function getPrivateParties(studioId: string, start: string, end: string, allowedStudioIds: number[] = []) {
+  const current = await getPrivatePartyPeriod(studioId, start, end, allowedStudioIds)
+  const comparisons = await Promise.all([1, 2].filter(years => previousYearDate(current.period.startDate, years) >= "2024-01-01").map(async years => {
+    const previous = await getPrivatePartyPeriod(studioId,
+      previousYearDate(current.period.startDate, years), previousYearDate(current.period.endDate, years),
+      allowedStudioIds, previousYearDate(current.period.salesThrough, years))
+    const currentLeads = current.leads.summary
+    const previousLeads = previous.leads.summary
+    return { yearsAgo: years, period: previous.period, leads: previousLeads, sales: previous.sales,
+      changes: {
+        leads: partyMetricChange(currentLeads?.received ?? null, previousLeads?.received ?? null),
+        parties: partyMetricChange(current.sales.hasSales ? current.sales.events : null, previous.sales.hasSales ? previous.sales.events : null),
+        revenue: partyMetricChange(current.sales.hasSales ? current.sales.revenue : null, previous.sales.hasSales ? previous.sales.revenue : null),
+        conversionPoints: currentLeads?.conversionRate != null && previousLeads?.conversionRate != null
+          ? currentLeads.conversionRate - previousLeads.conversionRate : null,
+      } }
+  }))
+  return { ...current, comparisons }
 }
 
 export type PrivatePartiesData = Awaited<ReturnType<typeof getPrivateParties>>

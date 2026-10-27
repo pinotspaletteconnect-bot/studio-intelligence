@@ -28,7 +28,14 @@ it.skipIf(process.env.SI_VERIFY_LIVE !== "1")("reads reconciled private-party co
       .gte("received_date", start).lte("received_date", "2026-10-26")
     expect(datedCount.error).toBeNull()
     expect(report.leads.summary!.received).toBe(datedCount.count)
-    console.log(JSON.stringify({ start, studios: report.studios.length, leads: report.leads.summary, sales: report.sales }))
+    for (const prior of report.comparisons) {
+      const independent = await supabase.from("pts_private_party_leads_reporting")
+        .select("source_lead_id", { count: "exact", head: true }).in("studio_id", ids)
+        .gte("received_date", prior.period.startDate).lte("received_date", prior.period.endDate)
+      expect(independent.error).toBeNull()
+      expect(prior.leads!.received).toBe(independent.count)
+    }
+    console.log(JSON.stringify({ start, studios: report.studios.length, leads: report.leads.summary, sales: report.sales, comparisons: report.comparisons }))
   }
   for (const scope of [[1, 2, 3, 4], [3]]) {
     for (const start of ["2026-10-01", "2024-01-01"]) {
