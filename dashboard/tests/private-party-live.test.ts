@@ -15,12 +15,19 @@ it.skipIf(process.env.SI_VERIFY_LIVE !== "1")("reads reconciled private-party co
   const studios = await supabase.from("studios").select("id,studio_name,active,organization_id").in("id", ids)
   expect(studios.error).toBeNull()
   const evidence: unknown[] = [{ studios: studios.data }]
+  const coverage = await supabase.from("pts_private_party_history_coverage").select("unknown_date_count").in("studio_id", ids)
+  expect(coverage.error).toBeNull()
+  const unknownDates = coverage.data!.reduce((sum, row) => sum + Number(row.unknown_date_count), 0)
   for (const start of ["2026-10-01", "2024-01-01"]) {
     const report = await getPrivateParties("all", start, "2026-10-26", ids)
     expect(report.leads.status).toBe("complete")
     expect(report.leads.summary).not.toBeNull()
-    expect(report.leads.unknownDateCount).toBe(401)
-    if (start === "2024-01-01") expect(report.leads.summary!.received).toBe(3795)
+    expect(report.leads.unknownDateCount).toBe(unknownDates)
+    const datedCount = await supabase.from("pts_private_party_leads_reporting")
+      .select("source_lead_id", { count: "exact", head: true }).in("studio_id", ids)
+      .gte("received_date", start).lte("received_date", "2026-10-26")
+    expect(datedCount.error).toBeNull()
+    expect(report.leads.summary!.received).toBe(datedCount.count)
     console.log(JSON.stringify({ start, studios: report.studios.length, leads: report.leads.summary, sales: report.sales }))
   }
   for (const scope of [[1, 2, 3, 4], [3]]) {
