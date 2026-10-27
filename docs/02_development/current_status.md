@@ -1,3 +1,18 @@
+# Minimum-guest private-party values - October 27, 2026
+
+Owner requested range/open-ended attendance support using minimum guests.
+Collector normalizes exact counts, ascending ranges (including en/em dash) and
+N+ to their minimum integer. Reversed/ambiguous/invalid counts remain null with
+parse warnings. Prices and deposits keep their existing numeric validation.
+Existing expected_headcount field now holds minimum expected guests for ranges;
+no schema or ETL changes. Reporting still multiplies that count by quoted price.
+Dashboard explains the conservative calculation and shows valued/converted
+booking coverage per studio, explicitly marking incomplete totals.
+The five verified St. Matthews October conversions have counts 10-15,10,10-15,
+8+,15-20 at prices30,30,30,39,39: minimum estimated total1797, previously300.
+Verified: 19 collector/job/ETL/auth tests;36 dashboard reporting/access tests;
+lint and production build. Deployment and data-refresh verification pending.
+
 # Private-party explanations and prior-year comparisons - October 27, 2026
 
 Prepared: inquiry-month attribution example and same-calendar-date comparisons

@@ -21,6 +21,19 @@ function numeric(value) {
   if (!Number.isFinite(result) || result<0) return null;
   return result;
 }
+/** Conservative attendance: an exact count, range minimum, or open-ended minimum. */
+function minimumHeadcount(value) {
+  const text = String(value ?? '').trim().replace(/[\u2013\u2014]/g, '-');
+  const count = '(?:\\d{1,3}(?:,\\d{3})+|\\d+)';
+  const exact = text.match(new RegExp(`^(${count})\\s*\\+?$`));
+  const range = text.match(new RegExp(`^(${count})\\s*-\\s*(${count})$`));
+  if (!exact && !range) return null;
+  const minimum = Number((exact ?? range)[1].replace(/,/g, ''));
+  const maximum = range ? Number(range[2].replace(/,/g, '')) : minimum;
+  if (!Number.isSafeInteger(minimum) || !Number.isSafeInteger(maximum) || maximum < minimum) return null;
+  return minimum;
+}
+
 function parseOptions(html, name) {
   const select = [...html.matchAll(/<select\b[^>]*>[\s\S]*?<\/select>/gi)].find(m=>attributes(m[0]).name===name);
   if (!select) throw Error(`Missing source selector ${name}`);
@@ -57,10 +70,10 @@ function parseModal(html, leadId, expectedLocation) {
   return {
     source_stage:cells[3], source_disposition:dispositionOption?plain(dispositionOption[2]):null, source_class_id:classId,
     requested_date:classId?sourceDate(get('RequestedDate')):null, event_date:classId?sourceDate(get('ClassDate')):null,
-    expected_headcount:numeric(get('PrivatePartyExpectedHeadcount')), quoted_price:numeric(get('PricePerPainter')),
+    expected_headcount:minimumHeadcount(get('PrivatePartyExpectedHeadcount')), quoted_price:numeric(get('PricePerPainter')),
     requested_deposit:numeric(get('DepositAmount')), is_mobile:mobile==null?null:['1','true','True'].includes(attributes(mobile).value),
     source_closed:closed ? /<option[^>]*selected[^>]*value="(?:true|1)"|<option[^>]*value="(?:true|1)"[^>]*selected/i.test(closed) : null,
-    value_parse_warnings:['PrivatePartyExpectedHeadcount','PricePerPainter','DepositAmount'].filter(name=>get(name).trim() && numeric(get(name))===null),
+    value_parse_warnings:['PrivatePartyExpectedHeadcount','PricePerPainter','DepositAmount'].filter(name=>get(name).trim() && (name==='PrivatePartyExpectedHeadcount'?minimumHeadcount(get(name)):numeric(get(name)))===null),
   };
 }
 
@@ -166,4 +179,4 @@ async function collectPrivatePartyStudio({ credentials, target, onList, onLead, 
   if (knownLeads.some(row => !rows.some(result => result.source_lead_id === Number(row.source_lead_id)))) throw Error('Known lead coverage incomplete');
   return {target,sourceCount:rows.length,enumeratedCount:list.length,plannerCount:plannerIds.size,unknownDateCount:rows.filter(row=>!row.received_date).length,historyFrom:fromDate,slices,rows};
 }
-module.exports={attributes,sourceDate,numeric,parseOptions,parseGrid,parseModal,parseSubmissionAudit,collectPrivatePartyStudio};
+module.exports={minimumHeadcount,attributes,sourceDate,numeric,parseOptions,parseGrid,parseModal,parseSubmissionAudit,collectPrivatePartyStudio};
