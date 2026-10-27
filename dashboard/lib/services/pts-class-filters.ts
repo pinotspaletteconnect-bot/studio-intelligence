@@ -33,9 +33,11 @@ export function hasHistoricalPartyEvidence(row: {
   class_sales?: number | string | null
   fee_sales?: number | string | null
 }) {
-  // Capacity describes available places, not evidence of an attended private party.
-  // Apply this to every painting title so named marketing holds are excluded too.
+  // A selected painting is evidence of a real party, including unpaid events.
+  // Capacity alone cannot turn an empty placeholder into a reported party.
   if (row.reporting_class_type === "Private Party") {
+    const placeholder = /^\s*(?:no\s+painting\s+selected|coming\s+soon)\s*$/i.test(row.painting ?? "")
+    if (!placeholder) return true
     return [row.seats_sold, row.class_sales, row.fee_sales]
       .some((value) => Number(value ?? 0) !== 0)
   }
