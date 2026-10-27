@@ -86,7 +86,7 @@ export async function getPrivateParties(studioId: string, start: string, end: st
   const salesEnd = periodEnd < completedThrough ? periodEnd : completedThrough
   const scope = <T>(query: T): T =>
     (query as T & { in: (field: string, values: number[]) => T }).in("studio_id", selectedIds)
-  const [current, historical, studiosResult, leadResult, coverageResult] = await Promise.all([
+  const [current, historical, studiosResult, leadResult, coverageResult, pipelineResult] = await Promise.all([
     fetchAllRows(scope(client.from("pts_class_sales_reporting")
       .select("id,studio_id,event_date,painting,class_time,capacity,seats_sold,class_sales,fee_sales")
       .eq("reporting_class_type", "Private Party").gte("event_date", periodStart).lte("event_date", salesEnd))
@@ -102,9 +102,13 @@ export async function getPrivateParties(studioId: string, start: string, end: st
     fetchAllRows(client.from("pts_private_party_history_coverage")
       .select("studio_id,source_count,loaded_count,source_first_date,source_last_date,completed_at,transition_history_available,history_from,unknown_date_count")
       .in("studio_id", selectedIds).order("studio_id")),
+    fetchAllRows(client.from("pts_private_party_leads_reporting")
+      .select("studio_id,source_lead_id,stage,estimated_value")
+      .in("studio_id", selectedIds).in("stage", ["new", "deposit_requested", "booked"])
+      .order("studio_id").order("source_lead_id")),
   ])
   for (const result of [current, historical, studiosResult]) if (result.error) throw result.error
-  for(const result of [leadResult,coverageResult])if(result.error)throw result.error
+  for(const result of [leadResult,coverageResult,pipelineResult])if(result.error)throw result.error
   const leadRows=(leadResult.data??[]) as PrivatePartyLead[]
   const coverage=coverageResult.data??[]
   const coveredIds=new Set(coverage.map(row=>Number(row.studio_id)))
@@ -122,7 +126,18 @@ export async function getPrivateParties(studioId: string, start: string, end: st
     const month = row.date.slice(0, 7)
     monthly.set(month, [...(monthly.get(month) ?? []), row])
   }
+  const pipelineRows = pipelineResult.data ?? []
+  const pipeline = (values: typeof pipelineRows) => ({
+    new: values.filter(row => row.stage === "new").length,
+    deposit_requested: values.filter(row => row.stage === "deposit_requested").length,
+    booked: values.filter(row => row.stage === "booked").length,
+  })
+  const pipelineCovered = (studiosResult.data ?? []).length > 0 &&
+    (studiosResult.data ?? []).every(studio => coveredIds.has(Number(studio.id)))
   return {
+    pipeline: { summary: pipelineCovered ? pipeline(pipelineRows) : null,
+      studios: (studiosResult.data ?? []).map(studio => ({ id: Number(studio.id), name: String(studio.studio_name),
+        counts: coveredIds.has(Number(studio.id)) ? pipeline(pipelineRows.filter(row => row.studio_id === studio.id)) : null })) },
     period: { startDate: periodStart, endDate: periodEnd, salesThrough: salesEnd },
     leads: { status: allStudiosCovered?"complete" as const:coverage.length?"partial" as const:"pending" as const,
       summary:allStudiosCovered?leadSummary:null, coverage,

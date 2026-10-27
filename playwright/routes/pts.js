@@ -20,6 +20,36 @@ const { runPtsThirdPartyClassCreditsReport } = require("../scripts/pts/thirdPart
 
 const router = express.Router();
 const { resolvePtsAccount } = require("../services/ptsCredentials");
+const { collectPrivatePartyStudio } = require("../scripts/pts/privateParties.cjs");
+
+router.post("/private-party-leads", requireCollectorAuth, async (req, res) => {
+    const accountId = Number(req.body?.accountId);
+    const studioId = Number(req.body?.studioId);
+    const knownLeads = req.body?.knownLeads ?? [];
+    if (!Number.isSafeInteger(accountId) || accountId <= 0 ||
+        !Number.isSafeInteger(studioId) || studioId <= 0 || !Array.isArray(knownLeads) || knownLeads.length > 30000 ||
+        knownLeads.some(row => !Number.isSafeInteger(Number(row.source_lead_id)) || Number(row.source_lead_id) <= 0 ||
+            row.received_date !== null && !/^\d{4}-\d{2}-\d{2}$/.test(row.received_date))) {
+        return res.status(400).json({ success: false, error: "Invalid private-party collection request" });
+    }
+    try {
+        const result = await runPtsReportQueued(accountId, async () => {
+            const account = await resolvePtsAccount(accountId);
+            const studio = account.studios.find(target => Number(target.studioId) === studioId);
+            if (!studio) throw Error("Private-party studio is not mapped to account");
+            return collectPrivatePartyStudio({ credentials: account.credentials,
+                target: { studio_id: studioId, account_id: accountId, pts_location_id: studio.locationId },
+                knownLeads: knownLeads.map(row => ({ source_lead_id: Number(row.source_lead_id),
+                    received_date: row.received_date, received_date_basis: row.received_date_basis })),
+            });
+        });
+        return res.json({ body: { mode: "daily_refresh", studioId, accountId, sourceCount: result.sourceCount,
+            historyFrom: result.historyFrom, rows: result.rows } });
+    } catch {
+        console.error("PTS private-party collection failed", { accountId, studioId });
+        return res.status(502).json({ success: false, error: "Private-party collection failed; no complete snapshot returned" });
+    }
+});
 
 
 router.get("/health", (req, res) => {
