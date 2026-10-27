@@ -28,6 +28,20 @@ it.skipIf(process.env.SI_VERIFY_LIVE !== "1")("reads reconciled private-party co
       .gte("received_date", start).lte("received_date", "2026-10-26")
     expect(datedCount.error).toBeNull()
     expect(report.leads.summary!.received).toBe(datedCount.count)
+    const reasonRows = report.leads.summary!.lossReasons
+    const lostCount = await supabase.from("pts_private_party_leads_reporting")
+      .select("source_lead_id", { count: "exact", head: true }).in("studio_id", ids)
+      .eq("stage", "lost").gte("received_date", start).lte("received_date", "2026-10-26")
+    expect(lostCount.error).toBeNull()
+    expect(reasonRows.reduce((sum, row) => sum + row.count, 0)).toBe(lostCount.count)
+    for (const reason of reasonRows.filter(row => row.reason !== "Not specified")) {
+      const independentReason = await supabase.from("pts_private_party_leads_reporting")
+        .select("source_lead_id", { count: "exact", head: true }).in("studio_id", ids)
+        .eq("stage", "lost").eq("source_disposition", reason.reason)
+        .gte("received_date", start).lte("received_date", "2026-10-26")
+      expect(independentReason.error).toBeNull()
+      expect(reason.count).toBe(independentReason.count)
+    }
     for (const prior of report.comparisons) {
       const independent = await supabase.from("pts_private_party_leads_reporting")
         .select("source_lead_id", { count: "exact", head: true }).in("studio_id", ids)

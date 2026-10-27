@@ -118,11 +118,12 @@ describe("private-party history", () => {
       ],
       pts_private_party_leads_reporting: [
         { studio_id: 1, source_lead_id: 10, received_date: "2026-10-01", stage: "booked", converted: true, estimated_value: 100 },
-        { studio_id: 2, source_lead_id: 20, received_date: "2026-10-01", stage: "booked", converted: true, estimated_value: 9000 },
+        { studio_id: 2, source_lead_id: 20, received_date: "2026-10-01", stage: "lost", source_disposition: "Hidden studio reason", converted: true, estimated_value: 9000 },
       ],
     }, [1])
     const result = await getPrivateParties("all", "2026-10-01", "2026-10-26", state.ids)
     expect(result.leads.summary).toMatchObject({ received: 1, converted: 1, estimatedBookedValue: 100 })
+    expect(result.leads.summary!.lossReasons).toEqual([])
     expect(result.leads.unknownDateCount).toBe(3)
     expect(result.leads.coverage.map(row => row.studio_id)).toEqual([1])
   })
@@ -161,5 +162,28 @@ describe("same-period year comparisons", () => {
     expect(result.comparisons[1].changes.averageRevenue).toBeNull()
     const oldest = await getPrivateParties("all", "2024-10-01", "2024-10-26", [1])
     expect(oldest.comparisons).toEqual([])
+  })
+})
+
+
+describe("recorded lost-lead reasons", () => {
+  it("groups only lost leads, includes lost prior bookings and keeps missing causes explicit", () => {
+    const base = { studio_id: 1, received_date: "2026-10-01", source_stage: "Dispositioned", estimated_value: null }
+    const result = summarizePartyLeads([
+      { ...base, source_lead_id: 1, stage: "lost", converted: false, source_disposition: "Not Responding" },
+      { ...base, source_lead_id: 2, stage: "lost", converted: true, source_disposition: " Not Responding " },
+      { ...base, source_lead_id: 3, stage: "lost", converted: false, source_disposition: "Joined Public Class" },
+      { ...base, source_lead_id: 4, stage: "lost", converted: false, source_disposition: "Active" },
+      { ...base, source_lead_id: 5, stage: "lost", converted: false, source_disposition: null },
+      { ...base, source_lead_id: 6, stage: "new", converted: false, source_disposition: "Active" },
+    ])
+    expect(result.stages.lost).toBe(5)
+    expect(result.lossReasons).toEqual([
+      { reason: "Not Responding", count: 2, shareOfLost: 40 },
+      { reason: "Not specified", count: 2, shareOfLost: 40 },
+      { reason: "Joined Public Class", count: 1, shareOfLost: 20 },
+    ])
+    expect(result.lossReasons.reduce((sum, row) => sum + row.count, 0)).toBe(result.stages.lost)
+    expect(summarizePartyLeads([]).lossReasons).toEqual([])
   })
 })
