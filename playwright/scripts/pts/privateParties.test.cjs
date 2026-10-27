@@ -1,7 +1,7 @@
 'use strict';
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
-const {sourceDate,parseGrid,parseModal,parseSubmissionAudit}=require('./privateParties.cjs');
+const {minimumHeadcount,sourceDate,parseGrid,parseModal,parseSubmissionAudit}=require('./privateParties.cjs');
 const {collectPrivatePartyStudio}=require('./privateParties.cjs');
 
 test('daily refresh reads fresh stages, retains older known leads and includes undated active inquiries', async()=>{
@@ -51,4 +51,20 @@ test('source detail rejects another studio and discards default event dates with
   assert.throws(()=>parseModal(html,99,'One'));
   const row=parseModal(html,42,'One');
   assert.equal(row.event_date,null); assert.equal(row.requested_date,null);
+});
+
+
+test('attendance estimates use exact counts and conservative range/open-ended minimums',()=>{
+ for(const [input,expected] of [['10',10],['10-15',10],[' 10 – 15 ',10],['15—20',15],['8+',8],['8 +',8],['1,000-1,500',1000],['0',0]]) assert.equal(minimumHeadcount(input),expected,input);
+ for(const input of ['',null,'15-10','-8','8.5','about 10','10 or 15','10-','8++','1,00','8+ guests','9007199254740992']) assert.equal(minimumHeadcount(input),null,String(input));
+});
+
+test('all five verified quote patterns contribute minimum guest value and retain invalid-field warnings',()=>{
+ const fixture=(count,price)=>'<table><tr><td>Location</td><td>One</td><td>Stage</td><td>Manage Party</td></tr></table><input name="PrivatePartyExpectedHeadcount" value="'+count+'"><input name="PricePerPainter" value="'+price+'">';
+ const rows=[['10-15',30],['10',30],['10-15',30],['8+',39],['15-20',39]].map(([count,price])=>parseModal(fixture(count,price),42,'One'));
+ assert.equal(rows.reduce((sum,row)=>sum+row.expected_headcount*row.quoted_price,0),1797);
+ assert.ok(rows.every(row=>row.value_parse_warnings.length===0));
+ const invalid=parseModal(fixture('15-10','30'),42,'One');
+ assert.equal(invalid.expected_headcount,null);
+ assert.deepEqual(invalid.value_parse_warnings,['PrivatePartyExpectedHeadcount']);
 });
