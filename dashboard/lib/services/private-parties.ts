@@ -60,7 +60,8 @@ export function reconcilePartySales(current: EventRow[], historical: DailyRow[],
 function summarize(rows: PartySalesRow[]) {
   const events = rows.reduce((sum, row) => sum + row.events, 0)
   const revenue = rows.reduce((sum, row) => sum + row.revenue, 0)
-  return { events, revenue, seats: rows.reduce((sum, row) => sum + row.seats, 0), averageValue: events ? revenue / events : null }
+  const seats = rows.reduce((sum, row) => sum + row.seats, 0)
+  return { events, revenue, seats, averageValue: events ? revenue / events : null, averageGuests: events ? seats / events : null }
 }
 
 export type PrivatePartyLead = {
@@ -176,6 +177,7 @@ export async function getPrivateParties(studioId: string, start: string, end: st
       changes: {
         leads: partyMetricChange(currentLeads?.received ?? null, previousLeads?.received ?? null),
         parties: partyMetricChange(current.sales.hasSales ? current.sales.events : null, previous.sales.hasSales ? previous.sales.events : null),
+        averageGuests: partyMetricChange(current.sales.averageGuests, previous.sales.averageGuests),
         revenue: partyMetricChange(current.sales.hasSales ? current.sales.revenue : null, previous.sales.hasSales ? previous.sales.revenue : null),
         conversionPoints: currentLeads?.conversionRate != null && previousLeads?.conversionRate != null
           ? currentLeads.conversionRate - previousLeads.conversionRate : null,

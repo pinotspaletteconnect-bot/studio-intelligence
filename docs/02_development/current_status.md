@@ -1,3 +1,15 @@
+# Average party volume comparison - October 27, 2026
+
+Added Average guests per party to the shared prior-year comparison card, with
+selected, one-year and two-year values and percentage/absolute changes.
+Service calculates recorded guest seats divided by reported parties; no UI
+business calculations. Display uses one decimal place, unavailable without party
+records. Unpaid selected-painting parties remain in the denominator and can
+have zero guests recorded; the caption makes this limitation explicit.
+37 reporting/access checks pass, including weighted totals, missing values and
+prior-year average changes. Lint/build verification and deployment recorded with
+this release. No schema, collection, schedule or access changes.
+
 # Retain real unpaid parties; confirmed marketing placeholders only - October 27, 2026
 
 Owner confirmed Gilbert10/25, Short North10/17 and St. Matthews10/3 are marketing

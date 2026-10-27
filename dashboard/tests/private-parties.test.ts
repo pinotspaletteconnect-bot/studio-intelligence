@@ -65,7 +65,7 @@ describe("private-party history", () => {
       ],
     })
     const result = await getPrivateParties("all", "2026-09-01", "2026-10-26", state.ids)
-    expect(result.sales).toMatchObject({ events: 4, revenue: 1100, averageValue: 275, seats: 27 })
+    expect(result.sales).toMatchObject({ events: 4, revenue: 1100, averageValue: 275, seats: 27, averageGuests: 6.75 })
     expect(result.monthly.map((row) => row.revenue)).toEqual([440, 660])
     expect(result.period.salesThrough).toBe("2026-10-25")
     expect(result.leads.status).toBe("pending")
@@ -85,7 +85,7 @@ describe("private-party history", () => {
     useWarehouse({ pts_class_sales_reporting: [{ id: 1, studio_id: 1, event_date: "2026-10-01", reporting_class_type: "Private Party", seats_sold: 2, class_sales: 0 }] })
     const result = await getPrivateParties("all", "2026-10-01", "2026-10-26", state.ids)
     expect(result.studios[0]).toMatchObject({ hasSales: true, averageValue: 0 })
-    expect(result.studios[1]).toMatchObject({ hasSales: false, averageValue: null })
+    expect(result.studios[1]).toMatchObject({ hasSales: false, averageValue: null, averageGuests: null })
   })
   it("fails visibly when historical sales cannot be read", async () => {
     const db = useWarehouse({})
@@ -147,8 +147,8 @@ describe("same-period year comparisons", () => {
         { studio_id: 2, source_lead_id: 4, received_date: "2025-10-01", converted: true, stage: "completed" },
       ],
       pts_class_sales_reporting: [
-        { id: 1, studio_id: 1, event_date: "2026-10-25", class_sales: 200 },
-        { id: 2, studio_id: 1, event_date: "2025-10-25", class_sales: 100 },
+        { id: 1, studio_id: 1, event_date: "2026-10-25", class_sales: 200, seats_sold: 10 },
+        { id: 2, studio_id: 1, event_date: "2025-10-25", class_sales: 100, seats_sold: 20 },
         { id: 3, studio_id: 1, event_date: "2025-10-26", class_sales: 900 },
         { id: 4, studio_id: 2, event_date: "2025-10-25", class_sales: 9000 },
       ].map(row => ({ ...row, reporting_class_type: "Private Party" })),
@@ -156,7 +156,7 @@ describe("same-period year comparisons", () => {
     const result = await getPrivateParties("all", "2026-10-01", "2026-10-26", [1])
     expect(result.leads.summary).toMatchObject({ received: 1, converted: 0 })
     expect(result.comparisons).toHaveLength(2)
-    expect(result.comparisons[0]).toMatchObject({ period: { startDate: "2025-10-01", endDate: "2025-10-26", salesThrough: "2025-10-25" }, leads: { received: 1, converted: 1 }, sales: { events: 1, revenue: 100 }, changes: { revenue: { difference: 100, percent: 100 }, conversionPoints: -100 } })
+    expect(result.comparisons[0]).toMatchObject({ period: { startDate: "2025-10-01", endDate: "2025-10-26", salesThrough: "2025-10-25" }, leads: { received: 1, converted: 1 }, sales: { events: 1, revenue: 100 }, changes: { revenue: { difference: 100, percent: 100 }, averageGuests: { difference: -10, percent: -50 }, conversionPoints: -100 } })
     expect(result.comparisons[1].changes.parties).toBeNull()
     const oldest = await getPrivateParties("all", "2024-10-01", "2024-10-26", [1])
     expect(oldest.comparisons).toEqual([])
