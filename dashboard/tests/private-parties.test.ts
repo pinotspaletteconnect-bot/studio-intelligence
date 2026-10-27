@@ -145,6 +145,7 @@ describe("same-period year comparisons", () => {
         { studio_id: 1, source_lead_id: 1, received_date: "2026-09-01", converted: true, stage: "booked" },
         { studio_id: 1, source_lead_id: 2, received_date: "2026-10-01", converted: false, stage: "new" },
         { studio_id: 1, source_lead_id: 3, received_date: "2025-10-01", converted: true, stage: "completed" },
+        { studio_id: 1, source_lead_id: 7, received_date: "2025-10-01", source_disposition: "Inactive", converted: true, stage: "lost", estimated_value: 999 },
         { studio_id: 2, source_lead_id: 4, received_date: "2025-10-01", converted: true, stage: "completed" },
       ],
       pts_class_sales_reporting: [
@@ -157,7 +158,7 @@ describe("same-period year comparisons", () => {
     const result = await getPrivateParties("all", "2026-10-01", "2026-10-26", [1])
     expect(result.leads.summary).toMatchObject({ received: 1, converted: 0 })
     expect(result.comparisons).toHaveLength(2)
-    expect(result.comparisons[0]).toMatchObject({ period: { startDate: "2025-10-01", endDate: "2025-10-26", salesThrough: "2025-10-25" }, leads: { received: 1, converted: 1 }, sales: { events: 1, revenue: 100 }, changes: { revenue: { difference: 100, percent: 100 }, averageGuests: { difference: -10, percent: -50 }, averageRevenue: { difference: 100, percent: 100 }, conversionPoints: -100 } })
+    expect(result.comparisons[0]).toMatchObject({ period: { startDate: "2025-10-01", endDate: "2025-10-26", salesThrough: "2025-10-25" }, leads: { received: 2, qualifiedReceived: 1, excludedInactive: 1, converted: 1 }, sales: { events: 1, revenue: 100 }, changes: { revenue: { difference: 100, percent: 100 }, averageGuests: { difference: -10, percent: -50 }, averageRevenue: { difference: 100, percent: 100 }, conversionPoints: -100 } })
     expect(result.comparisons[1].changes.parties).toBeNull()
     expect(result.comparisons[1].changes.averageRevenue).toBeNull()
     const oldest = await getPrivateParties("all", "2024-10-01", "2024-10-26", [1])
@@ -185,5 +186,21 @@ describe("recorded lost-lead reasons", () => {
     ])
     expect(result.lossReasons.reduce((sum, row) => sum + row.count, 0)).toBe(result.stages.lost)
     expect(summarizePartyLeads([]).lossReasons).toEqual([])
+  })
+})
+
+describe("Inactive disposition qualification", () => {
+  it("retains raw inquiries but removes Inactive records from numerator, denominator, values and losses", () => {
+    const base = { studio_id: 1, received_date: "2026-10-01", source_stage: "Dispositioned", estimated_value: 100 }
+    const result = summarizePartyLeads([
+      { ...base, source_lead_id: 1, source_disposition: "Active", stage: "booked", converted: true },
+      { ...base, source_lead_id: 2, source_disposition: "Not Responding", stage: "lost", converted: false },
+      { ...base, source_lead_id: 3, source_disposition: "Inactive", stage: "lost", converted: true },
+      { ...base, source_lead_id: 4, source_disposition: " inactive ", stage: "lost", converted: false },
+    ])
+    expect(result).toMatchObject({ received: 4, qualifiedReceived: 2, excludedInactive: 2, converted: 1, conversionRate: 50, estimatedBookedValue: 100, stages: { lost: 1, booked: 1 } })
+    expect(result.lossReasons).toEqual([{ reason: "Not Responding", count: 1, shareOfLost: 100 }])
+    const inactiveOnly = summarizePartyLeads([{ ...base, source_lead_id: 5, source_disposition: "Inactive", stage: "lost", converted: true }])
+    expect(inactiveOnly).toMatchObject({ received: 1, qualifiedReceived: 0, excludedInactive: 1, converted: 0, conversionRate: null, lossReasons: [] })
   })
 })

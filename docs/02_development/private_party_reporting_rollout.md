@@ -1,3 +1,24 @@
+# Exclude Inactive inquiries from qualified private-party leads - October 27, 2026
+
+Owner clarified Inactive dispositions are general questions or possible duplicate
+inquiries, not actual private-party leads. Reporting service now retains raw
+received records while separately returning qualifiedReceived/excludedInactive.
+Exact Inactive disposition (case/whitespace normalized) is excluded from both
+conversion numerator and denominator, estimated booked values, outcome stages
+and lost-reason shares. Other disposition categories remain unchanged.
+Current pipeline already excludes Inactive via source stage/disposition mapping.
+Same rule applies per studio, month and prior-year cohort. UI labels qualified
+leads, shows excluded counts in comparisons/studio/month tables and an audit note
+with raw=qualified+Inactive. No source records are deleted or deduplicated by guess.
+Daily ingestion/observation history is unchanged and automatically reflects edits.
+Actual event-date party counts/revenue remain unchanged.
+Sep1-Oct27 four studios:161dated inquiries=149qualified+12Inactive;41qualified
+bookings;conversion27.5%(previous25.5%);75qualified losses(previous87).
+39reporting/access tests pass, including inactive prior bookings, all-inactive
+cohorts and historical comparisons. Live independent read-only raw/excluded/
+qualified-booking/reason counts pass for current and historical cohorts.
+No schema, source collection, schedule or access changes.
+
 # Private-party disposition reasons and donut chart - October 27, 2026
 
 Existing collector, lead history, daily observations and reporting view already
