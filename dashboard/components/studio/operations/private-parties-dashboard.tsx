@@ -18,6 +18,12 @@ const pipelineStages = [
   ["Booked upcoming", "Manage Party", "booked"],
 ]
 
+function changeLabel(change: { difference: number; percent: number | null } | null) {
+  if (!change) return "Comparison unavailable"
+  const amount = `${change.difference > 0 ? "+" : ""}${change.difference.toLocaleString("en-US", { maximumFractionDigits: 0 })}`
+  return change.percent === null ? `${amount}; prior period was zero` : `${change.percent > 0 ? "+" : ""}${change.percent.toFixed(1)}% (${amount})`
+}
+
 export function PrivatePartiesDashboard() {
   const router = useRouter()
   const { selectedStudio, setSelectedStudio, dateRange, setCustomDateRange } = useApp()
@@ -81,6 +87,28 @@ export function PrivatePartiesDashboard() {
         <p className="w-full text-xs text-muted-foreground">Applied: {dateRange.startDate} – {dateRange.endDate}. Choose earlier dates to explore available history.</p>
       </div>
     </div>
+
+    <aside className="rounded-xl border bg-card p-5 text-sm" aria-labelledby="party-calculations">
+      <h2 id="party-calculations" className="mb-2 font-semibold">Which month gets the credit?</h2>
+      <p>A lead received in September that books in October counts once as a September lead and adds to September’s conversion rate. It is not a new October lead. If the party takes place in November, its party count and actual sales appear in November.</p>
+      <p className="mt-2 text-muted-foreground">Conversion = leads received in the selected dates with verified booking evidence ÷ all dated leads received in those dates × 100. Outcomes update with each daily refresh. Estimated converted value = quoted price × expected attendance where both are available. Actual party revenue = class sales + fees by party date; average party value = revenue ÷ reported parties.</p>
+    </aside>
+
+    {!loading && !error && data && <section aria-labelledby="party-year-comparison" className="space-y-3">
+      <h2 id="party-year-comparison" className="text-xl font-semibold">Same period in previous years</h2>
+      <p className="text-sm text-muted-foreground">Same calendar dates and selected studios, back to 2024. Sales use the same completed-day cutoff in each year. Current pipeline counts are today’s snapshot and are not compared with past years.</p>
+      {data.comparisons.length ? data.comparisons.map(previous => <div key={previous.yearsAgo} className="overflow-x-auto rounded-xl border bg-card p-4">
+        <h3 className="font-semibold">{previous.yearsAgo === 1 ? "Last year" : "Two years ago"}: {previous.period.startDate} – {previous.period.endDate}</h3>
+        <p className="mt-1 text-xs text-muted-foreground">Party sales: {previous.period.startDate} – {previous.period.salesThrough}. Changes show the selected period compared with this prior period.</p>
+        <table className="mt-3 w-full min-w-[560px] text-sm"><thead><tr className="border-b text-left"><th className="py-2">Metric</th><th className="text-right">Selected period</th><th className="text-right">Prior period</th><th className="text-right">Change</th></tr></thead><tbody>
+          <tr className="border-b"><td className="py-3">Leads received</td><td className="text-right">{leadSummary?.received ?? "—"}</td><td className="text-right">{previous.leads?.received ?? "—"}</td><td className="text-right">{changeLabel(previous.changes.leads)}</td></tr>
+          <tr className="border-b"><td className="py-3">Reported parties</td><td className="text-right">{data.sales.hasSales ? data.sales.events : "—"}</td><td className="text-right">{previous.sales.hasSales ? previous.sales.events : "—"}</td><td className="text-right">{changeLabel(previous.changes.parties)}</td></tr>
+          <tr className="border-b"><td className="py-3">Party revenue</td><td className="text-right">{data.sales.hasSales ? money.format(data.sales.revenue) : "—"}</td><td className="text-right">{previous.sales.hasSales ? money.format(previous.sales.revenue) : "—"}</td><td className="text-right">{previous.changes.revenue ? `${previous.changes.revenue.percent === null ? "No percentage baseline" : `${previous.changes.revenue.percent > 0 ? "+" : ""}${previous.changes.revenue.percent.toFixed(1)}%`} (${money.format(previous.changes.revenue.difference)})` : "Comparison unavailable"}</td></tr>
+          <tr><td className="py-3">Lead conversion to date</td><td className="text-right">{leadSummary?.conversionRate == null ? "—" : `${leadSummary.conversionRate.toFixed(1)}%`}</td><td className="text-right">{previous.leads?.conversionRate == null ? "—" : `${previous.leads.conversionRate.toFixed(1)}%`}</td><td className="text-right">{previous.changes.conversionPoints == null ? "Comparison unavailable" : `${previous.changes.conversionPoints > 0 ? "+" : ""}${previous.changes.conversionPoints.toFixed(1)} percentage points`}</td></tr>
+        </tbody></table>
+      </div>) : <p className="rounded-xl border p-4 text-sm">No comparable earlier period within the available history beginning January 1, 2024.</p>}
+      <p className="text-xs text-muted-foreground">Conversion reflects eventual bookings known today, not what was known on that date last year. Older leads have had longer to convert. Missing inquiry dates are excluded. Missing sales records display —, not zero; available records do not certify complete sales history. February 29 matches February 28 in non-leap years.</p>
+    </section>}
 
     <section aria-labelledby="party-leads" className="space-y-4">
       <div className="space-y-3"><h2 className="text-xl font-semibold">Current pipeline</h2>

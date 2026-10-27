@@ -1,3 +1,36 @@
+# Private-party explanations and prior-year comparisons - October 27, 2026
+
+Prepared: inquiry-month attribution example and same-calendar-date comparisons
+one and two years earlier, limited to history since 2024. Service-calculated
+changes cover leads, parties, actual revenue and conversion percentage points.
+Completed-day sales cutoffs match across years; leap days clamp to February 28.
+Older cohorts have longer to convert; these are eventual conversions known today,
+not past as-of rates. Missing sales remain unavailable; zero baselines have no
+percentage change. Current pipeline and organization authorization are unchanged.
+Verified: 36 reporting/access tests, lint, production webpack build and live
+read-only prior-year cohort counts. No schema, collector or schedule changes.
+
+# Daily private-party refresh verified - October 26, 2026
+
+First background refresh succeeded in 11m38s; completed 2026-10-27 01:25:04 UTC
+(October 26, 9:25 PM Eastern). Independent read-only verification confirmed
+all five configured studios, matching source/loaded/current-row counts, unique
+studio/lead identities, and completed coverage. Counts: St. Matthews 1115,
+Short North 1155, Gilbert 860, Jeffersonville 257, Huntington Beach 810; total
+4197. Huntington Beach gained one new active inquiry. Unknown dates remain401.
+Gilbert pipeline is12 new /0 deposit requested /6 booked, date-independent.
+
+Published production workflow: OHS6DmE8B6o4rNZF, Daily background refresh,
+5 AM America/New_York, v1 execution order,1-hour timeout, progress saved.
+Superseded synchronous workflow3kug1PWOcquUvDWc is unpublished; failed audit
+record preserved. PR112 production commit642a35accc51984a466b54999d2cf08094d60dca
+contains the timeout fix.17 collector/job/ETL/auth checks pass; dashboard build,
+lint and34 reporting/access tests passed for the pipeline release. No schema,
+authentication, credential or organization-access changes. User explicitly
+approved the immediate test and its retry. No approval remains outstanding.
+Verifier: automation/pts/verify-private-party-daily.cjs --after=2026-10-27T01:13:00Z
+Evidence: ignored output/private-parties/first-daily-refresh-success.png.
+
 # Daily private-party refresh and current pipeline - October 26, 2026
 
 Owner requested daily server-side updates and active pipeline counts independent
@@ -144,3 +177,18 @@ with authenticated background jobs, idempotent starts and progress/result
 checks. n8n still owns all validation and warehouse writes. Collector job state
 is ephemeral; restart/missing/failed jobs fail closed before ingestion.
 17 collector/job/ETL/auth checks pass. Retrying is already authorized.
+
+Background fix deployed via PR112, production commit
+642a35accc51984a466b54999d2cf08094d60dca. Replacement n8n workflow
+OHS6DmE8B6o4rNZF is published for 5 AM America/New_York; old workflow
+3kug1PWOcquUvDWc is unpublished (failed execution preserved). Both use
+existing credentials. First retry started October 26, 9:13:34 PM Eastern.
+All five jobs started in 5.7 seconds; per-studio progress polling succeeds.
+Collection still running; warehouse update and count reconciliation pending.
+
+Post-refresh reporting-service verification passed against the fresh warehouse.
+Live verification now compares counts to warehouse queries rather than a fixed
+baseline, so new daily inquiries do not cause false failures. Final browser
+reload reached login?reason=inactive (normal30-minute idle sign-out); no auth
+changes or bypass. Post-refresh figures verified through read-only service and
+warehouse checks; owner must sign in again to view the page.
