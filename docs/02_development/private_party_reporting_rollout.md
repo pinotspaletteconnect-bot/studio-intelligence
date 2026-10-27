@@ -114,3 +114,33 @@ checks, filters every query by allowed studio IDs, and introduces no auth change
 has been added. Preserve existing unrelated worktree changes when packaging.
 Automatic approval review blocked replacing the pilot canvas; evidence was
 preserved and a separate full-import helper was used instead.
+
+## Live deployment and schedule activation
+
+PR111 merged as 0c4a6ec8433ad315b83c1ba88b57716b353e3c83; both Railway
+services report success. Live current pipeline now shows Gilbert 12 open new
+leads, 0 awaiting deposit and 6 booked upcoming parties, independent of dates.
+Published n8n workflow 3kug1PWOcquUvDWc, Daily private-party refresh, 5 AM
+America/New_York. UI confirms schedule will trigger automatically. Verified v1
+execution order, progress saved, existing credentials and 1-hour timeout (host
+maximum); generator aligned to supported timeout. No schema changes.
+
+First immediate end-to-end refresh has NOT run. Automatic approval review
+rejected immediate production source collection/warehouse update because it
+requires authorization separate from the daily schedule request. Asked owner
+via pending input whether to run first refresh now or enable schedule only.
+Do not bypass this rejection. Existing imported records remain authoritative
+until the scheduled run or separately approved immediate verification.
+
+Owner approved immediate first refresh in reply to the pending question.
+Started manual verification of the published daily workflow at 2026-10-27
+00:54:46 UTC (October 26, 8:54 PM Eastern). Source collection running; no
+completion claim yet. Existing warehouse baseline: 4,196 records across five
+studios; Gilbert current pipeline 12 new / 0 deposit requested / 6 booked.
+
+First approved synchronous source read failed with hosting gateway 502 after
+about 11 minutes, before any warehouse nodes ran. Replacing long HTTP waits
+with authenticated background jobs, idempotent starts and progress/result
+checks. n8n still owns all validation and warehouse writes. Collector job state
+is ephemeral; restart/missing/failed jobs fail closed before ingestion.
+17 collector/job/ETL/auth checks pass. Retrying is already authorized.

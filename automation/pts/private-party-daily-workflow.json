@@ -1,5 +1,5 @@
 {
-  "name": "PTS Private Parties — Daily lead history and current pipeline",
+  "name": "PTS Private Parties — Daily background refresh and current pipeline",
   "nodes": [
     {
       "id": "daily-party-schedule",
@@ -78,15 +78,159 @@
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { accountId: Number($json.account_id), studioId: Number($json.studio_id), knownLeads: $json.known_leads } }}",
+        "jsonBody": "={{ { requestId: \"party-\"+$execution.id+\"-\"+$json.studio_id, accountId: Number($json.account_id), studioId: Number($json.studio_id), knownLeads: $json.known_leads } }}",
         "options": {
-          "timeout": 1800000,
+          "timeout": 30000,
           "batching": {
             "batch": {
               "batchSize": 1,
               "batchInterval": 1000
             }
           }
+        }
+      }
+    },
+    {
+      "id": "party-poll-wait",
+      "name": "Wait for source collection",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -240,
+        400
+      ],
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": 30,
+        "unit": "seconds"
+      }
+    },
+    {
+      "id": "Read collection progress",
+      "name": "Read collection progress",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        400
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "li7hEi0wisqrbFlP",
+          "name": "Studio Intelligence Collector"
+        }
+      },
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "method": "GET",
+        "url": "={{ \"https://studio-intelligence-production.up.railway.app/pts/private-party-leads/jobs/\"+$json.jobId }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "party-progress-check",
+      "name": "Verify source job states",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        400
+      ],
+      "parameters": {
+        "jsCode": "const jobs=$input.all().map(i=>i.json);const targets=$('Configured studios and known identities').all().map(i=>i.json);if(jobs.length!==targets.length||new Set(jobs.map(j=>j.jobId)).size!==jobs.length||jobs.some(j=>!targets.some(t=>Number(t.studio_id)===j.studioId&&Number(t.account_id)===j.accountId)))throw Error('Source job identity mismatch');if(jobs.some(j=>j.status==='failed'))throw Error('Source collection failed before warehouse update');return [{json:{ready:jobs.every(j=>j.status==='completed'),jobs}}];"
+      }
+    },
+    {
+      "id": "party-jobs-ready",
+      "name": "All studio jobs complete",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        480,
+        400
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "party-ready-condition",
+              "leftValue": "={{ $json.ready }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "party-ready-jobs",
+      "name": "Completed source jobs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        200
+      ],
+      "parameters": {
+        "jsCode": "return $json.jobs.map(job=>({json:job}));"
+      }
+    },
+    {
+      "id": "party-pending-jobs",
+      "name": "Continue source polling",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        600
+      ],
+      "parameters": {
+        "jsCode": "return $json.jobs.map(job=>({json:job}));"
+      }
+    },
+    {
+      "id": "Fetch complete source snapshots",
+      "name": "Fetch complete source snapshots",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        400
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "li7hEi0wisqrbFlP",
+          "name": "Studio Intelligence Collector"
+        }
+      },
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "method": "GET",
+        "url": "={{ \"https://studio-intelligence-production.up.railway.app/pts/private-party-leads/jobs/\"+$json.jobId+\"/result\" }}",
+        "options": {
+          "timeout": 60000
         }
       }
     },
@@ -100,7 +244,7 @@
         0
       ],
       "parameters": {
-        "jsCode": "const items=$input.all();const targets=$('Configured studios and known identities').all().map(i=>i.json);if(items.length!==targets.length||!targets.length)throw Error('Incomplete studio collection');const seenStudios=new Set();return items.flatMap(item=>{const $json=item.json;const body=$json.body;const target=targets.find(t=>Number(t.studio_id)===body?.studioId&&Number(t.account_id)===body?.accountId);if(!target||body.mode!=='daily_refresh'||seenStudios.has(body.studioId))throw Error('Studio identity mismatch');seenStudios.add(body.studioId);if(target.known_leads.some(known=>!body.rows.some(row=>row.source_lead_id===Number(known.source_lead_id))))throw Error('Known lead coverage incomplete');return (()=>{const body=$json.body;\n\nif(!body||!Number.isSafeInteger(body.studioId)||!Number.isSafeInteger(body.accountId)||!Array.isArray(body.rows)||body.rows.length!==body.sourceCount||body.rows.length>30000||body.historyFrom!=='2024-01-01')throw Error('Invalid approved import envelope');\n\nconst seen=new Set();\n\nconst fields=['studio_id','source_lead_id','received_date','received_date_basis','source_status','source_disposition','source_stage','source_class_id','event_date','requested_date','expected_headcount','quoted_price','requested_deposit','is_mobile','source_closed','value_parse_warnings','retrieved_at'];\n\nconst rows=body.rows.map(source=>{\n\n if(source.studio_id!==body.studioId||!Number.isSafeInteger(source.source_lead_id)||seen.has(source.source_lead_id)||(source.received_date!==null&&(!/^\\d{4}-\\d{2}-\\d{2}$/.test(source.received_date)||source.received_date<body.historyFrom&&body.mode!=='daily_refresh'))||source.received_date===null&&source.received_date_basis!=='unavailable'||!source.source_stage||!source.source_disposition||!source.retrieved_at)throw Error('Invalid or duplicate lead');\n\n seen.add(source.source_lead_id);\n\n const row=Object.fromEntries(fields.filter(k=>source[k]!==undefined).map(k=>[k,source[k]]));\n\n if(!row.source_class_id){row.event_date=null;row.requested_date=null;}\n\n return row;\n\n});\n\nconst dates=rows.map(r=>r.received_date).filter(Boolean).sort();\n\nreturn [{json:{studioId:body.studioId,accountId:body.accountId,sourceCount:rows.length,historyFrom:body.historyFrom,firstDate:dates[0]||null,lastDate:dates.at(-1)||null,rows}}];})();});"
+        "jsCode": "const items=$input.all();const targets=$('Configured studios and known identities').all().map(i=>i.json);if(items.length!==targets.length||!targets.length)throw Error('Incomplete studio collection');const seenStudios=new Set();return items.flatMap(item=>{const $json=item.json;const body=$json.body;const target=targets.find(t=>Number(t.studio_id)===body?.studioId&&Number(t.account_id)===body?.accountId);if(!target||body.mode!=='daily_refresh'||seenStudios.has(body.studioId))throw Error('Studio identity mismatch');seenStudios.add(body.studioId);if(target.known_leads.some(known=>!body.rows.some(row=>row.source_lead_id===Number(known.source_lead_id))))throw Error('Known lead coverage incomplete');return (()=>{const body=$json.body;\nif(!body||!Number.isSafeInteger(body.studioId)||!Number.isSafeInteger(body.accountId)||!Array.isArray(body.rows)||body.rows.length!==body.sourceCount||body.rows.length>30000||body.historyFrom!=='2024-01-01')throw Error('Invalid approved import envelope');\nconst seen=new Set();\nconst fields=['studio_id','source_lead_id','received_date','received_date_basis','source_status','source_disposition','source_stage','source_class_id','event_date','requested_date','expected_headcount','quoted_price','requested_deposit','is_mobile','source_closed','value_parse_warnings','retrieved_at'];\nconst rows=body.rows.map(source=>{\n if(source.studio_id!==body.studioId||!Number.isSafeInteger(source.source_lead_id)||seen.has(source.source_lead_id)||(source.received_date!==null&&(!/^\\d{4}-\\d{2}-\\d{2}$/.test(source.received_date)||source.received_date<body.historyFrom&&body.mode!=='daily_refresh'))||source.received_date===null&&source.received_date_basis!=='unavailable'||!source.source_stage||!source.source_disposition||!source.retrieved_at)throw Error('Invalid or duplicate lead');\n seen.add(source.source_lead_id);\n const row=Object.fromEntries(fields.filter(k=>source[k]!==undefined).map(k=>[k,source[k]]));\n if(!row.source_class_id){row.event_date=null;row.requested_date=null;}\n return row;\n});\nconst dates=rows.map(r=>r.received_date).filter(Boolean).sort();\nreturn [{json:{studioId:body.studioId,accountId:body.accountId,sourceCount:rows.length,historyFrom:body.historyFrom,firstDate:dates[0]||null,lastDate:dates.at(-1)||null,rows}}];})();});"
       }
     },
     {
@@ -294,6 +438,90 @@
       "main": [
         [
           {
+            "node": "Wait for source collection",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for source collection": {
+      "main": [
+        [
+          {
+            "node": "Read collection progress",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read collection progress": {
+      "main": [
+        [
+          {
+            "node": "Verify source job states",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify source job states": {
+      "main": [
+        [
+          {
+            "node": "All studio jobs complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "All studio jobs complete": {
+      "main": [
+        [
+          {
+            "node": "Completed source jobs",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Continue source polling",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Completed source jobs": {
+      "main": [
+        [
+          {
+            "node": "Fetch complete source snapshots",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Continue source polling": {
+      "main": [
+        [
+          {
+            "node": "Wait for source collection",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch complete source snapshots": {
+      "main": [
+        [
+          {
             "node": "Validate minimized history",
             "type": "main",
             "index": 0
@@ -305,7 +533,7 @@
   "settings": {
     "executionOrder": "v1",
     "timezone": "America/New_York",
-    "executionTimeout": 10800,
+    "executionTimeout": 3600,
     "saveExecutionProgress": true,
     "saveDataErrorExecution": "all",
     "saveDataSuccessExecution": "all"
