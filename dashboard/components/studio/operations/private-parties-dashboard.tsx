@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useEffect, useRef, useState } from "react"
+import { Fragment, useEffect, useRef, useState } from "react"
 import { useApp } from "@/contexts/app-context"
 import { StudioSelect } from "@/components/studio/shared/studio-select"
 import { Card, CardContent } from "@/components/ui/card"
@@ -97,16 +97,21 @@ export function PrivatePartiesDashboard() {
     {!loading && !error && data && <section aria-labelledby="party-year-comparison" className="space-y-3">
       <h2 id="party-year-comparison" className="text-xl font-semibold">Same period in previous years</h2>
       <p className="text-sm text-muted-foreground">Same calendar dates and selected studios, back to 2024. Sales use the same completed-day cutoff in each year. Current pipeline counts are today’s snapshot and are not compared with past years.</p>
-      {data.comparisons.length ? data.comparisons.map(previous => <div key={previous.yearsAgo} className="overflow-x-auto rounded-xl border bg-card p-4">
-        <h3 className="font-semibold">{previous.yearsAgo === 1 ? "Last year" : "Two years ago"}: {previous.period.startDate} – {previous.period.endDate}</h3>
-        <p className="mt-1 text-xs text-muted-foreground">Party sales: {previous.period.startDate} – {previous.period.salesThrough}. Changes show the selected period compared with this prior period.</p>
-        <table className="mt-3 w-full min-w-[560px] text-sm"><thead><tr className="border-b text-left"><th className="py-2">Metric</th><th className="text-right">Selected period</th><th className="text-right">Prior period</th><th className="text-right">Change</th></tr></thead><tbody>
-          <tr className="border-b"><td className="py-3">Leads received</td><td className="text-right">{leadSummary?.received ?? "—"}</td><td className="text-right">{previous.leads?.received ?? "—"}</td><td className="text-right">{changeLabel(previous.changes.leads)}</td></tr>
-          <tr className="border-b"><td className="py-3">Reported parties</td><td className="text-right">{data.sales.hasSales ? data.sales.events : "—"}</td><td className="text-right">{previous.sales.hasSales ? previous.sales.events : "—"}</td><td className="text-right">{changeLabel(previous.changes.parties)}</td></tr>
-          <tr className="border-b"><td className="py-3">Party revenue</td><td className="text-right">{data.sales.hasSales ? money.format(data.sales.revenue) : "—"}</td><td className="text-right">{previous.sales.hasSales ? money.format(previous.sales.revenue) : "—"}</td><td className="text-right">{previous.changes.revenue ? `${previous.changes.revenue.percent === null ? "No percentage baseline" : `${previous.changes.revenue.percent > 0 ? "+" : ""}${previous.changes.revenue.percent.toFixed(1)}%`} (${money.format(previous.changes.revenue.difference)})` : "Comparison unavailable"}</td></tr>
-          <tr><td className="py-3">Lead conversion to date</td><td className="text-right">{leadSummary?.conversionRate == null ? "—" : `${leadSummary.conversionRate.toFixed(1)}%`}</td><td className="text-right">{previous.leads?.conversionRate == null ? "—" : `${previous.leads.conversionRate.toFixed(1)}%`}</td><td className="text-right">{previous.changes.conversionPoints == null ? "Comparison unavailable" : `${previous.changes.conversionPoints > 0 ? "+" : ""}${previous.changes.conversionPoints.toFixed(1)} percentage points`}</td></tr>
-        </tbody></table>
-      </div>) : <p className="rounded-xl border p-4 text-sm">No comparable earlier period within the available history beginning January 1, 2024.</p>}
+      {data.comparisons.length ? <div className="overflow-x-auto rounded-xl border bg-card p-4">
+        <table className="w-full min-w-[900px] text-sm"><caption className="mb-3 text-left text-xs text-muted-foreground">Changes compare the selected period with each prior period. Party sales stop at the matched completed-day cutoff shown below each date range.</caption><thead><tr className="border-b text-left">
+          <th scope="col" className="py-3 pr-4">Metric</th>
+          <th scope="col" className="px-3 text-right align-top">Selected period<span className="mt-1 block text-xs font-normal text-muted-foreground">{data.period.startDate} – {data.period.endDate}</span><span className="block text-xs font-normal text-muted-foreground">Sales through {data.period.salesThrough}</span></th>
+          {data.comparisons.map(previous => <Fragment key={previous.yearsAgo}>
+            <th scope="col" className="border-l px-3 text-right align-top">{previous.yearsAgo === 1 ? "Prior period" : "Two years prior"}<span className="mt-1 block text-xs font-normal text-muted-foreground">{previous.period.startDate} – {previous.period.endDate}</span><span className="block text-xs font-normal text-muted-foreground">Sales through {previous.period.salesThrough}</span></th>
+            <th scope="col" className="px-3 text-right align-top">Change<span className="mt-1 block text-xs font-normal text-muted-foreground">vs. {previous.yearsAgo === 1 ? "prior year" : "two years prior"}</span></th>
+          </Fragment>)}
+        </tr></thead><tbody>{[
+          { label: "Leads received", current: leadSummary?.received ?? "—", previous: data.comparisons.map(previous => [previous.leads?.received ?? "—", changeLabel(previous.changes.leads)]) },
+          { label: "Reported parties", current: data.sales.hasSales ? data.sales.events : "—", previous: data.comparisons.map(previous => [previous.sales.hasSales ? previous.sales.events : "—", changeLabel(previous.changes.parties)]) },
+          { label: "Party revenue", current: data.sales.hasSales ? money.format(data.sales.revenue) : "—", previous: data.comparisons.map(previous => [previous.sales.hasSales ? money.format(previous.sales.revenue) : "—", previous.changes.revenue ? `${previous.changes.revenue.percent === null ? "No percentage baseline" : `${previous.changes.revenue.percent > 0 ? "+" : ""}${previous.changes.revenue.percent.toFixed(1)}%`} (${money.format(previous.changes.revenue.difference)})` : "Comparison unavailable"]) },
+          { label: "Lead conversion to date", current: leadSummary?.conversionRate == null ? "—" : `${leadSummary.conversionRate.toFixed(1)}%`, previous: data.comparisons.map(previous => [previous.leads?.conversionRate == null ? "—" : `${previous.leads.conversionRate.toFixed(1)}%`, previous.changes.conversionPoints == null ? "Comparison unavailable" : `${previous.changes.conversionPoints > 0 ? "+" : ""}${previous.changes.conversionPoints.toFixed(1)} percentage points`]) },
+        ].map(row => <tr key={row.label} className="border-b last:border-0"><th scope="row" className="py-3 pr-4 text-left font-normal">{row.label}</th><td className="px-3 text-right tabular-nums">{row.current}</td>{row.previous.map(([value, change], index) => <Fragment key={data.comparisons[index].yearsAgo}><td className="border-l px-3 text-right tabular-nums">{value}</td><td className="px-3 text-right tabular-nums">{change}</td></Fragment>)}</tr>)}</tbody></table>
+      </div> : <p className="rounded-xl border p-4 text-sm">No comparable earlier period within the available history beginning January 1, 2024.</p>}
       <p className="text-xs text-muted-foreground">Conversion reflects eventual bookings known today, not what was known on that date last year. Older leads have had longer to convert. Missing inquiry dates are excluded. Missing sales records display —, not zero; available records do not certify complete sales history. February 29 matches February 28 in non-leap years.</p>
     </section>}
 

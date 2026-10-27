@@ -1,3 +1,12 @@
+# Combined private-party comparison card - October 27, 2026
+
+Prepared one comparison card with Selected period, Prior period, Change,
+Two years prior, Change columns. Period dates and matched sales cutoffs stay in
+column headers; metric definitions, access and calculations are unchanged.
+Horizontal scrolling supports narrow screens. Lint and production build pass.
+Release waits for the already-running minimum-guest data refresh so the collector
+is not restarted during an active source job.
+
 # Minimum-guest private-party values - October 27, 2026
 
 Owner requested range/open-ended attendance support using minimum guests.
