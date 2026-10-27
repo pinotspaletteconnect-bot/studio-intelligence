@@ -14,6 +14,22 @@ function useWarehouse(tables: Record<string, Row[]>, allowed = [1, 2]) {
 beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(new Date("2026-10-26T16:00:00Z")) })
 
 describe("private-party history", () => {
+  it("excludes placeholder parties consistently with event detail without restoring older aggregates", async () => {
+    useWarehouse({
+      studios: [{ id: 1, studio_name: "One", timezone: "America/New_York" }],
+      pts_class_sales_reporting: [
+        { id: 1, studio_id: 1, event_date: "2026-10-01", painting: "Available for Private Party", class_sales: 0 },
+        { id: 2, studio_id: 1, event_date: "2026-10-02", painting: "No Painting Selected", capacity: 0, seats_sold: 0, class_sales: 0 },
+        { id: 3, studio_id: 1, event_date: "2026-10-03", painting: "Real party", class_time: "2026-10-03T06:00:00Z", class_sales: 50 },
+        { id: 4, studio_id: 1, event_date: "2026-10-04", painting: "No Painting Selected", seats_sold: 4, class_sales: 200 },
+      ].map(row => ({ reporting_class_type: "Private Party", ...row })),
+      pts_class_type_sales_daily_reporting: [
+        { studio_id: 1, report_date: "2026-10-01", reporting_class_type: "Private Party", class_event_count: 1, class_sales: 99 },
+      ],
+    }, [1])
+    const result = await getPrivateParties("all", "2026-10-01", "2026-10-26", state.ids)
+    expect(result.sales).toMatchObject({ events: 1, revenue: 200, averageValue: 200 })
+  })
   it("reconciles overlapping source histories by studio/date and weights average value", async () => {
     useWarehouse({
       pts_class_sales_reporting: [
