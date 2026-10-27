@@ -1,3 +1,23 @@
+# Private-party disposition reasons and donut chart - October 27, 2026
+
+Existing collector, lead history, daily observations and reporting view already
+preserve source_disposition. No migration, source refresh or schedule change is
+needed. Reporting service now groups only lost leads in the selected original
+inquiry-date cohort by their recorded reason, counting each lead once and showing
+share of lost leads. Missing/Active/Unknown/Dispositioned causes show Not specified;
+no cause is inferred from guest contact notes. Prior booked/later-lost leads stay
+in the loss breakdown without changing verified conversion.
+Dedicated page adds a donut wheel, total in the center, matching color/count/share
+table and explicit inquiry-date versus disposition-date explanation. Existing
+studio authorization and complete-import gating apply. Table supports accessibility
+and narrow screens. Joined Public Class remains a lost private-party opportunity,
+not an assertion of lost public-class revenue. Undated inquiries are excluded.
+Verified warehouse categories: Not Responding, Inactive, Not Enough Interest,
+Joined Public Class, Date Not Available, Too Expensive, Spam, Bad Contact Information.
+Sep1-Oct27 four-studio cohort87lost; Not Responding53(60.9%). Since2024,2221dated
+lost leads.38reporting/access tests, lint, production build pass; independent
+read-only reason totals/history checks run with the live reporting test.
+
 # Average revenue per party comparison - October 27, 2026
 
 Added Average revenue per party row to the combined prior-year card. Reuses the

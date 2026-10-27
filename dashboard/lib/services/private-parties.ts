@@ -66,15 +66,24 @@ function summarize(rows: PartySalesRow[]) {
 
 export type PrivatePartyLead = {
   studio_id: number; source_lead_id: number; received_date: string
-  source_stage: string; stage: string; converted: boolean; estimated_value: number | string | null
+  source_stage: string; source_disposition?: string | null; stage: string; converted: boolean; estimated_value: number | string | null
 }
 
 export function summarizePartyLeads(rows: PrivatePartyLead[]) {
   const converted=rows.filter(row=>row.converted)
   const valued=converted.filter(row=>row.estimated_value!==null)
+  const lost = rows.filter(row => row.stage === "lost")
+  const reasonCounts = new Map<string, number>()
+  for (const row of lost) {
+    const recorded = row.source_disposition?.trim().replace(/\s+/g, " ")
+    const reason = !recorded || /^(?:active|unknown|dispositioned)$/i.test(recorded) ? "Not specified" : recorded
+    reasonCounts.set(reason, (reasonCounts.get(reason) ?? 0) + 1)
+  }
+  const lossReasons = [...reasonCounts].map(([reason, count]) => ({ reason, count, shareOfLost: count / lost.length * 100 }))
+    .sort((a, b) => b.count - a.count || a.reason.localeCompare(b.reason))
   const stages=Object.fromEntries(['new','deposit_requested','booked','completed','lost','unknown'].map(stage=>[stage,rows.filter(row=>row.stage===stage).length]))
   return { received:rows.length, converted:converted.length, conversionRate:rows.length?converted.length/rows.length*100:null,
-    stages, estimatedBookedValue:valued.reduce((sum,row)=>sum+numberValue(row.estimated_value),0),
+    stages, lossReasons, estimatedBookedValue:valued.reduce((sum,row)=>sum+numberValue(row.estimated_value),0),
     valuedBookings:valued.length, unvaluedBookings:converted.length-valued.length }
 }
 
@@ -98,7 +107,7 @@ async function getPrivatePartyPeriod(studioId: string, start: string, end: strin
       .order("report_date").order("studio_id").order("source_class_type")),
     fetchAllRows(client.from("studios").select("id,studio_name,timezone").in("id", selectedIds).order("id")),
     fetchAllRows(client.from("pts_private_party_leads_reporting")
-      .select("studio_id,source_lead_id,received_date,source_stage,stage,converted,estimated_value")
+      .select("studio_id,source_lead_id,received_date,source_stage,source_disposition,stage,converted,estimated_value")
       .in("studio_id", selectedIds).gte("received_date",periodStart).lte("received_date",periodEnd).order("studio_id").order("source_lead_id")),
     fetchAllRows(client.from("pts_private_party_history_coverage")
       .select("studio_id,source_count,loaded_count,source_first_date,source_last_date,completed_at,transition_history_available,history_from,unknown_date_count")
