@@ -14,6 +14,25 @@ function useWarehouse(tables: Record<string, Row[]>, allowed = [1, 2]) {
 beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(new Date("2026-10-26T16:00:00Z")) })
 
 describe("private-party history", () => {
+  it("keeps all active pipeline stages independent of inquiry dates", async () => {
+    useWarehouse({
+      pts_private_party_history_coverage: [{ studio_id: 1, history_from: "2024-01-01" }],
+      pts_private_party_leads_reporting: [
+        { studio_id: 1, source_lead_id: 1, received_date: "2024-01-01", stage: "new" },
+        { studio_id: 1, source_lead_id: 2, received_date: null, stage: "new" },
+        { studio_id: 1, source_lead_id: 3, received_date: "2025-01-01", stage: "deposit_requested" },
+        { studio_id: 1, source_lead_id: 4, received_date: null, stage: "booked" },
+        { studio_id: 1, source_lead_id: 5, received_date: "2026-10-01", stage: "lost" },
+        { studio_id: 2, source_lead_id: 6, received_date: null, stage: "new" },
+      ],
+    }, [1])
+    const october = await getPrivateParties("all", "2026-10-01", "2026-10-26", state.ids)
+    const history = await getPrivateParties("all", "2024-01-01", "2026-10-26", state.ids)
+    expect(october.pipeline.summary).toEqual({ new: 2, deposit_requested: 1, booked: 1 })
+    expect(history.pipeline.summary).toEqual(october.pipeline.summary)
+    expect(october.leads.summary!.received).toBe(1)
+    expect(history.leads.summary!.received).toBe(3)
+  })
   it("excludes placeholder parties consistently with event detail without restoring older aggregates", async () => {
     useWarehouse({
       studios: [{ id: 1, studio_name: "One", timezone: "America/New_York" }],

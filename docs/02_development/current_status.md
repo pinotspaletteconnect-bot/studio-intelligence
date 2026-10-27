@@ -1,3 +1,26 @@
+# Daily private-party refresh and current pipeline - October 26, 2026
+
+Owner requested daily server-side updates and active pipeline counts independent
+of date filters. Current pipeline includes all new inquiries/date requests,
+deposit requests and Manage Party bookings, including undated/older inquiries.
+Conversion and completed/lost outcomes remain inquiry-cohort metrics. Existing
+organization/studio access filters remain in effect for both queries.
+
+New authenticated collector route /pts/private-party-leads refreshes source
+stages/values and includes known warehouse identities to preserve transitions.
+Credentials resolve through the existing account broker; collector performs no
+warehouse writes. Old active inquiries remain available outside the 2024 history
+cutoff and continue to refresh after closing. Known provenance is reused, but
+current stages/values are always fetched fresh. Failed workers drain before the
+account queue releases. Larger identity payloads are authenticated and scoped.
+
+Isolated n8n workflow: Daily 5 AM America/New_York, configured studios, sequential
+collector requests with retry, strict complete-identity/count validation before
+writes, bounded upserts through existing RPC, per-studio reconciliation/coverage.
+No public webhook, hardcoded studio mappings or credential changes. Existing
+stage observations preserve history. No new schema required. Pending deployment,
+first live refresh/reconciliation and publication of scheduled workflow.
+
 # Private Parties live verification and count correction - October 26, 2026
 
 Signed-in report verified for organization 1: St. Matthews, Short North,

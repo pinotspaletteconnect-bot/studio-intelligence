@@ -27,7 +27,7 @@ after(async () => {
 });
 
 test("all collection routes reject unauthenticated requests", async () => {
-    for (const path of ["/meta/download", "/meta/page-insights/download", "/eulerity/download", "/pts/sales-report", "/pts/class-sales-report", "/pts/product-sales-report", "/pts/reservations-report", "/pts/class-sales-upload", "/pts/product-sales-upload"]) {
+    for (const path of ["/meta/download", "/meta/page-insights/download", "/eulerity/download", "/pts/private-party-leads", "/pts/sales-report", "/pts/class-sales-report", "/pts/product-sales-report", "/pts/reservations-report", "/pts/class-sales-upload", "/pts/product-sales-upload"]) {
         assert.equal((await fetch(base + path, { method: "POST" })).status, 401, path);
     }
 });

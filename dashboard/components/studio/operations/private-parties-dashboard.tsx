@@ -12,12 +12,10 @@ import { businessDate } from "@/lib/date-range"
 import type { PrivatePartiesData } from "@/lib/services/private-parties"
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" })
-const stages = [
+const pipelineStages = [
   ["Open new leads", "Inquiry + Date Requested", "new"],
   ["Awaiting deposit", "Date Approved", "deposit_requested"],
   ["Booked upcoming", "Manage Party", "booked"],
-  ["Completed", "Close Party / Party Closed", "completed"],
-  ["Lost", "Dispositioned", "lost"],
 ]
 
 export function PrivatePartiesDashboard() {
@@ -85,6 +83,11 @@ export function PrivatePartiesDashboard() {
     </div>
 
     <section aria-labelledby="party-leads" className="space-y-4">
+      <div className="space-y-3"><h2 className="text-xl font-semibold">Current pipeline</h2>
+        <p className="text-sm text-muted-foreground">All active leads and upcoming booked parties as of the latest refresh. These counts include older and undated inquiries and are not affected by the date filter.</p>
+        <div className="grid gap-3 sm:grid-cols-3">{pipelineStages.map(([label, source, key]) => <Card key={label}><CardContent><p className="text-sm font-medium">{label}</p><p className="my-2 text-3xl tabular-nums">{!loading && !error && data?.pipeline.summary ? data.pipeline.summary[key as keyof typeof data.pipeline.summary] : "—"}</p><p className="text-xs text-muted-foreground">{source}</p></CardContent></Card>)}</div>
+        {data && !loading && !error && <div className="overflow-x-auto rounded-xl border bg-card p-4"><table className="w-full min-w-[420px] text-sm"><thead><tr className="border-b text-left"><th className="py-3">Studio</th><th className="text-right">Open leads</th><th className="text-right">Awaiting deposit</th><th className="text-right">Booked upcoming</th></tr></thead><tbody>{data.pipeline.studios.map(studio => <tr key={studio.id} className="border-b last:border-0"><td className="py-3">{studio.name}</td><td className="text-right">{studio.counts?.new ?? "—"}</td><td className="text-right">{studio.counts?.deposit_requested ?? "—"}</td><td className="text-right">{studio.counts?.booked ?? "—"}</td></tr>)}</tbody></table></div>}
+      </div>
       <h2 id="party-leads" className="text-xl font-semibold">Leads & conversion</h2>
       {!loading&&!error&&data?.leads.status!=="complete"&&<div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">Historical import coverage: {data?.leads.studiosCovered??0} of {data?.leads.studiosRequested??0} studios complete. Portfolio conversion stays unavailable until every selected studio is reconciled. Lead history begins January 1, 2024.</div>}
       <div className="grid gap-3 sm:grid-cols-3">{[
@@ -94,8 +97,8 @@ export function PrivatePartiesDashboard() {
       ].map(([label,value])=><Card key={label}><CardContent><p className="text-sm font-medium">{label}</p><p className="mt-2 text-3xl font-semibold tabular-nums">{value}</p></CardContent></Card>)}</div>
       {leadSummary&&<p className="text-xs text-muted-foreground">{leadSummary.converted} of {leadSummary.received} leads received in this period have booked as of the latest import. Estimates use quoted price × expected attendance for {leadSummary.valuedBookings} converted parties; {leadSummary.unvaluedBookings} have no usable quote. Estimates are not collected revenue.</p>}
       {Boolean(data?.leads.unknownDateCount)&&<p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">{data?.leads.unknownDateCount} imported leads have no verifiable original inquiry date. They are excluded from date-filtered lead counts and conversion rates. These rates describe the dated lead cohort.</p>}
-      <p className="text-sm text-muted-foreground">Current stages of leads received in the selected period</p>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">{stages.map(([label, source,key]) => <Card key={label}><CardContent><p className="text-sm font-medium">{label}</p><p className="my-2 text-3xl tabular-nums">{leadSummary?leadSummary.stages[key]:"—"}</p><p className="text-xs text-muted-foreground">{source}</p></CardContent></Card>)}</div>
+      <p className="text-sm text-muted-foreground">Outcomes of leads received in the selected period</p>
+      <div className="grid gap-3 sm:grid-cols-2">{[["Completed", "completed"], ["Lost", "lost"]].map(([label, key]) => <Card key={key}><CardContent><p className="text-sm font-medium">{label}</p><p className="my-2 text-3xl tabular-nums">{leadSummary ? leadSummary.stages[key] : "—"}</p></CardContent></Card>)}</div>
       {leadSummary&&leadSummary.stages.unknown>0&&<p className="text-xs text-muted-foreground">{leadSummary.stages.unknown} older leads have no current Party Planner stage. Legacy Confirmed status is retained as booking evidence.</p>}
       {data?.leads.coverage.length? <details className="rounded-xl border bg-card p-4 text-sm"><summary className="cursor-pointer font-medium">Import freshness and historical limits</summary><div className="mt-3 space-y-2 text-muted-foreground">{data.leads.coverage.map(row=><p key={row.studio_id}>Studio {row.studio_id}: {row.loaded_count} leads reconciled; imported {row.completed_at}. History from {row.history_from}; {row.unknown_date_count??0} without a verified original date.</p>)}<p>The source does not expose historical stage-change timestamps. Conversion shows verified bookings, including completed parties and legacy Confirmed records, as of import. A lost lead is counted as converted only when earlier booking evidence exists. Historical bookings by booking date and deposit-request conversion are unavailable.</p></div></details>:null}
       {data&&data.studios.some(studio=>studio.leads)&&<div className="overflow-x-auto rounded-xl border bg-card p-4"><h3 className="mb-3 font-semibold">Lead conversion by studio</h3><table className="w-full min-w-[560px] text-sm"><thead><tr className="border-b text-left"><th className="py-3">Studio</th><th className="text-right">Dated leads</th><th className="text-right">Converted</th><th className="text-right">Conversion</th><th className="text-right">Estimated value</th></tr></thead><tbody>{data.studios.map(studio=><tr key={studio.id} className="border-b last:border-0"><td className="py-3">{studio.name}</td><td className="text-right">{studio.leads?.received??"—"}</td><td className="text-right">{studio.leads?.converted??"—"}</td><td className="text-right">{studio.leads?.conversionRate==null?"—":`${studio.leads.conversionRate.toFixed(1)}%`}</td><td className="text-right">{studio.leads?.valuedBookings?money.format(studio.leads.estimatedBookedValue):"—"}</td></tr>)}</tbody></table></div>}

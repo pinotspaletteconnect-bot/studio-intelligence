@@ -1,0 +1,314 @@
+{
+  "name": "PTS Private Parties — Daily lead history and current pipeline",
+  "nodes": [
+    {
+      "id": "daily-party-schedule",
+      "name": "Daily at 5 AM Eastern",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -960,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 0 5 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "daily-party-manual",
+      "name": "Verify refresh now",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -960,
+        200
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "daily-party-targets",
+      "name": "Configured studios and known identities",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -720,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "cQudCPHn5oTqSxiY",
+          "name": "Postgres account"
+        }
+      },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "select t.account_id,t.studio_id,coalesce((select jsonb_agg(jsonb_build_object('source_lead_id',l.source_lead_id,'received_date',l.received_date,'received_date_basis',l.received_date_basis) order by l.source_lead_id) from public.pts_private_party_leads l where l.studio_id=t.studio_id),'[]'::jsonb) as known_leads from public.pts_collection_targets t order by t.account_id,t.studio_id;",
+        "options": {}
+      }
+    },
+    {
+      "id": "daily-party-source",
+      "name": "Collect fresh private-party snapshots",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -480,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 60000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "li7hEi0wisqrbFlP",
+          "name": "Studio Intelligence Collector"
+        }
+      },
+      "parameters": {
+        "method": "POST",
+        "url": "https://studio-intelligence-production.up.railway.app/pts/private-party-leads",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { accountId: Number($json.account_id), studioId: Number($json.studio_id), knownLeads: $json.known_leads } }}",
+        "options": {
+          "timeout": 1800000,
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 1000
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Validate minimized history",
+      "id": "party-validate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const items=$input.all();const targets=$('Configured studios and known identities').all().map(i=>i.json);if(items.length!==targets.length||!targets.length)throw Error('Incomplete studio collection');const seenStudios=new Set();return items.flatMap(item=>{const $json=item.json;const body=$json.body;const target=targets.find(t=>Number(t.studio_id)===body?.studioId&&Number(t.account_id)===body?.accountId);if(!target||body.mode!=='daily_refresh'||seenStudios.has(body.studioId))throw Error('Studio identity mismatch');seenStudios.add(body.studioId);if(target.known_leads.some(known=>!body.rows.some(row=>row.source_lead_id===Number(known.source_lead_id))))throw Error('Known lead coverage incomplete');return (()=>{const body=$json.body;\n\nif(!body||!Number.isSafeInteger(body.studioId)||!Number.isSafeInteger(body.accountId)||!Array.isArray(body.rows)||body.rows.length!==body.sourceCount||body.rows.length>30000||body.historyFrom!=='2024-01-01')throw Error('Invalid approved import envelope');\n\nconst seen=new Set();\n\nconst fields=['studio_id','source_lead_id','received_date','received_date_basis','source_status','source_disposition','source_stage','source_class_id','event_date','requested_date','expected_headcount','quoted_price','requested_deposit','is_mobile','source_closed','value_parse_warnings','retrieved_at'];\n\nconst rows=body.rows.map(source=>{\n\n if(source.studio_id!==body.studioId||!Number.isSafeInteger(source.source_lead_id)||seen.has(source.source_lead_id)||(source.received_date!==null&&(!/^\\d{4}-\\d{2}-\\d{2}$/.test(source.received_date)||source.received_date<body.historyFrom&&body.mode!=='daily_refresh'))||source.received_date===null&&source.received_date_basis!=='unavailable'||!source.source_stage||!source.source_disposition||!source.retrieved_at)throw Error('Invalid or duplicate lead');\n\n seen.add(source.source_lead_id);\n\n const row=Object.fromEntries(fields.filter(k=>source[k]!==undefined).map(k=>[k,source[k]]));\n\n if(!row.source_class_id){row.event_date=null;row.requested_date=null;}\n\n return row;\n\n});\n\nconst dates=rows.map(r=>r.received_date).filter(Boolean).sort();\n\nreturn [{json:{studioId:body.studioId,accountId:body.accountId,sourceCount:rows.length,historyFrom:body.historyFrom,firstDate:dates[0]||null,lastDate:dates.at(-1)||null,rows}}];})();});"
+      }
+    },
+    {
+      "name": "Open studio import run",
+      "id": "party-begin",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        480,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "cQudCPHn5oTqSxiY",
+          "name": "Postgres account"
+        }
+      },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "insert into public.pts_private_party_import_runs(studio_id,account_id,source_count,source_first_date,source_last_date,history_from) select $1::bigint,$2::bigint,$3::integer,$4::date,$5::date,$6::date where exists(select 1 from public.pts_collection_targets where studio_id=$1::bigint and account_id=$2::bigint) returning id,studio_id,account_id;",
+        "options": {
+          "queryReplacement": "={{ [$json.studioId,$json.accountId,$json.sourceCount,$json.firstDate,$json.lastDate,$json.historyFrom] }}",
+          "queryBatching": "transaction"
+        }
+      }
+    },
+    {
+      "name": "Create bounded batches",
+      "id": "party-batch",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const sources=$('Validate minimized history').all().map(i=>i.json);const runs=$input.all().map(i=>i.json);if(runs.length!==sources.length)throw Error('Missing studio run');const seen=new Set();return runs.flatMap(run=>{const source=sources.find(s=>s.studioId===Number(run.studio_id)&&s.accountId===Number(run.account_id));if(!source||!run.id||seen.has(run.studio_id))throw Error('Account/studio run mismatch');seen.add(run.studio_id);const out=[];for(let i=0;i<source.rows.length;i+=500)out.push({json:{runId:run.id,rows:source.rows.slice(i,i+500)}});return out.length?out:[{json:{runId:run.id,rows:[]}}];});"
+      }
+    },
+    {
+      "name": "Store validated lead batches",
+      "id": "party-store",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        960,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "cQudCPHn5oTqSxiY",
+          "name": "Postgres account"
+        }
+      },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "select public.import_pts_private_party_batch($1::uuid,$2::jsonb) as written, $1::uuid as run_id;",
+        "options": {
+          "queryBatching": "transaction",
+          "queryReplacement": "={{ [$json.runId, JSON.stringify($json.rows)] }}"
+        }
+      }
+    },
+    {
+      "name": "Verify import acknowledgements",
+      "id": "party-ack",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const runs=$('Open studio import run').all().map(i=>i.json);const sources=$('Validate minimized history').all().map(i=>i.json);const written=$input.all().map(i=>i.json);if(written.some(w=>!runs.some(r=>r.id===w.run_id)))throw Error('Unknown acknowledgement');return runs.map(run=>{const source=sources.find(s=>s.studioId===Number(run.studio_id)&&s.accountId===Number(run.account_id));const count=written.filter(w=>w.run_id===run.id).reduce((n,w)=>n+Number(w.written),0);if(!source||count!==source.sourceCount)throw Error('Studio count mismatch');return {json:{runId:run.id}};});"
+      }
+    },
+    {
+      "name": "Complete reconciled studio import",
+      "id": "party-complete",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1440,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "cQudCPHn5oTqSxiY",
+          "name": "Postgres account"
+        }
+      },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "update public.pts_private_party_import_runs set status='completed',completed_at=now() where id=$1::uuid and status='loading' and loaded_count=source_count returning id,studio_id,source_count,loaded_count,completed_at,history_from,unknown_date_count;",
+        "options": {
+          "queryReplacement": "={{ [$json.runId] }}"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Validate minimized history": {
+      "main": [
+        [
+          {
+            "node": "Open studio import run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Open studio import run": {
+      "main": [
+        [
+          {
+            "node": "Create bounded batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create bounded batches": {
+      "main": [
+        [
+          {
+            "node": "Store validated lead batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store validated lead batches": {
+      "main": [
+        [
+          {
+            "node": "Verify import acknowledgements",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify import acknowledgements": {
+      "main": [
+        [
+          {
+            "node": "Complete reconciled studio import",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily at 5 AM Eastern": {
+      "main": [
+        [
+          {
+            "node": "Configured studios and known identities",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify refresh now": {
+      "main": [
+        [
+          {
+            "node": "Configured studios and known identities",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configured studios and known identities": {
+      "main": [
+        [
+          {
+            "node": "Collect fresh private-party snapshots",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect fresh private-party snapshots": {
+      "main": [
+        [
+          {
+            "node": "Validate minimized history",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/New_York",
+    "executionTimeout": 10800,
+    "saveExecutionProgress": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all"
+  },
+  "active": false
+}

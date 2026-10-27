@@ -21,6 +21,9 @@ app.use('/receipt-pdf', createReceiptPdfRouter({
     render: createEmailRenderer(require('playwright').chromium)
 }));
 
+// Private-party refreshes carry only minimized known identities/date provenance.
+// Keep the larger body allowance authenticated and scoped to this one route.
+app.use('/pts/private-party-leads', require('./middleware/collectorAuth').requireCollectorAuth, express.json({ limit: '5mb' }));
 app.use(express.json());
 
 // Account-isolated seating source; n8n owns warehouse state and Sheets writes.
