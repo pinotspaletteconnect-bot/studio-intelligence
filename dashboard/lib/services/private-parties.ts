@@ -3,6 +3,7 @@ import { assertStudioAccess } from "@/lib/auth/api"
 import { supabase } from "@/lib/supabase/server"
 import { businessDate, offsetDate, resolveReportPeriod } from "@/lib/date-range"
 import { fetchAllRows } from "@/lib/supabase/pagination"
+import { hasHistoricalPartyEvidence, isReportablePtsClass } from "@/lib/services/pts-class-filters"
 
 export type PartySalesRow = {
   studio_id: number
@@ -19,6 +20,7 @@ type DailyRow = {
 type EventRow = {
   id: number; studio_id: number; event_date: string; seats_sold: number | string | null
   class_sales: number | string | null; fee_sales: number | string | null
+  painting?: string | null; class_time?: string | null; capacity?: number | string | null
 }
 
 const numberValue = (value: number | string | null) => {
@@ -28,9 +30,11 @@ const numberValue = (value: number | string | null) => {
 }
 
 /** Current event detail replaces range-load history only for matching studio/dates. */
-export function reconcilePartySales(current: EventRow[], historical: DailyRow[]): PartySalesRow[] {
+export function reconcilePartySales(current: EventRow[], historical: DailyRow[], timeZones = new Map<number, string | null>()): PartySalesRow[] {
   const daily = new Map<string, PartySalesRow>()
   for (const row of current) {
+    if (!isReportablePtsClass(row, timeZones.get(row.studio_id)) ||
+        !hasHistoricalPartyEvidence({ ...row, reporting_class_type: "Private Party" })) continue
     const key = `${row.studio_id}:${row.event_date}`
     const value = daily.get(key) ?? { studio_id: row.studio_id, date: row.event_date, events: 0, seats: 0, revenue: 0 }
     value.events += 1
@@ -38,7 +42,9 @@ export function reconcilePartySales(current: EventRow[], historical: DailyRow[])
     value.revenue += numberValue(row.class_sales) + numberValue(row.fee_sales)
     daily.set(key, value)
   }
-  const currentKeys = new Set(daily.keys())
+  // Even a date containing only excluded placeholders has current detail coverage.
+  // Do not reintroduce those classes through an older daily aggregate.
+  const currentKeys = new Set(current.map(row => `${row.studio_id}:${row.event_date}`))
   for (const row of historical) {
     const key = `${row.studio_id}:${row.report_date}`
     if (currentKeys.has(key)) continue
@@ -82,14 +88,14 @@ export async function getPrivateParties(studioId: string, start: string, end: st
     (query as T & { in: (field: string, values: number[]) => T }).in("studio_id", selectedIds)
   const [current, historical, studiosResult, leadResult, coverageResult] = await Promise.all([
     fetchAllRows(scope(client.from("pts_class_sales_reporting")
-      .select("id,studio_id,event_date,seats_sold,class_sales,fee_sales")
+      .select("id,studio_id,event_date,painting,class_time,capacity,seats_sold,class_sales,fee_sales")
       .eq("reporting_class_type", "Private Party").gte("event_date", periodStart).lte("event_date", salesEnd))
       .order("event_date").order("studio_id").order("id")),
     fetchAllRows(scope(client.from("pts_class_type_sales_daily_reporting")
       .select("studio_id,report_date,source_class_type,class_event_count,seats_sold,class_sales,fee_sales")
       .eq("reporting_class_type", "Private Party").gte("report_date", periodStart).lte("report_date", salesEnd))
       .order("report_date").order("studio_id").order("source_class_type")),
-    fetchAllRows(client.from("studios").select("id,studio_name").in("id", selectedIds).order("id")),
+    fetchAllRows(client.from("studios").select("id,studio_name,timezone").in("id", selectedIds).order("id")),
     fetchAllRows(client.from("pts_private_party_leads_reporting")
       .select("studio_id,source_lead_id,received_date,source_stage,stage,converted,estimated_value")
       .in("studio_id", selectedIds).gte("received_date",periodStart).lte("received_date",periodEnd).order("studio_id").order("source_lead_id")),
@@ -104,7 +110,8 @@ export async function getPrivateParties(studioId: string, start: string, end: st
   const coveredIds=new Set(coverage.map(row=>Number(row.studio_id)))
   const allStudiosCovered=(studiosResult.data??[]).every(studio=>coveredIds.has(Number(studio.id))) && coverage.every(row=>row.history_from && periodStart>=String(row.history_from))
   const leadSummary=summarizePartyLeads(leadRows.filter(row=>coveredIds.has(row.studio_id)))
-  const rows = reconcilePartySales((current.data ?? []) as EventRow[], (historical.data ?? []) as DailyRow[])
+  const timeZones = new Map((studiosResult.data ?? []).map(studio => [Number(studio.id), studio.timezone as string | null]))
+  const rows = reconcilePartySales((current.data ?? []) as EventRow[], (historical.data ?? []) as DailyRow[], timeZones)
   const studios = (studiosResult.data ?? []).map((studio) => {
     const ownRows = rows.filter((row) => row.studio_id === studio.id)
     return { id: studio.id as number, name: studio.studio_name as string, hasSales: ownRows.length > 0, ...summarize(ownRows),

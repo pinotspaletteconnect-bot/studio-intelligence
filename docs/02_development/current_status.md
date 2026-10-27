@@ -1,3 +1,21 @@
+# Private Parties live verification and count correction - October 26, 2026
+
+Signed-in report verified for organization 1: St. Matthews, Short North,
+Gilbert and Jeffersonville. Huntington Beach belongs to organization 3 and
+remains excluded by existing organization access; all five histories are stored.
+October: 62 dated leads, 15 conversions (24.2%), estimated converted value
+$2,479 (6 usable quotes, 9 missing). 307 undated records in this organization.
+2024 onward: 3,080 dated leads, 824 conversions (26.8%).
+
+Found summary counted placeholder classes excluded by individual sales detail.
+Reused production placeholder/before-opening/no-evidence filters; retained
+current-date precedence so historical aggregates cannot restore placeholders.
+October corrected: 29 parties, revenue unchanged $10,074.24, average $347.39.
+Gilbert: 6 parties/$1,950.24/average $325.04. Read-only warehouse reconciliation,
+34 reporting/access/live tests and full webpack build passed. Correction release
+in progress within the approved page deployment. No schema, source data,
+credentials or access rules changed.
+
 # October 26 — Private-party history imported; approved page release
 
 All five studios have reconciled 2024+ private-party history: 4,196 records,
