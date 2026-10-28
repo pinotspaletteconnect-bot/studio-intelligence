@@ -1,5 +1,6 @@
 'use strict';
 const {readClass,assertClass}=require('./classRoster.cjs');
+const {collectRoomRevision}=require('./roomRevision.cjs');
 const BASE='https://admin.pinotspalette.com';
 
 function productGridDOM(){
@@ -75,7 +76,10 @@ async function readProducts(page,target,details){
 async function collectClassProducts({page,target}){
  let stage='class-before';
  try{
-  const before=await readClass(page,target.classId);assertClass(before,target);
+  const before=await readClass(page,target.classId);
+  const revision=await collectRoomRevision({before,target,readClass:id=>readClass(page,id),assertClass});
+  if(revision)return revision;
+  assertClass(before,target);
   stage='products-grid';const first=await readProducts(page,target,before),label=before.title?.replace(/^Class - /,'');
   const candidates=first.filter(r=>r.classId?r.classId===target.classId:r.classLabel===label),rows=[];
   const orders=new Map();
