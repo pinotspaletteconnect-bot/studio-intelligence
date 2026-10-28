@@ -1,0 +1,10 @@
+'use strict';
+const {test}=require('node:test'),assert=require('node:assert/strict');
+const {collectRoomRevision}=require('./roomRevision.cjs');
+const {assertClass}=require('./classRoster.cjs');
+const target={classId:'123',studioCode:'GIL',sourceRoomId:'314',sourceLocationLabel:'Gilbert',allowedClassTypeIds:['100']};
+const details={title:'Class - Example',locationLabel:'Gilbert',roomId:'336',classTypeId:'100',classTypeLabel:'Public Class',isPublished:true,reservedCount:2,dateText:'28 Oct 2026',startTimeText:'7:00 PM',endTimeText:'9:00 PM'};
+test('unchanged room adds no source reads',async()=>{assert.equal(await collectRoomRevision({before:{...details,roomId:'314'},target,readClass:()=>{throw Error('extra read')},assertClass}),null);});
+test('changed room returns stable metadata before collecting products',async()=>{let reads=0;const s=await collectRoomRevision({before:details,target,readClass:async id=>{assert.equal(id,'123');reads++;return details;},assertClass});assert.equal(reads,1);assert.equal(s.kind,'room-revision');assert.equal(s.complete,false);assert.equal(s.details.roomId,'336');assert.equal(s.expectedRoomId,'314');assert.equal('rows'in s,false);assert.equal('expectedRowCount'in s,false);});
+test('wrong location, private class, unpublished or invalid room never authorize migration',async()=>{for(const change of [{locationLabel:'Other'},{classTypeId:'200',classTypeLabel:'Private Party'},{isPublished:false},{roomId:''}])await assert.rejects(collectRoomRevision({before:{...details,...change},target,readClass:async()=>details,assertClass}));});
+test('changed facts during second read hold room migration',async()=>{for(const change of [{roomId:'314'},{isPublished:false},{startTimeText:'8:00 PM'},{title:'Other'}])await assert.rejects(collectRoomRevision({before:details,target,readClass:async()=>({...details,...change}),assertClass}));});
