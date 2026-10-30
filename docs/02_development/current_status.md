@@ -1,3 +1,9 @@
+# Import recovery verified — October 30, 2026
+
+Collector PR123/124 repair Homebase password-mode readiness and add tini process reaping; PR125 preserves repeated product occurrences with stable unique keys. All five PTS studios recovered October21/24/29 daily summaries:$25,972.43 net. All15 source summaries and25 product slices/658 rows match warehouse counts/quantities/revenue. All56 Homebase daily costs/hours for four configured studios October16–29 match source; missing October26–29 restored:$3,042.95/172.35 hours. Huntington Beach has no configured Homebase target.
+
+Owner-approved PR126 reporting migration applied through Supabase SQL editor after exact view backups. Latest versions of stable PTS class IDs remove nine duplicate seats/$390.71 class net without deleting or rewriting raw history. All69 nonempty source class-date seat/source-revenue totals reconcile. Global third-party matching preserved37 credits/$1,975.05, zero lost matches. Daily verification now detects repeated source class IDs and passes with zero findings. Local monitor remains9 AM America/New_York. Existing production schedules/drafts unchanged; manual-only recovery copies retained for audit.
+
 # Exclude Inactive inquiries from qualified private-party leads - October 27, 2026
 
 Owner clarified Inactive dispositions are general questions or possible duplicate
@@ -201,7 +207,7 @@ Gilbert: 6 parties/$1,950.24/average $325.04. Read-only warehouse reconciliation
 in progress within the approved page deployment. No schema, source data,
 credentials or access rules changed.
 
-# October 26 � Private-party history imported; approved page release
+# October 26  Private-party history imported; approved page release
 
 All five studios have reconciled 2024+ private-party history: 4,196 records,
 401 unknown inquiry dates retained outside dated conversion. Dedicated page
@@ -441,7 +447,7 @@ a side-by-side studio table with all ten KPIs, current and comparison values,
 and absolute/relative changes. The existing studio/date/comparison filters apply;
 rate differences use percentage points. Missing or incomplete studio periods
 remain unavailable, with day coverage shown. Daily and country-key-event reads
-are paginated, and custom-period daily averages use each period�s own length.
+are paginated, and custom-period daily averages use each periods own length.
 No warehouse, collection, or workflow changes. Validation: five focused GA4
 regression tests, full lint, and production webpack build passed with placeholder
 build credentials. Live-data and browser visual verification remain pending.
@@ -516,13 +522,13 @@ The foundational collection platform and the first dashboard architecture are im
 
 ```text
 External source
-  → Playwright or API collector
-  → Express endpoint
-  → n8n ETL/orchestration
-  → Supabase warehouse
-  → SQL reporting views
-  → Next.js services and API routes
-  → dashboards, automation, and AI
+  â Playwright or API collector
+  â Express endpoint
+  â n8n ETL/orchestration
+  â Supabase warehouse
+  â SQL reporting views
+  â Next.js services and API routes
+  â dashboards, automation, and AI
 ```
 
 The collection, ETL, warehouse, and frontend layers are considered stable patterns. New work should extend those patterns rather than introduce parallel architectures.
@@ -617,10 +623,10 @@ The live Supabase schema is authoritative. Update `docs/01_architecture/schema.m
 
 ### Current PTS facts
 
-- `pts_sales_daily_summary` — one summary row per studio and report date
-- `pts_non_class_sales_items` — one product line per studio, report date, and
+- `pts_sales_daily_summary` â one summary row per studio and report date
+- `pts_non_class_sales_items` â one product line per studio, report date, and
   source row hash; customer names are excluded
-- `pts_class_sales_daily` — one latest-observed class event per studio and
+- `pts_class_sales_daily` â one latest-observed class event per studio and
   stable source event key; the published daily workflow refreshes the prior 14
   completed event days at 5:00 AM America/New_York
 A newly onboarded PTS organization lacked product and class reporting
@@ -628,19 +634,19 @@ mappings, leaving category cards at zero despite successful backfills.
 Its mapping configuration has been repaired, and a dashboard change to
 seed same-brand mappings during PTS studio onboarding awaits release.
 
-- `pts_class_type_mappings` and `pts_product_reporting_mappings` — governed
+- `pts_class_type_mappings` and `pts_product_reporting_mappings` â governed
   organization-level mappings for operations reporting groups
-- `pts_class_type_sales_daily` and `pts_product_sales_daily` — replacement
+- `pts_class_type_sales_daily` and `pts_product_sales_daily` â replacement
   range-load facts grouped by embedded event/sale date; deployed schema is
   ready for controlled Short North validation
 - `pts_class_sales_reporting`, `pts_product_sales_reporting`, and
-  `pts_daily_operations_reporting` — service-role reporting views that preserve
+  `pts_daily_operations_reporting` â service-role reporting views that preserve
   source grains while exposing class, product, and daily operations metrics
 - `pts_class_type_sales_daily_reporting`,
-  `pts_product_sales_daily_reporting`, and `pts_operations_daily` — replacement
+  `pts_product_sales_daily_reporting`, and `pts_operations_daily` â replacement
   reporting layer that avoids double-counting Product Sales amounts
 - `pts_reservation_bookings`, `pts_reservation_bookings_reporting`, and
-  `pts_reservation_booking_daily` — privacy-safe reservation order facts and
+  `pts_reservation_booking_daily` â privacy-safe reservation order facts and
   exact daily gross booked-seat/booked-sales reporting
 
 ## Dashboard State
@@ -720,14 +726,14 @@ Implemented foundation:
   preceding equal-length period, the same weekdays 364 days earlier, or an
   explicitly selected custom comparison range.
 - A dedicated Operations Year-over-Year Period Comparison page defaults to the
-  most recently completed Mondayâ€“Sunday week and supports month, rolling, and
+  most recently completed MondayÃ¢â¬âSunday week and supports month, rolling, and
   custom date ranges. Matching compact horizontal tables separate operating
   performance from detailed product sales and group both by studio; each
   cell emphasizes the current-year value, shows the same period for the prior
   two years, and displays the current-versus-prior-year delta. Weekly periods
   remain weekday-aligned, while other ranges retain matching calendar dates.
 - Operations summary combines the preserved range-load history with the
-  reporting views fed by workflows 05–07. Current production rows take
+  reporting views fed by workflows 05â07. Current production rows take
   precedence by studio/date on overlap. Product queries explicitly paginate
   Supabase results so F&B, candle, food, and art-supply history is not truncated
   at the API's 1,000-row response limit.
@@ -878,7 +884,7 @@ Known incomplete surfaces:
   retained 47 unique IDs while refreshing update timestamps. Product Sales runs
   daily at 2:00 AM using the previous completed America/New_York business date.
   The published `07 - PTS Class Sales Import` workflow collected, validated,
-  and upserted 158 unique class events across all four studios for July 16–29,
+  and upserted 158 unique class events across all four studios for July 16â29,
   2026. It refreshes the prior 14 completed event days daily at 5:00 AM.
   Broader controlled historical backfill remains incomplete.
 - Workflow 06 stopped after the range-enabled Product Sales collector response
