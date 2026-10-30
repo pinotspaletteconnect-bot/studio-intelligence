@@ -136,6 +136,14 @@ async function login(page, { email, password, targets }, options = {}) {
         if (options.capture) await options.capture(page, { status: "authenticated", message: null });
         return;
     }
+    // Homebase now defaults to email-code authentication. Keep the existing
+    // password-based account flow explicit; never submit Next on the code form.
+    const passwordSignIn = page.getByRole("button", { name: "Sign in with email and password", exact: true });
+    if (await passwordSignIn.isVisible().catch(() => false)) {
+        await passwordSignIn.click();
+        await page.locator('input[type="password"], input[name="password"]').first()
+            .waitFor({ state: "visible", timeout: 10000 });
+    }
     const emailInput = page.locator('input[type="email"], input[name="email"]').first();
     await emailInput.waitFor({ state: "visible", timeout: 20000 });
     await emailInput.fill(email);
