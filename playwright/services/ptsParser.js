@@ -238,13 +238,23 @@ async function parseNonClassSales(filePath) {
         "Net"
     ]);
 
+    const occurrences = new Map();
     return rows.map(row => {
         // Customer name is deliberately removed. Product and revenue reporting
         // does not require this personal data.
         const { customer: _customer, ...minimizedRow } = row;
 
+        // Preserve every exported line, including identical item occurrences.
+        // Retain the legacy key for the first occurrence and give later ones
+        // stable keys independent of unrelated row ordering.
+        const baseHash = rowHash(minimizedRow);
+        const occurrence = (occurrences.get(baseHash) || 0) + 1;
+        occurrences.set(baseHash, occurrence);
+
         return {
-            source_row_hash: rowHash(minimizedRow),
+            source_row_hash: occurrence === 1
+                ? baseHash
+                : rowHash({ product_row_hash: baseHash, occurrence }),
             order_number: row.order ?? null,
             sale_date: row.sale_date ?? null,
             order_date: row.order_date ?? null,
