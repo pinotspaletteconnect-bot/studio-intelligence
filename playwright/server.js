@@ -14,6 +14,9 @@ const quickbooksRoutes = require("./routes/quickbooks");
 
 const app = express();
 
+// Static OAuth app information; no source data or credential access.
+app.use('/receipt-automation', require('./routes/receiptAppInfo.cjs').createReceiptAppInfoRouter());
+
 // Optional, protected document utility; preserve all existing collectors.
 const {createReceiptPdfRouter} = require('./routes/receiptPdf');
 const {createEmailRenderer} = require('./services/receipts/render-email.cjs');
