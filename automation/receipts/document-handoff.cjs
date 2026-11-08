@@ -1,7 +1,7 @@
 'use strict';
 function collectDocumentResults(base, outputs) {
  const context={...base},errors=[];
- const expected=(base['Batch - Prepare and Hold Exceptions']||[]).filter(i=>i.json.sourceMessageId&&['prepared_for_review','needs_review'].includes(i.json.status));
+ const expected=(base['Batch - Prepare and Hold Exceptions']||[]).filter(i=>i.json.sourceMessageId&&(i.json.status==='prepared_for_review'||i.json.evidenceReady===true));
  const returned=new Set();
  for(const out of outputs){
   if(out.error)errors.push(String(out.error.message||out.error));
@@ -17,6 +17,12 @@ function collectDocumentResults(base, outputs) {
 function isolateDocumentCalls(w,makeId){
  const name='One Receipt Document at a Time',call=w.nodes.find(n=>n.name==='Preserve Receipt and Summary');
  if(!call)throw Error('Document helper call missing');
+ // Match the document helper's existing eligibility guard. Preserve the full
+ // review context for clarification; skip only calls that cannot create files.
+ const split=w.nodes.find(n=>n.name==='Process Each Receipt Independently');
+ const old="['prepared_for_review','needs_review'].includes(i.json.status)";
+ if(!split?.parameters.jsCode.includes(old))throw Error('Document eligibility guard changed');
+ split.parameters.jsCode=split.parameters.jsCode.replace(old,"(i.json.status==='prepared_for_review'||i.json.evidenceReady===true)");
  call.parameters.mode='once';
  w.nodes.push({id:makeId(),name,type:'n8n-nodes-base.splitInBatches',typeVersion:3,position:[call.position[0]-350,call.position[1]+180],parameters:{batchSize:1,options:{}}});
  const edge=node=>({main:[[{node,type:'main',index:0}]]});
