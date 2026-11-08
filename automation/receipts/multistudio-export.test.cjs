@@ -85,7 +85,8 @@ test('saved service purposes map to existing accounts without guessing other ser
  const js=drafts.review.nodes.find(n=>n.name==='First Receipt Review').parameters.jsCode;
  const prefix=js.slice(0,js.indexOf('const data=$("Batch - Trusted Review Configuration")'));
  const match=await new AsyncFunction('$',prefix+'return knownOwnerCategory;})();return result;')(lookup(scope));
- for(const answer of ['Pest control.','Pest control','This is for window cleaning.'])assert.equal(match(answer,c.approvedRules)?.accountId,'68');
+ for(const answer of ['Pest control.','Pest control','This is for window cleaning.','repair','Repairs.'])assert.equal(match(answer,c.approvedRules)?.accountId,'68');
+ assert.equal(match('repair or supplies?',c.approvedRules),null);
  assert.equal(match('Pest control or supplies?',c.approvedRules),null);
 });
 
