@@ -1,5 +1,13 @@
 [
   {
+    "id": "owner-north-vernon-beer-inventory-shared",
+    "vendor": "NORTH VERNON BEVERAGE CO. INC.",
+    "pattern": "^(?:MICH ULTRA|SHOCKT BELG WH|STELLA ARTOIS|MODELO ESP)\\b",
+    "account": "beer",
+    "accountDefinition": {"id":"162","name":"Beer Inventory"},
+    "approval": "Authenticated saved owner reply 1a175259a094b9da assigns beer to Beer Inventory162; owner approved category reuse across studios. Restricted to identified beer case descriptions, excluding deposits and service fees."
+  },
+  {
     "id": "owner-window-cleaning-fish-shared",
     "vendor": "FISH WINDOW CLEANING - COLUMBUS",
     "pattern": "^Window Cleaning$",

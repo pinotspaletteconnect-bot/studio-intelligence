@@ -69,3 +69,11 @@ test('visually reviewed Cintas correction is exact-source and balances printed s
  const changed={...c,receipt:{...c.receipt,totalCents:18743}};
  assert.equal(correctReviewedCintas(changed),changed);
 });
+test('reviewed North Vernon correction is restricted to the verified original',()=>{
+ const {correctReviewedNorthVernon:fix}=require('./receipt-source-repairs.cjs');
+ const c={source:{mailbox:'trooperseaselempirereceipts@gmail.com',sourceMessageId:'1a06d1b1f79bc35a',attachments:[{filename:'pro-3RH8GlnG.jpeg',size:587233}]},receipt:{vendor:'NORTH VERNON BEVERAGE CO. INC.',reference:'60227730',date:'2026-09-04',totalCents:12850,paidAmountCents:12850,items:[{},{},{},{}]}};
+ assert.deepEqual(fix(c).receipt.items.map(i=>i.netCents),[2595,3015,3680,3560]);
+ assert.equal(fix(c).receipt.items.reduce((n,i)=>n+i.netCents,0),12850);
+ for(const change of [{reference:'other'},{totalCents:12851},{date:'2026-09-05'}]){const bad={...c,receipt:{...c.receipt,...change}};assert.equal(fix(bad),bad);}
+ const bad={...c,source:{...c.source,mailbox:'other'}};assert.equal(fix(bad),bad);
+});

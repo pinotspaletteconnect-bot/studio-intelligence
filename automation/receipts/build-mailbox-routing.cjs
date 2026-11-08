@@ -12,7 +12,7 @@ const SHARED_RULES=require('./shared-owner-rules.json');
 const SHARED_ACCOUNTS=require('./shared-owner-accounts.json');
 const {currentSharedCategory,sharedSavedCategory}=require('./shared-answer-policy.cjs');
 const {supportOriginalPhotos}=require('./original-photo-support.cjs');
-const {correctFishCleaningPayment,correctCanvasDepotPayment,correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount,correctShippoPayment,correctReviewedCintas,correctOutshineServicePayment}=require('./receipt-source-repairs.cjs');
+const {correctReviewedNorthVernon,correctFishCleaningPayment,correctCanvasDepotPayment,correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount,correctShippoPayment,correctReviewedCintas,correctOutshineServicePayment}=require('./receipt-source-repairs.cjs');
 const edge=n=>({main:[[{node:n,type:'main',index:0}]]});
 const code=(name,jsCode,position=[0,0])=>({id:randomUUID(),name,type:'n8n-nodes-base.code',typeVersion:2,position,parameters:{jsCode}});
 
@@ -28,6 +28,7 @@ function addMailboxContext(w) {
 
 function scopedCode(js, name, key) {
  js=supportOriginalPhotos(js,key,name);
+ if(key==='review')js=correctReviewedNorthVernon.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctReviewedNorthVernon(cache);');
  if(key==='review')js=correctFishCleaningPayment.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctFishCleaningPayment(cache);');
  if(key==='review')js=correctCanvasDepotPayment.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctCanvasDepotPayment(cache);');
  if(key==='review')js=currentSharedCategory.toString()+'\n'+sharedSavedCategory.toString()+'\n'+js

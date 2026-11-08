@@ -1,5 +1,13 @@
 'use strict';
 
+function correctReviewedNorthVernon(cache) {
+ const r=cache?.receipt,s=cache?.source;
+ if(s?.mailbox!=='trooperseaselempirereceipts@gmail.com'||s.sourceMessageId!=='1a06d1b1f79bc35a'||r?.vendor!=='NORTH VERNON BEVERAGE CO. INC.'||r.reference!=='60227730'||r.date!=='2026-09-04'||r.totalCents!==12850||r.paidAmountCents!==12850||r.items?.length!==4||!s.attachments?.some(a=>a.filename==='pro-3RH8GlnG.jpeg'&&a.size===587233))return cache;
+ const printed=[['MICH ULTRA 24/12 LNNR',2595],['SHOCKT BELG WH 4/6 NR',3015],['STELLA ARTOIS 4/6 NR 11.2',3680],['MODELO ESP LOOSE LNNR',3560]];
+ const items=printed.map(([description,netCents])=>({description,quantity:1,netCents,itemTaxCents:null,evidence:'Original invoice 60227730 visually verified line amount '+(netCents/100).toFixed(2)}));
+ if(items.reduce((n,i)=>n+i.netCents,0)!==r.totalCents)throw Error('Reviewed North Vernon arithmetic mismatch');
+ return {...cache,receipt:{...r,items,subtotalCents:12850,taxCents:null,deliveryCents:null,otherFeesCents:null,orderDiscountCents:0,uncertainties:[]},sourceRepair:{kind:'visually_reviewed_north_vernon_invoice',note:'Original pro-3RH8GlnG.jpeg visually reviewed 2026-11-08. Four printed beer case amounts $25.95, $30.15, $36.80 and $35.60 exactly total $128.50; printed discount .00. Separate tax or fees are not printed. Corrected extraction misreads; original retained unchanged.'}};
+}
 function correctFishCleaningPayment(cache) {
  const r=cache?.receipt,s=cache?.source,t=String(s?.text||'').replace(/\r/g,'');
  if(r?.vendor!=='FISH WINDOW CLEANING - COLUMBUS'||s.attachments?.length||!t.includes('outgoing@safewebservices.com')||
@@ -98,4 +106,4 @@ function correctOutshineServicePayment(cache) {
  if((r.uncertainties||[]).some(u=>!allowed.has(u)))return cache;
  return {...cache,receipt:{...r,items:[{...r.items[0],description:'Window Cleaning',evidence:amounts[0][0]}],uncertainties:[]},sourceRepair:{kind:'confirmed_window_cleaning_payment',note:'Owner previously confirmed Outshine as window cleaning. The approved payment receipt explicitly reconciles amount, zero tax, zero tip and total. A single service amount is retained; no additional service details are invented.'}};
 }
-module.exports={correctFishCleaningPayment,correctCanvasDepotPayment,correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount,correctShippoPayment,correctReviewedCintas,correctOutshineServicePayment};
+module.exports={correctReviewedNorthVernon,correctFishCleaningPayment,correctCanvasDepotPayment,correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount,correctShippoPayment,correctReviewedCintas,correctOutshineServicePayment};
