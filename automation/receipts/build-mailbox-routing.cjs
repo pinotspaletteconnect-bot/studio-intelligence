@@ -15,7 +15,7 @@ const {currentSharedCategory,sharedSavedCategory}=require('./shared-answer-polic
 const {supportOriginalPhotos}=require('./original-photo-support.cjs');
 const {isolateDocumentCalls}=require('./document-handoff.cjs');
 const {correctReviewedHeidelberg}=require('./receipt-source-repairs.cjs');
-const {correctOhioPestService}=require('./receipt-source-repairs.cjs');
+const {correctOhioPestService,correctReviewedSamsAggregateTax}=require('./receipt-source-repairs.cjs');
 const {correctZemBrushOrder}=require('./receipt-source-repairs.cjs');
 const {correctReviewedKroger}=require('./reviewed-kroger.cjs');
 const {correctReviewedPlumbing}=require('./reviewed-plumbing.cjs');
@@ -34,7 +34,7 @@ function addMailboxContext(w) {
 }
 
 function scopedCode(js, name, key) {
- if(key==='review')js=correctOhioPestService.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctOhioPestService(cache);');
+ if(key==='review')js=correctReviewedSamsAggregateTax.toString()+'\n'+correctOhioPestService.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctReviewedSamsAggregateTax(correctOhioPestService(cache));');
  js=js.replace("if(value==='supplies ans materials')value='supplies and materials';", "if(value==='supplies ans materials')value='supplies and materials';\n  if(value==='candle inventoiry')value='candle inventory';\n  if(value==='nonalcoholic inventry')value='nonalcoholic inventory';\n  if(value==='this is an inspection. i would place this under permits')value='business licenses';");
  if(key==='review'&&name==='Choose Unread Receipts')js=js.replace('const rows=$input.all()',"for(const i of [...$('Read Historic Extraction Cache').all(),...$('Read New Extraction Cache').all()])if(['complete','failed','reserved'].includes(i.json.status)&&i.json.sourceMessageId)cached.add(i.json.sourceMessageId);const rows=$input.all()");
  if(key==='review')js=correctReviewedPlumbing.toString()+'\n'+correctReviewedKroger.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctReviewedKroger(correctReviewedPlumbing(cache));');

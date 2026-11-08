@@ -1,5 +1,11 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {correctBlickUnitAmounts}=require('./receipt-source-repairs.cjs');
+test('reviewed Sams aggregate tax removes invented item zeros without changing printed amounts',()=>{
+ const fix=require('./receipt-source-repairs.cjs').correctReviewedSamsAggregateTax;
+ const c={source:{sourceMessageId:'1a02073e37503ae7',attachments:[{filename:'pro-RD4bLPuI.jpeg',size:119397}]},receipt:{reference:'8000000060458803',date:'2026-08-20',totalCents:10416,subtotalCents:9789,taxCents:627,items:[1848,1848,1848,1324,828,2093].map(netCents=>({netCents,itemTaxCents:0})),uncertainties:[]}};
+ assert.ok(fix(c).receipt.items.every(i=>i.itemTaxCents===null));assert.equal(fix(c).receipt.totalCents,10416);assert.equal(c.receipt.items[0].itemTaxCents,0);
+ for(const changed of [{...c,source:{...c.source,sourceMessageId:'other'}},{...c,receipt:{...c.receipt,totalCents:10417}},{...c,receipt:{...c.receipt,items:c.receipt.items.map(i=>({...i,itemTaxCents:1}))}}])assert.equal(fix(changed),changed);
+});
 test('Ohio service invoice separates usage quantities from prices and preserves payment credit evidence',()=>{
  const {correctOhioPestService:fix}=require('./receipt-source-repairs.cjs');
  const c={source:{mailbox:'stellaseaselempirereceipts@gmail.com',sourceMessageId:'19f48622e1a7ac61',attachments:[{filename:'Ohio Exterminating Co Statement.pdf',size:38902}],text:'From: Ohio Exterminating Co. <bookkeeper@ohioexterminating.com>\nInvoice #\n548178\nMonthly Pest Control\n74.00\nSubtotal:\n74.00\nTax:\n5.92\nInvoice Total:\n$ 79.92\nCC/ACH EFT Payment XXXX9312\n-79.92\nBalance Due this Invoice:\n$ 0.00\nMaterials\nEPA\nDescription\nAmount\nUnits'},receipt:{vendor:'Ohio Exterminating Co.',reference:'548178',date:'2026-07-08',totalCents:7992,subtotalCents:7400,taxCents:592,paidAmountCents:-7992,items:['Monthly Pest Control','CONTRAC BLOX Target Pests: Mice','First Strike Target Pests: Mice, Rat','Transport Mikron Gallon Target Pests: General Treatment'].map(description=>({description})),uncertainties:['Invoice total and paid amount match, but itemized details for tax and fees are not clearly separated.']}};

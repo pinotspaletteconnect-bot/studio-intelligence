@@ -1,4 +1,11 @@
 'use strict';
+function correctReviewedSamsAggregateTax(cache) {
+ const r=cache?.receipt,s=cache?.source;
+ if(s?.sourceMessageId!=='1a02073e37503ae7'||r?.reference!=='8000000060458803'||r.date!=='2026-08-20'||r.totalCents!==10416||r.subtotalCents!==9789||r.taxCents!==627||r.items?.length!==6||s.attachments?.length!==1||s.attachments[0].filename!=='pro-RD4bLPuI.jpeg'||s.attachments[0].size!==119397)return cache;
+ const expected=[1848,1848,1848,1324,828,2093];
+ if(r.items.some((i,n)=>i.netCents!==expected[n]||i.itemTaxCents!==0)||(r.uncertainties||[]).length)return cache;
+ return {...cache,receipt:{...r,items:r.items.map(i=>({...i,itemTaxCents:null}))},sourceRepair:{kind:'visually_reviewed_aggregate_tax',note:'Original Sam’s order8000000060458803 visually reviewed. Six prices total $97.89; only aggregate tax $6.27 is printed, giving $104.16. Extraction incorrectly inserted zero tax on each line. Item tax is unknown, not zero; use the existing owner-approved proportional allocation, explicitly marked estimated in the summary.'}};
+}
 function correctOhioPestService(cache) {
  const r=cache?.receipt,s=cache?.source,t=String(s?.text||'').replace(/\r/g,'');
  if(s?.mailbox!=='stellaseaselempirereceipts@gmail.com'||s.sourceMessageId!=='19f48622e1a7ac61'||r?.vendor!=='Ohio Exterminating Co.'||r.reference!=='548178'||r.date!=='2026-07-08'||r.totalCents!==7992||r.subtotalCents!==7400||r.taxCents!==592||r.paidAmountCents!==-7992||s.attachments?.length!==1||s.attachments[0].filename!=='Ohio Exterminating Co Statement.pdf'||s.attachments[0].size!==38902)return cache;
@@ -139,4 +146,4 @@ function correctReviewedTarget(cache) {
  if(s?.mailbox!=='jessejayspinotreceipts@gmail.com'||s.sourceMessageId!=='1a0e940cf111b81e'||r?.vendor!=='Target'||r.date!=='2026-09-28'||r.totalCents!==1060||r.items?.length!==1||r.items[0].description!=='Mondo Llama'||r.items[0].netCents!==1000||!s.attachments?.some(a=>a.filename==='pro-RTGVbqtE.jpeg'&&a.size===863310))return cache;
  return {...cache,receipt:{...r,reference:'2-6271-2473-0160-7748-7',subtotalCents:1000,taxCents:60,paidAmountCents:1060},sourceRepair:{kind:'visually_reviewed_target_receipt',note:'Original photo reviewed November 8: REC#2-6271-2473-0160-7748-7, two Mondo Llama items at $5 each, subtotal $10, tax $.60, total and printed card charge $10.60. Handwritten Cash is retained on the original, not treated as proof of payment method. Product type still requires an owner answer.'}};
 }
-module.exports={correctOhioPestService,correctZemBrushOrder,correctReviewedTarget,correctReviewedHeidelberg,correctReviewedNorthVernon,correctFishCleaningPayment,correctCanvasDepotPayment,correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount,correctShippoPayment,correctReviewedCintas,correctOutshineServicePayment};
+module.exports={correctReviewedSamsAggregateTax,correctOhioPestService,correctZemBrushOrder,correctReviewedTarget,correctReviewedHeidelberg,correctReviewedNorthVernon,correctFishCleaningPayment,correctCanvasDepotPayment,correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount,correctShippoPayment,correctReviewedCintas,correctOutshineServicePayment};
