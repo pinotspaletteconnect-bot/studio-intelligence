@@ -1,5 +1,11 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {correctBlickUnitAmounts}=require('./receipt-source-repairs.cjs');
+test('Rockbot gross line totals are not taxed twice and changed invoices remain held',()=>{
+ const fix=require('./receipt-source-repairs.cjs').correctReviewedRockbot;
+ const c={source:{sourceMessageId:'19becf3beecda372',mailbox:'stellaseaselempirereceipts@gmail.com',attachments:[{filename:"CI_Pinot's Palette - Columbus, OH_#110136.pdf",size:66076}]},receipt:{reference:'CI_110136',date:'2026-01-21',totalCents:32335,subtotalCents:29940,taxCents:2395,paidAmountCents:32335,items:[{description:'Content Licensing & Standard Platform',netCents:19375,itemTaxCents:1435},{description:'Commercial Music Streaming',netCents:12960,itemTaxCents:960}],uncertainties:['Invoice balance shows $0.00, indicating it has been paid in full.']}};
+ const r=fix(c).receipt;assert.equal(r.items.reduce((n,i)=>n+i.netCents,0),29940);assert.equal(r.items.reduce((n,i)=>n+i.netCents+i.itemTaxCents,0),32335);assert.deepEqual(r.uncertainties,[]);
+ for(const bad of [{...c,receipt:{...c.receipt,totalCents:32336}},{...c,source:{...c.source,attachments:[]}},{...c,receipt:{...c.receipt,uncertainties:['Another page is missing.']}}])assert.equal(fix(bad),bad);
+});
 test('Cintas payment retains one printed invoice and the owner-confirmed service category',()=>{
  const fix=require('./receipt-source-repairs.cjs').correctCintasInvoicePayment;
  const text='From: myCintas Support <support@cintas.com>\nYour payment has been submitted.\nInvoice Date\nAccount\nInvoice #\nInvoice Total\nPayment\n08/10/2026\nPINOT\nUnited States\n0012928160\n4278494581\n$207.22\n$207.22\nSelected Invoice Total:\n$207.22\nCredits Applied:\n$0.00\nTotal Payment:\n$207.22';

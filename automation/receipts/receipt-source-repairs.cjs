@@ -1,4 +1,11 @@
 'use strict';
+function correctReviewedRockbot(cache) {
+ const r=cache?.receipt,s=cache?.source;
+ if(s?.sourceMessageId!=='19becf3beecda372'||s.mailbox!=='stellaseaselempirereceipts@gmail.com'||s.attachments?.length!==1||s.attachments[0].filename!=="CI_Pinot's Palette - Columbus, OH_#110136.pdf"||s.attachments[0].size!==66076||r?.reference!=='CI_110136'||r.date!=='2026-01-21'||r.totalCents!==32335||r.subtotalCents!==29940||r.taxCents!==2395||r.paidAmountCents!==32335||r.items?.length!==2)return cache;
+ const expected=[['Content Licensing & Standard Platform',19375,1435],['Commercial Music Streaming',12960,960]];
+ if(r.items.some((i,n)=>i.description!==expected[n][0]||i.netCents!==expected[n][1]||i.itemTaxCents!==expected[n][2])||(r.uncertainties||[]).some(u=>u!=='Invoice balance shows $0.00, indicating it has been paid in full.'))return cache;
+ return {...cache,receipt:{...r,items:r.items.map(i=>({...i,netCents:i.netCents-i.itemTaxCents})),uncertainties:[]},sourceRepair:{kind:'visually_reviewed_rockbot_net_and_tax',note:'Original invoice CI_110136 visually verified: licensing/platform unit price $179.40 plus $14.35 tax; music streaming $120.00 plus $9.60 tax. Net $299.40 plus tax $23.95 equals $323.35. Extraction incorrectly treated gross line totals as net. Printed paid-in-full balance is payment evidence, not an unresolved question.'}};
+}
 function correctCintasInvoicePayment(cache) {
  const r=cache?.receipt,s=cache?.source,t=String(s?.text||'').replace(/\r/g,'');
  if(r?.vendor!=='myCintas'||r.documentKind!=='payment_only'||s.attachments?.length||r.items?.length||!t.includes('From: myCintas Support <support@cintas.com>')||!t.includes('Your payment has been submitted.'))return cache;
@@ -162,4 +169,4 @@ function correctReviewedTarget(cache) {
  if(s?.mailbox!=='jessejayspinotreceipts@gmail.com'||s.sourceMessageId!=='1a0e940cf111b81e'||r?.vendor!=='Target'||r.date!=='2026-09-28'||r.totalCents!==1060||r.items?.length!==1||r.items[0].description!=='Mondo Llama'||r.items[0].netCents!==1000||!s.attachments?.some(a=>a.filename==='pro-RTGVbqtE.jpeg'&&a.size===863310))return cache;
  return {...cache,receipt:{...r,reference:'2-6271-2473-0160-7748-7',subtotalCents:1000,taxCents:60,paidAmountCents:1060},sourceRepair:{kind:'visually_reviewed_target_receipt',note:'Original photo reviewed November 8: REC#2-6271-2473-0160-7748-7, two Mondo Llama items at $5 each, subtotal $10, tax $.60, total and printed card charge $10.60. Handwritten Cash is retained on the original, not treated as proof of payment method. Product type still requires an owner answer.'}};
 }
-module.exports={correctCintasInvoicePayment,correctReviewedUberBookingFee,correctReviewedSamsAggregateTax,correctOhioPestService,correctZemBrushOrder,correctReviewedTarget,correctReviewedHeidelberg,correctReviewedNorthVernon,correctFishCleaningPayment,correctCanvasDepotPayment,correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount,correctShippoPayment,correctReviewedCintas,correctOutshineServicePayment};
+module.exports={correctReviewedRockbot,correctCintasInvoicePayment,correctReviewedUberBookingFee,correctReviewedSamsAggregateTax,correctOhioPestService,correctZemBrushOrder,correctReviewedTarget,correctReviewedHeidelberg,correctReviewedNorthVernon,correctFishCleaningPayment,correctCanvasDepotPayment,correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount,correctShippoPayment,correctReviewedCintas,correctOutshineServicePayment};
