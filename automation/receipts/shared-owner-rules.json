@@ -279,5 +279,13 @@
     "account": "perishable",
     "accountDefinition": {"id":"217","name":"Mixers & Perishables COGS"},
     "approval": "Saved owner answer 11 assigns pulp-free orange juice to mixers COGS. Owner explicitly instructed applying general product answers across studios; brand and package size do not change this product category."
+  },
+  {
+    "id": "plumbing-drain-maintenance",
+    "vendor": "Callthatplumber LLC",
+    "pattern": "^Drain clearing — invoice 1800 total, paid by Zelle$",
+    "account": "maintenance",
+    "accountDefinition": {"id":"68","name":"Repairs & maintenance"},
+    "approval": "User requested the closest existing COA description. The original invoice explicitly describes clearing a blocked sewer drain; existing Repairs & maintenance covers this service."
   }
 ]
