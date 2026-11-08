@@ -277,7 +277,10 @@
     "vendor": "Sam's Club",
     "pattern": "^Member's Mark Pulp-Free 100% Orange Juice(?:,|$)",
     "account": "perishable",
-    "accountDefinition": {"id":"217","name":"Mixers & Perishables COGS"},
+    "accountDefinition": {
+      "id": "217",
+      "name": "Mixers & Perishables COGS"
+    },
     "approval": "Saved owner answer 11 assigns pulp-free orange juice to mixers COGS. Owner explicitly instructed applying general product answers across studios; brand and package size do not change this product category."
   },
   {
@@ -285,7 +288,74 @@
     "vendor": "Callthatplumber LLC",
     "pattern": "^Drain clearing — invoice 1800 total, paid by Zelle$",
     "account": "maintenance",
-    "accountDefinition": {"id":"68","name":"Repairs & maintenance"},
+    "accountDefinition": {
+      "id": "68",
+      "name": "Repairs & maintenance"
+    },
     "approval": "User requested the closest existing COA description. The original invoice explicitly describes clearing a blocked sewer drain; existing Repairs & maintenance covers this service."
+  },
+  {
+    "id": "owner-bees-liquor-215-st.-matthews",
+    "studios": [
+      "St. Matthews"
+    ],
+    "vendor": "BEES",
+    "pattern": "^(?:Malibu Reg 750 ml Bottle|Mr[.] Boston Triple Sec 12x 750 ml Bottle)$",
+    "account": "actualLiquor",
+    "accountDefinition": {
+      "id": "215",
+      "name": "Liquor Inventory"
+    },
+    "approval": "Owner November 8: most liquor is liquor inventory. Existing studio chart snapshot identifies this Liquor Inventory account; no QBO access or account creation. Ginger beer remains unanswered."
+  },
+  {
+    "id": "owner-bees-liquor-235-short-north",
+    "studios": [
+      "Short North"
+    ],
+    "vendor": "BEES",
+    "pattern": "^(?:Malibu Reg 750 ml Bottle|Mr[.] Boston Triple Sec 12x 750 ml Bottle)$",
+    "account": "actualLiquor",
+    "accountDefinition": {
+      "id": "235",
+      "name": "Liquor Inventory"
+    },
+    "approval": "Owner November 8: most liquor is liquor inventory. Existing studio chart snapshot identifies this Liquor Inventory account; no QBO access or account creation. Ginger beer remains unanswered."
+  },
+  {
+    "id": "owner-bees-liquor-224-jeffersonville",
+    "studios": [
+      "Jeffersonville"
+    ],
+    "vendor": "BEES",
+    "pattern": "^(?:Malibu Reg 750 ml Bottle|Mr[.] Boston Triple Sec 12x 750 ml Bottle)$",
+    "account": "actualLiquor",
+    "accountDefinition": {
+      "id": "224",
+      "name": "Liquor Inventory"
+    },
+    "approval": "Owner November 8: most liquor is liquor inventory. Existing studio chart snapshot identifies this Liquor Inventory account; no QBO access or account creation. Ginger beer remains unanswered."
+  },
+  {
+    "id": "bees-confirmed-beer",
+    "vendor": "BEES",
+    "pattern": "^Modelo Especial 24 Pack",
+    "account": "beer",
+    "accountDefinition": {
+      "id": "162",
+      "name": "Beer Inventory"
+    },
+    "approval": "Reuse confirmed Modelo beer category across studio suppliers, as owner requested."
+  },
+  {
+    "id": "bees-confirmed-wine",
+    "vendor": "BEES",
+    "pattern": "^Seven Daughters Moscato 12x 750 ml Bottle$",
+    "account": "wine",
+    "accountDefinition": {
+      "id": "161",
+      "name": "Wine Inventory"
+    },
+    "approval": "Explicit Moscato wine uses existing owner-confirmed Wine Inventory across studio suppliers."
   }
 ]
