@@ -21,6 +21,9 @@ function sharedSavedCategory(description, rows, rules, helpers) {
    const text=String(s||'').trim().replace(/\s+/g,' ').toLowerCase();
    // Same named product in supplier shorthand and the owner's answered question.
    if(/^barritt'?s (?:12oz 4\/6pk cn ginger|regular ginger beer 4x 6 pack \(12 oz cans\))$/.test(text))return 'barritts regular ginger beer 12 oz cans';
+   // Owner-approved general product answers apply across studios. Restrict
+   // this family to named packaged soft drinks, never syrup or merchandise.
+   if(/^(?:coca-cola soft drink 12 fl\. oz\., 35 pk\.|sprite lemon lime soda soft drinks, 12 fl\. oz\., 35 pk\.|mountain dew 12 fl\. oz\. cans, 36 pk\.|canada dry ginger ale soda 12 fl\. oz\., 24 pk\.)$/.test(text))return 'packaged soft drinks';
    return text;
  };
  const d=normalize(description);

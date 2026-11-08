@@ -1,6 +1,15 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {currentSharedCategory,sharedSavedCategory}=require('./shared-answer-policy.cjs');
 const rules={companyId:'target-studio',accounts:{paint:{id:'164',name:'Paint Inventory'},projectPet:{id:'222',name:'Special Class Products COGS'}}};
+
+test('packaged soft drinks reuse the saved owner category while conflicting answers remain held',()=>{
+ const row={reviewKey:'answered',companyId:'source',meta:{field:'category',observed:'Coca-Cola Soft Drink 12 fl. oz., 35 pk.'},reply:{answer:'drinks',messageId:'owner-reply'}};
+ const helpers={questionMetadata:r=>r.meta,latestOwnerAnswer:r=>r.reply,knownOwnerCategory:a=>a==='drinks'?{accountId:'184',accountName:'Nonalcoholic Drink Inventory'}:{accountId:'giveaway',accountName:'Give Away'}};
+ for(const d of ['Sprite Lemon Lime Soda Soft Drinks, 12 fl. oz., 35 pk.','Mountain Dew 12 fl. oz. cans, 36 pk.','Canada Dry Ginger Ale Soda 12 fl. oz., 24 pk.'])assert.equal(sharedSavedCategory(d,[row],rules,helpers)?.accountId,'184');
+ for(const d of ['Coca-Cola syrup','Coca-Cola shirt','Other ginger ale'])assert.equal(sharedSavedCategory(d,[row],rules,helpers),null);
+ assert.equal(sharedSavedCategory(row.meta.observed,[row,{...row,reply:{answer:'giveaway'}}],rules,helpers),null);
+ assert.equal(sharedSavedCategory(row.meta.observed,[{...row,reply:null}],rules,helpers),null);
+});
 test('named Barritts shorthand reuses an authenticated answer but not other ginger products',()=>{
  const row={reviewKey:'answered',companyId:'source-studio',meta:{field:'category',observed:'Barritts Regular Ginger Beer 4x 6 Pack (12 oz Cans)'},reply:{answer:'Nonalcoholic inventory',messageId:'owner-reply'}};
  const helpers={questionMetadata:r=>r.meta,latestOwnerAnswer:r=>r.reply,knownOwnerCategory:a=>a==='Nonalcoholic inventory'?{accountId:'184',accountName:'Nonalcoholic Drink Inventory'}:null};

@@ -101,6 +101,8 @@ test('saved shipping and special-product answers use existing configured account
  assert.equal(match('These are all under cintas',c.approvedRules)?.accountId,'229');
  assert.equal(match('Candle inventoiry',c.approvedRules)?.accountId,'1150040007');
  assert.equal(match('Candle inventoiry or supplies?',c.approvedRules),null);
+ assert.equal(match('Nonalcoholic inventry',c.approvedRules)?.accountId,'184');
+ assert.equal(match('Nonalcoholic inventry or giveaway?',c.approvedRules),null);
  assert.equal(match('This is an inspection.  I would place this under permits.',c.approvedRules)?.accountId,'19');
  assert.equal(match('Maybe this is an inspection. I would place this under permits?',c.approvedRules),null);
  assert.equal(r.classifyItem({vendor:'Shippo',description:'Invoice Payment Confirmation'},scope.scopeId,c.approvedRules)?.accountId,'123');
