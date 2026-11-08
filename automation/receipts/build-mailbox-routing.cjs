@@ -15,6 +15,7 @@ const {currentSharedCategory,sharedSavedCategory}=require('./shared-answer-polic
 const {supportOriginalPhotos}=require('./original-photo-support.cjs');
 const {isolateDocumentCalls}=require('./document-handoff.cjs');
 const {correctReviewedHeidelberg}=require('./receipt-source-repairs.cjs');
+const {correctZemBrushOrder}=require('./receipt-source-repairs.cjs');
 const {correctReviewedNorthVernon,correctFishCleaningPayment,correctCanvasDepotPayment,correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount,correctShippoPayment,correctReviewedCintas,correctOutshineServicePayment}=require('./receipt-source-repairs.cjs');
 const edge=n=>({main:[[{node:n,type:'main',index:0}]]});
 const code=(name,jsCode,position=[0,0])=>({id:randomUUID(),name,type:'n8n-nodes-base.code',typeVersion:2,position,parameters:{jsCode}});
@@ -31,6 +32,7 @@ function addMailboxContext(w) {
 
 function scopedCode(js, name, key) {
  js=supportOriginalPhotos(js,key,name);
+ if(key==='review')js=correctZemBrushOrder.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctZemBrushOrder(cache);');
  if(key==='review')js=correctReviewedHeidelberg.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctReviewedHeidelberg(cache);');
  if(key==='review')js=correctReviewedNorthVernon.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctReviewedNorthVernon(cache);');
  if(key==='review')js=correctFishCleaningPayment.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctFishCleaningPayment(cache);');

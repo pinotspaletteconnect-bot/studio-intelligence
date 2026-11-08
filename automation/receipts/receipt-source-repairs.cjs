@@ -1,4 +1,16 @@
 'use strict';
+function correctZemBrushOrder(cache) {
+ const r=cache?.receipt,s=cache?.source,t=String(s?.text||'').replace(/\r/g,'');
+ if(r?.vendor!=='ZEM BRUSH MFG'||r.documentKind!=='order_confirmation'||r.date!=null||s.attachments?.length||r.uncertainties?.length)return cache;
+ const headers=[...t.matchAll(/From: ZEM BRUSH MFG <info@zembrush\.com>\nSent: [A-Za-z]+, ([A-Za-z]+) (\d{1,2}), (\d{4})[^\n]*\nTo:[^\n]*\nSubject: Your ZEM BRUSH MFG Order Confirmation \(#(\d+)\)/g)];
+ if(headers.length!==1||r.reference!=='#'+headers[0][4])return cache;
+ const month=['January','February','March','April','May','June','July','August','September','October','November','December'].indexOf(headers[0][1])+1;
+ const total=t.match(/Grand total:\s*\$([\d,]+\.\d{2})/);
+ if(!month||!total||Math.round(Number(total[1].replace(/,/g,''))*100)!==r.totalCents||!r.items?.length||r.items.some(i=>!/^PA10[01] Size #\d+ White Synthetic (?:Round|Flat) Long Handle Pinot's Palette Brush$/.test(i.description)||!t.includes(i.description)||!Number.isSafeInteger(i.netCents)||i.netCents<=0)||r.items.reduce((n,i)=>n+i.netCents,0)!==r.totalCents)return cache;
+ const date=headers[0][3]+'-'+String(month).padStart(2,'0')+'-'+headers[0][2].padStart(2,'0');
+ if(new Date(date).toISOString().slice(0,10)!==date)return cache;
+ return {...cache,receipt:{...r,date},sourceRepair:{kind:'vendor_order_confirmation_date',note:'Order date comes from the original ZEM confirmation Sent header preserved in the forwarded source, not the forwarding date. Printed brush lines reconcile to the printed grand total. Payment completion is not asserted.'}};
+}
 function correctReviewedHeidelberg(cache) {
  const r=cache?.receipt,s=cache?.source;
  if(s?.mailbox!=='stellaseaselempirereceipts@gmail.com'||s.sourceMessageId!=='1a18deac1df19385'||r?.vendor!=='Heidelberg Columbus'||r.reference!=='90008895'||r.totalCents!==35304||r.items?.length!==6||!s.attachments?.some(a=>a.filename==='10.28.26.jpg'&&a.mimeType==='image/jpeg'&&a.size===76769))return cache;
@@ -119,4 +131,4 @@ function correctReviewedTarget(cache) {
  if(s?.mailbox!=='jessejayspinotreceipts@gmail.com'||s.sourceMessageId!=='1a0e940cf111b81e'||r?.vendor!=='Target'||r.date!=='2026-09-28'||r.totalCents!==1060||r.items?.length!==1||r.items[0].description!=='Mondo Llama'||r.items[0].netCents!==1000||!s.attachments?.some(a=>a.filename==='pro-RTGVbqtE.jpeg'&&a.size===863310))return cache;
  return {...cache,receipt:{...r,reference:'2-6271-2473-0160-7748-7',subtotalCents:1000,taxCents:60,paidAmountCents:1060},sourceRepair:{kind:'visually_reviewed_target_receipt',note:'Original photo reviewed November 8: REC#2-6271-2473-0160-7748-7, two Mondo Llama items at $5 each, subtotal $10, tax $.60, total and printed card charge $10.60. Handwritten Cash is retained on the original, not treated as proof of payment method. Product type still requires an owner answer.'}};
 }
-module.exports={correctReviewedTarget,correctReviewedHeidelberg,correctReviewedNorthVernon,correctFishCleaningPayment,correctCanvasDepotPayment,correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount,correctShippoPayment,correctReviewedCintas,correctOutshineServicePayment};
+module.exports={correctZemBrushOrder,correctReviewedTarget,correctReviewedHeidelberg,correctReviewedNorthVernon,correctFishCleaningPayment,correctCanvasDepotPayment,correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount,correctShippoPayment,correctReviewedCintas,correctOutshineServicePayment};

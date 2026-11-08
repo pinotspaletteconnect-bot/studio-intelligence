@@ -4,7 +4,10 @@
     "vendor": "Heidelberg Columbus",
     "pattern": "^Modelo Especial .*Pilsner Style Lager$",
     "account": "beer",
-    "accountDefinition": {"id":"162","name":"Beer Inventory"},
+    "accountDefinition": {
+      "id": "162",
+      "name": "Beer Inventory"
+    },
     "approval": "Saved owner Beer Inventory answers and explicit approval to apply product categories across all studios; the printed product explicitly identifies lager."
   },
   {
@@ -12,7 +15,10 @@
     "vendor": "Heidelberg Columbus",
     "pattern": "^(?:Tangley Oaks .*Chard|McManis .*Pinot Noir|Maschio .*Prosecco Brut)(?: |$)",
     "account": "wine",
-    "accountDefinition": {"id":"161","name":"Wine Inventory"},
+    "accountDefinition": {
+      "id": "161",
+      "name": "Wine Inventory"
+    },
     "approval": "Saved owner Wine Inventory answers and explicit approval to apply product categories across all studios; only explicit wine varietals, not liquor or fees."
   },
   {
@@ -20,7 +26,10 @@
     "vendor": "TD Art Supply",
     "pattern": "^10[\"”] x 30[\"”] Wood Plank(?: |$)",
     "account": "special",
-    "accountDefinition": {"id":"179","name":"Special Surfaces Inventory"},
+    "accountDefinition": {
+      "id": "179",
+      "name": "Special Surfaces Inventory"
+    },
     "approval": "Apply the existing owner-confirmed TD wood painting surface category to the explicit wood plank surface description."
   },
   {
@@ -28,7 +37,10 @@
     "vendor": "NORTH VERNON BEVERAGE CO. INC.",
     "pattern": "^(?:MICH ULTRA|SHOCKT BELG WH|STELLA ARTOIS|MODELO ESP)\\b",
     "account": "beer",
-    "accountDefinition": {"id":"162","name":"Beer Inventory"},
+    "accountDefinition": {
+      "id": "162",
+      "name": "Beer Inventory"
+    },
     "approval": "Authenticated saved owner reply 1a175259a094b9da assigns beer to Beer Inventory162; owner approved category reuse across studios. Restricted to identified beer case descriptions, excluding deposits and service fees."
   },
   {
@@ -36,7 +48,10 @@
     "vendor": "FISH WINDOW CLEANING - COLUMBUS",
     "pattern": "^Window Cleaning$",
     "account": "maintenance",
-    "accountDefinition": {"id":"68","name":"Repairs & maintenance"},
+    "accountDefinition": {
+      "id": "68",
+      "name": "Repairs & maintenance"
+    },
     "approval": "Saved owner replies identify window cleaning; owner explicitly approved reuse of product/service category answers across all studios on 2026-11-08. Applies to explicit window-cleaning service only."
   },
   {
@@ -176,7 +191,10 @@
     "vendor": "TD Art Supply",
     "pattern": "^16\" x 20\" BLACK Canvas(?: |$)",
     "account": "canvas",
-    "accountDefinition": {"id": "163", "name": "Canvas Inventory"},
+    "accountDefinition": {
+      "id": "163",
+      "name": "Canvas Inventory"
+    },
     "approval": "Existing confirmed TD 16x20 canvas category and owner instruction to match product descriptions and reuse categories across studios. Explicit black canvas is still canvas; no amounts or dates are copied."
   },
   {
@@ -189,5 +207,16 @@
       "name": "Supplies:Brushes"
     },
     "approval": "User requested the closest existing COA description. Explicit art brushes match existing saved chart account 221; no account creation."
+  },
+  {
+    "id": "zem-art-brushes",
+    "vendor": "ZEM BRUSH MFG",
+    "pattern": "^PA10[01] Size #[0-9]+ White Synthetic (?:Round|Flat) Long Handle Pinot.s Palette Brush$",
+    "account": "brushes",
+    "accountDefinition": {
+      "id": "221",
+      "name": "Supplies:Brushes"
+    },
+    "approval": "Owner requested nearest existing account description and shared general product rules. Explicit painting brushes match existing Supplies:Brushes221."
   }
 ]
