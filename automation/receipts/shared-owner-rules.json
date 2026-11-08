@@ -1,0 +1,10 @@
+[
+  {
+    "id": "owner-autojate-phone-service-shared",
+    "vendor": "Autojate",
+    "pattern": "(?:Pinot.{0,3}s Palette|receptionist|phone service)",
+    "account": "phone",
+    "accountDefinition": {"id":"142","name":"Utilities:Phone service"},
+    "approval": "Authenticated owner replies 1a1abea0affa80e9 and 1a1b6f4dc28d0ff4 identify Autojate as phone service. Owner approved shared general product rules for all four studios on 2026-11-07. Receipt-specific amounts and dates are not shared."
+  }
+]

@@ -1,0 +1,39 @@
+{
+  "version": "2026-11-07-owner-approved-inboxes",
+  "mode": "receipt_email_only",
+  "useSharedCoa": true,
+  "sharedCoaApproval": "Owner confirmed 2026-11-07: same categories and general rules; receipt-specific answers stay separate",
+  "timezone": "America/New_York",
+  "schedule": "0 6 * * *",
+  "driveCredentialId": "HxqEWfDDCsP9irB2",
+  "studios": [
+    {
+      "studio": "Gilbert",
+      "mailbox": "crashseaselempirereceipts@gmail.com",
+      "gmailCredentialId": "wPAjMSJf9qKVeFB2",
+      "credentialName": "Gmail Receipts - Gilbert",
+      "folderId": "1YOHwtl8DvtT7Rxx7_S3ATPQsj08PP9OF"
+    },
+    {
+      "studio": "St. Matthews",
+      "mailbox": "jessejayspinotreceipts@gmail.com",
+      "gmailCredentialId": "tSGBgDQYecFUCPWw",
+      "credentialName": "Gmail Receipts - St. Matthews",
+      "folderId": "1aRILwcx7n2uiqZwLuXjO-UYf_6jySHO-"
+    },
+    {
+      "studio": "Short North",
+      "mailbox": "stellaseaselempirereceipts@gmail.com",
+      "gmailCredentialId": "VD8PJNMJtnqLkdn6",
+      "credentialName": "Gmail Receipts - Short North",
+      "folderId": "1p0Jqzqtf5lC5ZZ6HVx6kX7B5nKCLCPHu"
+    },
+    {
+      "studio": "Jeffersonville",
+      "mailbox": "trooperseaselempirereceipts@gmail.com",
+      "gmailCredentialId": "FzX9qQwFW9fYZN6G",
+      "credentialName": "Gmail Receipts - Jeffersonville",
+      "folderId": "1gXjyU5dSONJYARFD3T7A5jM4SBx0o58f"
+    }
+  ]
+}
