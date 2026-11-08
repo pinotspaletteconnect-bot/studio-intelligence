@@ -1132,3 +1132,12 @@ and reported all feeds current after their warehouse writes.
 ## Receipt OAuth public information — November 7, 2026
 Prepared static receipt-only app, privacy and use-information pages at /receipt-automation, /privacy and /terms beneath that path. No mailbox, credential, receipt-data or QBO calls occur in these routes. Local HTTP contract test passes; production deployment and Google Production transition are not yet verified. Rollout uses the existing collector without changing deployment configuration; rollback removes only the static router mount and files. New studio inbox authorization and end-to-end processing remain unverified.
 
+November 8 operational update: all four receipt inboxes now authorize successfully
+in the running coordinator. Receipt-only execution 326720 completed all four
+studio calls with no document or completion errors and reported
+`processed_with_holds`. Verified completed emails have both PDF file IDs and an
+archive result. This supersedes the earlier unverified inbox-processing status;
+it does not mean the backlog is cleared. Multiple-receipt scans, incomplete
+source details and unresolved classifications still require work. See
+`automation/receipts/README.md` for tested fixes and deployment verification.
+

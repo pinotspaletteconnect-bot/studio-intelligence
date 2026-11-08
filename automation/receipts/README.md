@@ -100,3 +100,24 @@ multi-megabyte PDF and malformed-data rejection. The real photo renders locally
 as an 11.08 MB PDF preserving the original. Deployment 7641039452 succeeded on November 8; the live Short North source PDF now opens with the original photo. Its restaurant-purpose question remains separate from the repaired rendering path.
 
 November 8 receipt handoff repairs: the coordinator now skips document calls for rows without ready evidence while retaining their clarification context. Exact-source supporting bank evidence retains its printed date through final verification. A reviewed Arena inline charge-reference image is preserved with its receipt; the archive guard checks explicitly included inline files and rejects missing or changed evidence. These fixes do not access QBO. The backlog remains incomplete; published workflows must be checked against actual PDF-pair and archive outcomes.
+
+November 8 evening validation: parent execution 326720 completed all four studio
+calls with empty document/completion issue lists. Its result is
+`processed_with_holds`, not a cleared backlog. New Cintas, Sam's Club and Uber
+completions have source/summary file IDs plus archive confirmation in the private
+completion index. Existing mixed-receipt scans, incomplete headers and genuinely
+unresolved classifications remain held. No QBO calls are part of this operation.
+
+The owner confirmed Rockbot's content license and streaming service as
+Memberships & subscriptions. Its reviewed tax correction and scoped category
+rule are published; live archival is tracked separately from offline replay.
+The saved answer `repair` now maps to the existing maintenance account while
+conflicting alternatives still require review.
+
+Deployment lesson: large CodeMirror `fill` operations produced concatenated code
+despite a Published badge. Use focused select-all/paste, copy the full editor
+content back, compare it to the tested code, and compile it before publishing.
+Click outside the code editor to commit its value; Tab can insert indentation.
+Verify a real execution after publishing. A badge alone is not code-integrity
+or end-to-end evidence. The duplicated review code was replaced and execution
+326720 verified recovery across all studios.
