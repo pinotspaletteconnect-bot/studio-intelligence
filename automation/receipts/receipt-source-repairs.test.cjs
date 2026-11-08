@@ -55,6 +55,10 @@ test('Google One sums printed state and local tax without inventing a charge',()
  const receipt={vendor:'Google LLC',reference:'SOP.123',subtotalCents:299,taxCents:17,totalCents:323,items:[{description:'200 GB (Google One)',netCents:299,itemTaxCents:17}],uncertainties:['Total amount charged is monthly; actual paid amount not specified.']};
  const c={receipt,source:{text:"From: Google Play <googleplay-noreply@google.com>\nOrder number: SOP.123\n$2.99/month\nState sales tax: $0.17\nLocal sales tax: $0.07\nTotal: $3.23/month\nYour subscription continues and you've been charged"}};
  const fixed=correctGoogleOneTaxes(c);assert.equal(fixed.receipt.taxCents,24);assert.equal(fixed.receipt.items[0].itemTaxCents,24);assert.deepEqual(fixed.receipt.uncertainties,[]);
+ const duration={...c,receipt:{...receipt,uncertainties:['Total amount charged is monthly; actual payment may vary based on subscription duration.','Other invoice is missing.']}};
+ assert.deepEqual(correctGoogleOneTaxes(duration).receipt.uncertainties,['Other invoice is missing.']);
+ const uncharged={...duration,source:{text:c.source.text.replace("continues and you've been charged",'renews next month')}};
+ assert.equal(correctGoogleOneTaxes(uncharged),uncharged);
  assert.equal(correctGoogleOneTaxes({...c,receipt:{...receipt,totalCents:324}}).receipt.totalCents,324);
  assert.equal(correctGoogleOneTaxes({...c,source:{text:c.source.text+'\nOrder number: SOP.456'}}).receipt.taxCents,17);
 });
