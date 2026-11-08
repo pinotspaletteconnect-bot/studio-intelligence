@@ -6,5 +6,13 @@
     "account": "phone",
     "accountDefinition": {"id":"142","name":"Utilities:Phone service"},
     "approval": "Authenticated owner replies 1a1abea0affa80e9 and 1a1b6f4dc28d0ff4 identify Autojate as phone service. Owner approved shared general product rules for all four studios on 2026-11-07. Receipt-specific amounts and dates are not shared."
+  },
+  {
+    "id": "td-paint-color-quarts",
+    "vendor": "TD Art Supply",
+    "pattern": "^(?:Metallic Silver|Venetian Red|Raw Umber|Raw Sienna|Ultra Blue|Phthalo (?:Green|Blue|Red)|Mars Black|Green Oxide|Deep Yellow|Fluorescent (?:White|Pink|Magenta|Blue|Violet|Red|Green)|Bright Red|Fire Red|Titanium White|Cobalt Blue)(?: Quart)? Size 32 oz\\.$",
+    "account": "paint",
+    "accountDefinition": {"id":"164","name":"Paint Inventory"},
+    "approval": "Existing confirmed Paint Inventory category and owner-approved shared general product rules. Applies only to named TD Art Supply paint colors in 32 oz containers; no other TD products or receipt-specific decisions are inferred."
   }
 ]

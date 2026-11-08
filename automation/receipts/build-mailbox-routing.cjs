@@ -23,13 +23,23 @@ function addMailboxContext(w) {
 }
 
 function scopedCode(js, name, key) {
+ if(key==='review')js=js.replace("function workingConfirmation(receipt) {",`function workingConfirmation(receipt) { {
+  const ancillaryOnly=new Set(['Total amount matches subtotal, but no tax or fees are listed.','Total amount matches subtotal, but no explicit tax or fees are listed.','No explicit tax or discount amounts provided.','Total amount and item details are consistent with the invoice, but tax and delivery fees are not specified.']);
+  const validItems=Array.isArray(receipt.items)&&receipt.items.length&&receipt.items.every(i=>Number.isSafeInteger(i.netCents)&&i.netCents>0);
+  const net=validItems?receipt.items.reduce((s,i)=>s+i.netCents,0):null;
+  const balanced=validItems&&net===receipt.subtotalCents&&net+(receipt.taxCents??0)+(receipt.deliveryCents??0)+(receipt.otherFeesCents??0)-(receipt.orderDiscountCents??0)===receipt.totalCents;
+  if(balanced&&Array.isArray(receipt.uncertainties))receipt={...receipt,uncertainties:receipt.uncertainties.filter(s=>!ancillaryOnly.has(s))}; }
+ `);
  if(key==='coordinator'&&name==='Plan Genuine Questions')js=js
    .replace("if(r.status==='duplicate_in_batch'||", "if(r.status!=='needs_review'||")
    .replace('sources.filter(m=>!cache[m.id]', 'sources.filter(m=>$(\'Collect File Results\').first().json.context["Batch - Prepare and Hold Exceptions"].some(i=>i.json.sourceMessageId===m.id&&i.json.status===\'needs_review\')&&!cache[m.id]');
  if(key==='review')js=js.replaceAll('.includes(row.approvalId)', '.concat('+JSON.stringify(Array.from({length:166},(_,i)=>'receipt-studios-20261108-usd5-'+String(i+1).padStart(3,'0')))+').includes(row.approvalId)');
  js=js.replace('function receiptAddressEvidence(receipt,message,owner){',"function receiptAddressEvidence(receipt,message,owner){ return {...receipt,printedStudioEvidence:receipt.printedStudioEvidence||receipt.studioEvidence||'',studioEvidence:'Owner-assigned receipt inbox: '+MB.studio};");
  js=js.replace("if(!/\\b(?:Gilbert|85295)\\b/i.test(r.studioEvidence||''))add('studioEvidence','Was this expense for Gilbert? Reply Gilbert or explain the correct studio.',r.studioEvidence);",'');
- if(key==='questions'&&name==='Code in JavaScript')js="if(questionMetadata($input.first().json)?.field==='studioEvidence')return [];\n"+js;
+ js=js.replace("if(!studioFromEvidence(r.studioEvidence))add('studioEvidence','Which studio should receive this expense? Reply Gilbert, St. Matthews, Short North, or Jeffersonville.',r.studioEvidence);",'');
+ // Printed facts and extraction failures require source review, not a repeated
+ // owner questionnaire. Ask only for genuinely missing business purpose/context.
+ if(key==='questions'&&name==='Code in JavaScript')js=js.replace('const incoming=$input.first().json;',"const incoming=$input.first().json;\nconst questionField=questionMetadata(incoming)?.field;if(questionField&&!['category','ownerContext'].includes(questionField))return [];");
  if(key==='extraction'&&name==='Backlog - Eligible Allowances')
   js=selectApprovedTicket.toString()+"\nconst ticket=selectApprovedTicket($input.all().map(i=>i.json),$('Verify Legacy Budget').all().map(i=>i.json),$('Helper Input').first().json.sourceMessageId);return ticket?[{json:ticket}]:[];";
  if(key==='extraction')js=js.replaceAll('maximumApprovalUSD:5','maximumApprovalUSD:10');

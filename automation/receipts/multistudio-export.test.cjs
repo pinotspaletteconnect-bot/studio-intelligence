@@ -23,6 +23,27 @@ test('all seven existing workflows compile with no dangling connections',()=>{
  for(const w of Object.values(drafts))assert.equal(validateDraft(w),true);
  assert.equal(drafts.coordinator.id,'10cuqNLwpmvvhlAl');
 });
+test('TD paint rule recognizes named paint containers but excludes other merchandise',()=>{
+ const rule=require('./shared-owner-rules.json').find(r=>r.id==='td-paint-color-quarts');
+ const match=new RegExp(rule.pattern,'i');
+ assert.equal(rule.accountDefinition.id,'164');
+ assert.ok(match.test('Titanium White Quart Size 32 oz.'));
+ assert.ok(match.test('Fluorescent Pink Size 32 oz.'));
+ assert.ok(!match.test('White Candle Vessel Size 32 oz.'));
+ assert.ok(!match.test('Titanium White Shirt'));
+});
+
+test('absent ancillary lines clear only when item and total arithmetic fully reconcile',async()=>{
+ const scope={...mailboxScope(registry,registry.studios[3].mailbox),useSharedCoa:true};
+ const js=drafts.review.nodes.find(n=>n.name==='First Receipt Review').parameters.jsCode;
+ const prefix=js.slice(0,js.indexOf('const data=$("Batch - Trusted Review Configuration")'));
+ const normalize=await new AsyncFunction('$',prefix+'return workingConfirmation;})();return result;')(lookup(scope));
+ const r={documentKind:'order_confirmation',items:[{netCents:28656}],subtotalCents:28656,totalCents:28656,taxCents:null,deliveryCents:0,otherFeesCents:null,orderDiscountCents:null,uncertainties:['Total amount matches subtotal, but no tax or fees are listed.']};
+ assert.deepEqual(normalize(r).uncertainties,[]);
+ assert.equal(normalize({...r,totalCents:28657}).uncertainties.length,1);
+ assert.equal(normalize({...r,items:[]}).uncertainties.length,1);
+ assert.deepEqual(normalize({...r,uncertainties:['Two receipts have different totals.']}).uncertainties,['Two receipts have different totals.']);
+});
 
 test('new approved extraction results reach review without another paid request',async()=>{
  const scope={...mailboxScope(registry,registry.studios[3].mailbox),useSharedCoa:true};
@@ -44,6 +65,17 @@ test('new clarification emails use the confirmed work address',()=>{
  const followups=drafts.replies.nodes.filter(n=>n.parameters.sendTo);
  assert.equal(followups.length,4);
  assert.ok(followups.every(n=>n.parameters.sendTo==='jeff.duff@pinotspalette.com'&&n.parameters.subject.includes('Receipt question')));
+});
+
+test('location suppression runs after metadata initialization and preserves genuine questions',async()=>{
+ const scope={...mailboxScope(registry,registry.studios[2].mailbox),useSharedCoa:true};
+ const make=field=>({companyId:scope.scopeId,receiptKey:scope.scopeId+':0123456789abcdef',reviewKey:'a'.repeat(64),lineId:'0',itemDescription:'Unclear item',amountCents:100,sourceUrl:'https://mail.google.com/mail/#all/0123456789abcdef',question:'Question\n[RECEIPT-QUESTION-V1]'+JSON.stringify({version:1,companyId:scope.scopeId,receiptKey:scope.scopeId+':0123456789abcdef',field,itemIndex:0})});
+ const run=async field=>{const row={json:make(field)};return new AsyncFunction('$','$input',drafts.questions.nodes.find(n=>n.name==='Code in JavaScript').parameters.jsCode)(lookup(scope),{first:()=>row,all:()=>[row]});};
+ assert.deepEqual(await run('studioEvidence'),[]);
+ assert.deepEqual(await run('reference'),[]);
+ assert.deepEqual(await run('orderDiscountCents'),[]);
+ assert.deepEqual(await run('verifyReceipt'),[]);
+ assert.equal((await run('category'))[0].json.status,'delivery_pending');
 });
 
 test('completed and non-receipt messages never enter the question backlog',async()=>{
@@ -74,7 +106,7 @@ test('embedded argument rules are scoped without changing historical provenance'
  const js=scopedCode('return [{json:{rules:'+JSON.stringify(rules)+'}}];','fixture','review');
  const output=await new AsyncFunction('$',js)(lookup(scope));
  assert.equal(output[0].json.rules.companyId,scope.scopeId);
- assert.deepEqual(output[0].json.rules.rules.map(r=>r.id),['general','owner-autojate-phone-service-shared']);
+ assert.deepEqual(output[0].json.rules.rules.map(r=>r.id),['general','owner-autojate-phone-service-shared','td-paint-color-quarts']);
  assert.equal(output[0].json.rules.accounts.phone.name,'Utilities:Phone service');
 });
 test('saved Autojate phone purpose classifies each studio without copying amounts',async()=>{
