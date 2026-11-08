@@ -1,4 +1,5 @@
 {
+  "businessLicenses": {"id":"19","name":"Business licenses"},
   "marketing": {"id":"13","name":"Advertising & marketing"},
   "staffEvents": {"id":"1150040006","name":"Employee benefits:Employee events"}
 }

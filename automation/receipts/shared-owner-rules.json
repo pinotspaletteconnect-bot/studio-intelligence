@@ -1,5 +1,13 @@
 [
   {
+    "id": "ohio-monthly-pest-control",
+    "vendor": "Ohio Exterminating Co.",
+    "pattern": "^Monthly Pest Control$",
+    "account": "maintenance",
+    "accountDefinition": {"id": "68", "name": "Repairs & maintenance"},
+    "approval": "Reuse authenticated saved pest-control answers and the existing maintenance category under owner-approved cross-studio service rules; applies only to explicitly named monthly pest control, not material quantities."
+  },
+  {
     "id": "owner-heidelberg-beer",
     "vendor": "Heidelberg Columbus",
     "pattern": "^Modelo Especial .*Pilsner Style Lager$",

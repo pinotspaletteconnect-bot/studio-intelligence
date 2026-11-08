@@ -1,5 +1,11 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {correctBlickUnitAmounts}=require('./receipt-source-repairs.cjs');
+test('Ohio service invoice separates usage quantities from prices and preserves payment credit evidence',()=>{
+ const {correctOhioPestService:fix}=require('./receipt-source-repairs.cjs');
+ const c={source:{mailbox:'stellaseaselempirereceipts@gmail.com',sourceMessageId:'19f48622e1a7ac61',attachments:[{filename:'Ohio Exterminating Co Statement.pdf',size:38902}],text:'From: Ohio Exterminating Co. <bookkeeper@ohioexterminating.com>\nInvoice #\n548178\nMonthly Pest Control\n74.00\nSubtotal:\n74.00\nTax:\n5.92\nInvoice Total:\n$ 79.92\nCC/ACH EFT Payment XXXX9312\n-79.92\nBalance Due this Invoice:\n$ 0.00\nMaterials\nEPA\nDescription\nAmount\nUnits'},receipt:{vendor:'Ohio Exterminating Co.',reference:'548178',date:'2026-07-08',totalCents:7992,subtotalCents:7400,taxCents:592,paidAmountCents:-7992,items:['Monthly Pest Control','CONTRAC BLOX Target Pests: Mice','First Strike Target Pests: Mice, Rat','Transport Mikron Gallon Target Pests: General Treatment'].map(description=>({description})),uncertainties:['Invoice total and paid amount match, but itemized details for tax and fees are not clearly separated.']}};
+ const r=fix(c).receipt;assert.equal(r.items.length,1);assert.equal(r.items[0].netCents+r.items[0].itemTaxCents,r.totalCents);assert.equal(r.paidAmountCents,7992);assert.equal(r.reviewedPrintedAmounts.paymentLedgerCents,-7992);assert.equal(r.materialUsage.length,3);
+ for(const bad of [{...c,source:{...c.source,sourceMessageId:'other'}},{...c,source:{...c.source,text:c.source.text.replace('$ 0.00','$ 10.00')}},{...c,receipt:{...c.receipt,totalCents:8000}},{...c,receipt:{...c.receipt,uncertainties:['Another invoice omitted.']}}])assert.equal(fix(bad),bad);
+});
 test('reviewed Heidelberg line amounts reconcile without double-discounting or inventing payment',()=>{
  const {correctReviewedHeidelberg:fix}=require('./receipt-source-repairs.cjs');
  const c={source:{mailbox:'stellaseaselempirereceipts@gmail.com',sourceMessageId:'1a18deac1df19385',attachments:[{filename:'10.28.26.jpg',mimeType:'image/jpeg',size:76769}]},receipt:{vendor:'Heidelberg Columbus',reference:'90008895',totalCents:35304,items:Array(6).fill({})}};
