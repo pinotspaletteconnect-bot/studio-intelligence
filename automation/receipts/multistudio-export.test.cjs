@@ -23,6 +23,15 @@ test('all seven existing workflows compile with no dangling connections',()=>{
  for(const w of Object.values(drafts))assert.equal(validateDraft(w),true);
  assert.equal(drafts.coordinator.id,'10cuqNLwpmvvhlAl');
 });
+test('uncached Canvas Depot email uses shared owner category without extraction',async()=>{
+ const scope={...mailboxScope(registry,registry.studios[2].mailbox),useSharedCoa:true},c=await config(scope),id='0123456789abcdef';
+ const text='From: outgoing@safewebservices.com\nDYNAMIC WHOLESALE SIGNS\nYour Card Sale is complete!\nApr 20, 2026\n$125.55\nTransaction ID\n11969756418\nDescription\nThe Canvas Depot\nOrder ID\nINV 6380\n';
+ for(const name of ['First Receipt Review','Batch - Prepare and Hold Exceptions']){
+  const values={'Mailbox Context':[{json:{mailboxContext:scope}}],'Batch - Trusted Review Configuration':[{json:{config:c,messages:[{id,text,subject:'Canvas Depot payment'}]}}],'Batch - Read Extraction Cache':[],'Current Extraction Cache':[],'Read Persisted Receipt Answers':[],'Read Existing Receipt Posting States':[]};
+  const result=await new AsyncFunction('$',drafts.review.nodes.find(n=>n.name===name).parameters.jsCode)(n=>({all:()=>values[n],first:()=>values[n][0]}));
+  assert.equal(result[0].json.status,'prepared_for_review');assert.equal(result[0].json.totalCents,12555);assert.equal(result[0].json.allocationLines[0].accountId,'222');
+ }
+});
 test('TD paint rule recognizes named paint containers but excludes other merchandise',()=>{
  const rule=require('./shared-owner-rules.json').find(r=>r.id==='td-paint-color-quarts');
  const match=new RegExp(rule.pattern,'i');
