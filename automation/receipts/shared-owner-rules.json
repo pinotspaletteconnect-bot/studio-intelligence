@@ -271,5 +271,13 @@
       "name": "Nonalcoholic Drink Inventory"
     },
     "approval": "Saved owner Sams Club answer: Tea is non alcoholic inventory. User explicitly directed shared product answers across studios."
+  },
+  {
+    "id": "owner-pulp-free-orange-juice",
+    "vendor": "Sam's Club",
+    "pattern": "^Member's Mark Pulp-Free 100% Orange Juice(?:,|$)",
+    "account": "perishable",
+    "accountDefinition": {"id":"217","name":"Mixers & Perishables COGS"},
+    "approval": "Saved owner answer 11 assigns pulp-free orange juice to mixers COGS. Owner explicitly instructed applying general product answers across studios; brand and package size do not change this product category."
   }
 ]
