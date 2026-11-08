@@ -24,7 +24,7 @@ function correctFishCleaningPayment(cache) {
  if(totals.length!==1||taxes.length!==1||refs.length!==1||refs[0][1]!==r.reference)return cache;
  const gross=Math.round(Number(totals[0][1])*100),tax=Math.round(Number(taxes[0][1])*100);
  if(gross<=tax||tax<0||r.totalCents!==gross||r.taxCents!==tax||(r.paidAmountCents!=null&&r.paidAmountCents!==gross)||
-   r.items?.length!==1||!['Total','Line Items'].includes(r.items[0].description)||r.items[0].netCents!==gross||
+   r.items?.length!==1||!['Total','Line Items'].includes(r.items[0].description)||![gross,gross-tax].includes(r.items[0].netCents)||
    [r.deliveryCents,r.otherFeesCents,r.orderDiscountCents].some(n=>n!=null&&n!==0))return cache;
  const allowed=new Set(['Subtotal amount is not explicitly provided; only total and tax are mentioned.','Line item details are not explicitly provided.']);
  if(!(r.uncertainties||[]).every(u=>allowed.has(u)))return cache;

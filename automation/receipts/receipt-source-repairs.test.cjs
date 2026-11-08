@@ -13,6 +13,8 @@ test('window-cleaning net derives only from explicit printed total and tax with 
  const {correctFishCleaningPayment:fix}=require('./receipt-source-repairs.cjs');
  const c={source:{text:'From: outgoing@safewebservices.com\nYour card has been charged by FISH WINDOW CLEANING - COLUMBUS.\nTotal 40.96\nTax 2.56\nReference #\n4414875588\nCredit Card Sale',attachments:[]},receipt:{vendor:'FISH WINDOW CLEANING - COLUMBUS',reference:'4414875588',totalCents:4096,taxCents:256,paidAmountCents:null,items:[{description:'Total',netCents:4096}],uncertainties:['Subtotal amount is not explicitly provided; only total and tax are mentioned.']}};
  const r=fix(c).receipt;assert.equal(r.subtotalCents,3840);assert.equal(r.items[0].netCents+r.items[0].itemTaxCents,r.totalCents);assert.equal(r.paidAmountCents,4096);
+ const net={...c,receipt:{...c.receipt,subtotalCents:3840,items:[{description:'Line Items',netCents:3840,itemTaxCents:256}]}};
+ assert.equal(fix(net).receipt.items[0].description,'Window Cleaning');assert.equal(fix(net).receipt.items[0].netCents,3840);
  for(const delta of [{reference:'wrong'},{taxCents:257},{paidAmountCents:1},{uncertainties:['Additional receipts omitted.']}]){const bad={...c,receipt:{...c.receipt,...delta}};assert.equal(fix(bad),bad);}
  const extra={...c,source:{...c.source,text:c.source.text+'\nTotal 50.00'}};assert.equal(fix(extra),extra);
 });
