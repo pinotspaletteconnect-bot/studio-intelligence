@@ -5,6 +5,8 @@ test('Cintas payment retains one printed invoice and the owner-confirmed service
  const text='From: myCintas Support <support@cintas.com>\nYour payment has been submitted.\nInvoice Date\nAccount\nInvoice #\nInvoice Total\nPayment\n08/10/2026\nPINOT\nUnited States\n0012928160\n4278494581\n$207.22\n$207.22\nSelected Invoice Total:\n$207.22\nCredits Applied:\n$0.00\nTotal Payment:\n$207.22';
  const c={source:{text,attachments:[]},receipt:{vendor:'myCintas',documentKind:'payment_only',reference:'0012928160',date:'2026-08-10',totalCents:20722,paidAmountCents:20722,items:[],uncertainties:['No itemized line items present.']}};
  const r=fix(c);assert.equal(r.receipt.reference,'4278494581');assert.equal(r.receipt.items[0].netCents,20722);assert.equal(r.receipt.vendor,'Cintas');assert.match(r.sourceRepair.note,/settlement.*not asserted/);
+ assert.equal(fix({...c,receipt:{...c.receipt,uncertainties:['No itemized line items present in the receipt.']}}).receipt.reference,'4278494581');
+ const uncertain={...c,receipt:{...c.receipt,uncertainties:['Invoice total is unclear.']}};assert.equal(fix(uncertain),uncertain);
  for(const v of [{...c,source:{text:text.replace('Credits Applied:\n$0.00','Credits Applied:\n$1.00'),attachments:[]}},{...c,source:{text:text+'\nUnited States\n001\n002\n$1.00\n$1.00',attachments:[]}},{...c,receipt:{...c.receipt,totalCents:1}},{...c,source:{text,attachments:[{}]}}])assert.equal(fix(v),v);
 });
 test('Uber booking fee remains a charge and is not counted again as tax',()=>{
