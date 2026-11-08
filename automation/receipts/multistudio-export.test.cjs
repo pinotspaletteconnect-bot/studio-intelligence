@@ -29,6 +29,8 @@ test('TD paint rule recognizes named paint containers but excludes other merchan
  assert.equal(rule.accountDefinition.id,'164');
  assert.ok(match.test('Titanium White Quart Size 32 oz.'));
  assert.ok(match.test('Fluorescent Pink Size 32 oz.'));
+ assert.ok(match.test('Fluorescent White Size 32 oz. $9.53 Case of 1'));
+ assert.ok(!match.test('Fluorescent White Size 32 oz. plus unknown accessory'));
  for(const color of ['Metallic Copper','Metallic Gold','Fluorescent Orange','Fluorescent Yellow','Burnt Umber','Burnt Sienna','Violet Quart','Chrome Orange Quart','Chrome Yellow Quart'])assert.ok(match.test(color+' Size 32 oz.'));
  assert.ok(!match.test('White Candle Vessel Size 32 oz.'));
  assert.ok(!match.test('Titanium White Shirt'));
@@ -57,6 +59,21 @@ test('saved service purposes map to existing accounts without guessing other ser
  assert.equal(match('Pest control or supplies?',c.approvedRules),null);
 });
 
+test('saved shipping and special-product answers use existing configured accounts',async()=>{
+ const scope={...mailboxScope(registry,registry.studios[2].mailbox),useSharedCoa:true},c=await config(scope),r=await runtime(scope);
+ const js=drafts.review.nodes.find(n=>n.name==='First Receipt Review').parameters.jsCode;
+ const prefix=js.slice(0,js.indexOf('const data=$("Batch - Trusted Review Configuration")'));
+ const match=await new AsyncFunction('$',prefix+'return knownOwnerCategory;})();return result;')(lookup(scope));
+ for(const [answer,id] of [['Postage and shipping','123'],['All shippos are shipping and postage','123'],['Special class cogs','222'],['Special products cogs','222'],['Special product inventory','179'],['Printing and photocopying','120']])assert.equal(match(answer,c.approvedRules)?.accountId,id);
+ assert.equal(match('maybe shipping or supplies',c.approvedRules),null);
+ assert.equal(match('marketing',c.approvedRules)?.accountId,'13');
+ assert.equal(match('Staff enrichment. Find a coa that is close to this.',c.approvedRules)?.accountId,'1150040006');
+ assert.equal(match('These are all under cintas',c.approvedRules)?.accountId,'229');
+ assert.equal(r.classifyItem({vendor:'Shippo',description:'Invoice Payment Confirmation'},scope.scopeId,c.approvedRules)?.accountId,'123');
+ assert.equal(r.classifyItem({vendor:'TD Art Supply',description:'#4 Round Brush'},scope.scopeId,c.approvedRules)?.accountId,'221');
+ assert.equal(r.classifyItem({vendor:'Unknown',description:'Invoice Payment Confirmation'},scope.scopeId,c.approvedRules),null);
+});
+
 test('authenticated saved category answer survives a stale follow-up delivery state',async()=>{
  const scope={...mailboxScope(registry,registry.studios[1].mailbox),useSharedCoa:true},c=await config(scope),r=await runtime(scope),id='0123456789abcdef';
  const cache={source:{sourceMessageId:id,attachments:[]},receipt:{items:[{description:'Amount',netCents:2650}]}};
@@ -67,6 +84,10 @@ test('authenticated saved category answer survives a stale follow-up delivery st
  const wrong={...row,ruleScope:'owner-clarification-v1:'+JSON.stringify([{...audit,authenticated:false}])};
  assert.deepEqual(r.applyOwnerClarifications({id},cache,[wrong],c.approvedRules).mappings,{});
  assert.deepEqual(r.applyOwnerClarifications({id:'different'},cache,[row],c.approvedRules).mappings,{});
+ const all={...row,ruleScope:'owner-clarification-v1:'+JSON.stringify([{...audit,answer:'These are all under cintas'}])};
+ const cintas={...cache,receipt:{vendor:'CINTAS',items:[...cache.receipt.items,{description:'Soap service',netCents:1000}]}};
+ assert.equal(r.applyOwnerClarifications({id},cintas,[all],c.approvedRules).mappings[1]?.accountId,'229');
+ assert.equal(r.applyOwnerClarifications({id},{...cintas,receipt:{...cintas.receipt,vendor:'Other'}},[all],c.approvedRules).mappings[1],undefined);
 });
 
 test('absent ancillary lines clear only when item and total arithmetic fully reconcile',async()=>{
@@ -211,6 +232,19 @@ test('each inbox read has a bounded Gmail request count',()=>{
  const reads=drafts.review.nodes.filter(n=>n.type==='n8n-nodes-base.gmail'&&n.parameters.operation==='getAll');
  assert.equal(reads.length,4);
  assert.ok(reads.every(n=>n.parameters.returnAll===false&&n.parameters.limit===250));
+});
+
+test('calendar companion does not block a receipt PDF, but other unsupported files remain held',()=>{
+ const js=drafts.extraction.nodes.find(n=>n.name==='Backlog - Select Real Attachments').parameters.jsCode;
+ const fn=js.slice(js.indexOf('function gmailSource'),js.indexOf('function extractionRequest'));
+ const parse=new Function(fn+'return gmailSource;')();
+ const part=(filename,mimeType)=>({filename,mimeType,headers:[{name:'Content-Disposition',value:'attachment'}],body:{size:100,attachmentId:'attachment'}});
+ const source={id:'1a0018714e2ede07',payload:{parts:[part('event.ics','text/calendar'),part('receipt.pdf','application/pdf')]}};
+ assert.deepEqual(parse(source).attachments.map(a=>a.filename),['receipt.pdf']);
+ source.payload.parts.push(part('details.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'));
+ assert.equal(parse(source).attachments.find(a=>a.filename==='details.xlsx').supported,false);
+ source.payload.parts.push(part('receipt.ics','application/octet-stream'));
+ assert.equal(parse(source).attachments.find(a=>a.filename==='receipt.ics').supported,false);
 });
 
 test('attachment-only emails enter extraction while completed cache and unrelated holds do not',async()=>{

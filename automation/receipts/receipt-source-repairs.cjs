@@ -35,4 +35,17 @@ function correctReviewedAutojateDiscount(cache) {
  if(!s.attachments?.some(a=>a.filename==='REC10008.pdf'&&a.size===15773))return cache;
  return {...cache,receipt:{...r,subtotalCents:7960,orderDiscountCents:0,items:[{...r.items[0],netCents:7960}],reviewedPrintedAmounts:{subtotalCents:9950,discountCents:1990,totalCents:7960}},sourceRepair:{kind:'reviewed_single_line_discount',note:'Original REC10008.pdf visually reviewed 2026-11-08: single phone-service line $99.50, discount $19.90, paid $79.60. Entire discount applies to that sole line. Summary reports net $79.60; original PDF retains printed amounts.'}};
 }
-module.exports={correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount};
+function correctShippoPayment(cache) {
+ const r=cache?.receipt,s=cache?.source,text=String(s?.text||'').replace(/\r/g,'');
+ if(r?.vendor!=='Shippo'||s.attachments?.length||!text.includes('From: Shippo <noreply@shippo.com>')||!text.includes('Invoice Payment Confirmation'))return cache;
+ const refs=[...text.matchAll(/Invoice #(\d+)/g)];
+ const paid=[...text.matchAll(/This is confirmation that we have received payment for ([^\n]+?) for (\d+) transactions? with a total of \$(\d+\.\d{2}) USD\./g)];
+ if(refs.length!==1||refs[0][1]!==r.reference||paid.length!==1||Number(paid[0][2])<1)return cache;
+ const cents=Math.round(Number(paid[0][3])*100);
+ if(!Number.isSafeInteger(cents)||cents<=0||r.totalCents!==cents||r.paidAmountCents!==cents||r.subtotalCents!==cents||r.taxCents||r.deliveryCents||r.otherFeesCents||r.orderDiscountCents)return cache;
+ const allowed=/^(?:No itemized line items provided in the receipt\.|No itemized details for the \d+ transactions are provided\.)$/;
+ if((r.uncertainties||[]).some(u=>!allowed.test(u)))return cache;
+ if(r.items?.length>1||(r.items?.length===1&&(r.items[0].description!=='Invoice Payment Confirmation'||r.items[0].netCents!==cents)))return cache;
+ return {...cache,receipt:{...r,items:[{description:'Invoice Payment Confirmation',quantity:1,netCents:cents,itemTaxCents:null,evidence:paid[0][0]}],uncertainties:[]},sourceRepair:{kind:'shippo_confirmed_aggregate_postage',note:'Owner explicitly confirmed all Shippo charges are shipping and postage. Source confirms payment for '+paid[0][2]+' transactions; the summary uses the single invoice payment total, not invented per-label prices.'}};
+}
+module.exports={correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount,correctShippoPayment};

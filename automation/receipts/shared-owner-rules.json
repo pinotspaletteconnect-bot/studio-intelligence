@@ -13,7 +13,7 @@
   {
     "id": "td-paint-color-quarts",
     "vendor": "TD Art Supply",
-    "pattern": "^(?:Metallic (?:Silver|Copper|Gold)|Venetian Red|Raw Umber|Raw Sienna|Burnt (?:Sienna|Umber)|Violet|Chrome Orange|Chrome Yellow|Ultra Blue|Phthalo (?:Green|Blue|Red)|Mars Black|Green Oxide|Deep Yellow|Fluorescent (?:White|Pink|Magenta|Blue|Violet|Red|Green|Orange|Yellow)|Bright Red|Fire Red|Titanium White|Cobalt Blue)(?: Quart)? Size 32 oz\\.$",
+    "pattern": "^(?:Metallic (?:Silver|Copper|Gold)|Venetian Red|Raw Umber|Raw Sienna|Burnt (?:Sienna|Umber)|Violet|Chrome Orange|Chrome Yellow|Ultra Blue|Phthalo (?:Green|Blue|Red)|Mars Black|Green Oxide|Deep Yellow|Fluorescent (?:White|Pink|Magenta|Blue|Violet|Red|Green|Orange|Yellow)|Bright Red|Fire Red|Titanium White|Cobalt Blue)(?: Quart)? Size 32 oz\\.(?: \\u0024[0-9]+\\.[0-9]{2} Case of [0-9]+)?$",
     "account": "paint",
     "accountDefinition": {
       "id": "164",
@@ -48,7 +48,10 @@
     "vendor": "TD Art Supply",
     "pattern": "^Candle Fragrance Measuring Cup\\b",
     "account": "candleCogs",
-    "accountDefinition": { "id": "1150040010", "name": "Candle COGS" },
+    "accountDefinition": {
+      "id": "1150040010",
+      "name": "Candle COGS"
+    },
     "approval": "Existing confirmed candle-consumables rule maps candle cups to Candle COGS. Explicit measuring cups are consumables, not fragrance inventory."
   },
   {
@@ -67,7 +70,10 @@
     "vendor": "Franklin Pest Solutions",
     "pattern": "^Commercial Pest Recurring$",
     "account": "maintenance",
-    "accountDefinition": { "id": "68", "name": "Repairs & maintenance" },
+    "accountDefinition": {
+      "id": "68",
+      "name": "Repairs & maintenance"
+    },
     "approval": "Authenticated owner replies 1a1bbc85a0d648aa, 1a1bbc882ea928ff, 1a1bbc912b14a3c8 and 1a1bbc93857ad798 confirm pest control. User requested closest existing COA description and shared general rules. Existing saved chart account 68 covers premises maintenance; no pest-control account is invented."
   },
   {
@@ -75,7 +81,10 @@
     "vendor": "Outshine Window Cleaning",
     "pattern": "^Window Cleaning(?: Out Only \\+ I/O Doors)?$",
     "account": "maintenance",
-    "accountDefinition": { "id": "68", "name": "Repairs & maintenance" },
+    "accountDefinition": {
+      "id": "68",
+      "name": "Repairs & maintenance"
+    },
     "approval": "Authenticated owner reply 1a1bb72572d05ba5 confirms window cleaning. Use existing chart account 68 for premises maintenance under user instruction to match existing account descriptions. Generic Amount lines require the receipt-specific saved answer."
   },
   {
@@ -83,7 +92,10 @@
     "vendor": "Kahoot!",
     "pattern": "^Kahoot!\\+ Premier Personal \\(annual billing\\)$",
     "account": "software",
-    "accountDefinition": { "id": "122", "name": "Office expenses:Software & apps" },
+    "accountDefinition": {
+      "id": "122",
+      "name": "Office expenses:Software & apps"
+    },
     "approval": "Receipt explicitly identifies an annual Kahoot software plan. Existing saved chart account 122 matches the product description, as user requested."
   },
   {
@@ -96,5 +108,38 @@
       "name": "General business expenses:Memberships & subscriptions"
     },
     "approval": "User instructed matching description to existing confirmed COA and approved shared general rules. Google One storage is explicitly an auto-renewing subscription; use the existing Memberships & subscriptions category."
+  },
+  {
+    "id": "owner-shippo-postage",
+    "vendor": "Shippo",
+    "pattern": "^Invoice Payment Confirmation$",
+    "account": "shipping",
+    "accountDefinition": {
+      "id": "123",
+      "name": "Office expenses:Shipping & postage"
+    },
+    "approval": "Authenticated owner reply 1a1bbbd9d79c6dac: All shippos are shipping and postage. Shared general rule approved; totals and source evidence remain receipt-specific."
+  },
+  {
+    "id": "owner-walgreens-prints",
+    "vendor": "Walgreens",
+    "pattern": "^Prints, 4x6$",
+    "account": "printing",
+    "accountDefinition": {
+      "id": "120",
+      "name": "Office expenses:Printing & photocopying"
+    },
+    "approval": "Saved owner answer explicitly classifies Prints, 4x6 as Printing and photocopying; user also confirmed Walgreens printing for Project Pet."
+  },
+  {
+    "id": "td-art-brushes",
+    "vendor": "TD Art Supply",
+    "pattern": "^#[0-9]+ (?:Round|Flat) Brush$",
+    "account": "brushes",
+    "accountDefinition": {
+      "id": "221",
+      "name": "Supplies:Brushes"
+    },
+    "approval": "User requested the closest existing COA description. Explicit art brushes match existing saved chart account 221; no account creation."
   }
 ]

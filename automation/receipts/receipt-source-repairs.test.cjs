@@ -23,3 +23,13 @@ test('Google One sums printed state and local tax without inventing a charge',()
  assert.equal(correctGoogleOneTaxes({...c,receipt:{...receipt,totalCents:324}}).receipt.totalCents,324);
  assert.equal(correctGoogleOneTaxes({...c,source:{text:c.source.text+'\nOrder number: SOP.456'}}).receipt.taxCents,17);
 });
+test('Shippo aggregate payment uses the printed amount only after all invoice checks match',()=>{
+ const {correctShippoPayment}=require('./receipt-source-repairs.cjs');
+ const c={source:{text:'From: Shippo <noreply@shippo.com>\nInvoice Payment Confirmation\nInvoice #12345\nThis is confirmation that we have received payment for Oct 11, 2026 for 4 transactions with a total of $46.00 USD.',attachments:[]},receipt:{vendor:'Shippo',reference:'12345',subtotalCents:4600,totalCents:4600,paidAmountCents:4600,items:[],uncertainties:['No itemized line items provided in the receipt.']}};
+ const fixed=correctShippoPayment(c);
+ assert.equal(fixed.receipt.items[0].netCents,4600);
+ assert.equal(fixed.receipt.uncertainties.length,0);
+ assert.equal(c.receipt.items.length,0);
+ for(const delta of [{totalCents:4601},{reference:'wrong'},{uncertainties:['Two receipts disagree.']},{taxCents:1}]){const bad={...c,receipt:{...c.receipt,...delta}};assert.equal(correctShippoPayment(bad),bad);}
+ const wrong={...c,source:{...c.source,text:c.source.text.replace('noreply@shippo.com','someone@example.com')}};assert.equal(correctShippoPayment(wrong),wrong);
+});
