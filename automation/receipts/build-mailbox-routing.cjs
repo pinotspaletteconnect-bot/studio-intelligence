@@ -10,7 +10,8 @@ const {scopeReceiptRules,scopeReceiptConfig}=require('./scoped-runtime.cjs');
 const {selectApprovedTicket}=require('./approved-budget.cjs');
 const SHARED_RULES=require('./shared-owner-rules.json');
 const SHARED_ACCOUNTS=require('./shared-owner-accounts.json');
-const {correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount,correctShippoPayment,correctReviewedCintas}=require('./receipt-source-repairs.cjs');
+const {currentSharedCategory,sharedSavedCategory}=require('./shared-answer-policy.cjs');
+const {correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount,correctShippoPayment,correctReviewedCintas,correctOutshineServicePayment}=require('./receipt-source-repairs.cjs');
 const edge=n=>({main:[[{node:n,type:'main',index:0}]]});
 const code=(name,jsCode,position=[0,0])=>({id:randomUUID(),name,type:'n8n-nodes-base.code',typeVersion:2,position,parameters:{jsCode}});
 
@@ -25,6 +26,10 @@ function addMailboxContext(w) {
 }
 
 function scopedCode(js, name, key) {
+ if(key==='review')js=currentSharedCategory.toString()+'\n'+sharedSavedCategory.toString()+'\n'+js
+   .replace('mapping:owner.mappings[i]||classifyItem(', 'mapping:currentSharedCategory(vendor,item.description,rules)||owner.mappings[i]||sharedSavedCategory(item.description,clarificationRows,rules,{questionMetadata,latestOwnerAnswer,knownOwnerCategory})||classifyItem(')
+   .replace('const unknown=mapped.filter(l=>!l.mapping);','for(const line of mapped)if(line.mapping?.sharedOwnerAnswer)owner.provenance.push({...line.mapping.sharedOwnerAnswer,field:"category",lineId:line.lineId,value:{accountId:line.mapping.accountId,accountName:line.mapping.accountName}});\n  const unknown=mapped.filter(l=>!l.mapping);');
+ if(key==='review')js=correctOutshineServicePayment.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctOutshineServicePayment(cache);');
  if(key==='review')js=correctReviewedCintas.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctReviewedCintas(cache);');
  if(key==='review')js=js.replace("accountId:value.accountId}};", `accountId:value.accountId}};
       if(/^these are all under cintas[.!]?$/i.test(answer.answer.trim())&&/^Cintas$/i.test(r.vendor)&&value.accountId==='229')r.items.forEach((line,index)=>{

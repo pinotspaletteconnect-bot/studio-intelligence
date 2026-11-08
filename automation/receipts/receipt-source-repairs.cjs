@@ -56,4 +56,17 @@ function correctReviewedCintas(cache) {
  if(items.reduce((n,i)=>n+i.netCents,0)+r.taxCents!==r.totalCents)throw Error('Reviewed Cintas arithmetic mismatch');
  return {...cache,receipt:{...r,items,subtotalCents:17681,otherFeesCents:0,deliveryCents:0,orderDiscountCents:0,uncertainties:[],reviewedPrintedAmounts:{serviceSubtotalCents:15629,serviceChargeCents:2052,subtotalCents:17681,taxCents:1061,totalCents:18742}},sourceRepair:{kind:'visually_reviewed_cintas_invoice',note:'Original invoice 4218411442 visually reviewed 2026-11-08. Nine positive service lines total $156.29; separately printed service charge $20.52; subtotal $176.81; tax $10.61; total $187.42. Zero-price refill lines remain on original PDF. Categories still require saved owner approval.'}};
 }
-module.exports={correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount,correctShippoPayment,correctReviewedCintas};
+function correctOutshineServicePayment(cache) {
+ const r=cache?.receipt,s=cache?.source,text=String(s?.text||'').replace(/\r/g,'');
+ if(r?.vendor!=='Outshine Window Cleaning'||s.attachments?.length||!text.includes('From: Xplor Pay <no-reply@xplorpay.com>')||!text.includes('SALE, APPROVED'))return cache;
+ const refs=[...text.matchAll(/Transaction ID:\s*(\d+)/g)],dates=[...text.matchAll(/Transaction Date:\s*(\d{2})\/(\d{2})\/(\d{4})/g)];
+ const amounts=[...text.matchAll(/Amount:\s*(\d+\.\d{2}) USD\s*Sales Tax:\s*(\d+\.\d{2}) USD\s*Tip:\s*(\d+\.\d{2}) USD\s*Total:\s*(\d+\.\d{2}) USD/g)];
+ if(refs.length!==1||refs[0][1]!==r.reference||dates.length!==1||`${dates[0][3]}-${dates[0][1]}-${dates[0][2]}`!==r.date||amounts.length!==1)return cache;
+ const [net,tax,tip,total]=amounts[0].slice(1).map(n=>Math.round(Number(n)*100));
+ if(net<=0||tax!==0||tip!==0||net!==total||r.totalCents!==total||r.paidAmountCents!==total||r.subtotalCents!==net||r.taxCents||r.deliveryCents||r.otherFeesCents||r.orderDiscountCents)return cache;
+ if(r.items?.length!==1||!['Amount','Window Cleaning'].includes(r.items[0].description)||r.items[0].netCents!==net)return cache;
+ const allowed=new Set(['No itemized line items provided; only total amount available.','No itemized list of services provided.']);
+ if((r.uncertainties||[]).some(u=>!allowed.has(u)))return cache;
+ return {...cache,receipt:{...r,items:[{...r.items[0],description:'Window Cleaning',evidence:amounts[0][0]}],uncertainties:[]},sourceRepair:{kind:'confirmed_window_cleaning_payment',note:'Owner previously confirmed Outshine as window cleaning. The approved payment receipt explicitly reconciles amount, zero tax, zero tip and total. A single service amount is retained; no additional service details are invented.'}};
+}
+module.exports={correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount,correctShippoPayment,correctReviewedCintas,correctOutshineServicePayment};

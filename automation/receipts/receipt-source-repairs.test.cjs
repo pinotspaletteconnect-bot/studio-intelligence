@@ -1,6 +1,13 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {correctBlickUnitAmounts}=require('./receipt-source-repairs.cjs');
 
+test('known window-cleaning service payment requires exact printed identity and balanced amounts',()=>{
+ const {correctOutshineServicePayment:fix}=require('./receipt-source-repairs.cjs');
+ const c={source:{text:'From: Xplor Pay <no-reply@xplorpay.com>\nTransaction ID:\n912867490\nTransaction Date:\n10/26/2026 10:16 AM\nSALE, APPROVED\nAmount:\n26.50 USD\nSales Tax:\n0.00 USD\nTip:\n0.00 USD\nTotal:\n26.50 USD',attachments:[]},receipt:{vendor:'Outshine Window Cleaning',reference:'912867490',date:'2026-10-26',subtotalCents:2650,totalCents:2650,paidAmountCents:2650,items:[{description:'Amount',netCents:2650}],uncertainties:['No itemized line items provided; only total amount available.']}};
+ const out=fix(c);assert.equal(out.receipt.items[0].description,'Window Cleaning');assert.deepEqual(out.receipt.uncertainties,[]);
+ for(const wrong of [{...c,receipt:{...c.receipt,reference:'other'}},{...c,receipt:{...c.receipt,totalCents:2700}},{...c,receipt:{...c.receipt,uncertainties:['Multiple receipts present.']}},{...c,source:{...c.source,attachments:[{filename:'other.pdf'}]}}])assert.equal(fix(wrong),wrong);
+});
+
 test('reviewed Autojate discount stays bound to its original studio and receipt',()=>{
  const {correctReviewedAutojateDiscount:fix}=require('./receipt-source-repairs.cjs');
  const c={source:{mailbox:'jessejayspinotreceipts@gmail.com',sourceMessageId:'1a197c0e676af3a9',attachments:[{filename:'REC10008.pdf',size:15773}]},receipt:{vendor:'Autojate',reference:'REC10008',date:'2026-11-01',subtotalCents:9950,orderDiscountCents:1990,totalCents:7960,paidAmountCents:7960,items:[{description:'Jesse - Pinots Palette',netCents:7950}],uncertainties:[]}};
