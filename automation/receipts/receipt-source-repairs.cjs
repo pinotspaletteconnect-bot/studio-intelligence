@@ -1,4 +1,11 @@
 'use strict';
+function correctReviewedUberBookingFee(cache) {
+ const r=cache?.receipt,s=cache?.source,t=String(s?.text||'').replace(/\r/g,'').replace(/<https?:\/\/[^>]+>/g,'').replace(/\n\s*\n/g,'\n');
+ if(s?.sourceMessageId!=='1a0a4de6e04e1543'||s.mailbox!=='stellaseaselempirereceipts@gmail.com'||s.attachments?.length||r?.vendor!=='Uber'||r.reference!=='1d5e7c67-9f90-4a63-af79-1c0b5b29d6cf'||r.date!=='2026-09-15'||r.totalCents!==1596||r.paidAmountCents!==1596||r.items?.length!==3||(r.uncertainties||[]).length)return cache;
+ const lines=[['Trip fare',1275],['Booking Fee',121],['Tip',200]];
+ if(r.items.some((i,n)=>i.description!==lines[n][0]||i.netCents!==lines[n][1])||!t.includes('From: Uber Receipts <noreply@uber.com>')||!t.includes('Total $15.96')||!t.includes('Trip fare $12.75')||!t.includes('Booking Fee\n$1.21')||!t.includes('Tip $2.00')||!t.includes('Mastercard ••••5929 $15.96')||!t.includes('Receipt ID # '+r.reference))return cache;
+ return {...cache,receipt:{...r,subtotalCents:null,taxCents:null,items:r.items.map(i=>({...i,itemTaxCents:null,...(i.description==='Booking Fee'?{evidence:'$1.21'}:{})}))},sourceRepair:{kind:'source_verified_booking_fee_not_tax',note:'Original Uber email explicitly lists fare $12.75, booking fee $1.21 and tip $2.00, totaling the paid $15.96. Extraction had also counted the booking fee as tax. No separate tax is printed; all three charges remain itemized. The source link separates the Booking Fee label from its $1.21 amount.'}};
+}
 function correctReviewedSamsAggregateTax(cache) {
  const r=cache?.receipt,s=cache?.source;
  if(s?.sourceMessageId!=='1a02073e37503ae7'||r?.reference!=='8000000060458803'||r.date!=='2026-08-20'||r.totalCents!==10416||r.subtotalCents!==9789||r.taxCents!==627||r.items?.length!==6||s.attachments?.length!==1||s.attachments[0].filename!=='pro-RD4bLPuI.jpeg'||s.attachments[0].size!==119397)return cache;
@@ -146,4 +153,4 @@ function correctReviewedTarget(cache) {
  if(s?.mailbox!=='jessejayspinotreceipts@gmail.com'||s.sourceMessageId!=='1a0e940cf111b81e'||r?.vendor!=='Target'||r.date!=='2026-09-28'||r.totalCents!==1060||r.items?.length!==1||r.items[0].description!=='Mondo Llama'||r.items[0].netCents!==1000||!s.attachments?.some(a=>a.filename==='pro-RTGVbqtE.jpeg'&&a.size===863310))return cache;
  return {...cache,receipt:{...r,reference:'2-6271-2473-0160-7748-7',subtotalCents:1000,taxCents:60,paidAmountCents:1060},sourceRepair:{kind:'visually_reviewed_target_receipt',note:'Original photo reviewed November 8: REC#2-6271-2473-0160-7748-7, two Mondo Llama items at $5 each, subtotal $10, tax $.60, total and printed card charge $10.60. Handwritten Cash is retained on the original, not treated as proof of payment method. Product type still requires an owner answer.'}};
 }
-module.exports={correctReviewedSamsAggregateTax,correctOhioPestService,correctZemBrushOrder,correctReviewedTarget,correctReviewedHeidelberg,correctReviewedNorthVernon,correctFishCleaningPayment,correctCanvasDepotPayment,correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount,correctShippoPayment,correctReviewedCintas,correctOutshineServicePayment};
+module.exports={correctReviewedUberBookingFee,correctReviewedSamsAggregateTax,correctOhioPestService,correctZemBrushOrder,correctReviewedTarget,correctReviewedHeidelberg,correctReviewedNorthVernon,correctFishCleaningPayment,correctCanvasDepotPayment,correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount,correctShippoPayment,correctReviewedCintas,correctOutshineServicePayment};

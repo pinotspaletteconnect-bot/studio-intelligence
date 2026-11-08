@@ -1,5 +1,11 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {correctBlickUnitAmounts}=require('./receipt-source-repairs.cjs');
+test('Uber booking fee remains a charge and is not counted again as tax',()=>{
+ const fix=require('./receipt-source-repairs.cjs').correctReviewedUberBookingFee;
+ const c={source:{sourceMessageId:'1a0a4de6e04e1543',mailbox:'stellaseaselempirereceipts@gmail.com',attachments:[],text:'From: Uber Receipts <noreply@uber.com>\nTotal $15.96\nTrip fare $12.75\nBooking Fee\n<https://example.com/link>\n$1.21\nTip $2.00\nMastercard ••••5929 $15.96\nReceipt ID # 1d5e7c67-9f90-4a63-af79-1c0b5b29d6cf'},receipt:{vendor:'Uber',reference:'1d5e7c67-9f90-4a63-af79-1c0b5b29d6cf',date:'2026-09-15',totalCents:1596,paidAmountCents:1596,subtotalCents:1275,taxCents:121,items:[['Trip fare',1275],['Booking Fee',121],['Tip',200]].map(([description,netCents])=>({description,netCents,itemTaxCents:121})),uncertainties:[]}};
+ const r=fix(c);assert.equal(r.receipt.taxCents,null);assert.equal(r.receipt.items.reduce((s,i)=>s+i.netCents,0),1596);assert.equal(r.receipt.items[1].evidence,'$1.21');
+ for(const v of [{...c,receipt:{...c.receipt,totalCents:1597}},{...c,source:{...c.source,text:c.source.text.replace('$1.21','$1.22')}},{...c,source:{...c.source,attachments:[{}]}}])assert.equal(fix(v),v);
+});
 test('reviewed Sams aggregate tax removes invented item zeros without changing printed amounts',()=>{
  const fix=require('./receipt-source-repairs.cjs').correctReviewedSamsAggregateTax;
  const c={source:{sourceMessageId:'1a02073e37503ae7',attachments:[{filename:'pro-RD4bLPuI.jpeg',size:119397}]},receipt:{reference:'8000000060458803',date:'2026-08-20',totalCents:10416,subtotalCents:9789,taxCents:627,items:[1848,1848,1848,1324,828,2093].map(netCents=>({netCents,itemTaxCents:0})),uncertainties:[]}};

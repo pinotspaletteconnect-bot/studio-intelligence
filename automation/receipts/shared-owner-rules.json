@@ -1,5 +1,13 @@
 [
   {
+    "id": "owner-uber-taxi-service",
+    "vendor": "Uber",
+    "pattern": "^(?:Trip fare|Booking Fee|Tip)$",
+    "account": "taxi",
+    "accountDefinition": {"id":"136","name":"Travel:Taxis or shared rides"},
+    "approval": "Authenticated owner reply1a1bc16597123235: Uber. This is taxi service. Existing saved chart account136; owner approved sharing general service rules across studios. Covers ride fare, booking fee and ride tip, not Uber Eats."
+  },
+  {
     "id": "ohio-monthly-pest-control",
     "vendor": "Ohio Exterminating Co.",
     "pattern": "^Monthly Pest Control$",
