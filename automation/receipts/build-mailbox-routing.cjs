@@ -8,6 +8,7 @@ const registry=require('./receipt-studio-mailboxes.json');
 const scopes=registry.studios.map(s=>({...mailboxScope(registry,s.mailbox),useSharedCoa:registry.useSharedCoa===true}));
 const {scopeReceiptRules,scopeReceiptConfig}=require('./scoped-runtime.cjs');
 const {selectApprovedTicket}=require('./approved-budget.cjs');
+const {addExtractionPreflight}=require('./extraction-preflight.cjs');
 const SHARED_RULES=require('./shared-owner-rules.json');
 const SHARED_ACCOUNTS=require('./shared-owner-accounts.json');
 const {currentSharedCategory,sharedSavedCategory}=require('./shared-answer-policy.cjs');
@@ -69,7 +70,7 @@ function scopedCode(js, name, key) {
  if(key==='coordinator'&&name==='Plan Genuine Questions')js=js
    .replace("if(r.status==='duplicate_in_batch'||", "if(r.status!=='needs_review'||")
    .replace('sources.filter(m=>!cache[m.id]', 'sources.filter(m=>$(\'Collect File Results\').first().json.context["Batch - Prepare and Hold Exceptions"].some(i=>i.json.sourceMessageId===m.id&&i.json.status===\'needs_review\')&&!cache[m.id]');
- if(key==='review')js=js.replaceAll('.includes(row.approvalId)', '.concat('+JSON.stringify(Array.from({length:166},(_,i)=>'receipt-studios-20261108-usd5-'+String(i+1).padStart(3,'0')))+').includes(row.approvalId)');
+ if(key==='review')js=js.replaceAll('.includes(row.approvalId)', '.concat('+JSON.stringify([...Array.from({length:166},(_,i)=>'receipt-studios-20261108-usd5-'+String(i+1).padStart(3,'0')),...Array.from({length:50},(_,i)=>'receipt-reconciled-20261108-cap10-'+String(i+1).padStart(3,'0'))])+').includes(row.approvalId)');
  js=js.replace('function receiptAddressEvidence(receipt,message,owner){',"function receiptAddressEvidence(receipt,message,owner){ return {...receipt,printedStudioEvidence:receipt.printedStudioEvidence||receipt.studioEvidence||'',studioEvidence:'Owner-assigned receipt inbox: '+MB.studio};");
  js=js.replace("if(!/\\b(?:Gilbert|85295)\\b/i.test(r.studioEvidence||''))add('studioEvidence','Was this expense for Gilbert? Reply Gilbert or explain the correct studio.',r.studioEvidence);",'');
  js=js.replace("if(!studioFromEvidence(r.studioEvidence))add('studioEvidence','Which studio should receive this expense? Reply Gilbert, St. Matthews, Short North, or Jeffersonville.',r.studioEvidence);",'');
@@ -217,7 +218,7 @@ function draftHelpers(backups) {
   const w=JSON.parse(fs.readFileSync(backups[key],'utf8'));
   const routed=routeStudioGmail(scopeHelperCode(addMailboxContext(w),key),registry);
   routed.pinData={};
-  out[key]=routed;
+  out[key]=key==='extraction'?addExtractionPreflight(routed,randomUUID):routed;
  }
  out.coordinator=coordinator(JSON.parse(fs.readFileSync(backups.coordinator,'utf8')));
  return out;

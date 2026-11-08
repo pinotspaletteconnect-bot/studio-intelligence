@@ -11,6 +11,22 @@ function supportOriginalPhotos(js,key,name){
  if(key!=='documents')return js;
  if(name==='Batch - Select Original PDF')return js
   .replace("p.mimeType==='application/pdf'","['application/pdf','image/jpeg','image/png'].includes(p.mimeType)")
+  // The reviewed Short North signature logo is not receipt evidence. Keep
+  // unknown inline images and every explicitly expected image in the guard.
+  .replace('const found=[];',`const found=[];
+ const expectedFiles=job.sourceAttachment?.kind==='pdf_bundle_v1'?job.sourceAttachment.files:job.sourceAttachment?[job.sourceAttachment]:[];
+ const htmlParts=[];const readHtml=p=>{if(p.mimeType==='text/html'&&p.body?.data)htmlParts.push(Buffer.from(p.body.data,'base64url').toString('utf8'));for(const c of p.parts||[])readHtml(c);};readHtml(gmail.payload||{});
+ const signatureLogo=p=>{
+  if(expectedFiles.some(e=>e.filename===p.filename&&e.size===Number(p.body?.size)))return false;
+  if(p.filename!=='image.png'||p.mimeType!=='image/png'||Number(p.body?.size)!==177463)return false;
+  const headers=Object.fromEntries((p.headers||[]).map(h=>[h.name.toLowerCase(),h.value]));
+  const cid=(headers['content-id']||'').replace(/^<|>$/g,'');
+  return /^inline(?:;|$)/i.test(headers['content-disposition']||'')&&cid&&htmlParts.some(html=>{
+   const start=html.search(/id=["']Signature["']/i);if(start<0)return false;
+   const tail=html.slice(start);return tail.includes('cid:'+cid)&&/width=["']168["']/i.test(tail)&&/height=["']102["']/i.test(tail);
+  });
+ };`)
+  .replace('found.push(p);','{if(!signatureLogo(p))found.push(p);}')
   .replace('expected.files.length<2','expected.files.length<1')
   .replace('p.filename===e.filename&&Number(p.body?.size)===e.size','p.filename===e.filename&&p.mimeType===e.mimeType&&Number(p.body?.size)===e.size')
   .replace('fileName:e.filename,size:e.size','fileName:e.filename,mimeType:e.mimeType,size:e.size');

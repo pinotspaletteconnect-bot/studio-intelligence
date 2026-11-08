@@ -3,6 +3,21 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 const {draftHelpers}=require('./build-mailbox-routing.cjs');
 const drafts=draftHelpers(JSON.parse(fs.readFileSync('C:/Projects/studio-intelligence/tmp/multistudio-live-backup-paths.json')));
 const code=name=>drafts.documents.nodes.find(n=>n.name===name).parameters.jsCode;
+test('reviewed signature logo does not change receipt bundle; unknown inline evidence still blocks',()=>{
+ const js=code('Batch - Select Original PDF');
+ const select=new Function('Buffer',js.slice(js.indexOf('function selectOriginalPdf'),js.indexOf('function bundleJobs'))+'return selectOriginalPdf;')(Buffer);
+ const receipt={filename:'receipt.png',mimeType:'image/png',body:{size:20,attachmentId:'receipt'}};
+ const logo={filename:'image.png',mimeType:'image/png',headers:[{name:'Content-Disposition',value:'inline; filename="image.png"'},{name:'Content-ID',value:'<signature-logo>'}],body:{size:177463,attachmentId:'logo'}};
+ const html={mimeType:'text/html',body:{data:Buffer.from('<div id="Signature"><img width="168" height="102" src="cid:signature-logo"></div>').toString('base64url')}};
+ const job={sourceMessageId:'abc',sourceAttachment:{kind:'pdf_bundle_v1',files:[{filename:receipt.filename,mimeType:receipt.mimeType,size:20}]}};
+ const message={id:'abc',payload:{parts:[html,logo,receipt]}};
+ assert.equal(select(job,message).files.length,1);
+ assert.throws(()=>select(job,{...message,payload:{parts:[html,{...logo,body:{...logo.body,size:100}},receipt]}}),/bundle changed/);
+ assert.throws(()=>select(job,{...message,payload:{parts:[logo,receipt]}}),/bundle changed/);
+ assert.throws(()=>select(job,{...message,payload:{parts:[html,{...logo,headers:[]},receipt]}}),/bundle changed/);
+ const both={...job,sourceAttachment:{kind:'pdf_bundle_v1',files:[...job.sourceAttachment.files,{filename:'image.png',mimeType:'image/png',size:177463}]}};
+ assert.equal(select(both,message).files.length,2);
+});
 test('archive accepts preserved photos but rejects changed or unsupported attachments',async()=>{
  const js=drafts.archive.nodes.find(n=>n.name==='Require Complete Original Evidence').parameters.jsCode;
  const run=new (Object.getPrototypeOf(async function(){}).constructor)('$','$json',js);

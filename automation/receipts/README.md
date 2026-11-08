@@ -76,3 +76,18 @@ Document handoff recovery (November 8): coordinator uses one-item Loop Over Item
 Live validation: Short North execution323819 completed both Fish Window Cleaning receipts with two verified PDFs each and archived=true. Other document attempts reported busy leases; all-four completion is not established. A context-only parent return is now reported as incomplete. A precisely identified Michaels saved-search promotion is excluded from receipt extraction without archiving it; transactional messages remain eligible. 32 targeted reporting/routing/nonreceipt tests pass.
 
 Follow-up validation: raw Gmail labels/snippet are absent after intake normalization. The saved-search guard now also recognizes the exact marketing subject, body opening and Michaels link domain; replay of the real Short North input excludes the advertisement. Target source photo independently corrects its printed receipt number and subtotal while retaining the unresolved product category. The next coordinator draft isolates each studio call as well as each document call; live validation remains required.
+
+Further November 8 validation: coordinator execution324199 returned all four actual
+studio outcomes and correctly reported needs_attention. Short North's Canvas Depot
+payment completed with both PDFs and archive confirmation. The document helper now
+recognizes the visually inspected Short North signature logo using inline metadata,
+exact size, signature HTML and display dimensions; unknown inline images still fail
+the receipt coverage check. No actual receipt attachment is removed by this rule.
+
+Budget reconciliation retains all historical allowance rows. Unknown historical
+usage remains fully reserved; only recorded settled input/output usage releases a
+reservation. A bounded supplemental set can use the existing $10 cap, never a new
+spending limit. The extraction helper counts the exact model input before consuming
+an allowance, checks context and worst-case output cost, and makes no paid request
+when the count is missing or exceeds the reservation. This draft requires live
+validation before reporting further extraction capacity as operational.
