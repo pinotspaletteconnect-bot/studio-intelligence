@@ -91,3 +91,10 @@ spending limit. The extraction helper counts the exact model input before consum
 an allowance, checks context and worst-case output cost, and makes no paid request
 when the count is missing or exceeds the reservation. This draft requires live
 validation before reporting further extraction capacity as operational.
+
+November 8 large-photo repair: a 5.55 MB receipt photo reproduced a V8 stack
+failure in the bundle's repeated-group base64 validator. Validation now uses a
+bounded alphabet check and canonical byte round-trip, retaining SHA-256, size,
+format and page limits. Three regression tests pass, including a synthetic
+multi-megabyte PDF and malformed-data rejection. The real photo renders locally
+as an 11.08 MB PDF preserving the original. Production deployment pending.
