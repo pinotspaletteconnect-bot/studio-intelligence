@@ -3,6 +3,19 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 const {draftHelpers}=require('./build-mailbox-routing.cjs');
 const drafts=draftHelpers(JSON.parse(fs.readFileSync('C:/Projects/studio-intelligence/tmp/multistudio-live-backup-paths.json')));
 const code=name=>drafts.documents.nodes.find(n=>n.name===name).parameters.jsCode;
+test('archive accepts preserved photos but rejects changed or unsupported attachments',async()=>{
+ const js=drafts.archive.nodes.find(n=>n.name==='Require Complete Original Evidence').parameters.jsCode;
+ const run=new (Object.getPrototypeOf(async function(){}).constructor)('$','$json',js);
+ const attachment={filename:'receipt.jpg',mimeType:'image/jpeg',size:587233};
+ const prepared={receipt:{sourceMessageId:'abc',sourceAttachment:{kind:'pdf_bundle_v1',files:[attachment]}}};
+ const $=name=>({first:()=>({json:name==='Mailbox Context'?{mailboxContext:{studio:'Jeffersonville'}}:prepared})});
+ const message={id:'abc',payload:{filename:attachment.filename,mimeType:attachment.mimeType,body:{size:attachment.size}}};
+ assert.equal((await run($,message))[0].json.receipt.sourceMessageId,'abc');
+ await assert.rejects(run($,{...message,id:'wrong'}),/changed/);
+ await assert.rejects(run($,{...message,payload:{...message.payload,mimeType:'image/png'}}),/coverage changed/);
+ await assert.rejects(run($,{...message,payload:{...message.payload,body:{size:1}}}),/coverage changed/);
+ await assert.rejects(run($,{...message,payload:{...message.payload,mimeType:'application/zip'}}),/not preserved/);
+});
 test('original-photo routing verifies identity, MIME, length and signatures before bundling',()=>{
  const selectCode=code('Batch - Select Original PDF');
  const select=new Function(selectCode.slice(selectCode.indexOf('function selectOriginalPdf'),selectCode.indexOf('function bundleJobs'))+'return selectOriginalPdf;')();

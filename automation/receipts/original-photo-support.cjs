@@ -1,6 +1,9 @@
 'use strict';
 // Extend the existing attachment path; no new workflow or credentials.
 function supportOriginalPhotos(js,key,name){
+ if(key==='archive')return js
+  .replace("originals.some(x=>x.mimeType!=='application/pdf')","originals.some(x=>!['application/pdf','image/jpeg','image/png'].includes(x.mimeType))")
+  .replace("e.filename===a.filename&&Number(e.size)===Number(a.body.size)","e.filename===a.filename&&(e.mimeType||'application/pdf')===a.mimeType&&Number(e.size)===Number(a.body.size)");
  if(key==='review')return js
   .replaceAll("a.mimeType!=='application/pdf'","!['application/pdf','image/jpeg','image/png'].includes(a.mimeType)")
   .replace("mimeType:'application/pdf',size:a.size","mimeType:a.mimeType,size:a.size")
