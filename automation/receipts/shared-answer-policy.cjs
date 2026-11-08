@@ -17,7 +17,12 @@ function currentSharedCategory(vendor, description, rules) {
 }
 
 function sharedSavedCategory(description, rows, rules, helpers) {
- const normalize=s=>String(s||'').trim().replace(/\s+/g,' ').toLowerCase();
+ const normalize=s=>{
+   const text=String(s||'').trim().replace(/\s+/g,' ').toLowerCase();
+   // Same named product in supplier shorthand and the owner's answered question.
+   if(/^barritt'?s (?:12oz 4\/6pk cn ginger|regular ginger beer 4x 6 pack \(12 oz cans\))$/.test(text))return 'barritts regular ginger beer 12 oz cans';
+   return text;
+ };
  const d=normalize(description);
  // Generic totals/payment labels cannot identify a product across vendors.
  if(d.length<5||/^(?:amount|total|subtotal|payment|invoice payment confirmation|service|service charge|fee|tax)$/.test(d))return null;

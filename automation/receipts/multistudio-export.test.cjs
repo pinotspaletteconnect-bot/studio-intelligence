@@ -99,6 +99,8 @@ test('saved shipping and special-product answers use existing configured account
  assert.equal(match('marketing',c.approvedRules)?.accountId,'13');
  assert.equal(match('Staff enrichment. Find a coa that is close to this.',c.approvedRules)?.accountId,'1150040006');
  assert.equal(match('These are all under cintas',c.approvedRules)?.accountId,'229');
+ assert.equal(match('Candle inventoiry',c.approvedRules)?.accountId,'1150040007');
+ assert.equal(match('Candle inventoiry or supplies?',c.approvedRules),null);
  assert.equal(r.classifyItem({vendor:'Shippo',description:'Invoice Payment Confirmation'},scope.scopeId,c.approvedRules)?.accountId,'123');
  assert.equal(r.classifyItem({vendor:'TD Art Supply',description:'#4 Round Brush'},scope.scopeId,c.approvedRules)?.accountId,'221');
  assert.equal(r.classifyItem({vendor:'Unknown',description:'Invoice Payment Confirmation'},scope.scopeId,c.approvedRules),null);

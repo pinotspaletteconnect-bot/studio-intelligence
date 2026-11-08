@@ -33,6 +33,7 @@ function addMailboxContext(w) {
 }
 
 function scopedCode(js, name, key) {
+ js=js.replace("if(value==='supplies ans materials')value='supplies and materials';", "if(value==='supplies ans materials')value='supplies and materials';\n  if(value==='candle inventoiry')value='candle inventory';");
  if(key==='review'&&name==='Choose Unread Receipts')js=js.replace('const rows=$input.all()',"for(const i of [...$('Read Historic Extraction Cache').all(),...$('Read New Extraction Cache').all()])if(['complete','failed','reserved'].includes(i.json.status)&&i.json.sourceMessageId)cached.add(i.json.sourceMessageId);const rows=$input.all()");
  if(key==='review')js=correctReviewedPlumbing.toString()+'\n'+correctReviewedKroger.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctReviewedKroger(correctReviewedPlumbing(cache));');
  js=supportOriginalPhotos(js,key,name);

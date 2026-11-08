@@ -1,6 +1,13 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {currentSharedCategory,sharedSavedCategory}=require('./shared-answer-policy.cjs');
 const rules={companyId:'target-studio',accounts:{paint:{id:'164',name:'Paint Inventory'},projectPet:{id:'222',name:'Special Class Products COGS'}}};
+test('named Barritts shorthand reuses an authenticated answer but not other ginger products',()=>{
+ const row={reviewKey:'answered',companyId:'source-studio',meta:{field:'category',observed:'Barritts Regular Ginger Beer 4x 6 Pack (12 oz Cans)'},reply:{answer:'Nonalcoholic inventory',messageId:'owner-reply'}};
+ const helpers={questionMetadata:r=>r.meta,latestOwnerAnswer:r=>r.reply,knownOwnerCategory:a=>a==='Nonalcoholic inventory'?{accountId:'184',accountName:'Nonalcoholic Drink Inventory'}:null};
+ assert.equal(sharedSavedCategory("Barritt's 12OZ 4/6PK Cn Ginger",[row],rules,helpers)?.accountId,'184');
+ assert.equal(sharedSavedCategory('Other Ginger Beer',[row],rules,helpers),null);
+ assert.equal(sharedSavedCategory("Barritt's 12OZ 4/6PK Cn Ginger",[{...row,reply:null}],rules,helpers),null);
+});
 test('known Modelo beer reuses its confirmed category across suppliers without classifying merchandise',()=>{
  const r={...rules,accounts:{...rules.accounts,beer:{id:'162',name:'Beer Inventory'}}};
  assert.equal(currentSharedCategory('Heidelberg','Modelo Especial',r).accountId,'162');
