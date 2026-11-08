@@ -1,0 +1,49 @@
+# Receipt email studio routing
+
+The owner approved the four named Gmail inboxes, shared COA category names and
+general product rules on November 7, 2026. Receipt-specific answers and reviewed
+source corrections remain within their original studio.
+
+`receipt-studio-mailboxes.json` is the non-secret routing configuration. Credentials
+are static n8n bindings; no tokens or client secrets belong in these files.
+
+`build-mailbox-routing.cjs` patches fresh exports of the seven existing receipt-only
+workflows. It does not create workflows, change database schemas, or access QBO.
+Gilbert keeps its existing ledger identity for compatibility. Other studios receive
+mailbox-specific receipt, cache and document identities. The existing extraction
+allowance ledger preserves all historical reservations. On November 8 the owner
+approved another $5, for a $10 lifetime cap. The 115 historical and 50 original
+current tickets plus 166 new tickets reserve at most $9.93. Claims are conditional,
+and failed or reserved tickets are not recycled. Actual billed usage is separate.
+
+Inbox reads are bounded to 250 messages and paid extraction to 25 new receipts per
+studio pass. This prevents a large inbox from consuming the shared allowance in
+one pass. These are batch limits, not proof that the entire inbox has been cleared;
+remaining held and older messages require subsequent reconciliation.
+
+The coordinator dispatches one isolated execution per studio through its existing
+workflow's sub-workflow entry. The child entry does not redispatch. The original
+manual trigger and 6 AM America/New_York schedule dispatch all four studios.
+An absent studio result is reported as incomplete, never as successful processing.
+
+Completion requires balanced approved item splits and both independently verified
+PDFs before removing INBOX from the source email. Existing file identities and
+ledger claims prevent duplicate copies. Clarification replies return to the source
+studio inbox and must match the original question and authenticated owner reply.
+
+Validation:
+
+```
+node --test automation/receipts/mailbox-scope.test.cjs automation/receipts/route-studio-gmail.test.cjs automation/receipts/scoped-runtime.test.cjs automation/receipts/multistudio-export.test.cjs
+```
+
+The export integration tests consume the local fresh-export manifest. They verify
+actual generated node code, including category/split outputs for all studios,
+receipt-specific isolation, graph validity, sender binding and archive gates.
+They do not substitute for live processing, file verification and replay checks.
+
+Rollback: restore the corresponding pre-release workflow JSON or n8n version.
+The export manifest is recorded in the receipt-email checkpoint. Preserve the
+existing credential bindings and keep completed files/audit history intact.
+
+November 8 repair: the exact 166 additional approved extraction IDs are accepted by both review stages. Previously these completed results were ignored by the legacy cache allowlist. Inbox identity is authoritative for studio routing; printed addresses are retained as evidence only. New clarification mail goes to jeff.duff@pinotspalette.com. Existing authenticated replies from either owner address remain valid. Location questions are suppressed. Saved Autojate phone-service purpose is shared without copying receipt amounts or dates.
