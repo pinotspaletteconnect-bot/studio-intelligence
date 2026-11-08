@@ -23,6 +23,20 @@ test('all seven existing workflows compile with no dangling connections',()=>{
  for(const w of Object.values(drafts))assert.equal(validateDraft(w),true);
  assert.equal(drafts.coordinator.id,'10cuqNLwpmvvhlAl');
 });
+
+test('reviewed Target reference retains its original photo through evidence preparation',async()=>{
+ const scope={...mailboxScope(registry,'jessejayspinotreceipts@gmail.com'),useSharedCoa:true};
+ const js=drafts.review.nodes.find(n=>n.name==='First Receipt Review').parameters.jsCode;
+ const prefix=js.slice(0,js.indexOf('const data=$("Batch - Trusted Review Configuration")'));
+ const add=await new AsyncFunction('$',prefix+'return addExtractionEvidence;})();return result;')(lookup(scope));
+ const cache={source:{mailbox:scope.mailbox,sourceMessageId:'1a0e940cf111b81e',attachments:[{filename:'pro-RTGVbqtE.jpeg',mimeType:'image/jpeg',size:863310}]},receipt:{vendor:'Target',date:'2026-09-28',totalCents:1060,subtotalCents:1060,reference:null,items:[{description:'Mondo Llama',netCents:1000}]}};
+ const item={json:{sourceMessageId:cache.source.sourceMessageId,companyId:scope.scopeId,status:'prepared_for_review',reference:'2-6271-2473-0160-7748-7',totalCents:1060}};
+ const result=add(item,cache);
+ assert.equal(result.json.sourceAttachment.kind,'pdf_bundle_v1');
+ assert.deepEqual(result.json.sourceAttachment.files,cache.source.attachments);
+ assert.equal(cache.receipt.reference,null);
+ assert.equal(add({...item,json:{...item.json,totalCents:9999}},cache).json.sourceAttachment,undefined);
+});
 test('uncached Canvas Depot email uses shared owner category without extraction',async()=>{
  const scope={...mailboxScope(registry,registry.studios[2].mailbox),useSharedCoa:true},c=await config(scope),id='0123456789abcdef';
  const text='From: outgoing@safewebservices.com\nDYNAMIC WHOLESALE SIGNS\nYour Card Sale is complete!\nApr 20, 2026\n$125.55\nTransaction ID\n11969756418\nDescription\nThe Canvas Depot\nOrder ID\nINV 6380\n';
