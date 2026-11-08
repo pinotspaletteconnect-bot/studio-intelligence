@@ -4,7 +4,10 @@
     "vendor": "Uber",
     "pattern": "^(?:Trip fare|Booking Fee|Tip)$",
     "account": "taxi",
-    "accountDefinition": {"id":"136","name":"Travel:Taxis or shared rides"},
+    "accountDefinition": {
+      "id": "136",
+      "name": "Travel:Taxis or shared rides"
+    },
     "approval": "Authenticated owner reply1a1bc16597123235: Uber. This is taxi service. Existing saved chart account136; owner approved sharing general service rules across studios. Covers ride fare, booking fee and ride tip, not Uber Eats."
   },
   {
@@ -12,7 +15,10 @@
     "vendor": "Ohio Exterminating Co.",
     "pattern": "^Monthly Pest Control$",
     "account": "maintenance",
-    "accountDefinition": {"id": "68", "name": "Repairs & maintenance"},
+    "accountDefinition": {
+      "id": "68",
+      "name": "Repairs & maintenance"
+    },
     "approval": "Reuse authenticated saved pest-control answers and the existing maintenance category under owner-approved cross-studio service rules; applies only to explicitly named monthly pest control, not material quantities."
   },
   {
@@ -373,5 +379,16 @@
       "name": "Wine Inventory"
     },
     "approval": "Explicit Moscato wine uses existing owner-confirmed Wine Inventory across studio suppliers."
+  },
+  {
+    "id": "owner-rockbot-music-subscription",
+    "vendor": "Rockbot, Inc.",
+    "pattern": "^(?:Content Licensing & Standard Platform|Commercial Music Streaming)$",
+    "account": "subscriptions",
+    "accountDefinition": {
+      "id": "104",
+      "name": "General business expenses:Memberships & subscriptions"
+    },
+    "approval": "Authenticated owner chat November 8, 2026: Yes—Memberships & subscriptions for both Rockbot annual music streaming and content licensing lines. Owner approved general rule reuse across all four studios. No amounts or dates inferred."
   }
 ]
