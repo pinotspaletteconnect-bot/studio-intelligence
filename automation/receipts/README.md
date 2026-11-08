@@ -97,4 +97,6 @@ failure in the bundle's repeated-group base64 validator. Validation now uses a
 bounded alphabet check and canonical byte round-trip, retaining SHA-256, size,
 format and page limits. Three regression tests pass, including a synthetic
 multi-megabyte PDF and malformed-data rejection. The real photo renders locally
-as an 11.08 MB PDF preserving the original. Production deployment pending.
+as an 11.08 MB PDF preserving the original. Deployment 7641039452 succeeded on November 8; the live Short North source PDF now opens with the original photo. Its restaurant-purpose question remains separate from the repaired rendering path.
+
+November 8 receipt handoff repairs: the coordinator now skips document calls for rows without ready evidence while retaining their clarification context. Exact-source supporting bank evidence retains its printed date through final verification. A reviewed Arena inline charge-reference image is preserved with its receipt; the archive guard checks explicitly included inline files and rejects missing or changed evidence. These fixes do not access QBO. The backlog remains incomplete; published workflows must be checked against actual PDF-pair and archive outcomes.

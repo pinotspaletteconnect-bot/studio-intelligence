@@ -23,6 +23,11 @@ function supportOriginalPhotos(js,key,name){
  const htmlParts=[];const readHtml=p=>{if(p.mimeType==='text/html'&&p.body?.data)htmlParts.push(Buffer.from(p.body.data,'base64url').toString('utf8'));for(const c of p.parts||[])readHtml(c);};readHtml(gmail.payload||{});
  const signatureLogo=p=>{
   if(expectedFiles.some(e=>e.filename===p.filename&&e.size===Number(p.body?.size)))return false;
+  // Verified original insurance email: this is the 150x77 St Matthews logo.
+  if(job.companyId==='receipt-mail-stellaseaselempirereceipts'&&job.sourceMessageId==='19f66f6d01994e17'&&p.filename==='image001.png'&&p.mimeType==='image/png'&&Number(p.body?.size)===16092){
+   const h=Object.fromEntries((p.headers||[]).map(x=>[x.name.toLowerCase(),x.value]));
+   if(/^inline(?:;|$)/i.test(h['content-disposition']||'')&&h['content-id']==='<image001.png@01DD0FBB.46DD9290>'&&htmlParts.some(html=>html.includes('cid:image001.png@01DD0FBB.46DD9290')&&/width=["']150["']/.test(html)&&/height=["']77["']/.test(html)))return true;
+  }
   if(p.filename!=='image.png'||p.mimeType!=='image/png'||Number(p.body?.size)!==177463)return false;
   const headers=Object.fromEntries((p.headers||[]).map(h=>[h.name.toLowerCase(),h.value]));
   const cid=(headers['content-id']||'').replace(/^<|>$/g,'');

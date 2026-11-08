@@ -17,6 +17,13 @@ test('reviewed signature logo does not change receipt bundle; unknown inline evi
  assert.throws(()=>select(job,{...message,payload:{parts:[html,{...logo,headers:[]},receipt]}}),/bundle changed/);
  const both={...job,sourceAttachment:{kind:'pdf_bundle_v1',files:[...job.sourceAttachment.files,{filename:'image.png',mimeType:'image/png',size:177463}]}};
  assert.equal(select(both,message).files.length,2);
+ const insuranceJob={...job,companyId:'receipt-mail-stellaseaselempirereceipts',sourceMessageId:'19f66f6d01994e17'};
+ const insuranceLogo={filename:'image001.png',mimeType:'image/png',headers:[{name:'Content-Disposition',value:'inline'},{name:'Content-ID',value:'<image001.png@01DD0FBB.46DD9290>'}],body:{size:16092,attachmentId:'logo'}};
+ const insuranceHtml={mimeType:'text/html',body:{data:Buffer.from('<img width="150" height="77" src="cid:image001.png@01DD0FBB.46DD9290">').toString('base64url')}};
+ const insuranceMail={id:insuranceJob.sourceMessageId,payload:{parts:[insuranceHtml,insuranceLogo,receipt]}};
+ assert.equal(select(insuranceJob,insuranceMail).files.length,1);
+ assert.throws(()=>select({...insuranceJob,companyId:'other'},insuranceMail),/bundle changed/);
+ assert.throws(()=>select(insuranceJob,{...insuranceMail,payload:{parts:[insuranceHtml,{...insuranceLogo,body:{size:16093}},receipt]}}),/bundle changed/);
 });
 test('archive accepts preserved photos but rejects changed or unsupported attachments',async()=>{
  const js=drafts.archive.nodes.find(n=>n.name==='Require Complete Original Evidence').parameters.jsCode;
