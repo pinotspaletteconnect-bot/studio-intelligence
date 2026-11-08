@@ -12,6 +12,7 @@ const SHARED_RULES=require('./shared-owner-rules.json');
 const SHARED_ACCOUNTS=require('./shared-owner-accounts.json');
 const {currentSharedCategory,sharedSavedCategory}=require('./shared-answer-policy.cjs');
 const {supportOriginalPhotos}=require('./original-photo-support.cjs');
+const {isolateDocumentCalls}=require('./document-handoff.cjs');
 const {correctReviewedHeidelberg}=require('./receipt-source-repairs.cjs');
 const {correctReviewedNorthVernon,correctFishCleaningPayment,correctCanvasDepotPayment,correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount,correctShippoPayment,correctReviewedCintas,correctOutshineServicePayment}=require('./receipt-source-repairs.cjs');
 const edge=n=>({main:[[{node:n,type:'main',index:0}]]});
@@ -202,7 +203,7 @@ function coordinator(source) {
  w.nodes.push(dispatch,run,report);w.connections[dispatch.name]=edge(run.name);w.connections[run.name]=edge(report.name);
  for(const n of w.nodes.filter(n=>['n8n-nodes-base.manualTrigger','n8n-nodes-base.scheduleTrigger'].includes(n.type)))w.connections[n.name]=edge(dispatch.name);
  w.name='Receipt Email — All Studios — 02';w.pinData={};
- return routeStudioGmail(w,registry);
+ return routeStudioGmail(isolateDocumentCalls(w,randomUUID),registry);
 }
 
 // This draft handles credential routing only. Review/cache/ledger scope and
