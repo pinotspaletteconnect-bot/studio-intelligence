@@ -9,6 +9,15 @@ test('one failed helper retains other verified results and reports the missing r
  assert.ok(result.documentErrors.includes('failed'));assert.ok(result.documentErrors.some(x=>x.includes('for b;')));
  assert.ok(!result.documentErrors.some(x=>x.includes('for a;')));
 });
+test('studio context alone cannot be reported as completed receipt processing',async()=>{
+ const fs=require('fs');const {draftHelpers}=require('./build-mailbox-routing.cjs');
+ const w=draftHelpers(JSON.parse(fs.readFileSync('C:/Projects/studio-intelligence/tmp/multistudio-live-backup-paths.json'))).coordinator;
+ const code=w.nodes.find(n=>n.name==='All Studio Results').parameters.jsCode;
+ const fn=new Function('$input',code);
+ const result=fn({all:()=>[{json:{mailboxContext:{mailbox:'stellaseaselempirereceipts@gmail.com'}}}]});
+ assert.equal(result[0].json.status,'needs_attention');
+ assert.ok(result[0].json.studios.every(s=>s.status==='failed_or_incomplete'));
+});
 test('existing workflow loops individual document calls and only collects at loop completion',()=>{
  const fs=require('fs');const {draftHelpers,validateDraft}=require('./build-mailbox-routing.cjs');
  const w=draftHelpers(JSON.parse(fs.readFileSync('C:/Projects/studio-intelligence/tmp/multistudio-live-backup-paths.json'))).coordinator;

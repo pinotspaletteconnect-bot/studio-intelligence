@@ -97,6 +97,7 @@ function scopedCode(js, name, key) {
  for(const e of edits.reverse())js=js.slice(0,e.start)+'scopeReceiptRules('+e.literal+',MB)'+js.slice(e.end);
  js=js.replace('function prepareBatch(items, config) {','function prepareBatch(items, config) {\n config=scopeReceiptConfig(config,MB);');
  if(key==='review') {
+   js=require('./non-receipt-mail.cjs').isSavedSearchPromotion.toString()+'\n'+js.replace("if (!id) return hold('Missing message identity');", "if (!id) return hold('Missing message identity');if(isSavedSearchPromotion(m))return {json:{...base,status:'excluded_non_receipt',reason:'Saved-search marketing email; no receipt processed or archived'}};");
    js=js.replace("if (!id) return hold('Missing message identity');", "if (!id) return hold('Missing message identity');if(/^(?:Welcome to Google on your .+|Security alert|2-Step Verification (?:turned on|turned off))$/i.test(m.subject||''))return {json:{...base,status:'excluded_non_receipt',reason:'Google account notification'}};");
    js=js.replace('(config.approvedRules ? parseApproved(m,config.approvedRules) : null)',"(MB.studio==='Gilbert'&&config.approvedRules ? parseApproved(m,config.approvedRules) : null)")
      .replace(' || !shippingAddress.includes(rule.shippingMarker) || !billingAddress.includes(rule.billingMarker)', " || (MB.studio==='Gilbert'&&(!shippingAddress.includes(rule.shippingMarker)||!billingAddress.includes(rule.billingMarker)))")

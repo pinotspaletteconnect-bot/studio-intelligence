@@ -25,6 +25,7 @@ function isolateDocumentCalls(w,makeId){
  w.connections[call.name]=edge(name);
  w.nodes.find(n=>n.name==='Collect File Results').parameters.jsCode=collectDocumentResults.toString()+"\nconst base=$('Read Receipts and Apply Saved Answers').first().json.context;return [{json:{...collectDocumentResults(base,$input.all().map(i=>i.json)),mailboxContext:$('Mailbox Context').first().json.mailboxContext}}];";
  const report=w.nodes.find(n=>n.name==='All Studio Results');
+ report.parameters.jsCode=report.parameters.jsCode.replace("return hit?", "return hit&&hit.json.mode==='receipt_email_only'&&Array.isArray(hit.json.completed)&&Array.isArray(hit.json.documentIssues)&&hit.json.reviewCounts?");
  report.parameters.jsCode=report.parameters.jsCode.replace("s.error||s.status==='failed_or_incomplete'","s.error||s.documentIssues?.length||s.completionIssues?.length||s.status==='failed_or_incomplete'");
  report.parameters.jsCode=report.parameters.jsCode.replace("?'needs_attention':'completed'","?'needs_attention':studios.some(s=>s.reviewCounts?.needs_review||s.awaitingExtraction?.length)?'processed_with_holds':'completed'");
  return w;
