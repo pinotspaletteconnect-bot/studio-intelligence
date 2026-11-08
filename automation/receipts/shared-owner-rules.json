@@ -218,5 +218,58 @@
       "name": "Supplies:Brushes"
     },
     "approval": "Owner requested nearest existing account description and shared general product rules. Explicit painting brushes match existing Supplies:Brushes221."
+  },
+  {
+    "id": "owner-actual-rum-215-st.-matthews",
+    "studios": [
+      "St. Matthews"
+    ],
+    "vendor": "Heidelberg Columbus",
+    "pattern": "^Malibu .*Coconut Rum",
+    "account": "actualLiquor",
+    "accountDefinition": {
+      "id": "215",
+      "name": "Liquor Inventory"
+    },
+    "approval": "Owner November 8: most liquor is liquor inventory. Existing studio chart snapshot identifies this Liquor Inventory account; no QBO access or account creation. Ginger beer remains unanswered."
+  },
+  {
+    "id": "owner-actual-rum-235-short-north",
+    "studios": [
+      "Short North"
+    ],
+    "vendor": "Heidelberg Columbus",
+    "pattern": "^Malibu .*Coconut Rum",
+    "account": "actualLiquor",
+    "accountDefinition": {
+      "id": "235",
+      "name": "Liquor Inventory"
+    },
+    "approval": "Owner November 8: most liquor is liquor inventory. Existing studio chart snapshot identifies this Liquor Inventory account; no QBO access or account creation. Ginger beer remains unanswered."
+  },
+  {
+    "id": "owner-actual-rum-224-jeffersonville",
+    "studios": [
+      "Jeffersonville"
+    ],
+    "vendor": "Heidelberg Columbus",
+    "pattern": "^Malibu .*Coconut Rum",
+    "account": "actualLiquor",
+    "accountDefinition": {
+      "id": "224",
+      "name": "Liquor Inventory"
+    },
+    "approval": "Owner November 8: most liquor is liquor inventory. Existing studio chart snapshot identifies this Liquor Inventory account; no QBO access or account creation. Ginger beer remains unanswered."
+  },
+  {
+    "id": "owner-kroger-tea",
+    "vendor": "Kroger",
+    "pattern": "^BIGELOW TEA$",
+    "account": "water",
+    "accountDefinition": {
+      "id": "184",
+      "name": "Nonalcoholic Drink Inventory"
+    },
+    "approval": "Saved owner Sams Club answer: Tea is non alcoholic inventory. User explicitly directed shared product answers across studios."
   }
 ]

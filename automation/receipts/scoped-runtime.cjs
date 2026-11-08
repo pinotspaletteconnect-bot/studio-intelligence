@@ -5,6 +5,7 @@ function scopeReceiptRules(rules, scope) {
   if(scope.studio!=='Gilbert'&&scope.useSharedCoa!==true)
     throw Error('Confirm whether this studio uses the saved shared COA before classification');
   const copy=JSON.parse(JSON.stringify(rules));
+  const applicable=SHARED_RULES.filter(r=>!r.studios||r.studios.includes(scope.studio));
   for(const [key,account] of Object.entries(SHARED_ACCOUNTS)) {
     if(copy.accounts?.[key]&&JSON.stringify(copy.accounts[key])!==JSON.stringify(account))throw Error('Shared owner account conflicts with saved account');
     if(copy.accounts)copy.accounts[key]||={...account};
@@ -14,11 +15,11 @@ function scopeReceiptRules(rules, scope) {
     copy.rules=(copy.rules||[]).filter(r=>!r.sourceMessageId&&!r.ownerChatDecision);
     copy.candleOrderContext=[];
   }
-  if(copy.accounts)for(const r of SHARED_RULES){
+  if(copy.accounts)for(const r of applicable){
     if(copy.accounts[r.account]&&JSON.stringify(copy.accounts[r.account])!==JSON.stringify(r.accountDefinition))throw Error('Shared COA account conflicts with saved account');
     copy.accounts[r.account]||={...r.accountDefinition};
   }
-  copy.rules=[...(copy.rules||[]),...SHARED_RULES.filter(r=>copy.accounts?.[r.account]&&!(copy.rules||[]).some(old=>old.id===r.id))];
+  copy.rules=[...(copy.rules||[]),...applicable.filter(r=>copy.accounts?.[r.account]&&!(copy.rules||[]).some(old=>old.id===r.id))];
   return copy;
 }
 function scopeReceiptConfig(config, scope) {

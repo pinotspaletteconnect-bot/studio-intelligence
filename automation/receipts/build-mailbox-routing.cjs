@@ -16,6 +16,7 @@ const {supportOriginalPhotos}=require('./original-photo-support.cjs');
 const {isolateDocumentCalls}=require('./document-handoff.cjs');
 const {correctReviewedHeidelberg}=require('./receipt-source-repairs.cjs');
 const {correctZemBrushOrder}=require('./receipt-source-repairs.cjs');
+const {correctReviewedKroger}=require('./reviewed-kroger.cjs');
 const {correctReviewedNorthVernon,correctFishCleaningPayment,correctCanvasDepotPayment,correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount,correctShippoPayment,correctReviewedCintas,correctOutshineServicePayment}=require('./receipt-source-repairs.cjs');
 const edge=n=>({main:[[{node:n,type:'main',index:0}]]});
 const code=(name,jsCode,position=[0,0])=>({id:randomUUID(),name,type:'n8n-nodes-base.code',typeVersion:2,position,parameters:{jsCode}});
@@ -31,6 +32,8 @@ function addMailboxContext(w) {
 }
 
 function scopedCode(js, name, key) {
+ if(key==='review'&&name==='Choose Unread Receipts')js=js.replace('const rows=$input.all()',"for(const i of [...$('Read Historic Extraction Cache').all(),...$('Read New Extraction Cache').all()])if(['complete','failed','reserved'].includes(i.json.status)&&i.json.sourceMessageId)cached.add(i.json.sourceMessageId);const rows=$input.all()");
+ if(key==='review')js=correctReviewedKroger.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctReviewedKroger(cache);');
  js=supportOriginalPhotos(js,key,name);
  if(key==='review')js=correctZemBrushOrder.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctZemBrushOrder(cache);');
  if(key==='review')js=correctReviewedHeidelberg.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctReviewedHeidelberg(cache);');

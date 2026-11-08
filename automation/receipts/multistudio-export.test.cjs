@@ -179,7 +179,9 @@ test('embedded argument rules are scoped without changing historical provenance'
  const js=scopedCode('return [{json:{rules:'+JSON.stringify(rules)+'}}];','fixture','review');
  const output=await new AsyncFunction('$',js)(lookup(scope));
  assert.equal(output[0].json.rules.companyId,scope.scopeId);
- assert.deepEqual(output[0].json.rules.rules.map(r=>r.id),['general',...require('./shared-owner-rules.json').map(r=>r.id)]);
+ assert.deepEqual(output[0].json.rules.rules.map(r=>r.id),['general',...require('./shared-owner-rules.json').filter(r=>!r.studios||r.studios.includes(scope.studio)).map(r=>r.id)]);
+ assert.equal(output[0].json.rules.accounts.actualLiquor.id,'215');
+ assert.equal(output[0].json.rules.accounts.actualLiquor.name,'Liquor Inventory');
  assert.equal(output[0].json.rules.accounts.phone.name,'Utilities:Phone service');
 });
 test('saved Autojate phone purpose classifies each studio without copying amounts',async()=>{
@@ -267,7 +269,8 @@ test('attachment-only emails enter extraction while completed cache and unrelate
  const scope={...mailboxScope(registry,registry.studios[1].mailbox),useSharedCoa:true};
  const js=drafts.review.nodes.find(n=>n.name==='Choose Unread Receipts').parameters.jsCode;
  const rows=[{sourceMessageId:'a',status:'needs_review',reason:'Receipt body is empty; inspect original attachments before asking for a COA'},{sourceMessageId:'b',status:'needs_review',reason:'Needs COA clarification: purpose'},{sourceMessageId:'c',status:'needs_review',reason:'Receipt body is empty; inspect original attachments before asking for a COA'}];
- const values={'Mailbox Context':[{json:{mailboxContext:scope}}],'Batch - Read Extraction Cache':[{json:{status:'complete',sourceMessageId:'c'}}],'Read New Extraction Cache':[{json:{status:'available'}}]};
+ rows.unshift({sourceMessageId:'failed',status:'needs_review',reason:'Receipt format requires extraction'});
+ const values={'Mailbox Context':[{json:{mailboxContext:scope}}],'Batch - Read Extraction Cache':[{json:{status:'complete',sourceMessageId:'c'}}],'Read Historic Extraction Cache':[], 'Read New Extraction Cache':[{json:{status:'failed',sourceMessageId:'failed'}},{json:{status:'available'}}]};
  const result=await new AsyncFunction('$','$input',js)(n=>({all:()=>values[n],first:()=>values[n][0]}),{all:()=>rows.map(json=>({json}))});
  assert.deepEqual(result.map(i=>i.json.sourceMessageId),['a']);
 });
