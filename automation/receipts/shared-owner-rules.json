@@ -53,5 +53,16 @@
       "name": "Special Surfaces Inventory"
     },
     "approval": "Existing confirmed TD porch-leaner mapping from the saved review configuration."
+  },
+  {
+    "id": "google-one-storage-subscription",
+    "vendor": "Google LLC",
+    "pattern": "^\\d+\\s*(?:GB|TB) \\(Google One\\)",
+    "account": "subscriptions",
+    "accountDefinition": {
+      "id": "104",
+      "name": "General business expenses:Memberships & subscriptions"
+    },
+    "approval": "User instructed matching description to existing confirmed COA and approved shared general rules. Google One storage is explicitly an auto-renewing subscription; use the existing Memberships & subscriptions category."
   }
 ]

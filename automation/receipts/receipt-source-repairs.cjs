@@ -18,4 +18,15 @@ function correctBlickUnitAmounts(cache) {
  if(items.every((i,n)=>i.netCents===r.items[n].netCents))return cache;
  return {...cache,receipt:{...r,items},sourceRepair:{kind:'blick_printed_line_totals',note:'Used the printed extended line amounts, independently reconciled to quantity × unit price and printed subtotal.'}};
 }
-module.exports={correctBlickUnitAmounts};
+function correctGoogleOneTaxes(cache) {
+ const r=cache?.receipt,text=String(cache?.source?.text||'').replace(/\r/g,'');
+ if(r?.vendor!=='Google LLC'||r.items?.length!==1||!/^\d+\s*(?:GB|TB) \(Google One\)/.test(r.items[0].description)||!text.includes('From: Google Play <googleplay-noreply@google.com>'))return cache;
+ const orders=[...text.matchAll(/^Order number: (\S+)$/gm)],prices=[...text.matchAll(/^\$([\d.]+)\/month$/gm)],totals=[...text.matchAll(/^Total: \$([\d.]+)\/month$/gm)],taxes=[...text.matchAll(/^(?:State|Local) sales tax: \$([\d.]+)$/gm)];
+ const cents=s=>Math.round(Number(s)*100);
+ if(orders.length!==1||orders[0][1]!==r.reference||prices.length!==1||totals.length!==1||taxes.length!==2||!text.includes("continues and you've been charged"))return cache;
+ const net=cents(prices[0][1]),tax=taxes.reduce((s,m)=>s+cents(m[1]),0),total=cents(totals[0][1]);
+ if(net!==r.subtotalCents||net!==r.items[0].netCents||net+tax!==total||total!==r.totalCents)return cache;
+ const unnecessary=new Set(['Total amount charged is monthly; actual paid amount not specified.','Total amount charged is monthly; actual payment details are not provided.']);
+ return {...cache,receipt:{...r,taxCents:tax,items:[{...r.items[0],itemTaxCents:tax}],uncertainties:(r.uncertainties||[]).filter(s=>!unnecessary.has(s))},sourceRepair:{kind:'google_one_printed_taxes',note:'State and local sales tax were added from the printed receipt and reconciled with the printed monthly charge. Source explicitly states this renewal was charged.'}};
+}
+module.exports={correctBlickUnitAmounts,correctGoogleOneTaxes};
