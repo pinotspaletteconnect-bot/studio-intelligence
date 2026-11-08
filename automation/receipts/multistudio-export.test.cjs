@@ -41,6 +41,19 @@ test('new clarification emails use the confirmed work address',()=>{
  const sends=drafts.questions.nodes.filter(n=>n.parameters.sendTo);
  assert.equal(sends.length,8);
  assert.ok(sends.every(n=>n.parameters.sendTo==='jeff.duff@pinotspalette.com'));
+ const followups=drafts.replies.nodes.filter(n=>n.parameters.sendTo);
+ assert.equal(followups.length,4);
+ assert.ok(followups.every(n=>n.parameters.sendTo==='jeff.duff@pinotspalette.com'&&n.parameters.subject.includes('Receipt question')));
+});
+
+test('completed and non-receipt messages never enter the question backlog',async()=>{
+ const scope={...mailboxScope(registry,registry.studios[2].mailbox),useSharedCoa:true};
+ const rows=['prepared_for_review','excluded_non_receipt','needs_review'].map((status,i)=>({json:{sourceMessageId:String(i+1).padStart(16,'0'),status}}));
+ const context={'Read Persisted Receipt Answers':[],'Batch - Trusted Review Configuration':[{json:{messages:rows.map(i=>({id:i.json.sourceMessageId,text:'',subject:''}))}}],'Batch - Read Extraction Cache':[],'Batch - Prepare and Hold Exceptions':rows};
+ const lookup=n=>({first:()=>({json:n==='Mailbox Context'?{mailboxContext:scope}:{context}})});
+ const out=await new AsyncFunction('$',drafts.coordinator.nodes.find(n=>n.name==='Plan Genuine Questions').parameters.jsCode)(lookup);
+ assert.deepEqual(out[0].json.questions,[]);
+ assert.deepEqual(out[0].json.awaitingExtraction,[scope.scopeId+':'+rows[2].json.sourceMessageId]);
 });
 test('shared approved rules produce balanced splits for each studio without QBO',async()=>{
  for(const studio of registry.studios){

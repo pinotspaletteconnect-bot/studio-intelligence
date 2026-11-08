@@ -23,6 +23,9 @@ function addMailboxContext(w) {
 }
 
 function scopedCode(js, name, key) {
+ if(key==='coordinator'&&name==='Plan Genuine Questions')js=js
+   .replace("if(r.status==='duplicate_in_batch'||", "if(r.status!=='needs_review'||")
+   .replace('sources.filter(m=>!cache[m.id]', 'sources.filter(m=>$(\'Collect File Results\').first().json.context["Batch - Prepare and Hold Exceptions"].some(i=>i.json.sourceMessageId===m.id&&i.json.status===\'needs_review\')&&!cache[m.id]');
  if(key==='review')js=js.replaceAll('.includes(row.approvalId)', '.concat('+JSON.stringify(Array.from({length:166},(_,i)=>'receipt-studios-20261108-usd5-'+String(i+1).padStart(3,'0')))+').includes(row.approvalId)');
  js=js.replace('function receiptAddressEvidence(receipt,message,owner){',"function receiptAddressEvidence(receipt,message,owner){ return {...receipt,printedStudioEvidence:receipt.printedStudioEvidence||receipt.studioEvidence||'',studioEvidence:'Owner-assigned receipt inbox: '+MB.studio};");
  js=js.replace("if(!/\\b(?:Gilbert|85295)\\b/i.test(r.studioEvidence||''))add('studioEvidence','Was this expense for Gilbert? Reply Gilbert or explain the correct studio.',r.studioEvidence);",'');
@@ -120,6 +123,12 @@ function scopeHelperCode(w,key) {
    }
  }
  if(key==='questions')for(const n of w.nodes.filter(n=>n.credentials?.gmailOAuth2&&n.parameters.sendTo))n.parameters.sendTo='jeff.duff@pinotspalette.com';
+ if(key==='replies')for(const n of w.nodes.filter(n=>n.name==='Reply with Specific Question'))n.parameters={
+  operation:'send',sendTo:'jeff.duff@pinotspalette.com',
+  subject:"={{ '[QBO-REVIEW:' + $json.reviewKey + '] Receipt question' }}",
+  emailType:'text',message:"={{ $json.followup + '\\n\\nOriginal source: ' + $json.sourceUrl }}",
+  options:{appendAttribution:false,replyTo:scopes[0].mailbox}
+ };
  // Every child call receives the studio even when its preceding API step
  // returned only remote response fields.
  for(const n of [...w.nodes].filter(n=>n.type==='n8n-nodes-base.executeWorkflow')) {
