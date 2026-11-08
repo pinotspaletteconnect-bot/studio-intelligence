@@ -31,6 +31,19 @@ PDFs before removing INBOX from the source email. Existing file identities and
 ledger claims prevent duplicate copies. Clarification replies return to the source
 studio inbox and must match the original question and authenticated owner reply.
 
+November 8 owner policy shares confirmed product/service categories across all
+four studios. Paint of any color is Paint Inventory; Canvas Depot is Special Class
+Products COGS. Authenticated exact-product answers can be reused with their source
+provenance; amounts, dates and source identities remain receipt-specific. Conflicting
+category answers remain unresolved. Completed Canvas Depot card receipts retain
+the printed gross payment without inventing unstated tax. Fish Window Cleaning
+payments reconcile their printed total and tax against the saved service category.
+
+Photo-preservation support extends the existing document helper and PDF bundler,
+not the workflow inventory. JPEG/PNG originals are retained byte-for-byte inside
+the source PDF; readable balanced categorization and both verified PDFs are still
+required before archival. Mixed or incomplete extractions remain held.
+
 Validation:
 
 ```

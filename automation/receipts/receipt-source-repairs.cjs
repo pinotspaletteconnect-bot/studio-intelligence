@@ -1,4 +1,33 @@
 'use strict';
+
+function correctFishCleaningPayment(cache) {
+ const r=cache?.receipt,s=cache?.source,t=String(s?.text||'').replace(/\r/g,'');
+ if(r?.vendor!=='FISH WINDOW CLEANING - COLUMBUS'||s.attachments?.length||!t.includes('outgoing@safewebservices.com')||
+   !t.includes('Your card has been charged by FISH WINDOW CLEANING - COLUMBUS.')||!t.includes('Credit Card Sale'))return cache;
+ const totals=[...t.matchAll(/^Total ([\d]+\.[\d]{2})$/gm)],taxes=[...t.matchAll(/^Tax ([\d]+\.[\d]{2})$/gm)],refs=[...t.matchAll(/Reference #\s*\n\s*(\d+)/g)];
+ if(totals.length!==1||taxes.length!==1||refs.length!==1||refs[0][1]!==r.reference)return cache;
+ const gross=Math.round(Number(totals[0][1])*100),tax=Math.round(Number(taxes[0][1])*100);
+ if(gross<=tax||tax<0||r.totalCents!==gross||r.taxCents!==tax||(r.paidAmountCents!=null&&r.paidAmountCents!==gross)||
+   r.items?.length!==1||!['Total','Line Items'].includes(r.items[0].description)||r.items[0].netCents!==gross||
+   [r.deliveryCents,r.otherFeesCents,r.orderDiscountCents].some(n=>n!=null&&n!==0))return cache;
+ const allowed=new Set(['Subtotal amount is not explicitly provided; only total and tax are mentioned.','Line item details are not explicitly provided.']);
+ if(!(r.uncertainties||[]).every(u=>allowed.has(u)))return cache;
+ return {...cache,receipt:{...r,subtotalCents:gross-tax,paidAmountCents:gross,items:[{...r.items[0],description:'Window Cleaning',netCents:gross-tax,itemTaxCents:tax,evidence:totals[0][0]}],uncertainties:[]},sourceRepair:{kind:'window_cleaning_printed_total_tax',note:'Payment receipt explicitly says the card was charged for window cleaning. Service net is the printed Total less the separately printed Tax; both printed figures are preserved and reconcile exactly. Owner-confirmed window-cleaning category applies across studios.'}};
+}
+
+function correctCanvasDepotPayment(cache) {
+ const r=cache?.receipt,s=cache?.source,t=String(s?.text||'').replace(/\r/g,'');
+ if(!r||!['DYNAMIC WHOLESALE SIGNS','Canvas Depot','The Canvas Depot'].includes(r.vendor)||s.attachments?.length||
+   !t.includes('Your Card Sale is complete!')||!t.includes('The Canvas Depot')||!t.includes('outgoing@safewebservices.com'))return cache;
+ const amounts=[...t.matchAll(/\$([0-9]+\.[0-9]{2})/g)],refs=[...t.matchAll(/Order ID\s*\n\s*(INV\s+\d+)/g)];
+ const cents=amounts.length===1?Math.round(Number(amounts[0][1])*100):null;
+ if(!cents||refs.length!==1||refs[0][1]!==r.reference||r.totalCents!==cents||(r.paidAmountCents!=null&&r.paidAmountCents!==cents)||r.subtotalCents!==cents||
+   r.items?.length!==1||r.items[0].netCents!==cents||!/^The Canvas Depot$/i.test(r.items[0].description)||
+   [r.taxCents,r.deliveryCents,r.otherFeesCents,r.orderDiscountCents].some(n=>n!=null&&n!==0))return cache;
+ const allowed=new Set(['No tax, delivery, or discount details provided.','Total amount matches the subtotal; no tax or additional fees are specified.']);
+ if(!(r.uncertainties||[]).every(u=>allowed.has(u)))return cache;
+ return {...cache,receipt:{...r,paidAmountCents:cents,uncertainties:[]},sourceRepair:{kind:'confirmed_canvas_depot_gross_payment',note:'Completed card-sale receipt identifies Canvas Depot and its invoice reference. Owner assigns Canvas Depot purchases to Special Class Products COGS. The full printed payment is classified; a separate tax or fee breakdown is not stated and has not been invented.'}};
+}
 function correctBlickUnitAmounts(cache) {
  const r=cache?.receipt,text=String(cache?.source?.text||'');
  if(!/^Blick(?: Art Materials)?$/i.test(r?.vendor||'')||!Array.isArray(r.items)||!r.items.length)return cache;
@@ -69,4 +98,4 @@ function correctOutshineServicePayment(cache) {
  if((r.uncertainties||[]).some(u=>!allowed.has(u)))return cache;
  return {...cache,receipt:{...r,items:[{...r.items[0],description:'Window Cleaning',evidence:amounts[0][0]}],uncertainties:[]},sourceRepair:{kind:'confirmed_window_cleaning_payment',note:'Owner previously confirmed Outshine as window cleaning. The approved payment receipt explicitly reconciles amount, zero tax, zero tip and total. A single service amount is retained; no additional service details are invented.'}};
 }
-module.exports={correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount,correctShippoPayment,correctReviewedCintas,correctOutshineServicePayment};
+module.exports={correctFishCleaningPayment,correctCanvasDepotPayment,correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount,correctShippoPayment,correctReviewedCintas,correctOutshineServicePayment};

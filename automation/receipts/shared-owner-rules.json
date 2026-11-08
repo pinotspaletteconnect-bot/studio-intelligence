@@ -1,5 +1,13 @@
 [
   {
+    "id": "owner-window-cleaning-fish-shared",
+    "vendor": "FISH WINDOW CLEANING - COLUMBUS",
+    "pattern": "^Window Cleaning$",
+    "account": "maintenance",
+    "accountDefinition": {"id":"68","name":"Repairs & maintenance"},
+    "approval": "Saved owner replies identify window cleaning; owner explicitly approved reuse of product/service category answers across all studios on 2026-11-08. Applies to explicit window-cleaning service only."
+  },
+  {
     "id": "owner-autojate-phone-service-shared",
     "vendor": "Autojate",
     "pattern": "(?:Pinot.{0,3}s Palette|receptionist|phone service)",

@@ -6,6 +6,18 @@ const {bundlePdfs}=require('./services/receipts/bundle-pdfs.cjs');
 const {renderBundle}=require('./services/receipts/bundle-worker.cjs');
 async function source(name,count){const p=await PDFDocument.create();for(let i=0;i<count;i++)p.addPage([200+i,300+i]).drawText(`${name} page ${i+1}`,{x:10,y:100,size:12});const b=Buffer.from(await p.save());return {fileName:name+'.pdf',size:b.length,sha256:createHash('sha256').update(b).digest('hex'),base64:b.toString('base64')};}
 async function input(){return {companyId:'test',sourceMessageId:'synthetic',documents:[await source('invoice',2),await source('payment',1)]};}
+
+test('a receipt photo becomes a PDF page while original bytes remain embedded',async()=>{
+ const raw=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aB4sAAAAASUVORK5CYII=','base64');
+ const image={fileName:'receipt.png',size:raw.length,base64:raw.toString('base64'),sha256:createHash('sha256').update(raw).digest('hex')};
+ const i={companyId:'test',sourceMessageId:'photo',documents:[image]},r=await bundlePdfs(i),p=await PDFDocument.load(r.pdf);
+ assert.equal(p.getPageCount(),2);assert.equal(p.getPage(1).getWidth(),1);
+ const names=p.catalog.lookup(PDFName.of('Names'),PDFDict).lookup(PDFName.of('EmbeddedFiles'),PDFDict).lookup(PDFName.of('Names'));
+ const spec=p.context.lookup(names.get(1)),stream=spec.lookup(PDFName.of('EF'),PDFDict).lookup(PDFName.of('F'));
+ assert.deepEqual(Buffer.from(decodePDFRawStream(stream).decode()),raw);
+ await assert.rejects(()=>bundlePdfs({...i,documents:[{...image,fileName:'receipt.jpg'}]}),/format mismatch/);
+ await assert.rejects(()=>bundlePdfs({...i,documents:[{...image,sha256:'0'.repeat(64)}]}),/integrity/);
+});
 test('bundle preserves source page geometry and exact embedded original bytes',async()=>{
  const i=await input(),r=await renderBundle(i),p=await PDFDocument.load(r.pdf);
  assert.equal(p.getPageCount(),4);assert.equal(p.getPage(1).getWidth(),200);assert.equal(p.getPage(2).getWidth(),201);

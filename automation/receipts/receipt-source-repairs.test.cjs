@@ -1,6 +1,22 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {correctBlickUnitAmounts}=require('./receipt-source-repairs.cjs');
 
+test('window-cleaning net derives only from explicit printed total and tax with charged status',()=>{
+ const {correctFishCleaningPayment:fix}=require('./receipt-source-repairs.cjs');
+ const c={source:{text:'From: outgoing@safewebservices.com\nYour card has been charged by FISH WINDOW CLEANING - COLUMBUS.\nTotal 40.96\nTax 2.56\nReference #\n4414875588\nCredit Card Sale',attachments:[]},receipt:{vendor:'FISH WINDOW CLEANING - COLUMBUS',reference:'4414875588',totalCents:4096,taxCents:256,paidAmountCents:null,items:[{description:'Total',netCents:4096}],uncertainties:['Subtotal amount is not explicitly provided; only total and tax are mentioned.']}};
+ const r=fix(c).receipt;assert.equal(r.subtotalCents,3840);assert.equal(r.items[0].netCents+r.items[0].itemTaxCents,r.totalCents);assert.equal(r.paidAmountCents,4096);
+ for(const delta of [{reference:'wrong'},{taxCents:257},{paidAmountCents:1},{uncertainties:['Additional receipts omitted.']}]){const bad={...c,receipt:{...c.receipt,...delta}};assert.equal(fix(bad),bad);}
+ const extra={...c,source:{...c.source,text:c.source.text+'\nTotal 50.00'}};assert.equal(fix(extra),extra);
+});
+
+test('Canvas Depot payment preserves unknown tax and requires exact printed amount and invoice',()=>{
+ const {correctCanvasDepotPayment}=require('./receipt-source-repairs.cjs');
+ const c={source:{text:'From: outgoing@safewebservices.com\nYour Card Sale is complete!\n$139.50\nDescription\nThe Canvas Depot\nOrder ID\nINV 6568',attachments:[]},receipt:{vendor:'DYNAMIC WHOLESALE SIGNS',reference:'INV 6568',totalCents:13950,paidAmountCents:13950,subtotalCents:13950,taxCents:null,items:[{description:'The Canvas Depot',netCents:13950}],uncertainties:['No tax, delivery, or discount details provided.']}};
+ const fixed=correctCanvasDepotPayment(c);assert.equal(fixed.receipt.uncertainties.length,0);assert.equal(fixed.receipt.taxCents,null);assert.match(fixed.sourceRepair.note,/not been invented/);
+ for(const delta of [{reference:'INV 999'},{totalCents:13951},{taxCents:10},{uncertainties:['Two charges may be combined.']}]){const bad={...c,receipt:{...c.receipt,...delta}};assert.equal(correctCanvasDepotPayment(bad),bad);}
+ const two={...c,source:{...c.source,text:c.source.text+'\n$5.00'}};assert.equal(correctCanvasDepotPayment(two),two);
+});
+
 test('known window-cleaning service payment requires exact printed identity and balanced amounts',()=>{
  const {correctOutshineServicePayment:fix}=require('./receipt-source-repairs.cjs');
  const c={source:{text:'From: Xplor Pay <no-reply@xplorpay.com>\nTransaction ID:\n912867490\nTransaction Date:\n10/26/2026 10:16 AM\nSALE, APPROVED\nAmount:\n26.50 USD\nSales Tax:\n0.00 USD\nTip:\n0.00 USD\nTotal:\n26.50 USD',attachments:[]},receipt:{vendor:'Outshine Window Cleaning',reference:'912867490',date:'2026-10-26',subtotalCents:2650,totalCents:2650,paidAmountCents:2650,items:[{description:'Amount',netCents:2650}],uncertainties:['No itemized line items provided; only total amount available.']}};
