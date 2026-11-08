@@ -23,6 +23,11 @@ test('all seven existing workflows compile with no dangling connections',()=>{
  for(const w of Object.values(drafts))assert.equal(validateDraft(w),true);
  assert.equal(drafts.coordinator.id,'10cuqNLwpmvvhlAl');
 });
+test('PDF rendering retries briefly without retrying paid extraction or durable uploads',()=>{
+ const node=drafts.documents.nodes.find(n=>n.name==='Batch - Render Documents');
+ assert.equal(node.retryOnFail,true);assert.equal(node.maxTries,4);assert.equal(node.waitBetweenTries,5000);
+ assert.equal(node.parameters.options.batching.batch.batchSize,1);
+});
 
 test('reviewed Target reference retains its original photo through evidence preparation',async()=>{
  const scope={...mailboxScope(registry,'jessejayspinotreceipts@gmail.com'),useSharedCoa:true};

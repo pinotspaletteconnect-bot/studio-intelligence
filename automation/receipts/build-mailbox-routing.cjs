@@ -179,6 +179,9 @@ function scopeHelperCode(w,key) {
    });
  }
  if(key==='documents')for(const n of w.nodes){
+   // Rendering has no durable write or paid extraction side effect. Allow a
+   // bounded retry when the existing PDF worker is temporarily occupied.
+   if(n.name==='Batch - Render Documents')Object.assign(n,{retryOnFail:true,maxTries:4,waitBetweenTries:5000});
    const q=n.parameters?.queryParameters?.parameters?.find(p=>p.name==='q');
    if(q&&q.value.includes('1mKjkWl5pisd_aBiDTTNwi6LTm9eMNqK_')) {
      const base=q.value;
