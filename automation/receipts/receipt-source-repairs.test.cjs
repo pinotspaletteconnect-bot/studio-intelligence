@@ -1,5 +1,12 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {correctBlickUnitAmounts}=require('./receipt-source-repairs.cjs');
+
+test('reviewed Autojate discount stays bound to its original studio and receipt',()=>{
+ const {correctReviewedAutojateDiscount:fix}=require('./receipt-source-repairs.cjs');
+ const c={source:{mailbox:'jessejayspinotreceipts@gmail.com',sourceMessageId:'1a197c0e676af3a9',attachments:[{filename:'REC10008.pdf',size:15773}]},receipt:{vendor:'Autojate',reference:'REC10008',date:'2026-11-01',subtotalCents:9950,orderDiscountCents:1990,totalCents:7960,paidAmountCents:7960,items:[{description:'Jesse - Pinots Palette',netCents:7950}],uncertainties:[]}};
+ const out=fix(c);assert.equal(out.receipt.items[0].netCents,7960);assert.equal(out.receipt.orderDiscountCents,0);assert.equal(out.receipt.reviewedPrintedAmounts.discountCents,1990);assert.equal(c.receipt.items[0].netCents,7950);
+ for(const wrong of [{...c,source:{...c.source,mailbox:'other@example.com'}},{...c,receipt:{...c.receipt,totalCents:8000}},{...c,receipt:{...c.receipt,items:[...c.receipt.items,...c.receipt.items]}}])assert.equal(fix(wrong),wrong);
+});
 test('Blick uses printed extended amounts only when all quantity and subtotal checks agree',()=>{
  const cache={source:{text:'Paint\nQty: 3\nIn stock and reserved\n$ 22.14\neach $ 7.38\nSubtotal: $22.14'},receipt:{vendor:'Blick Art Materials',subtotalCents:2214,items:[{description:'Paint',quantity:3,netCents:738}]}};
  assert.equal(correctBlickUnitAmounts(cache).receipt.items[0].netCents,2214);

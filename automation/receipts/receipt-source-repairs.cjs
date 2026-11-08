@@ -29,4 +29,10 @@ function correctGoogleOneTaxes(cache) {
  const unnecessary=new Set(['Total amount charged is monthly; actual paid amount not specified.','Total amount charged is monthly; actual payment details are not provided.']);
  return {...cache,receipt:{...r,taxCents:tax,items:[{...r.items[0],itemTaxCents:tax}],uncertainties:(r.uncertainties||[]).filter(s=>!unnecessary.has(s))},sourceRepair:{kind:'google_one_printed_taxes',note:'State and local sales tax were added from the printed receipt and reconciled with the printed monthly charge. Source explicitly states this renewal was charged.'}};
 }
-module.exports={correctBlickUnitAmounts,correctGoogleOneTaxes};
+function correctReviewedAutojateDiscount(cache) {
+ const r=cache?.receipt,s=cache?.source;
+ if(s?.mailbox!=='jessejayspinotreceipts@gmail.com'||s.sourceMessageId!=='1a197c0e676af3a9'||r?.vendor!=='Autojate'||r.reference!=='REC10008'||r.date!=='2026-11-01'||r.items?.length!==1||!r.items[0].description.startsWith('Jesse - Pinot')||r.subtotalCents!==9950||r.orderDiscountCents!==1990||r.totalCents!==7960||r.paidAmountCents!==7960||r.taxCents||r.deliveryCents||r.otherFeesCents||r.uncertainties?.length)return cache;
+ if(!s.attachments?.some(a=>a.filename==='REC10008.pdf'&&a.size===15773))return cache;
+ return {...cache,receipt:{...r,subtotalCents:7960,orderDiscountCents:0,items:[{...r.items[0],netCents:7960}],reviewedPrintedAmounts:{subtotalCents:9950,discountCents:1990,totalCents:7960}},sourceRepair:{kind:'reviewed_single_line_discount',note:'Original REC10008.pdf visually reviewed 2026-11-08: single phone-service line $99.50, discount $19.90, paid $79.60. Entire discount applies to that sole line. Summary reports net $79.60; original PDF retains printed amounts.'}};
+}
+module.exports={correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount};

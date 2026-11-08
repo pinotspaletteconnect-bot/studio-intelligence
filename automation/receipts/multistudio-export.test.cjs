@@ -29,7 +29,7 @@ test('TD paint rule recognizes named paint containers but excludes other merchan
  assert.equal(rule.accountDefinition.id,'164');
  assert.ok(match.test('Titanium White Quart Size 32 oz.'));
  assert.ok(match.test('Fluorescent Pink Size 32 oz.'));
- for(const color of ['Metallic Copper','Metallic Gold','Fluorescent Orange','Burnt Sienna','Violet Quart','Chrome Orange Quart','Chrome Yellow Quart'])assert.ok(match.test(color+' Size 32 oz.'));
+ for(const color of ['Metallic Copper','Metallic Gold','Fluorescent Orange','Fluorescent Yellow','Burnt Umber','Burnt Sienna','Violet Quart','Chrome Orange Quart','Chrome Yellow Quart'])assert.ok(match.test(color+' Size 32 oz.'));
  assert.ok(!match.test('White Candle Vessel Size 32 oz.'));
  assert.ok(!match.test('Titanium White Shirt'));
 });
@@ -40,6 +40,33 @@ test('existing TD canvas and candle categories apply to extracted descriptions',
  }
  assert.equal(r.classifyItem({vendor:'TD Art Supply',description:'Unknown accessory'},scope.scopeId,c.approvedRules),null);
  assert.equal(r.classifyItem({vendor:'TD Art Supply',description:'Candle Soy Wax 25 lb'},scope.scopeId,c.approvedRules)?.accountId,'1150040007');
+ for(const description of ['Candle Cotton Wick $0.15 ea Packed 36','Candle Wick Stickers $0.025 ea Case of 80','Candle Vessel Customer Labels'])assert.equal(r.classifyItem({vendor:'TD Art Supply',description},scope.scopeId,c.approvedRules)?.accountId,'1150040007');
+ assert.equal(r.classifyItem({vendor:'TD Art Supply',description:'Candle Fragrance Measuring Cup .75oz $0.025 ea Case Pack 100'},scope.scopeId,c.approvedRules)?.accountId,'1150040010');
+ assert.equal(r.classifyItem({vendor:'TD Art Supply',description:'16 x 20" Premium Canvas'},scope.scopeId,c.approvedRules)?.accountId,'163');
+});
+
+test('saved service purposes map to existing accounts without guessing other services',async()=>{
+ const scope={...mailboxScope(registry,registry.studios[1].mailbox),useSharedCoa:true},c=await config(scope),r=await runtime(scope);
+ for(const [vendor,description,id] of [['Franklin Pest Solutions','Commercial Pest Recurring','68'],['Outshine Window Cleaning','Window Cleaning Out Only + I/O Doors','68'],['Kahoot!','Kahoot!+ Premier Personal (annual billing)','122']])assert.equal(r.classifyItem({vendor,description},scope.scopeId,c.approvedRules)?.accountId,id);
+ assert.equal(r.classifyItem({vendor:'Outshine Window Cleaning',description:'Amount'},scope.scopeId,c.approvedRules),null);
+ assert.equal(r.classifyItem({vendor:'Unknown Vendor',description:'Commercial Pest Recurring'},scope.scopeId,c.approvedRules),null);
+ const js=drafts.review.nodes.find(n=>n.name==='First Receipt Review').parameters.jsCode;
+ const prefix=js.slice(0,js.indexOf('const data=$("Batch - Trusted Review Configuration")'));
+ const match=await new AsyncFunction('$',prefix+'return knownOwnerCategory;})();return result;')(lookup(scope));
+ for(const answer of ['Pest control.','Pest control','This is for window cleaning.'])assert.equal(match(answer,c.approvedRules)?.accountId,'68');
+ assert.equal(match('Pest control or supplies?',c.approvedRules),null);
+});
+
+test('authenticated saved category answer survives a stale follow-up delivery state',async()=>{
+ const scope={...mailboxScope(registry,registry.studios[1].mailbox),useSharedCoa:true},c=await config(scope),r=await runtime(scope),id='0123456789abcdef';
+ const cache={source:{sourceMessageId:id,attachments:[]},receipt:{items:[{description:'Amount',netCents:2650}]}};
+ const meta={version:1,companyId:scope.scopeId,receiptKey:scope.scopeId+':'+id,field:'category',itemIndex:0,observed:'Amount',attachments:[]};
+ const audit={messageId:'reply',sender:'jeff.duff@pinotspalette.com',authenticated:true,receivedAt:'2026-11-08T12:00:00Z',answer:'This is for window cleaning.'};
+ const row={companyId:scope.scopeId,receiptKey:meta.receiptKey,reviewKey:'a'.repeat(64),status:'followup_delivery_pending',question:'Question\n[RECEIPT-QUESTION-V1]'+JSON.stringify(meta),ruleScope:'owner-clarification-v1:'+JSON.stringify([audit])};
+ assert.equal(r.applyOwnerClarifications({id},cache,[row],c.approvedRules).mappings[0]?.accountId,'68');
+ const wrong={...row,ruleScope:'owner-clarification-v1:'+JSON.stringify([{...audit,authenticated:false}])};
+ assert.deepEqual(r.applyOwnerClarifications({id},cache,[wrong],c.approvedRules).mappings,{});
+ assert.deepEqual(r.applyOwnerClarifications({id:'different'},cache,[row],c.approvedRules).mappings,{});
 });
 
 test('absent ancillary lines clear only when item and total arithmetic fully reconcile',async()=>{

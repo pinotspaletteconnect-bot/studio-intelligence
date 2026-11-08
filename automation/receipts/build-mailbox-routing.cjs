@@ -9,7 +9,7 @@ const scopes=registry.studios.map(s=>({...mailboxScope(registry,s.mailbox),useSh
 const {scopeReceiptRules,scopeReceiptConfig}=require('./scoped-runtime.cjs');
 const {selectApprovedTicket}=require('./approved-budget.cjs');
 const SHARED_RULES=require('./shared-owner-rules.json');
-const {correctBlickUnitAmounts,correctGoogleOneTaxes}=require('./receipt-source-repairs.cjs');
+const {correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount}=require('./receipt-source-repairs.cjs');
 const edge=n=>({main:[[{node:n,type:'main',index:0}]]});
 const code=(name,jsCode,position=[0,0])=>({id:randomUUID(),name,type:'n8n-nodes-base.code',typeVersion:2,position,parameters:{jsCode}});
 
@@ -24,6 +24,9 @@ function addMailboxContext(w) {
 }
 
 function scopedCode(js, name, key) {
+ if(key==='review')js=js.replace("['needs_answer','answered_pending_account_verification'].includes(row.status)","['needs_answer','answered_pending_account_verification','followup_delivery_pending'].includes(row.status)");
+ if(key==='review')js=correctReviewedAutojateDiscount.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctReviewedAutojateDiscount(cache);');
+ js=js.replace("plumbing:['plumbing repair'],subscriptions:['subscriptions']", "plumbing:['plumbing repair'],subscriptions:['subscriptions'],maintenance:['pest control','window cleaning','this is for window cleaning'],software:['software','software subscription']");
  if(key==='review')js=correctGoogleOneTaxes.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctGoogleOneTaxes(cache);');
  if(key==='documents')js=js.replaceAll('plain-instructions-v2','bold-instructions-v3');
  if(key==='review')js=correctBlickUnitAmounts.toString()+'\n'+js.replace("if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;","if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctBlickUnitAmounts(cache);").replaceAll('cache.reviewedPdfEvidence?.note||null','cache.reviewedPdfEvidence?.note||cache.sourceRepair?.note||null');

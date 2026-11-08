@@ -13,7 +13,7 @@
   {
     "id": "td-paint-color-quarts",
     "vendor": "TD Art Supply",
-    "pattern": "^(?:Metallic (?:Silver|Copper|Gold)|Venetian Red|Raw Umber|Raw Sienna|Burnt Sienna|Violet|Chrome Orange|Chrome Yellow|Ultra Blue|Phthalo (?:Green|Blue|Red)|Mars Black|Green Oxide|Deep Yellow|Fluorescent (?:White|Pink|Magenta|Blue|Violet|Red|Green|Orange)|Bright Red|Fire Red|Titanium White|Cobalt Blue)(?: Quart)? Size 32 oz\\.$",
+    "pattern": "^(?:Metallic (?:Silver|Copper|Gold)|Venetian Red|Raw Umber|Raw Sienna|Burnt (?:Sienna|Umber)|Violet|Chrome Orange|Chrome Yellow|Ultra Blue|Phthalo (?:Green|Blue|Red)|Mars Black|Green Oxide|Deep Yellow|Fluorescent (?:White|Pink|Magenta|Blue|Violet|Red|Green|Orange|Yellow)|Bright Red|Fire Red|Titanium White|Cobalt Blue)(?: Quart)? Size 32 oz\\.$",
     "account": "paint",
     "accountDefinition": {
       "id": "164",
@@ -24,7 +24,7 @@
   {
     "id": "td-confirmed-canvas-sizes",
     "vendor": "TD Art Supply",
-    "pattern": "^(?:New Price[.!]* )?(?:16 x 20\"|10 x 30\"|12\" x 16\"|8\" x 10\") (?:Value )?Canvas(?: |$)",
+    "pattern": "^(?:New Price[.!]* )?(?:16 x 20\"|10 x 30\"|12\" x 16\"|8\" x 10\") (?:(?:Value|Premium) )?Canvas(?: |$)",
     "account": "canvas",
     "accountDefinition": {
       "id": "163",
@@ -35,13 +35,21 @@
   {
     "id": "td-confirmed-candle-materials",
     "vendor": "TD Art Supply",
-    "pattern": "^Candle (?:Soy Wax\\b|Fragrance\\b|Warning Label\\b|Vessel and Black Lid Kit\\b)",
+    "pattern": "^Candle (?:Soy Wax\\b|Fragrance(?! Measuring Cup)\\b|Warning Label\\b|Vessel Customer Labels\\b|Cotton Wick\\b|Wick Stickers\\b|Vessel and Black Lid Kit\\b)",
     "account": "candleInventory",
     "accountDefinition": {
       "id": "1150040007",
       "name": "Candle Inventory"
     },
     "approval": "Existing confirmed candle-stock rule covers scents, labels/stickers and vessels. These explicit TD product descriptions identify candle stock without inferring purpose for generic containers."
+  },
+  {
+    "id": "td-confirmed-candle-measuring-cups",
+    "vendor": "TD Art Supply",
+    "pattern": "^Candle Fragrance Measuring Cup\\b",
+    "account": "candleCogs",
+    "accountDefinition": { "id": "1150040010", "name": "Candle COGS" },
+    "approval": "Existing confirmed candle-consumables rule maps candle cups to Candle COGS. Explicit measuring cups are consumables, not fragrance inventory."
   },
   {
     "id": "td-confirmed-porch-leaner",
@@ -53,6 +61,30 @@
       "name": "Special Surfaces Inventory"
     },
     "approval": "Existing confirmed TD porch-leaner mapping from the saved review configuration."
+  },
+  {
+    "id": "franklin-recurring-pest-control",
+    "vendor": "Franklin Pest Solutions",
+    "pattern": "^Commercial Pest Recurring$",
+    "account": "maintenance",
+    "accountDefinition": { "id": "68", "name": "Repairs & maintenance" },
+    "approval": "Authenticated owner replies 1a1bbc85a0d648aa, 1a1bbc882ea928ff, 1a1bbc912b14a3c8 and 1a1bbc93857ad798 confirm pest control. User requested closest existing COA description and shared general rules. Existing saved chart account 68 covers premises maintenance; no pest-control account is invented."
+  },
+  {
+    "id": "outshine-window-cleaning",
+    "vendor": "Outshine Window Cleaning",
+    "pattern": "^Window Cleaning(?: Out Only \\+ I/O Doors)?$",
+    "account": "maintenance",
+    "accountDefinition": { "id": "68", "name": "Repairs & maintenance" },
+    "approval": "Authenticated owner reply 1a1bb72572d05ba5 confirms window cleaning. Use existing chart account 68 for premises maintenance under user instruction to match existing account descriptions. Generic Amount lines require the receipt-specific saved answer."
+  },
+  {
+    "id": "kahoot-software-subscription",
+    "vendor": "Kahoot!",
+    "pattern": "^Kahoot!\\+ Premier Personal \\(annual billing\\)$",
+    "account": "software",
+    "accountDefinition": { "id": "122", "name": "Office expenses:Software & apps" },
+    "approval": "Receipt explicitly identifies an annual Kahoot software plan. Existing saved chart account 122 matches the product description, as user requested."
   },
   {
     "id": "google-one-storage-subscription",
