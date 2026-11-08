@@ -1,6 +1,12 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {currentSharedCategory,sharedSavedCategory}=require('./shared-answer-policy.cjs');
 const rules={companyId:'target-studio',accounts:{paint:{id:'164',name:'Paint Inventory'},projectPet:{id:'222',name:'Special Class Products COGS'}}};
+test('known Modelo beer reuses its confirmed category across suppliers without classifying merchandise',()=>{
+ const r={...rules,accounts:{...rules.accounts,beer:{id:'162',name:'Beer Inventory'}}};
+ assert.equal(currentSharedCategory('Heidelberg','Modelo Especial',r).accountId,'162');
+ assert.equal(currentSharedCategory('Other supplier','Modelo Especial',r).accountId,'162');
+ assert.equal(currentSharedCategory('Heidelberg','Modelo Especial shirt',r),null);
+});
 test('owner policy uses all paint colors and Canvas Depot across studio scopes',()=>{
  for(const studio of ['Gilbert','St. Matthews','Short North','Jeffersonville']) {
    const r={...rules,companyId:studio};
