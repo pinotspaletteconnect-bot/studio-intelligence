@@ -8,7 +8,7 @@ const cache={source:{mailbox:fact.mailbox,sourceMessageId:fact.sourceMessageId,a
 const get=n=>({first:()=>({json:{mailboxContext:scope}})});
 function record(){return prepareSupportingDocument({id:fact.sourceMessageId},cache,scope,facts).json;}
 test('reviewed deposit keeps exact evidence and never invents an expense category',()=>{
- const r=record();assert.equal(r.allocationLines.length,0);assert.equal(r.postingAllowed,false);assert.ok(supportingFact(r,facts));
+ const r=record();assert.equal(r.summaryRequest.message.date,fact.date);assert.equal(Number.isNaN(new Date(r.summaryRequest.message.date).getTime()),false);assert.equal(r.allocationLines.length,0);assert.equal(r.postingAllowed,false);assert.ok(supportingFact(r,facts));
  for(const delta of [{totalCents:1},{companyId:'other'},{reference:'other'},{allocationLines:[{accountId:'131',amountCents:58600}]}])assert.equal(supportingFact({...r,...delta},facts),undefined);
  assert.equal(prepareSupportingDocument({id:fact.sourceMessageId},cache,{...scope,mailbox:'other'},facts),null);
 });
