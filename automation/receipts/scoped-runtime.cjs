@@ -19,6 +19,15 @@ function scopeReceiptRules(rules, scope) {
 function scopeReceiptConfig(config, scope) {
   const copy={...config,companyId:scope.scopeId,mailbox:scope.mailbox};
   if(copy.approvedRules)copy.approvedRules=scopeReceiptRules(copy.approvedRules,scope);
+  if(copy.tdRule){
+    const items=new Map((copy.tdRule.items||[]).map(i=>[i.pattern,i]));
+    for(const r of SHARED_RULES.filter(r=>r.id.startsWith('td-'))){
+      const item={pattern:r.pattern,accountId:r.accountDefinition.id,accountName:r.accountDefinition.name};
+      if(items.has(r.pattern)&&items.get(r.pattern).accountId!==item.accountId)throw Error('Conflicting TD category');
+      items.set(r.pattern,item);
+    }
+    copy.tdRule={...copy.tdRule,items:[...items.values()]};
+  }
   if(scope.studio!=='Gilbert') {
     copy.reviewedReceipts=[];
     copy.completedReceipts=[];

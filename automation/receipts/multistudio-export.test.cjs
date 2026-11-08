@@ -219,3 +219,16 @@ test('each studio archives only after two verified PDFs, preserving duplicate id
   assert.throws(()=>r.archiveAfterVerified(receipt,jobs,'wrong@example.com','completed'),/Wrong Gmail/);
  }
 });
+
+test('TD text reader uses mailbox studio with balanced known items, rejecting mismatches',async()=>{
+ const scope={...mailboxScope(registry,registry.studios[2].mailbox),useSharedCoa:true};
+ const js=drafts.review.nodes.find(n=>n.name==='First Receipt Review').parameters.jsCode;
+ const prefix=js.slice(0,js.indexOf('const data=$("Batch - Trusted Review Configuration")'));
+ const parse=await new AsyncFunction('$',prefix+'return parseTd;})();return result;')(lookup(scope));
+ const c=await config(scope),rule=require('./scoped-runtime.cjs').scopeReceiptConfig(c,scope).tdRule;
+ const m={id:'testmail',subject:'FW: Order #TAS12345 confirmed',text:'From: TD ART SUPPLY <store+26326730@t.shopifyemail.com>\nSent: Monday, November 2, 2026 9:00 AM\nOrder #TAS12345\nOrder summary\n16 x 20" Value Canvas x × 2\n$95.52\nSubtotal\n$95.52\nShipping\n$0.00\nTotal\n$95.52 USD\nShipping address\nShort North\nBilling address\nGilbert\nShipping method\nFedEx'};
+ assert.equal(parse(m,rule)?.totalCents,9552);
+ assert.equal(parse({...m,text:m.text.replace('Total\n$95.52','Total\n$95.53')},rule),null);
+ assert.equal(parse({...m,text:m.text.replace('16 x 20" Value Canvas x','Unknown item')},rule),null);
+ assert.equal(parse({...m,text:m.text.replace('TD ART SUPPLY','UNKNOWN VENDOR')},rule),null);
+});

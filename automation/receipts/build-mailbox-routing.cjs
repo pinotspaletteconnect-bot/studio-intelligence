@@ -66,7 +66,10 @@ function scopedCode(js, name, key) {
  js=js.replace('function prepareBatch(items, config) {','function prepareBatch(items, config) {\n config=scopeReceiptConfig(config,MB);');
  if(key==='review') {
    js=js.replace("if (!id) return hold('Missing message identity');", "if (!id) return hold('Missing message identity');if(/^(?:Welcome to Google on your .+|Security alert|2-Step Verification (?:turned on|turned off))$/i.test(m.subject||''))return {json:{...base,status:'excluded_non_receipt',reason:'Google account notification'}};");
-   js=js.replace("if (!candidates.length) {const parsed=", "if (!candidates.length && MB.studio==='Gilbert') {const parsed=")
+   js=js.replace('(config.approvedRules ? parseApproved(m,config.approvedRules) : null)',"(MB.studio==='Gilbert'&&config.approvedRules ? parseApproved(m,config.approvedRules) : null)")
+     .replace(' || !shippingAddress.includes(rule.shippingMarker) || !billingAddress.includes(rule.billingMarker)', " || (MB.studio==='Gilbert'&&(!shippingAddress.includes(rule.shippingMarker)||!billingAddress.includes(rule.billingMarker)))")
+     .replace('requiredText:[order[0],rule.shippingMarker,rule.billingMarker]',"requiredText:MB.studio==='Gilbert'?[order[0],rule.shippingMarker,rule.billingMarker]:[order[0],rule.vendorMarker]")
+     .replace('if(rules.length!==1)return null;',"if(!rules.length||new Set(rules.map(r=>r.accountId+'|'+r.accountName)).size!==1)return null;")
      .replace("confirmedStudio:r.confirmedStudio||'Gilbert'","confirmedStudio:r.confirmedStudio||MB.studio")
      .replace('if(!studios.length)return receipt;',"if(!studios.length)return !String(receipt.studioEvidence||'').trim()?{...receipt,studioEvidence:'Owner-assigned receipt inbox: '+MB.studio}:receipt;");
  }
