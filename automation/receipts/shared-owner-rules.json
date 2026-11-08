@@ -1,5 +1,13 @@
 [
   {
+    "id": "td-wood-plank-special-surface",
+    "vendor": "TD Art Supply",
+    "pattern": "^10[\"”] x 30[\"”] Wood Plank(?: |$)",
+    "account": "special",
+    "accountDefinition": {"id":"179","name":"Special Surfaces Inventory"},
+    "approval": "Apply the existing owner-confirmed TD wood painting surface category to the explicit wood plank surface description."
+  },
+  {
     "id": "owner-north-vernon-beer-inventory-shared",
     "vendor": "NORTH VERNON BEVERAGE CO. INC.",
     "pattern": "^(?:MICH ULTRA|SHOCKT BELG WH|STELLA ARTOIS|MODELO ESP)\\b",
@@ -29,7 +37,7 @@
   {
     "id": "td-paint-color-quarts",
     "vendor": "TD Art Supply",
-    "pattern": "^(?:Metallic (?:Silver|Copper|Gold)|Venetian Red|Raw Umber|Raw Sienna|Burnt (?:Sienna|Umber)|Violet|Chrome Orange|Chrome Yellow|Ultra Blue|Phthalo (?:Green|Blue|Red)|Mars Black|Green Oxide|Deep Yellow|Fluorescent (?:White|Pink|Magenta|Blue|Violet|Red|Green|Orange|Yellow)|Bright Red|Fire Red|Titanium White|Cobalt Blue)(?: Quart)? Size 32 oz\\.(?: \\u0024[0-9]+\\.[0-9]{2} Case of [0-9]+)?$",
+    "pattern": "^(?:Metallic (?:Silver|Copper|Gold)|Magenta|Venetian Red|Raw Umber|Raw Sienna|Burnt (?:Sienna|Umber)|Violet|Chrome Orange|Chrome Yellow|Ultra Blue|Phthalo (?:Green|Blue|Red)|Mars Black|Green Oxide|Deep Yellow|Fluorescent (?:White|Pink|Magenta|Blue|Violet|Red|Green|Orange|Yellow)|Bright Red|Fire Red|Titanium White|Cobalt Blue)(?: Quart)? Size 32 oz\\.(?: \\u0024[0-9]+\\.[0-9]{2} Case of [0-9]+)?$",
     "account": "paint",
     "accountDefinition": {
       "id": "164",

@@ -61,7 +61,7 @@ function scopedCode(js, name, key) {
   const validItems=Array.isArray(receipt.items)&&receipt.items.length&&receipt.items.every(i=>Number.isSafeInteger(i.netCents)&&i.netCents>0);
   const net=validItems?receipt.items.reduce((s,i)=>s+i.netCents,0):null;
   const balanced=validItems&&net===receipt.subtotalCents&&net+(receipt.taxCents??0)+(receipt.deliveryCents??0)+(receipt.otherFeesCents??0)-(receipt.orderDiscountCents??0)===receipt.totalCents;
-  if(balanced&&Array.isArray(receipt.uncertainties))receipt={...receipt,uncertainties:receipt.uncertainties.filter(s=>!ancillaryOnly.has(s))}; }
+  if(balanced&&Array.isArray(receipt.uncertainties))receipt={...receipt,uncertainties:receipt.uncertainties.filter(s=>!ancillaryOnly.has(s)&&!(receipt.documentKind==='order_confirmation'&&s==='The total amount charged is not explicitly stated as paid; it is inferred from the order confirmation.'))}; }
  `);
  if(key==='coordinator'&&name==='Plan Genuine Questions')js=js
    .replace("if(r.status==='duplicate_in_batch'||", "if(r.status!=='needs_review'||")

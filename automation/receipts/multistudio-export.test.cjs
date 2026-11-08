@@ -28,6 +28,7 @@ test('TD paint rule recognizes named paint containers but excludes other merchan
  const match=new RegExp(rule.pattern,'i');
  assert.equal(rule.accountDefinition.id,'164');
  assert.ok(match.test('Titanium White Quart Size 32 oz.'));
+ assert.ok(match.test('Magenta Size 32 oz.'));
  assert.ok(match.test('Fluorescent Pink Size 32 oz.'));
  assert.ok(match.test('Fluorescent White Size 32 oz. $9.53 Case of 1'));
  assert.ok(!match.test('Fluorescent White Size 32 oz. plus unknown accessory'));
@@ -100,6 +101,11 @@ test('absent ancillary lines clear only when item and total arithmetic fully rec
  assert.equal(normalize({...r,totalCents:28657}).uncertainties.length,1);
  assert.equal(normalize({...r,items:[]}).uncertainties.length,1);
  assert.deepEqual(normalize({...r,uncertainties:['Two receipts have different totals.']}).uncertainties,['Two receipts have different totals.']);
+ const unconfirmed={...r,paidAmountCents:null,uncertainties:['The total amount charged is not explicitly stated as paid; it is inferred from the order confirmation.']};
+ assert.deepEqual(normalize(unconfirmed).uncertainties,[]);
+ assert.equal(normalize(unconfirmed).paidAmountCents,null);
+ assert.equal(normalize({...unconfirmed,totalCents:28657}).uncertainties.length,1);
+ assert.equal(normalize({...unconfirmed,documentKind:'receipt'}).uncertainties.length,1);
 });
 
 test('new approved extraction results reach review without another paid request',async()=>{
