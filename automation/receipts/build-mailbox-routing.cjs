@@ -67,7 +67,11 @@ function scopedCode(js, name, key) {
  if(key==='review')js=correctBlickUnitAmounts.toString()+'\n'+js.replace("if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;","if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctBlickUnitAmounts(cache);").replaceAll('cache.reviewedPdfEvidence?.note||null','cache.reviewedPdfEvidence?.note||cache.sourceRepair?.note||null');
  if(key==='review'&&name==='Choose Unread Receipts')js=js.replace("/requires extraction/.test(r.reason||'')", "/requires extraction|Receipt body is empty; inspect original attachments/.test(r.reason||'')");
  if(key==='review')js=js.replace("function workingConfirmation(receipt) {",`function workingConfirmation(receipt) { {
-  const ancillaryOnly=new Set(['Total amount matches subtotal, but no tax or fees are listed.','Total amount matches subtotal, but no explicit tax or fees are listed.','No explicit tax or discount amounts provided.','Total amount and item details are consistent with the invoice, but tax and delivery fees are not specified.']);
+  // Explicitly free lines remain in the original document but do not need an
+  // expense allocation. Unknown amounts and negative adjustments stay held.
+  const free=i=>i.netCents===0&&typeof i.description==='string'&&i.description.trim()&&/^\\s*\\$0\\.00(?: USD)?\\s*$/.test(i.evidence||'')&&(i.itemTaxCents==null||i.itemTaxCents===0);
+  if(Array.isArray(receipt.items)&&receipt.items.some(free)&&receipt.items.some(i=>Number.isSafeInteger(i.netCents)&&i.netCents>0))receipt={...receipt,zeroPriceItems:receipt.items.filter(free),items:receipt.items.filter(i=>!free(i))};
+  const ancillaryOnly=new Set(['Total amount matches subtotal, but no tax or fees are listed.','Total amount matches subtotal, but no explicit tax or fees are listed.','No explicit tax or discount amounts provided.','Total amount and item details are consistent with the invoice, but tax and delivery fees are not specified.','Total amount matches the payment but lacks detailed tax or discount breakdown.']);
   const validItems=Array.isArray(receipt.items)&&receipt.items.length&&receipt.items.every(i=>Number.isSafeInteger(i.netCents)&&i.netCents>0);
   const net=validItems?receipt.items.reduce((s,i)=>s+i.netCents,0):null;
   const balanced=validItems&&net===receipt.subtotalCents&&net+(receipt.taxCents??0)+(receipt.deliveryCents??0)+(receipt.otherFeesCents??0)-(receipt.orderDiscountCents??0)===receipt.totalCents;

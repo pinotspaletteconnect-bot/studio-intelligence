@@ -135,6 +135,15 @@ test('absent ancillary lines clear only when item and total arithmetic fully rec
  assert.equal(normalize(unconfirmed).paidAmountCents,null);
  assert.equal(normalize({...unconfirmed,totalCents:28657}).uncertainties.length,1);
  assert.equal(normalize({...unconfirmed,documentKind:'receipt'}).uncertainties.length,1);
+ const free={description:'Free event',netCents:0,itemTaxCents:0,evidence:'$0.00 USD'};
+ const paid={...r,documentKind:'receipt',items:[{netCents:10000},{netCents:2500},{netCents:438},free],subtotalCents:12938,totalCents:12938,paidAmountCents:12938,uncertainties:['Total amount matches the payment but lacks detailed tax or discount breakdown.']};
+ assert.equal(normalize(paid).items.length,3);
+ assert.deepEqual(normalize(paid).zeroPriceItems,[free]);
+ assert.deepEqual(normalize(paid).uncertainties,[]);
+ assert.equal(normalize({...paid,totalCents:12939}).uncertainties.length,1);
+ assert.equal(normalize({...paid,items:[free]}).items.length,1);
+ assert.equal(normalize({...paid,items:[{netCents:12938},{...free,evidence:'unreadable'}]}).uncertainties.length,1);
+ assert.equal(normalize({...paid,items:[{netCents:12938},{...free,itemTaxCents:1}]}).uncertainties.length,1);
 });
 
 test('new approved extraction results reach review without another paid request',async()=>{
