@@ -29,6 +29,7 @@ test('TD paint rule recognizes named paint containers but excludes other merchan
  assert.equal(rule.accountDefinition.id,'164');
  assert.ok(match.test('Titanium White Quart Size 32 oz.'));
  assert.ok(match.test('Fluorescent Pink Size 32 oz.'));
+ for(const color of ['Metallic Copper','Metallic Gold','Fluorescent Orange','Burnt Sienna','Violet Quart','Chrome Orange Quart','Chrome Yellow Quart'])assert.ok(match.test(color+' Size 32 oz.'));
  assert.ok(!match.test('White Candle Vessel Size 32 oz.'));
  assert.ok(!match.test('Titanium White Shirt'));
 });
@@ -38,6 +39,7 @@ test('existing TD canvas and candle categories apply to extracted descriptions',
   assert.equal(r.classifyItem({vendor:'TD Art Supply',description},scope.scopeId,c.approvedRules)?.accountId,id);
  }
  assert.equal(r.classifyItem({vendor:'TD Art Supply',description:'Unknown accessory'},scope.scopeId,c.approvedRules),null);
+ assert.equal(r.classifyItem({vendor:'TD Art Supply',description:'Candle Soy Wax 25 lb'},scope.scopeId,c.approvedRules)?.accountId,'1150040007');
 });
 
 test('absent ancillary lines clear only when item and total arithmetic fully reconcile',async()=>{

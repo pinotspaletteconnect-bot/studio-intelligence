@@ -4,15 +4,21 @@
     "vendor": "Autojate",
     "pattern": "(?:Pinot.{0,3}s Palette|receptionist|phone service)",
     "account": "phone",
-    "accountDefinition": {"id":"142","name":"Utilities:Phone service"},
+    "accountDefinition": {
+      "id": "142",
+      "name": "Utilities:Phone service"
+    },
     "approval": "Authenticated owner replies 1a1abea0affa80e9 and 1a1b6f4dc28d0ff4 identify Autojate as phone service. Owner approved shared general product rules for all four studios on 2026-11-07. Receipt-specific amounts and dates are not shared."
   },
   {
     "id": "td-paint-color-quarts",
     "vendor": "TD Art Supply",
-    "pattern": "^(?:Metallic Silver|Venetian Red|Raw Umber|Raw Sienna|Ultra Blue|Phthalo (?:Green|Blue|Red)|Mars Black|Green Oxide|Deep Yellow|Fluorescent (?:White|Pink|Magenta|Blue|Violet|Red|Green)|Bright Red|Fire Red|Titanium White|Cobalt Blue)(?: Quart)? Size 32 oz\\.$",
+    "pattern": "^(?:Metallic (?:Silver|Copper|Gold)|Venetian Red|Raw Umber|Raw Sienna|Burnt Sienna|Violet|Chrome Orange|Chrome Yellow|Ultra Blue|Phthalo (?:Green|Blue|Red)|Mars Black|Green Oxide|Deep Yellow|Fluorescent (?:White|Pink|Magenta|Blue|Violet|Red|Green|Orange)|Bright Red|Fire Red|Titanium White|Cobalt Blue)(?: Quart)? Size 32 oz\\.$",
     "account": "paint",
-    "accountDefinition": {"id":"164","name":"Paint Inventory"},
+    "accountDefinition": {
+      "id": "164",
+      "name": "Paint Inventory"
+    },
     "approval": "Existing confirmed Paint Inventory category and owner-approved shared general product rules. Applies only to named TD Art Supply paint colors in 32 oz containers; no other TD products or receipt-specific decisions are inferred."
   },
   {
@@ -20,15 +26,21 @@
     "vendor": "TD Art Supply",
     "pattern": "^(?:New Price[.!]* )?(?:16 x 20\"|10 x 30\"|12\" x 16\"|8\" x 10\") (?:Value )?Canvas(?: |$)",
     "account": "canvas",
-    "accountDefinition": {"id":"163","name":"Canvas Inventory"},
+    "accountDefinition": {
+      "id": "163",
+      "name": "Canvas Inventory"
+    },
     "approval": "Existing confirmed TD canvas-size mapping from the saved receipt review configuration, applied to extracted item descriptions as well as email parsing."
   },
   {
     "id": "td-confirmed-candle-materials",
     "vendor": "TD Art Supply",
-    "pattern": "^Candle (?:Fragrance\\b|Warning Label\\b|Vessel and Black Lid Kit\\b)",
+    "pattern": "^Candle (?:Soy Wax\\b|Fragrance\\b|Warning Label\\b|Vessel and Black Lid Kit\\b)",
     "account": "candleInventory",
-    "accountDefinition": {"id":"1150040007","name":"Candle Inventory"},
+    "accountDefinition": {
+      "id": "1150040007",
+      "name": "Candle Inventory"
+    },
     "approval": "Existing confirmed candle-stock rule covers scents, labels/stickers and vessels. These explicit TD product descriptions identify candle stock without inferring purpose for generic containers."
   },
   {
@@ -36,7 +48,10 @@
     "vendor": "TD Art Supply",
     "pattern": "^10\\.5\" x 47[\"”] Wood Porch Leaner(?: |$)",
     "account": "special",
-    "accountDefinition": {"id":"179","name":"Special Surfaces Inventory"},
+    "accountDefinition": {
+      "id": "179",
+      "name": "Special Surfaces Inventory"
+    },
     "approval": "Existing confirmed TD porch-leaner mapping from the saved review configuration."
   }
 ]

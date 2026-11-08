@@ -24,6 +24,7 @@ function addMailboxContext(w) {
 }
 
 function scopedCode(js, name, key) {
+ if(key==='documents')js=js.replaceAll('plain-instructions-v2','bold-instructions-v3');
  if(key==='review')js=correctBlickUnitAmounts.toString()+'\n'+js.replace("if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;","if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctBlickUnitAmounts(cache);").replaceAll('cache.reviewedPdfEvidence?.note||null','cache.reviewedPdfEvidence?.note||cache.sourceRepair?.note||null');
  if(key==='review'&&name==='Choose Unread Receipts')js=js.replace("/requires extraction/.test(r.reason||'')", "/requires extraction|Receipt body is empty; inspect original attachments/.test(r.reason||'')");
  if(key==='review')js=js.replace("function workingConfirmation(receipt) {",`function workingConfirmation(receipt) { {
