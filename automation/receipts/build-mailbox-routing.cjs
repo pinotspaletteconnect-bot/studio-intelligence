@@ -40,7 +40,7 @@ function scopedCode(js, name, key) {
  js=js.replace("if(!studioFromEvidence(r.studioEvidence))add('studioEvidence','Which studio should receive this expense? Reply Gilbert, St. Matthews, Short North, or Jeffersonville.',r.studioEvidence);",'');
  // Printed facts and extraction failures require source review, not a repeated
  // owner questionnaire. Ask only for genuinely missing business purpose/context.
- if(key==='questions'&&name==='Code in JavaScript')js=js.replace('const incoming=$input.first().json;',"const incoming=$input.first().json;\nconst questionField=questionMetadata(incoming)?.field;if(questionField&&!['category','ownerContext'].includes(questionField))return [];");
+ if(key==='questions'&&name==='Code in JavaScript')js=js.replace('const incoming=$input.first().json;',"const incoming=$input.first().json;\nconst questionMeta=questionMetadata(incoming),questionField=questionMeta?.field;if(questionField&&!['category','ownerContext'].includes(questionField))return [];if(questionField==='category'&&SHARED_RULES.some(r=>r.id.startsWith('td-')&&new RegExp(r.pattern,'i').test(String(questionMeta.observed||''))))return [];");
  if(key==='extraction'&&name==='Backlog - Eligible Allowances')
   js=selectApprovedTicket.toString()+"\nconst ticket=selectApprovedTicket($input.all().map(i=>i.json),$('Verify Legacy Budget').all().map(i=>i.json),$('Helper Input').first().json.sourceMessageId);return ticket?[{json:ticket}]:[];";
  if(key==='extraction')js=js.replaceAll('maximumApprovalUSD:5','maximumApprovalUSD:10');

@@ -13,7 +13,7 @@ function lookup(scope){return name=>{assert.equal(name,'Mailbox Context');return
 async function runtime(scope){
  const js=drafts.review.nodes.find(n=>n.name==='First Receipt Review').parameters.jsCode;
  const prefix=js.slice(0,js.indexOf('const data=$("Batch - Trusted Review Configuration")'));
- return new AsyncFunction('$',prefix+'return {reviewExtractedReceipt,applyOwnerClarifications,reviewMultiOrder,correctReviewedPdf};})();return result;')(lookup(scope));
+ return new AsyncFunction('$',prefix+'return {reviewExtractedReceipt,applyOwnerClarifications,reviewMultiOrder,correctReviewedPdf,classifyItem};})();return result;')(lookup(scope));
 }
 async function config(scope){
  const js=drafts.review.nodes.find(n=>n.name==='Batch - Trusted Review Configuration').parameters.jsCode;
@@ -31,6 +31,13 @@ test('TD paint rule recognizes named paint containers but excludes other merchan
  assert.ok(match.test('Fluorescent Pink Size 32 oz.'));
  assert.ok(!match.test('White Candle Vessel Size 32 oz.'));
  assert.ok(!match.test('Titanium White Shirt'));
+});
+test('existing TD canvas and candle categories apply to extracted descriptions',async()=>{
+ const scope={...mailboxScope(registry,registry.studios[2].mailbox),useSharedCoa:true},c=await config(scope),r=await runtime(scope);
+ for(const [description,id] of [['10 x 30" Canvas $3.25ea Case of 24','163'],['Candle Fragrance Bourbon Tobacco 1 Pound','1150040007'],['Candle Warning Label','1150040007']]){
+  assert.equal(r.classifyItem({vendor:'TD Art Supply',description},scope.scopeId,c.approvedRules)?.accountId,id);
+ }
+ assert.equal(r.classifyItem({vendor:'TD Art Supply',description:'Unknown accessory'},scope.scopeId,c.approvedRules),null);
 });
 
 test('absent ancillary lines clear only when item and total arithmetic fully reconcile',async()=>{
@@ -106,7 +113,7 @@ test('embedded argument rules are scoped without changing historical provenance'
  const js=scopedCode('return [{json:{rules:'+JSON.stringify(rules)+'}}];','fixture','review');
  const output=await new AsyncFunction('$',js)(lookup(scope));
  assert.equal(output[0].json.rules.companyId,scope.scopeId);
- assert.deepEqual(output[0].json.rules.rules.map(r=>r.id),['general','owner-autojate-phone-service-shared','td-paint-color-quarts']);
+ assert.deepEqual(output[0].json.rules.rules.map(r=>r.id),['general',...require('./shared-owner-rules.json').map(r=>r.id)]);
  assert.equal(output[0].json.rules.accounts.phone.name,'Utilities:Phone service');
 });
 test('saved Autojate phone purpose classifies each studio without copying amounts',async()=>{
