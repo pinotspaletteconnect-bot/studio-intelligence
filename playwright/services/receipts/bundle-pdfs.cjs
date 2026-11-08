@@ -16,11 +16,15 @@ async function bundlePdfs(input) {
   for (const d of documents) {
     if (!d || typeof d.fileName !== 'string' || !/^[\x20-\x7e]{1,180}\.(?:pdf|jpe?g|png)$/i.test(d.fileName) ||
         /[\\/]/.test(d.fileName) || names.has(d.fileName) ||
-        typeof d.base64 !== 'string' || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(d.base64))
+        typeof d.base64 !== 'string' || d.base64.length > 16000000 ||
+        d.base64.length % 4 !== 0 || /[^A-Za-z0-9+/=]/.test(d.base64))
       throw Error('Invalid source PDF');
     names.add(d.fileName);
     const raw = Buffer.from(d.base64, 'base64'); bytes += raw.length;
-    if (!raw.length || raw.length > 12000000 || bytes > 20000000 ||
+    // Canonical round-trip validates padding without a repeated-group regex,
+    // which exhausts V8's stack on ordinary multi-megabyte camera photos.
+    if (raw.toString('base64') !== d.base64 ||
+        !raw.length || raw.length > 12000000 || bytes > 20000000 ||
         raw.length !== d.size ||
         !/^[a-f0-9]{64}$/.test(d.sha256 || '') ||
         createHash('sha256').update(raw).digest('hex') !== d.sha256)
