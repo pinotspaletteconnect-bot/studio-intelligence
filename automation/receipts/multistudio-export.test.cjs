@@ -176,6 +176,15 @@ test('each inbox read has a bounded Gmail request count',()=>{
  assert.equal(reads.length,4);
  assert.ok(reads.every(n=>n.parameters.returnAll===false&&n.parameters.limit===250));
 });
+
+test('attachment-only emails enter extraction while completed cache and unrelated holds do not',async()=>{
+ const scope={...mailboxScope(registry,registry.studios[1].mailbox),useSharedCoa:true};
+ const js=drafts.review.nodes.find(n=>n.name==='Choose Unread Receipts').parameters.jsCode;
+ const rows=[{sourceMessageId:'a',status:'needs_review',reason:'Receipt body is empty; inspect original attachments before asking for a COA'},{sourceMessageId:'b',status:'needs_review',reason:'Needs COA clarification: purpose'},{sourceMessageId:'c',status:'needs_review',reason:'Receipt body is empty; inspect original attachments before asking for a COA'}];
+ const values={'Mailbox Context':[{json:{mailboxContext:scope}}],'Batch - Read Extraction Cache':[{json:{status:'complete',sourceMessageId:'c'}}],'Read New Extraction Cache':[{json:{status:'available'}}]};
+ const result=await new AsyncFunction('$','$input',js)(n=>({all:()=>values[n],first:()=>values[n][0]}),{all:()=>rows.map(json=>({json}))});
+ assert.deepEqual(result.map(i=>i.json.sourceMessageId),['a']);
+});
 test('source-specific correction and two-order decisions do not cross studios',async()=>{
  const scope={...mailboxScope(registry,registry.studios[1].mailbox),useSharedCoa:true};
  const r=await runtime(scope);

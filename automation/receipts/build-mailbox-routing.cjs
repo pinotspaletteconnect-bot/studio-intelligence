@@ -23,6 +23,7 @@ function addMailboxContext(w) {
 }
 
 function scopedCode(js, name, key) {
+ if(key==='review'&&name==='Choose Unread Receipts')js=js.replace("/requires extraction/.test(r.reason||'')", "/requires extraction|Receipt body is empty; inspect original attachments/.test(r.reason||'')");
  if(key==='review')js=js.replace("function workingConfirmation(receipt) {",`function workingConfirmation(receipt) { {
   const ancillaryOnly=new Set(['Total amount matches subtotal, but no tax or fees are listed.','Total amount matches subtotal, but no explicit tax or fees are listed.','No explicit tax or discount amounts provided.','Total amount and item details are consistent with the invoice, but tax and delivery fees are not specified.']);
   const validItems=Array.isArray(receipt.items)&&receipt.items.length&&receipt.items.every(i=>Number.isSafeInteger(i.netCents)&&i.netCents>0);
