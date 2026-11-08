@@ -26,6 +26,13 @@ test('archive accepts preserved photos but rejects changed or unsupported attach
  const $=name=>({first:()=>({json:name==='Mailbox Context'?{mailboxContext:{studio:'Jeffersonville'}}:prepared})});
  const message={id:'abc',payload:{filename:attachment.filename,mimeType:attachment.mimeType,body:{size:attachment.size}}};
  assert.equal((await run($,message))[0].json.receipt.sourceMessageId,'abc');
+ const supporting={filename:'image.png',mimeType:'image/png',size:7784};
+ const inline={filename:supporting.filename,mimeType:supporting.mimeType,body:{size:supporting.size},headers:[{name:'Content-Disposition',value:'inline'}]};
+ prepared.receipt.sourceAttachment.files.push(supporting);
+ await assert.rejects(run($,message),/coverage changed/);
+ assert.equal((await run($,{...message,payload:{parts:[message.payload,inline]}}))[0].json.receipt.sourceMessageId,'abc');
+ await assert.rejects(run($,{...message,payload:{parts:[message.payload,{...inline,body:{size:7785}}]}}),/coverage changed/);
+ prepared.receipt.sourceAttachment.files.pop();
  await assert.rejects(run($,{...message,id:'wrong'}),/changed/);
  await assert.rejects(run($,{...message,payload:{...message.payload,mimeType:'image/png'}}),/coverage changed/);
  await assert.rejects(run($,{...message,payload:{...message.payload,body:{size:1}}}),/coverage changed/);
