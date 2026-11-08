@@ -7,13 +7,13 @@ function currentSharedCategory(vendor, description, rules) {
  let key=null;
  if(['canvasdepot','thecanvasdepot','dynamicwholesalesigns','dynamicwholesale'].includes(name))key='projectPet';
  const d=String(description||'');
- if(!key&&/^Modelo Especial$/i.test(d.trim()))key='beer';
+ if(!key&&/^(?:Modelo Especial|Stella Artois 5\.16 gal \(1\/6 bbl\) Keg|Kona Big Wave 4x 6 Pack \(12 oz Bottles\)|Bud Light 4x 6 Pack \(12 oz Bottles\)|Four Peaks Hop Knot IPA 4x 6 Pack \(12 oz Bottles\))$/i.test(d.trim()))key='beer';
  if(!key&&/\b(?:paint|acrylics?|watercolou?rs?|tempera|gouache)\b/i.test(d)&&
    !/\b(?:brush(?:es)?|pen(?:s)?|marker(?:s)?|medium|thinner|remover|tray|palette|apron|varnish|canvas|kit|class|ticket|lesson|event|service|set of tools)\b/i.test(d))key='paint';
  const account=key&&rules.accounts[key];
  return account?{companyId:rules.companyId,accountId:account.id,accountName:account.name,
    approved:true,active:true,ruleId:'owner-shared-20261108-'+key,
-   sharedOwnerAnswer:{source:key==='beer'?'owner_reply_1a175259a094b9da_and_shared_reuse_approval':'owner_chat_20261108',scope:'all four studio inboxes',statement:key==='paint'?'Paint regardless of color is Paint Inventory.':key==='beer'?'Existing owner-confirmed Modelo beer category applies across suppliers and studios.':'Canvas Depot is Special Class Products COGS.'}}:null;
+   sharedOwnerAnswer:{source:key==='beer'?'owner_reply_1a175259a094b9da_and_shared_reuse_approval':'owner_chat_20261108',scope:'all four studio inboxes',statement:key==='paint'?'Paint regardless of color is Paint Inventory.':key==='beer'?'Existing owner-confirmed Beer Inventory category applies to these named beer products across suppliers and studios; deposits and other merchandise are excluded.':'Canvas Depot is Special Class Products COGS.'}}:null;
 }
 
 function sharedSavedCategory(description, rows, rules, helpers) {

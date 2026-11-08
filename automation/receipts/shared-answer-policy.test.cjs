@@ -22,6 +22,8 @@ test('known Modelo beer reuses its confirmed category across suppliers without c
  assert.equal(currentSharedCategory('Heidelberg','Modelo Especial',r).accountId,'162');
  assert.equal(currentSharedCategory('Other supplier','Modelo Especial',r).accountId,'162');
  assert.equal(currentSharedCategory('Heidelberg','Modelo Especial shirt',r),null);
+ for(const d of ['Stella Artois 5.16 gal (1/6 bbl) Keg','Kona Big Wave 4x 6 Pack (12 oz Bottles)','Bud Light 4x 6 Pack (12 oz Bottles)','Four Peaks Hop Knot IPA 4x 6 Pack (12 oz Bottles)'])assert.equal(currentSharedCategory('BEES',d,r)?.accountId,'162');
+ for(const d of ['Stella Artois keg deposit','Bud Light shirt','Empty keg','Barritts Ginger Beer'])assert.equal(currentSharedCategory('BEES',d,r),null);
 });
 test('owner policy uses all paint colors and Canvas Depot across studio scopes',()=>{
  for(const studio of ['Gilbert','St. Matthews','Short North','Jeffersonville']) {
