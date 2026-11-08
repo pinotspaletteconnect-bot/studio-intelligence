@@ -23,6 +23,14 @@ function isolateDocumentCalls(w,makeId){
  w.connections['Process Each Receipt Independently']=edge(name);
  w.connections[name]={main:[[{node:'Collect File Results',type:'main',index:0}],[{node:'Preserve Receipt and Summary — Context',type:'main',index:0}]]};
  w.connections[call.name]=edge(name);
+ const studioCall=w.nodes.find(n=>n.name==='Process Studios Independently');
+ if(!studioCall)throw Error('Studio helper call missing');
+ studioCall.parameters.mode='once';
+ const studioLoop='One Studio at a Time';
+ w.nodes.push({id:makeId(),name:studioLoop,type:'n8n-nodes-base.splitInBatches',typeVersion:3,position:[studioCall.position[0]-300,studioCall.position[1]+180],parameters:{batchSize:1,options:{}}});
+ w.connections['Select Studio Inboxes']=edge(studioLoop);
+ w.connections[studioLoop]={main:[[{node:'All Studio Results',type:'main',index:0}],[{node:studioCall.name,type:'main',index:0}]]};
+ w.connections[studioCall.name]=edge(studioLoop);
  w.nodes.find(n=>n.name==='Collect File Results').parameters.jsCode=collectDocumentResults.toString()+"\nconst base=$('Read Receipts and Apply Saved Answers').first().json.context;return [{json:{...collectDocumentResults(base,$input.all().map(i=>i.json)),mailboxContext:$('Mailbox Context').first().json.mailboxContext}}];";
  const report=w.nodes.find(n=>n.name==='All Studio Results');
  report.parameters.jsCode=report.parameters.jsCode.replace("return hit?", "return hit&&hit.json.mode==='receipt_email_only'&&Array.isArray(hit.json.completed)&&Array.isArray(hit.json.documentIssues)&&hit.json.reviewCounts?");

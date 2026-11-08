@@ -85,3 +85,9 @@ test('reviewed North Vernon correction is restricted to the verified original',(
  for(const change of [{reference:'other'},{totalCents:12851},{date:'2026-09-05'}]){const bad={...c,receipt:{...c.receipt,...change}};assert.equal(fix(bad),bad);}
  const bad={...c,source:{...c.source,mailbox:'other'}};assert.equal(fix(bad),bad);
 });
+test('Target source repair corrects printed facts without guessing the item category',()=>{
+ const {correctReviewedTarget:fix}=require('./receipt-source-repairs.cjs');
+ const c={source:{mailbox:'jessejayspinotreceipts@gmail.com',sourceMessageId:'1a0e940cf111b81e',attachments:[{filename:'pro-RTGVbqtE.jpeg',size:863310}]},receipt:{vendor:'Target',date:'2026-09-28',totalCents:1060,subtotalCents:1060,reference:null,items:[{description:'Mondo Llama',netCents:1000}]}};
+ const r=fix(c).receipt;assert.equal(r.reference,'2-6271-2473-0160-7748-7');assert.equal(r.subtotalCents+r.taxCents,r.totalCents);assert.equal(r.items[0].description,'Mondo Llama');assert.equal(r.items[0].accountId,undefined);
+ const other={...c,source:{...c.source,sourceMessageId:'1a0e93eadf2ad6ba'}};assert.equal(fix(other),other);
+});

@@ -27,5 +27,10 @@ test('existing workflow loops individual document calls and only collects at loo
  assert.equal(w.connections[loop.name].main[0][0].node,'Collect File Results');
  assert.equal(w.connections[loop.name].main[1][0].node,'Preserve Receipt and Summary — Context');
  assert.equal(w.connections['Preserve Receipt and Summary'].main[0][0].node,loop.name);
+ assert.equal(w.nodes.find(n=>n.name==='Process Studios Independently').parameters.mode,'once');
+ assert.equal(w.connections['Select Studio Inboxes'].main[0][0].node,'One Studio at a Time');
+ assert.equal(w.connections['One Studio at a Time'].main[0][0].node,'All Studio Results');
+ assert.equal(w.connections['One Studio at a Time'].main[1][0].node,'Process Studios Independently');
+ assert.equal(w.connections['Process Studios Independently'].main[0][0].node,'One Studio at a Time');
  assert.ok(w.nodes.find(n=>n.name==='All Studio Results').parameters.jsCode.includes('s.documentIssues?.length'));
 });

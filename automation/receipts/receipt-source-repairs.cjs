@@ -114,4 +114,9 @@ function correctOutshineServicePayment(cache) {
  if((r.uncertainties||[]).some(u=>!allowed.has(u)))return cache;
  return {...cache,receipt:{...r,items:[{...r.items[0],description:'Window Cleaning',evidence:amounts[0][0]}],uncertainties:[]},sourceRepair:{kind:'confirmed_window_cleaning_payment',note:'Owner previously confirmed Outshine as window cleaning. The approved payment receipt explicitly reconciles amount, zero tax, zero tip and total. A single service amount is retained; no additional service details are invented.'}};
 }
-module.exports={correctReviewedHeidelberg,correctReviewedNorthVernon,correctFishCleaningPayment,correctCanvasDepotPayment,correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount,correctShippoPayment,correctReviewedCintas,correctOutshineServicePayment};
+function correctReviewedTarget(cache) {
+ const r=cache?.receipt,s=cache?.source;
+ if(s?.mailbox!=='jessejayspinotreceipts@gmail.com'||s.sourceMessageId!=='1a0e940cf111b81e'||r?.vendor!=='Target'||r.date!=='2026-09-28'||r.totalCents!==1060||r.items?.length!==1||r.items[0].description!=='Mondo Llama'||r.items[0].netCents!==1000||!s.attachments?.some(a=>a.filename==='pro-RTGVbqtE.jpeg'&&a.size===863310))return cache;
+ return {...cache,receipt:{...r,reference:'2-6271-2473-0160-7748-7',subtotalCents:1000,taxCents:60,paidAmountCents:1060},sourceRepair:{kind:'visually_reviewed_target_receipt',note:'Original photo reviewed November 8: REC#2-6271-2473-0160-7748-7, two Mondo Llama items at $5 each, subtotal $10, tax $.60, total and printed card charge $10.60. Handwritten Cash is retained on the original, not treated as proof of payment method. Product type still requires an owner answer.'}};
+}
+module.exports={correctReviewedTarget,correctReviewedHeidelberg,correctReviewedNorthVernon,correctFishCleaningPayment,correctCanvasDepotPayment,correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount,correctShippoPayment,correctReviewedCintas,correctOutshineServicePayment};
