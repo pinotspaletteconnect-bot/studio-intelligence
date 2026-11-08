@@ -7,10 +7,10 @@ function correctBlickUnitAmounts(cache) {
  for(const item of r.items){
   const parts=text.split(item.description);
   if(parts.length!==2)return cache;
-  const m=parts[1].match(/^\s*Qty:\s*(\d+)\s+In stock and reserved\s+\$\s*([\d,]+\.\d{2})(?:\s+each\s*\$\s*([\d,]+\.\d{2}))?/i);
+  const m=parts[1].match(/^\s*Qty:\s*(\d+)\s+(?:In stock and reserved|\d+ Units In stock and Reserved; \d+ Units on Backorder until \d{1,2}\/\d{1,2}\/\d{4})\s+\$\s*([\d,]+\.\d{2})(?:\s+each\s*\$\s*([\d,]+\.\d{2}))?/i);
   if(!m||Number(m[1])!==item.quantity)return cache;
   const line=cents(m[2]),unit=m[3]?cents(m[3]):line;
-  if(!Number.isSafeInteger(line)||line<=0||unit*item.quantity!==line||![line,unit].includes(item.netCents))return cache;
+  if(!Number.isSafeInteger(line)||line<=0||unit*item.quantity!==line||![line,unit,line*item.quantity].includes(item.netCents))return cache;
   items.push({...item,netCents:line,evidence:item.description+m[0]});
  }
  const sum=items.reduce((n,i)=>n+i.netCents,0),subtotal=text.match(/Subtotal:\s*\$\s*([\d,]+\.\d{2})/i);
@@ -48,4 +48,12 @@ function correctShippoPayment(cache) {
  if(r.items?.length>1||(r.items?.length===1&&(r.items[0].description!=='Invoice Payment Confirmation'||r.items[0].netCents!==cents)))return cache;
  return {...cache,receipt:{...r,items:[{description:'Invoice Payment Confirmation',quantity:1,netCents:cents,itemTaxCents:null,evidence:paid[0][0]}],uncertainties:[]},sourceRepair:{kind:'shippo_confirmed_aggregate_postage',note:'Owner explicitly confirmed all Shippo charges are shipping and postage. Source confirms payment for '+paid[0][2]+' transactions; the summary uses the single invoice payment total, not invented per-label prices.'}};
 }
-module.exports={correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount,correctShippoPayment};
+function correctReviewedCintas(cache) {
+ const r=cache?.receipt,s=cache?.source;
+ if(s?.mailbox!=='jessejayspinotreceipts@gmail.com'||s.sourceMessageId!=='1a130a62a28c7ece'||r?.vendor!=='CINTAS'||r.reference!=='4218411442'||r.date!=='2026-09-07'||r.totalCents!==18742||r.taxCents!==1061||!s.attachments?.some(a=>a.filename==='Epson_10122026080516.pdf'&&a.size===640678))return cache;
+ const printed=[['SIG AUTOPAPER DRG ALU',2,50],['FC4 NEUTRAL FLR CLNR',1,362],['SIG AIR SVC',1,2431],['SIG SOAP SVC',1,954],['SIG SANT SVC',1,1924],['A0004 PINOT PALETTE LOGO MAT',1,4345],['HRDWD DRK PAPER LRG',2,3735],["SANI'S BOWL CLIP SVC",2,1268],['SIG HND SNTZR STAND',1,560],['SERVICE CHARGE',1,2052]];
+ const items=printed.map(([description,quantity,netCents])=>({description,quantity,netCents,itemTaxCents:null,evidence:'Visually verified original line total: '+(netCents/100).toFixed(2)}));
+ if(items.reduce((n,i)=>n+i.netCents,0)+r.taxCents!==r.totalCents)throw Error('Reviewed Cintas arithmetic mismatch');
+ return {...cache,receipt:{...r,items,subtotalCents:17681,otherFeesCents:0,deliveryCents:0,orderDiscountCents:0,uncertainties:[],reviewedPrintedAmounts:{serviceSubtotalCents:15629,serviceChargeCents:2052,subtotalCents:17681,taxCents:1061,totalCents:18742}},sourceRepair:{kind:'visually_reviewed_cintas_invoice',note:'Original invoice 4218411442 visually reviewed 2026-11-08. Nine positive service lines total $156.29; separately printed service charge $20.52; subtotal $176.81; tax $10.61; total $187.42. Zero-price refill lines remain on original PDF. Categories still require saved owner approval.'}};
+}
+module.exports={correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount,correctShippoPayment,correctReviewedCintas};

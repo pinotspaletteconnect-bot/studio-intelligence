@@ -10,7 +10,7 @@ const {scopeReceiptRules,scopeReceiptConfig}=require('./scoped-runtime.cjs');
 const {selectApprovedTicket}=require('./approved-budget.cjs');
 const SHARED_RULES=require('./shared-owner-rules.json');
 const SHARED_ACCOUNTS=require('./shared-owner-accounts.json');
-const {correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount,correctShippoPayment}=require('./receipt-source-repairs.cjs');
+const {correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount,correctShippoPayment,correctReviewedCintas}=require('./receipt-source-repairs.cjs');
 const edge=n=>({main:[[{node:n,type:'main',index:0}]]});
 const code=(name,jsCode,position=[0,0])=>({id:randomUUID(),name,type:'n8n-nodes-base.code',typeVersion:2,position,parameters:{jsCode}});
 
@@ -25,6 +25,7 @@ function addMailboxContext(w) {
 }
 
 function scopedCode(js, name, key) {
+ if(key==='review')js=correctReviewedCintas.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctReviewedCintas(cache);');
  if(key==='review')js=js.replace("accountId:value.accountId}};", `accountId:value.accountId}};
       if(/^these are all under cintas[.!]?$/i.test(answer.answer.trim())&&/^Cintas$/i.test(r.vendor)&&value.accountId==='229')r.items.forEach((line,index)=>{
         mappings[index]={...value,companyId:rules.companyId,approved:true,active:true,ruleId:'owner:'+row.reviewKey,

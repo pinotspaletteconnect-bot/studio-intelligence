@@ -10,6 +10,8 @@ test('reviewed Autojate discount stays bound to its original studio and receipt'
 test('Blick uses printed extended amounts only when all quantity and subtotal checks agree',()=>{
  const cache={source:{text:'Paint\nQty: 3\nIn stock and reserved\n$ 22.14\neach $ 7.38\nSubtotal: $22.14'},receipt:{vendor:'Blick Art Materials',subtotalCents:2214,items:[{description:'Paint',quantity:3,netCents:738}]}};
  assert.equal(correctBlickUnitAmounts(cache).receipt.items[0].netCents,2214);
+ const backorder={source:{text:cache.source.text.replace('In stock and reserved','1 Units In stock and Reserved; 2 Units on Backorder until 11/18/2026')},receipt:{...cache.receipt,items:[{description:'Paint',quantity:3,netCents:6642}]}};
+ assert.equal(correctBlickUnitAmounts(backorder).receipt.items[0].netCents,2214);
  assert.equal(correctBlickUnitAmounts({...cache,receipt:{...cache.receipt,subtotalCents:2200}}).receipt.items[0].netCents,738);
  assert.equal(correctBlickUnitAmounts({...cache,source:{text:cache.source.text.replace('Qty: 3','Qty: 2')}}).receipt.items[0].netCents,738);
  assert.equal(correctBlickUnitAmounts({...cache,source:{text:cache.source.text+'\nPaint'}}).receipt.items[0].netCents,738);
@@ -32,4 +34,15 @@ test('Shippo aggregate payment uses the printed amount only after all invoice ch
  assert.equal(c.receipt.items.length,0);
  for(const delta of [{totalCents:4601},{reference:'wrong'},{uncertainties:['Two receipts disagree.']},{taxCents:1}]){const bad={...c,receipt:{...c.receipt,...delta}};assert.equal(correctShippoPayment(bad),bad);}
  const wrong={...c,source:{...c.source,text:c.source.text.replace('noreply@shippo.com','someone@example.com')}};assert.equal(correctShippoPayment(wrong),wrong);
+});
+test('visually reviewed Cintas correction is exact-source and balances printed service fee',()=>{
+ const {correctReviewedCintas}=require('./receipt-source-repairs.cjs');
+ const c={source:{mailbox:'jessejayspinotreceipts@gmail.com',sourceMessageId:'1a130a62a28c7ece',attachments:[{filename:'Epson_10122026080516.pdf',size:640678}]},receipt:{vendor:'CINTAS',reference:'4218411442',date:'2026-09-07',totalCents:18742,taxCents:1061}};
+ const r=correctReviewedCintas(c).receipt;
+ assert.equal(r.items.reduce((n,i)=>n+i.netCents,0),17681);
+ assert.equal(r.items.at(-1).netCents,2052);
+ const wrong={...c,source:{...c.source,mailbox:'other@example.com'}};
+ assert.equal(correctReviewedCintas(wrong),wrong);
+ const changed={...c,receipt:{...c.receipt,totalCents:18743}};
+ assert.equal(correctReviewedCintas(changed),changed);
 });
