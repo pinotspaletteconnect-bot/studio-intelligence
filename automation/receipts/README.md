@@ -68,3 +68,9 @@ The active plain-text summary rendering path now prints COA split lines in large
 November 8 follow-up: TD Premium Canvas and additional named paint colors retain established inventory accounts. Candle measuring cups explicitly use Candle COGS rather than fragrance inventory. Authenticated pest-control and window-cleaning answers map to existing Repairs & maintenance account 68; precise Kahoot software plans use existing Software & apps account 122. Unknown services and conflicting answers remain held. Generated-runtime tests verify these mappings.
 
 November 8 receipt backlog repairs: ignore explicit .ics calendar companions during PDF extraction while retaining unsupported-file guards; apply authenticated saved shipping, printing, special-products, marketing and staff-enrichment purposes to existing chart accounts. Shippo aggregate payment summaries retain the printed invoice amount and owner-approved shipping purpose without inventing per-label itemization. Wrapped evidence quotes are normalized only for source-text comparison. Cintas all-lines approval remains bound to the exact authenticated receipt and vendor. TD paint descriptions accept printed case-price suffixes. Finite $10 guard unchanged; no QBO.
+
+November 8 large-photo repair: a 5.55 MB receipt photo reproduced a V8 stack
+failure in the bundle base64 validator. Bounded alphabet validation and canonical
+byte round-trip replace the recursive regular expression. SHA-256, size, format
+and page limits remain enforced. Three regression tests pass; the actual photo
+renders locally with its unmodified original embedded. Deployment pending.
