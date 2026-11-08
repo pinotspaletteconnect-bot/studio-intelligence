@@ -1,5 +1,12 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {correctBlickUnitAmounts}=require('./receipt-source-repairs.cjs');
+test('Cintas payment retains one printed invoice and the owner-confirmed service category',()=>{
+ const fix=require('./receipt-source-repairs.cjs').correctCintasInvoicePayment;
+ const text='From: myCintas Support <support@cintas.com>\nYour payment has been submitted.\nInvoice Date\nAccount\nInvoice #\nInvoice Total\nPayment\n08/10/2026\nPINOT\nUnited States\n0012928160\n4278494581\n$207.22\n$207.22\nSelected Invoice Total:\n$207.22\nCredits Applied:\n$0.00\nTotal Payment:\n$207.22';
+ const c={source:{text,attachments:[]},receipt:{vendor:'myCintas',documentKind:'payment_only',reference:'0012928160',date:'2026-08-10',totalCents:20722,paidAmountCents:20722,items:[],uncertainties:['No itemized line items present.']}};
+ const r=fix(c);assert.equal(r.receipt.reference,'4278494581');assert.equal(r.receipt.items[0].netCents,20722);assert.equal(r.receipt.vendor,'Cintas');assert.match(r.sourceRepair.note,/settlement.*not asserted/);
+ for(const v of [{...c,source:{text:text.replace('Credits Applied:\n$0.00','Credits Applied:\n$1.00'),attachments:[]}},{...c,source:{text:text+'\nUnited States\n001\n002\n$1.00\n$1.00',attachments:[]}},{...c,receipt:{...c.receipt,totalCents:1}},{...c,source:{text,attachments:[{}]}}])assert.equal(fix(v),v);
+});
 test('Uber booking fee remains a charge and is not counted again as tax',()=>{
  const fix=require('./receipt-source-repairs.cjs').correctReviewedUberBookingFee;
  const c={source:{sourceMessageId:'1a0a4de6e04e1543',mailbox:'stellaseaselempirereceipts@gmail.com',attachments:[],text:'From: Uber Receipts <noreply@uber.com>\nTotal $15.96\nTrip fare $12.75\nBooking Fee\n<https://example.com/link>\n$1.21\nTip $2.00\nMastercard ••••5929 $15.96\nReceipt ID # 1d5e7c67-9f90-4a63-af79-1c0b5b29d6cf'},receipt:{vendor:'Uber',reference:'1d5e7c67-9f90-4a63-af79-1c0b5b29d6cf',date:'2026-09-15',totalCents:1596,paidAmountCents:1596,subtotalCents:1275,taxCents:121,items:[['Trip fare',1275],['Booking Fee',121],['Tip',200]].map(([description,netCents])=>({description,netCents,itemTaxCents:121})),uncertainties:[]}};

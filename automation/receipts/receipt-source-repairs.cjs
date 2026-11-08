@@ -1,4 +1,13 @@
 'use strict';
+function correctCintasInvoicePayment(cache) {
+ const r=cache?.receipt,s=cache?.source,t=String(s?.text||'').replace(/\r/g,'');
+ if(r?.vendor!=='myCintas'||r.documentKind!=='payment_only'||s.attachments?.length||r.items?.length||!t.includes('From: myCintas Support <support@cintas.com>')||!t.includes('Your payment has been submitted.'))return cache;
+ const invoices=[...t.matchAll(/United States\n(\d+)\n(\d+)\n\$([\d,]+\.\d{2})\n\$([\d,]+\.\d{2})/g)],dates=[...t.matchAll(/Invoice Date\nAccount\nInvoice #\nInvoice Total\nPayment\n(\d{2})\/(\d{2})\/(\d{4})\n/g)];
+ if(invoices.length!==1||dates.length!==1)return cache;
+ const m=invoices[0],amount=Math.round(Number(m[3].replace(/,/g,''))*100),date=dates[0][3]+'-'+dates[0][1]+'-'+dates[0][2];
+ if(m[3]!==m[4]||r.reference!==m[1]||r.date!==date||r.totalCents!==amount||r.paidAmountCents!==amount||!t.includes('Selected Invoice Total:\n$'+m[3])||!t.includes('Credits Applied:\n$0.00')||!t.includes('Total Payment:\n$'+m[3])||(r.uncertainties||[]).some(u=>!['No itemized line items present.','No itemized line items provided.'].includes(u)))return cache;
+ return {...cache,receipt:{...r,vendor:'Cintas',reference:m[2],subtotalCents:amount,taxCents:null,items:[{description:'Cintas service',quantity:1,netCents:amount,itemTaxCents:null,evidence:'$'+m[3]}],uncertainties:[]},sourceRepair:{kind:'owner_cintas_invoice_payment',note:'Owner reply1a1bbe3ee49c5e23 says these are all under Cintas; shared-studio category reuse is approved. Original payment confirmation identifies one invoice '+m[2]+' for $'+m[3]+' with no credits. The displayed date is the invoice date. Payment was submitted; bank settlement and separate tax are not asserted. Original email preserved.'}};
+}
 function correctReviewedUberBookingFee(cache) {
  const r=cache?.receipt,s=cache?.source,t=String(s?.text||'').replace(/\r/g,'').replace(/<https?:\/\/[^>]+>/g,'').replace(/\n\s*\n/g,'\n');
  if(s?.sourceMessageId!=='1a0a4de6e04e1543'||s.mailbox!=='stellaseaselempirereceipts@gmail.com'||s.attachments?.length||r?.vendor!=='Uber'||r.reference!=='1d5e7c67-9f90-4a63-af79-1c0b5b29d6cf'||r.date!=='2026-09-15'||r.totalCents!==1596||r.paidAmountCents!==1596||r.items?.length!==3||(r.uncertainties||[]).length)return cache;
@@ -153,4 +162,4 @@ function correctReviewedTarget(cache) {
  if(s?.mailbox!=='jessejayspinotreceipts@gmail.com'||s.sourceMessageId!=='1a0e940cf111b81e'||r?.vendor!=='Target'||r.date!=='2026-09-28'||r.totalCents!==1060||r.items?.length!==1||r.items[0].description!=='Mondo Llama'||r.items[0].netCents!==1000||!s.attachments?.some(a=>a.filename==='pro-RTGVbqtE.jpeg'&&a.size===863310))return cache;
  return {...cache,receipt:{...r,reference:'2-6271-2473-0160-7748-7',subtotalCents:1000,taxCents:60,paidAmountCents:1060},sourceRepair:{kind:'visually_reviewed_target_receipt',note:'Original photo reviewed November 8: REC#2-6271-2473-0160-7748-7, two Mondo Llama items at $5 each, subtotal $10, tax $.60, total and printed card charge $10.60. Handwritten Cash is retained on the original, not treated as proof of payment method. Product type still requires an owner answer.'}};
 }
-module.exports={correctReviewedUberBookingFee,correctReviewedSamsAggregateTax,correctOhioPestService,correctZemBrushOrder,correctReviewedTarget,correctReviewedHeidelberg,correctReviewedNorthVernon,correctFishCleaningPayment,correctCanvasDepotPayment,correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount,correctShippoPayment,correctReviewedCintas,correctOutshineServicePayment};
+module.exports={correctCintasInvoicePayment,correctReviewedUberBookingFee,correctReviewedSamsAggregateTax,correctOhioPestService,correctZemBrushOrder,correctReviewedTarget,correctReviewedHeidelberg,correctReviewedNorthVernon,correctFishCleaningPayment,correctCanvasDepotPayment,correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount,correctShippoPayment,correctReviewedCintas,correctOutshineServicePayment};
