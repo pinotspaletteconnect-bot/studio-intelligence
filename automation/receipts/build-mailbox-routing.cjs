@@ -9,7 +9,10 @@ const scopes=registry.studios.map(s=>({...mailboxScope(registry,s.mailbox),useSh
 const {scopeReceiptRules,scopeReceiptConfig}=require('./scoped-runtime.cjs');
 const {selectApprovedTicket}=require('./approved-budget.cjs');
 const SHARED_RULES=require('./shared-owner-rules.json');
-const {correctBlickUnitAmounts}=require('./receipt-source-repairs.cjs');
+const SHARED_ACCOUNTS=require('./shared-owner-accounts.json');
+const {currentSharedCategory,sharedSavedCategory}=require('./shared-answer-policy.cjs');
+const {supportOriginalPhotos}=require('./original-photo-support.cjs');
+const {correctFishCleaningPayment,correctCanvasDepotPayment,correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount,correctShippoPayment,correctReviewedCintas,correctOutshineServicePayment}=require('./receipt-source-repairs.cjs');
 const edge=n=>({main:[[{node:n,type:'main',index:0}]]});
 const code=(name,jsCode,position=[0,0])=>({id:randomUUID(),name,type:'n8n-nodes-base.code',typeVersion:2,position,parameters:{jsCode}});
 
@@ -24,6 +27,32 @@ function addMailboxContext(w) {
 }
 
 function scopedCode(js, name, key) {
+ js=supportOriginalPhotos(js,key,name);
+ if(key==='review')js=correctFishCleaningPayment.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctFishCleaningPayment(cache);');
+ if(key==='review')js=correctCanvasDepotPayment.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctCanvasDepotPayment(cache);');
+ if(key==='review')js=currentSharedCategory.toString()+'\n'+sharedSavedCategory.toString()+'\n'+js
+   .replace('mapping:owner.mappings[i]||classifyItem(', 'mapping:currentSharedCategory(vendor,item.description,rules)||owner.mappings[i]||sharedSavedCategory(item.description,clarificationRows,rules,{questionMetadata,latestOwnerAnswer,knownOwnerCategory})||classifyItem(')
+   .replace('const unknown=mapped.filter(l=>!l.mapping);','for(const line of mapped)if(line.mapping?.sharedOwnerAnswer)owner.provenance.push({...line.mapping.sharedOwnerAnswer,field:"category",lineId:line.lineId,value:{accountId:line.mapping.accountId,accountName:line.mapping.accountName}});\n  const unknown=mapped.filter(l=>!l.mapping);');
+ if(key==='review')js=correctOutshineServicePayment.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctOutshineServicePayment(cache);');
+ if(key==='review')js=correctReviewedCintas.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctReviewedCintas(cache);');
+ if(key==='review')js=js.replace("accountId:value.accountId}};", `accountId:value.accountId}};
+      if(/^these are all under cintas[.!]?$/i.test(answer.answer.trim())&&/^Cintas$/i.test(r.vendor)&&value.accountId==='229')r.items.forEach((line,index)=>{
+        mappings[index]={...value,companyId:rules.companyId,approved:true,active:true,ruleId:'owner:'+row.reviewKey,
+          ownerDecision:{...p,lineId:String(index),description:line.description,accountId:value.accountId,scope:'all lines of this exact Cintas receipt'}};
+      });`);
+ js=js.replace("phone:['phone'", "cintas:['these are all under cintas'],marketing:['marketing'],staffEvents:['staff enrichment'],phone:['phone'");
+ if(key==='review')js=correctShippoPayment.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctShippoPayment(cache);');
+ if(key==='review')js=js.replace('source.includes(normalized(l.evidence))',`source.includes(normalized(String(l.evidence).replace(/^["“]([\\s\\S]*)["”]$/, '$1')))`);
+ js=js.replace("phone:['phone'", "shipping:['shipping and postage','postage and shipping','all shippos are shipping and postage'],projectPet:['special class cogs','special products cogs'],special:['special product inventory'],phone:['phone'");
+ // Calendar invitations accompany payment receipts but are not receipt images.
+ // Ignore only the explicit calendar MIME/extension pair; other unsupported
+ // attachments still require inspection before any extraction allowance is used.
+ if(key==='extraction')js=js.replace("if(mime==='application/pdf'||actualAttachment) attachments.push({", "if((mime==='application/pdf'||actualAttachment)&&!(mime==='text/calendar'&&/\\.ics$/i.test(part.filename))) attachments.push({");
+ if(key==='review')js=js.replace("['needs_answer','answered_pending_account_verification'].includes(row.status)","['needs_answer','answered_pending_account_verification','followup_delivery_pending'].includes(row.status)");
+ if(key==='review')js=correctReviewedAutojateDiscount.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctReviewedAutojateDiscount(cache);');
+ js=js.replace("plumbing:['plumbing repair'],subscriptions:['subscriptions']", "plumbing:['plumbing repair'],subscriptions:['subscriptions'],maintenance:['pest control','window cleaning','this is for window cleaning'],software:['software','software subscription']");
+ if(key==='review')js=correctGoogleOneTaxes.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctGoogleOneTaxes(cache);');
+ if(key==='documents')js=js.replaceAll('plain-instructions-v2','bold-instructions-v3');
  if(key==='review')js=correctBlickUnitAmounts.toString()+'\n'+js.replace("if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;","if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctBlickUnitAmounts(cache);").replaceAll('cache.reviewedPdfEvidence?.note||null','cache.reviewedPdfEvidence?.note||cache.sourceRepair?.note||null');
  if(key==='review'&&name==='Choose Unread Receipts')js=js.replace("/requires extraction/.test(r.reason||'')", "/requires extraction|Receipt body is empty; inspect original attachments/.test(r.reason||'')");
  if(key==='review')js=js.replace("function workingConfirmation(receipt) {",`function workingConfirmation(receipt) { {
@@ -65,7 +94,10 @@ function scopedCode(js, name, key) {
  js=js.replace('function prepareBatch(items, config) {','function prepareBatch(items, config) {\n config=scopeReceiptConfig(config,MB);');
  if(key==='review') {
    js=js.replace("if (!id) return hold('Missing message identity');", "if (!id) return hold('Missing message identity');if(/^(?:Welcome to Google on your .+|Security alert|2-Step Verification (?:turned on|turned off))$/i.test(m.subject||''))return {json:{...base,status:'excluded_non_receipt',reason:'Google account notification'}};");
-   js=js.replace("if (!candidates.length) {const parsed=", "if (!candidates.length && MB.studio==='Gilbert') {const parsed=")
+   js=js.replace('(config.approvedRules ? parseApproved(m,config.approvedRules) : null)',"(MB.studio==='Gilbert'&&config.approvedRules ? parseApproved(m,config.approvedRules) : null)")
+     .replace(' || !shippingAddress.includes(rule.shippingMarker) || !billingAddress.includes(rule.billingMarker)', " || (MB.studio==='Gilbert'&&(!shippingAddress.includes(rule.shippingMarker)||!billingAddress.includes(rule.billingMarker)))")
+     .replace('requiredText:[order[0],rule.shippingMarker,rule.billingMarker]',"requiredText:MB.studio==='Gilbert'?[order[0],rule.shippingMarker,rule.billingMarker]:[order[0],rule.vendorMarker]")
+     .replace('if(rules.length!==1)return null;',"if(!rules.length||new Set(rules.map(r=>r.accountId+'|'+r.accountName)).size!==1)return null;")
      .replace("confirmedStudio:r.confirmedStudio||'Gilbert'","confirmedStudio:r.confirmedStudio||MB.studio")
      .replace('if(!studios.length)return receipt;',"if(!studios.length)return !String(receipt.studioEvidence||'').trim()?{...receipt,studioEvidence:'Owner-assigned receipt inbox: '+MB.studio}:receipt;");
  }
@@ -103,7 +135,7 @@ function scopedCode(js, name, key) {
    after+='result=result.map(i=>({...i,json:{...i.json,config:scopeReceiptConfig(i.json.config,MB)}}));';
  if(key==='coordinator'&&name==='Receipt Email Run Result')
    after+=`const review=$('Read Receipts and Apply Saved Answers').first().json;const rows=review.context?.['Batch - Prepare and Hold Exceptions']||[];const reviewCounts={};for(const i of rows){const status=i.json.status||'unknown';reviewCounts[status]=(reviewCounts[status]||0)+1;}const awaitingExtraction=$('Plan Genuine Questions').first().json.awaitingExtraction||[];result=result.map(i=>({...i,json:{...i.json,reviewCounts,awaitingExtraction}}));`;
- return `const MB=$('Mailbox Context').first().json.mailboxContext;\nconst SHARED_RULES=${JSON.stringify(SHARED_RULES)};\n${scopeReceiptRules.toString()}\n${scopeReceiptConfig.toString()}\nlet result=await(async()=>{\n${js}\n})();\n${after}\nreturn result.map(i=>({...i,json:{...i.json,mailboxContext:MB,...(i.json.context?{context:{...i.json.context,mailboxContext:MB}}:{})}}));`;
+ return `const MB=$('Mailbox Context').first().json.mailboxContext;\nconst SHARED_RULES=${JSON.stringify(SHARED_RULES)};\nconst SHARED_ACCOUNTS=${JSON.stringify(SHARED_ACCOUNTS)};\n${scopeReceiptRules.toString()}\n${scopeReceiptConfig.toString()}\nlet result=await(async()=>{\n${js}\n})();\n${after}\nreturn result.map(i=>({...i,json:{...i.json,mailboxContext:MB,...(i.json.context?{context:{...i.json.context,mailboxContext:MB}}:{})}}));`;
 }
 
 function scopeHelperCode(w,key) {

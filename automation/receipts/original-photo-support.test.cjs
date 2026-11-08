@@ -1,0 +1,25 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
+const {draftHelpers}=require('./build-mailbox-routing.cjs');
+const drafts=draftHelpers(JSON.parse(fs.readFileSync('C:/Projects/studio-intelligence/tmp/multistudio-live-backup-paths.json')));
+const code=name=>drafts.documents.nodes.find(n=>n.name===name).parameters.jsCode;
+test('original-photo routing verifies identity, MIME, length and signatures before bundling',()=>{
+ const selectCode=code('Batch - Select Original PDF');
+ const select=new Function(selectCode.slice(selectCode.indexOf('function selectOriginalPdf'),selectCode.indexOf('function bundleJobs'))+'return selectOriginalPdf;')();
+ const raw=Buffer.from('89504e470d0a1a0a00000000','hex');
+ const expected={filename:'receipt.png',size:raw.length,mimeType:'image/png'};
+ const job={sourceMessageId:'abc',sourceAttachment:{kind:'pdf_bundle_v1',files:[expected]}};
+ const gmail={id:'abc',payload:{filename:expected.filename,mimeType:expected.mimeType,body:{size:raw.length,data:raw.toString('base64url')}}};
+ assert.equal(select(job,gmail).files[0].mimeType,'image/png');
+ assert.throws(()=>select(job,{...gmail,id:'wrong'}),/identity/);
+ assert.throws(()=>select(job,{...gmail,payload:{...gmail.payload,mimeType:'text/plain'}}),/changed/);
+ const verifyCode=code('Verify Each Original PDF');
+ const verify=new Function('Buffer',verifyCode.slice(verifyCode.indexOf('function verifyOriginalPdf'),verifyCode.indexOf("const jobs=$('Batch - Select Original PDF')"))+'return verifyOriginalPdf;')(Buffer);
+ assert.deepEqual(verify(raw.toString('base64url'),raw.length,'image/png'),raw);
+ assert.throws(()=>verify(raw.toString('base64url'),raw.length,'application/pdf'),/verification/);
+ assert.throws(()=>verify(raw.toString('base64url'),raw.length+1,'image/png'),/verification/);
+ const collectCode=code('Batch - Bind Original Evidence');
+ const collect=new Function(collectCode.slice(collectCode.indexOf('function collectBundles'),collectCode.indexOf('return collectBundles($input'))+'return collectBundles;')();
+ const out=collect([{json:{...job,jobIndex:0,attachmentIndex:0,attachmentCount:1,original:select(job,gmail).files[0],originalSha256:'a'.repeat(64),originalPdf:raw.toString('base64')}}]);
+ assert.equal(out[0].json.bundleRequest.documents.length,1);assert.equal(out[0].json.originalPdf,null);
+});

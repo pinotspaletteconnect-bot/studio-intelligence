@@ -16,6 +16,16 @@ in supplied order, and unmodified original PDF bytes embedded as files. This
 preserves signed originals separately; the bundle itself is not a signed invoice.
 No network requests, classification, posting, or archival in the bundler.
 
+November 8 extension: the same endpoint accepts JPEG/PNG receipt photos, including
+a single photo. Magic bytes, filename, size and SHA256 must agree. A photo is
+placed on a PDF page without cropping, and its exact original bytes are embedded.
+Existing PDF pages remain unchanged. The existing 8-file, 20MB input, 100-page,
+worker timeout and output limits remain; photo dimensions are capped at 50MP.
+The workflow verifies source mailbox/message and attachment MIME/size before
+conversion and still requires both verified final PDFs before archival.
+Release order: deploy renderer support first, then publish existing document
+helper, then review support. Rollback restores those versions in reverse order.
+
 Existing /email rendering is unchanged except fixed-phase diagnostic logging
 without receipt content. Live logs show browser startup SIGTRAP; underlying
 runtime cause remains unverified. Deployment renews the service runtime, but
