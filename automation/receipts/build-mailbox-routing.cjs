@@ -144,6 +144,7 @@ function scopedCode(js, name, key) {
    js=js.replaceAll("'receipt-'+", "('receipt-'+(MB.studio==='Gilbert'?'':MB.scopeId+'-'))+")
      .replaceAll('`receipt-${',"`receipt-${MB.studio==='Gilbert'?'':MB.scopeId+'-'}${");
  }
+ js=require('./reviewed-supporting-documents.cjs').supportingCode(js,key);
  let after='';
  if(key==='review'&&name==='Choose Unread Receipts')
    after+=`const available=$('Read New Extraction Cache').all().filter(i=>i.json.status==='available').length;result=result.filter(i=>i.json.sourceMessageId).slice(0,Math.min(25,available));if(!result.length)result=[{json:{sourceMessageId:null,extractionDeferred:true}}];`;
