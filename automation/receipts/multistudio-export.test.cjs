@@ -55,6 +55,7 @@ test('existing TD canvas and candle categories apply to extracted descriptions',
  for(const description of ['Candle Cotton Wick $0.15 ea Packed 36','Candle Wick Stickers $0.025 ea Case of 80','Candle Vessel Customer Labels'])assert.equal(r.classifyItem({vendor:'TD Art Supply',description},scope.scopeId,c.approvedRules)?.accountId,'1150040007');
  assert.equal(r.classifyItem({vendor:'TD Art Supply',description:'Candle Fragrance Measuring Cup .75oz $0.025 ea Case Pack 100'},scope.scopeId,c.approvedRules)?.accountId,'1150040010');
  assert.equal(r.classifyItem({vendor:'TD Art Supply',description:'16 x 20" Premium Canvas'},scope.scopeId,c.approvedRules)?.accountId,'163');
+ assert.equal(r.classifyItem({vendor:'TD Art Supply',description:'16" x 20" BLACK Canvas $2.25ea Case of 24'},scope.scopeId,c.approvedRules)?.accountId,'163');
 });
 
 test('saved service purposes map to existing accounts without guessing other services',async()=>{

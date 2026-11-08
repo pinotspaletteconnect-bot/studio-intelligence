@@ -172,6 +172,14 @@
     "approval": "Saved owner answer explicitly classifies Prints, 4x6 as Printing and photocopying; user also confirmed Walgreens printing for Project Pet."
   },
   {
+    "id": "td-black-canvas",
+    "vendor": "TD Art Supply",
+    "pattern": "^16\" x 20\" BLACK Canvas(?: |$)",
+    "account": "canvas",
+    "accountDefinition": {"id": "163", "name": "Canvas Inventory"},
+    "approval": "Existing confirmed TD 16x20 canvas category and owner instruction to match product descriptions and reuse categories across studios. Explicit black canvas is still canvas; no amounts or dates are copied."
+  },
+  {
     "id": "td-art-brushes",
     "vendor": "TD Art Supply",
     "pattern": "^#[0-9]+ (?:Round|Flat) Brush$",
