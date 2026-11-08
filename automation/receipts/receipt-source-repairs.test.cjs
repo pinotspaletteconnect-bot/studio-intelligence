@@ -1,5 +1,13 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {correctBlickUnitAmounts}=require('./receipt-source-repairs.cjs');
+test('reviewed Heidelberg line amounts reconcile without double-discounting or inventing payment',()=>{
+ const {correctReviewedHeidelberg:fix}=require('./receipt-source-repairs.cjs');
+ const c={source:{mailbox:'stellaseaselempirereceipts@gmail.com',sourceMessageId:'1a18deac1df19385',attachments:[{filename:'10.28.26.jpg',mimeType:'image/jpeg',size:76769}]},receipt:{vendor:'Heidelberg Columbus',reference:'90008895',totalCents:35304,items:Array(6).fill({})}};
+ const r=fix(c).receipt;
+ assert.equal(r.items.reduce((n,i)=>n+i.netCents,0)+r.otherFeesCents,r.totalCents);
+ assert.equal(r.date,'2026-10-28');assert.equal(r.paidAmountCents,null);assert.equal(r.taxCents,null);assert.equal(r.orderDiscountCents,0);
+ for(const source of [{...c.source,mailbox:'wrong'},{...c.source,sourceMessageId:'wrong'},{...c.source,attachments:[]}]){const bad={...c,source};assert.equal(fix(bad),bad);}
+});
 
 test('window-cleaning net derives only from explicit printed total and tax with charged status',()=>{
  const {correctFishCleaningPayment:fix}=require('./receipt-source-repairs.cjs');

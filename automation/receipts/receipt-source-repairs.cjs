@@ -1,4 +1,12 @@
 'use strict';
+function correctReviewedHeidelberg(cache) {
+ const r=cache?.receipt,s=cache?.source;
+ if(s?.mailbox!=='stellaseaselempirereceipts@gmail.com'||s.sourceMessageId!=='1a18deac1df19385'||r?.vendor!=='Heidelberg Columbus'||r.reference!=='90008895'||r.totalCents!==35304||r.items?.length!==6||!s.attachments?.some(a=>a.filename==='10.28.26.jpg'&&a.mimeType==='image/jpeg'&&a.size===76769))return cache;
+ const printed=[['Modelo Especial 12OZ 24PK Cn Pilsner Style Lager',1,2239],["Barritt's 12OZ 4/6PK Cn Ginger",1,2299],['Malibu 750ML Coconut Rum-12 NV',2,2308],['Tangley Oaks 750ML Chard 12 18',1,5068],["McManis 750ML Pinot Noir 12 25",1,9595],['Maschio 750ML Prosecco Brut 12',1,13595]];
+ const items=printed.map(([description,quantity,netCents])=>({description,quantity,netCents,itemTaxCents:null,evidence:'Visually verified printed extended line amount: '+(netCents/100).toFixed(2)}));
+ if(items.reduce((n,i)=>n+i.netCents,0)+200!==35304)throw Error('Reviewed Heidelberg arithmetic mismatch');
+ return {...cache,receipt:{...r,date:'2026-10-28',items,subtotalCents:35104,taxCents:null,deliveryCents:null,orderDiscountCents:0,otherFeesCents:200,paidAmountCents:null,uncertainties:[],reviewedPrintedAmounts:{totalSalesCents:46279,discountCents:11175,totalContentCents:35104,splitCaseChargeCents:200,totalCents:35304}},sourceRepair:{kind:'visually_reviewed_heidelberg_invoice',note:'Original 10.28.26.jpg reviewed 2026-11-08. Six extended line amounts already include discounts and sum to $351.04; printed split case bottle charge $2.00 gives invoice total $353.04. Printed date is October 28, 2026. Tax and payment are not independently stated; neither is invented. Categories still require saved rules.'}};
+}
 
 function correctReviewedNorthVernon(cache) {
  const r=cache?.receipt,s=cache?.source;
@@ -106,4 +114,4 @@ function correctOutshineServicePayment(cache) {
  if((r.uncertainties||[]).some(u=>!allowed.has(u)))return cache;
  return {...cache,receipt:{...r,items:[{...r.items[0],description:'Window Cleaning',evidence:amounts[0][0]}],uncertainties:[]},sourceRepair:{kind:'confirmed_window_cleaning_payment',note:'Owner previously confirmed Outshine as window cleaning. The approved payment receipt explicitly reconciles amount, zero tax, zero tip and total. A single service amount is retained; no additional service details are invented.'}};
 }
-module.exports={correctReviewedNorthVernon,correctFishCleaningPayment,correctCanvasDepotPayment,correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount,correctShippoPayment,correctReviewedCintas,correctOutshineServicePayment};
+module.exports={correctReviewedHeidelberg,correctReviewedNorthVernon,correctFishCleaningPayment,correctCanvasDepotPayment,correctBlickUnitAmounts,correctGoogleOneTaxes,correctReviewedAutojateDiscount,correctShippoPayment,correctReviewedCintas,correctOutshineServicePayment};

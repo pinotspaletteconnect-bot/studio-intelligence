@@ -1,5 +1,21 @@
 [
   {
+    "id": "owner-heidelberg-beer",
+    "vendor": "Heidelberg Columbus",
+    "pattern": "^Modelo Especial .*Pilsner Style Lager$",
+    "account": "beer",
+    "accountDefinition": {"id":"162","name":"Beer Inventory"},
+    "approval": "Saved owner Beer Inventory answers and explicit approval to apply product categories across all studios; the printed product explicitly identifies lager."
+  },
+  {
+    "id": "owner-heidelberg-wine",
+    "vendor": "Heidelberg Columbus",
+    "pattern": "^(?:Tangley Oaks .*Chard|McManis .*Pinot Noir|Maschio .*Prosecco Brut)(?: |$)",
+    "account": "wine",
+    "accountDefinition": {"id":"161","name":"Wine Inventory"},
+    "approval": "Saved owner Wine Inventory answers and explicit approval to apply product categories across all studios; only explicit wine varietals, not liquor or fees."
+  },
+  {
     "id": "td-wood-plank-special-surface",
     "vendor": "TD Art Supply",
     "pattern": "^10[\"”] x 30[\"”] Wood Plank(?: |$)",
