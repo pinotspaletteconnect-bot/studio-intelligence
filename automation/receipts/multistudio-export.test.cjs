@@ -42,6 +42,15 @@ test('reviewed Target reference retains its original photo through evidence prep
  assert.equal(cache.receipt.reference,null);
  assert.equal(add({...item,json:{...item.json,totalCents:9999}},cache).json.sourceAttachment,undefined);
 });
+test('Heidelberg reference correction preserves the original photo handoff',async()=>{
+ const scope={...mailboxScope(registry,'stellaseaselempirereceipts@gmail.com'),useSharedCoa:true};
+ const js=drafts.review.nodes.find(n=>n.name==='First Receipt Review').parameters.jsCode;
+ const prefix=js.slice(0,js.indexOf('const data=$("Batch - Trusted Review Configuration")'));
+ const add=await new AsyncFunction('$',prefix+'return addExtractionEvidence;})();return result;')(lookup(scope));
+ const cache={source:{mailbox:scope.mailbox,sourceMessageId:'1a06e05fcc75de01',attachments:[{filename:'Heidelberg 9.2.jpg',mimeType:'image/jpeg',size:71999}]},receipt:{vendor:'Heidelberg Columbus',reference:'900023044',date:'2022-09-02',totalCents:37333,items:[2299,8795,9595,11995,4649].map(netCents=>({netCents})),uncertainties:[]}};
+ const item={json:{sourceMessageId:cache.source.sourceMessageId,companyId:scope.scopeId,status:'prepared_for_review',reference:'90023044',totalCents:37333}};
+ const result=add(item,cache);assert.equal(result.json.evidenceReady,true);assert.deepEqual(result.json.sourceAttachment.files,cache.source.attachments);assert.equal(cache.receipt.reference,'900023044');
+});
 test('uncached Canvas Depot email uses shared owner category without extraction',async()=>{
  const scope={...mailboxScope(registry,registry.studios[2].mailbox),useSharedCoa:true},c=await config(scope),id='0123456789abcdef';
  const text='From: outgoing@safewebservices.com\nDYNAMIC WHOLESALE SIGNS\nYour Card Sale is complete!\nApr 20, 2026\n$125.55\nTransaction ID\n11969756418\nDescription\nThe Canvas Depot\nOrder ID\nINV 6380\n';

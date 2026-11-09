@@ -35,6 +35,7 @@ function addMailboxContext(w) {
 }
 
 function scopedCode(js, name, key) {
+ if(key==='review'){const fix=require('./receipt-source-repairs.cjs').correctReviewedStorage;js=fix.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctReviewedStorage(cache);');}
  if(key==='review'){const fix=require('./receipt-source-repairs.cjs').correctBwcPolicyPayment;js=fix.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctBwcPolicyPayment(cache);');}
  if(key==='review'){const fix=require('./receipt-source-repairs.cjs').correctReviewedHeidelbergSeptember;js=fix.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctReviewedHeidelbergSeptember(cache);');}
  if(key==='review'){const fix=require('./receipt-source-repairs.cjs').correctReviewedKeg1;js=fix.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctReviewedKeg1(cache);');}
@@ -135,6 +136,7 @@ function scopedCode(js, name, key) {
    .replace('function correctReviewedPdf(cache){',"function correctReviewedPdf(cache){ if(MB.studio!=='Gilbert')return null;")
    .replace('function reviewedPartialDuplicate(receipt,message,config){',"function reviewedPartialDuplicate(receipt,message,config){ if(MB.studio!=='Gilbert')return null;")
    .replace('function reviewMultiOrder(message,config,snapshot,decision){',"function reviewMultiOrder(message,config,snapshot,decision){ if(MB.studio!=='Gilbert')return null;");
+ if(key==='review')js=js.replace('function addExtractionEvidence(item, cache) {','function addExtractionEvidence(item, cache) {\n if(cache)cache=correctReviewedStorage(correctReviewedHeidelbergSeptember(correctBwcPolicyPayment(cache)));');
  if(key==='archive') {
    js=js.replaceAll(JSON.stringify(scopes[0].mailbox),'MB.mailbox')
      .replaceAll("'"+scopes[0].mailbox+"'",'MB.mailbox');

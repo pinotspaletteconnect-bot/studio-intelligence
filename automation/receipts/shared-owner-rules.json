@@ -319,6 +319,14 @@
     "approval": "Saved owner Sams Club answer: Tea is non alcoholic inventory. User explicitly directed shared product answers across studios."
   },
   {
+    "id": "owner-storage-unit-rental",
+    "vendor": "Go Store It - Grandview Heights",
+    "pattern": "^Storage unit (?:rent|protection plan)$",
+    "account": "storageRent",
+    "accountDefinition": {"id": "17", "name": "Rent"},
+    "approval": "Authenticated saved owner answer122 confirms Storage unit. Existing Rent account matches the stated purpose; separately itemize rental and its related protection plan without claiming the protection plan is an insurance policy. Owner authorized matching closest existing account descriptions and sharing general category rules."
+  },
+  {
     "id": "owner-fresh-lemons-limes",
     "vendor": "Kroger",
     "pattern": "^(?:Lemons|Limes)$",

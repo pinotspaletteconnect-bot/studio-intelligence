@@ -1,5 +1,11 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {correctBlickUnitAmounts}=require('./receipt-source-repairs.cjs');
+test('storage tax applies only to rental line and preserves the original source',()=>{
+ const fix=require('./receipt-source-repairs.cjs').correctReviewedStorage;
+ const c={source:{mailbox:'stellaseaselempirereceipts@gmail.com',sourceMessageId:'19fa3a52726b728b',attachments:[{filename:'Receipt_1736947649.pdf',size:60512}]},receipt:{vendor:'Go Store It - Grandview Heights',reference:'1736947649',date:'2026-07-26',totalCents:25152,orderDiscountCents:1752}};
+ const r=fix(c).receipt;assert.equal(r.items.reduce((n,i)=>n+i.netCents+i.itemTaxCents,0),25152);assert.equal(r.items[1].itemTaxCents,0);assert.equal(r.orderDiscountCents,0);assert.equal(c.receipt.orderDiscountCents,1752);
+ const other={...c,source:{...c.source,mailbox:'other'}};assert.equal(fix(other),other);
+});
 test('BWC keeps one policy payment and does not claim settlement or combine confirmations',()=>{
  const fix=require('./receipt-source-repairs.cjs').correctBwcPolicyPayment;
  const text='From: donotreply@bwc.state.oh.us <donotreply@bwc.state.oh.us>\nThank you for scheduling your payment.\nConfirmation ID#: 1650213600\nPolicy number: 80191599\nScheduled payment date: 09/04/2026\nAmount: $283.00';

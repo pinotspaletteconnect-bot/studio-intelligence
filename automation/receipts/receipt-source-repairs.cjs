@@ -1,4 +1,9 @@
 'use strict';
+function correctReviewedStorage(cache) {
+ const r=cache?.receipt,s=cache?.source;
+ if(s?.mailbox!=='stellaseaselempirereceipts@gmail.com'||s.sourceMessageId!=='19fa3a52726b728b'||r?.vendor!=='Go Store It - Grandview Heights'||r.reference!=='1736947649'||r.date!=='2026-07-26'||r.totalCents!==25152||s.attachments?.length!==1||s.attachments[0].filename!=='Receipt_1736947649.pdf'||s.attachments[0].size!==60512)return cache;
+ return {...cache,receipt:{...r,subtotalCents:23400,taxCents:1752,orderDiscountCents:0,deliveryCents:0,otherFeesCents:0,paidAmountCents:25152,items:[{description:'Storage unit rent',quantity:1,netCents:21900,itemTaxCents:1752,evidence:'$219.00'},{description:'Storage unit protection plan',quantity:1,netCents:1500,itemTaxCents:0,evidence:'$15.00'}],uncertainties:[]},sourceRepair:{kind:'visually_reviewed_storage_tax',note:'Original PDF reviewed November 9: receipt1736947649, July26,2026. Storage rent $219 plus printed tax $17.52; related storage protection plan $15 with zero tax. Total paid $251.52. No discount is printed. Owner answer122 confirms storage unit; protection remains a separately identified rental-related line, not an assertion that the plan is an insurance policy.'}};
+}
 function correctBwcPolicyPayment(cache) {
  const r=cache?.receipt,s=cache?.source,t=String(s?.text||'').replace(/\r/g,'');
  if(r?.vendor!=='BWC'||r.documentKind!=='payment_only'||s.attachments?.length||r.items?.length||!t.includes('From: donotreply@bwc.state.oh.us <donotreply@bwc.state.oh.us>')||!t.includes('scheduling your payment'))return cache;
@@ -194,3 +199,4 @@ module.exports={correctReviewedRockbot,correctCintasInvoicePayment,correctReview
 module.exports.correctReviewedKeg1=correctReviewedKeg1;
 module.exports.correctBwcPolicyPayment=correctBwcPolicyPayment;
 module.exports.correctReviewedHeidelbergSeptember=correctReviewedHeidelbergSeptember;
+module.exports.correctReviewedStorage=correctReviewedStorage;
