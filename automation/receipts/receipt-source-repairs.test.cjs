@@ -1,5 +1,11 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {correctBlickUnitAmounts}=require('./receipt-source-repairs.cjs');
+test('single banner holder preserves order gross total without inventing a tax split',()=>{
+ const fix=require('./receipt-source-repairs.cjs').correctReviewedPosterOrder;
+ const c={source:{mailbox:'jessejayspinotreceipts@gmail.com',sourceMessageId:'1a130a1424e002df',attachments:[],text:'Quantity: 1\nGrand Total: $34.95'},receipt:{vendor:'Amazon.com',reference:'111-8443245-5627403',date:'2026-10-12',totalCents:3495,items:[{description:'Displays2go Window Sign Holder for Banner Graphics',quantity:1,netCents:3297}]}};
+ const r=fix(c).receipt;assert.equal(r.items[0].netCents,3495);assert.equal(r.taxCents,null);assert.equal(r.paidAmountCents,null);
+ for(const bad of [{...c,source:{...c.source,text:'Quantity: 1\nGrand Total: $35.95'}},{...c,receipt:{...c.receipt,items:[...c.receipt.items,...c.receipt.items]}}])assert.equal(fix(bad),bad);
+});
 test('Gordon six units across four lines preserve printed tax and source scope',()=>{
  const fix=require('./receipt-source-repairs.cjs').correctReviewedGordonFood;
  const c={source:{mailbox:'jessejayspinotreceipts@gmail.com',sourceMessageId:'1a0206ee81c7465c',attachments:[{filename:'pro-oqGpp8hO.jpeg',size:901042}]},receipt:{vendor:'Gordon Food Service Store',totalCents:7412,items:[2498,1261,2798,799].map(netCents=>({netCents}))}};

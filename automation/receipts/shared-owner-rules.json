@@ -1,5 +1,21 @@
 [
   {
+    "id":"owner-banner-sign-holder-marketing",
+    "vendor":"Amazon.com",
+    "pattern":"^Displays2go Window Sign Holder for Banner Graphics$",
+    "account":"marketing",
+    "accountDefinition":{"id":"13","name":"Advertising & marketing"},
+    "approval":"Saved owner answer96 classifies display poster frames as marketing. Owner approved nearest-description matching and sharing general product rules; this explicit banner sign holder serves the same display purpose."
+  },
+  {
+    "id":"gordon-owner-cheddar-food-inventory",
+    "vendor":"Gordon Food Service Store",
+    "pattern":"^CHEESE CHED SHRP S$",
+    "account":"food",
+    "accountDefinition":{"id":"224","name":"Food Inventory"},
+    "approval":"Owner confirmed November9,2026: the $12.61 cheddar on St. Matthews Gordon Food Service $74.12 receipt uses Food Inventory. Owner approved shared general product rules."
+  },
+  {
     "id":"gordon-owner-salami-food-cogs",
     "vendor":"Gordon Food Service Store",
     "pattern":"^SALAMI HARD SLCD$",
