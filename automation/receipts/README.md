@@ -121,3 +121,5 @@ Click outside the code editor to commit its value; Tab can insert indentation.
 Verify a real execution after publishing. A badge alone is not code-integrity
 or end-to-end evidence. The duplicated review code was replaced and execution
 326720 verified recovery across all studios.
+
+November 9 review repairs: the owner-confirmed Keg1 scan now retains an unknown purchase date rather than using its scanner filename; it remains held. Heidelberg invoice90023044 is corrected from the original September2 photo: five discounted extended amounts total373.33, so the printed176.00 discount must not be deducted again. BWC confirmations are parsed as a single workers-compensation policy payment with a scheduled date; the summary does not claim bank settlement. These changes use existing categories and source guards.49 targeted tests pass; live PDF/archive results remain a separate verification step.

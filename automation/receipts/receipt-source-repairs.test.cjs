@@ -1,5 +1,24 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {correctBlickUnitAmounts}=require('./receipt-source-repairs.cjs');
+test('BWC keeps one policy payment and does not claim settlement or combine confirmations',()=>{
+ const fix=require('./receipt-source-repairs.cjs').correctBwcPolicyPayment;
+ const text='From: donotreply@bwc.state.oh.us <donotreply@bwc.state.oh.us>\nThank you for scheduling your payment.\nConfirmation ID#: 1650213600\nPolicy number: 80191599\nScheduled payment date: 09/04/2026\nAmount: $283.00';
+ const c={source:{text,attachments:[]},receipt:{vendor:'BWC',documentKind:'payment_only',reference:'1650213600',date:'2026-09-04',totalCents:28300,items:[],uncertainties:['No itemized line items present in the document.']}};
+ const r=fix(c);assert.equal(r.receipt.items[0].netCents,28300);assert.equal(r.receipt.paidAmountCents,null);assert.ok(text.includes(r.receipt.items[0].evidence));assert.match(r.sourceRepair.note,/no settlement is asserted/);
+ for(const bad of [{...c,source:{...c.source,text:text+'\nAmount: $1.00'}},{...c,receipt:{...c.receipt,totalCents:1}},{...c,source:{...c.source,text:text.replace('donotreply@bwc.state.oh.us','other@example.com')}},{...c,source:{...c.source,attachments:[{}]}}])assert.equal(fix(bad),bad);
+});
+test('Heidelberg September uses discounted extended prices once and preserves source identity',()=>{
+ const fix=require('./receipt-source-repairs.cjs').correctReviewedHeidelbergSeptember;
+ const c={source:{mailbox:'stellaseaselempirereceipts@gmail.com',sourceMessageId:'1a06e05fcc75de01',attachments:[{filename:'Heidelberg 9.2.jpg',size:71999}]},receipt:{vendor:'Heidelberg Columbus',date:'2022-09-02',totalCents:37333,items:[2299,8795,9595,11995,4649].map(netCents=>({netCents})),uncertainties:['Total sales and total content amounts are provided, but tax and delivery details are not specified.']}};
+ const r=fix(c).receipt;assert.equal(r.date,'2026-09-02');assert.equal(r.reference,'90023044');assert.equal(r.items.reduce((n,i)=>n+i.netCents,0),r.totalCents);assert.equal(r.orderDiscountCents,0);assert.equal(r.paidAmountCents,null);assert.deepEqual(r.uncertainties,[]);
+ for(const bad of [{...c,source:{...c.source,sourceMessageId:'other'}},{...c,receipt:{...c.receipt,totalCents:1}},{...c,receipt:{...c.receipt,uncertainties:['Second receipt missing']}}])assert.equal(fix(bad),bad);
+});
+test('Keg1 owner answer preserves unknown purchase date and exact source scope',()=>{
+ const fix=require('./receipt-source-repairs.cjs').correctReviewedKeg1;
+ const c={source:{mailbox:'jessejayspinotreceipts@gmail.com',sourceMessageId:'1a163f0fe9170f93',attachments:[{filename:'Epson_10222026070738.pdf',size:489095}]},receipt:{vendor:'Epson',date:'2022-10-22',totalCents:3800}};
+ const r=fix(c);assert.equal(r.receipt.vendor,'Keg1');assert.equal(r.receipt.reference,'543975');assert.equal(r.receipt.date,null);assert.equal(r.receipt.items[0].netCents+r.receipt.deliveryCents,3800);assert.match(r.receipt.uncertainties[0],/owner confirmed they do not know/);assert.match(r.sourceRepair.note,/not marked complete/);assert.equal(c.receipt.vendor,'Epson');
+ for(const bad of [{...c,source:{...c.source,mailbox:'other'}},{...c,source:{...c.source,sourceMessageId:'other'}},{...c,receipt:{...c.receipt,totalCents:3900}},{...c,source:{...c.source,attachments:[]}}])assert.equal(fix(bad),bad);
+});
 test('Rockbot gross line totals are not taxed twice and changed invoices remain held',()=>{
  const fix=require('./receipt-source-repairs.cjs').correctReviewedRockbot;
  const c={source:{sourceMessageId:'19becf3beecda372',mailbox:'stellaseaselempirereceipts@gmail.com',attachments:[{filename:"CI_Pinot's Palette - Columbus, OH_#110136.pdf",size:66076}]},receipt:{reference:'CI_110136',date:'2026-01-21',totalCents:32335,subtotalCents:29940,taxCents:2395,paidAmountCents:32335,items:[{description:'Content Licensing & Standard Platform',netCents:19375,itemTaxCents:1435},{description:'Commercial Music Streaming',netCents:12960,itemTaxCents:960}],uncertainties:['Invoice balance shows $0.00, indicating it has been paid in full.']}};

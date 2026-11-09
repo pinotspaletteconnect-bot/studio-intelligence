@@ -1,5 +1,29 @@
 [
   {
+    "id":"bwc-workers-compensation-policy",
+    "vendor":"BWC",
+    "pattern":"^Ohio BWC workers compensation policy payment$",
+    "account":"workersComp",
+    "accountDefinition":{"id":"103","name":"Employee benefits:Workers' compensation insurance"},
+    "approval":"Owner directed matching explicit service descriptions to existing COA and sharing categories across studios. Ohio BWC policy payments match existing account103; this does not assert bank settlement or infer other insurance coverage."
+  },
+  {
+    "id": "heidelberg-explicit-rose-wine",
+    "vendor": "Heidelberg Columbus",
+    "pattern": "^Charles & Charles Rose 750ML$",
+    "account": "wine",
+    "accountDefinition": {"id":"161","name":"Wine Inventory"},
+    "approval": "Original invoice identifies rose wine. Apply the existing confirmed Wine Inventory category under the owner's instruction to match product descriptions and share general categories across studios."
+  },
+  {
+    "id": "heidelberg-explicit-sweet-sour-mixer",
+    "vendor": "Heidelberg Columbus",
+    "pattern": "^Daily's Sweet & Sour RTU 1L$",
+    "account": "mixers",
+    "accountDefinition": {"id":"185","name":"Mixers & Perishables Inventory"},
+    "approval": "Original invoice identifies packaged ready-to-use sweet-and-sour cocktail mixer. Apply the existing confirmed mixer inventory category under the owner's instruction to match descriptions; does not apply to fresh fruit, food or other Daily's products."
+  },
+  {
     "id": "owner-uber-taxi-service",
     "vendor": "Uber",
     "pattern": "^(?:Trip fare|Booking Fee|Tip)$",
