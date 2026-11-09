@@ -254,3 +254,10 @@ module.exports.correctMichaelsUnitAmounts=correctMichaelsUnitAmounts;
 module.exports.correctReviewedGordonFood=correctReviewedGordonFood;
 module.exports.correctReviewedKegOctober=correctReviewedKegOctober;
 module.exports.correctReviewedSamsOctober=correctReviewedSamsOctober;
+function correctReviewedDollarTree(cache) {
+ const s=cache?.source,r=cache?.receipt;
+ if(s?.mailbox!=='trooperseaselempirereceipts@gmail.com'||s.sourceMessageId!=='1a0633a806f193d3'||r?.vendor!=='Dollar Tree'||r.totalCents!==3180||!s.attachments?.some(a=>a.filename==='pro-m3DtjXu6.jpeg'&&a.size===792070))return cache;
+ return {...cache,receipt:{...r,date:'2026-09-02',reference:'5192-031-21490611',currency:'USD',subtotalCents:3000,taxCents:180,totalCents:3180,paidAmountCents:3180,deliveryCents:0,otherFeesCents:0,orderDiscountCents:0,
+  items:[{description:'CLASSIC WHITE WINE 15Z',quantity:20,netCents:3000,itemTaxCents:180,evidence:'20 printed units at $1.50; subtotal $30.00, sales tax $1.80, total $31.80.'}],uncertainties:[]},sourceRepair:{kind:'visually_reviewed_dollar_tree',note:'Original photo reviewed November 9: footer 031 21490611 9/02/26 11:33; store 5192. Twenty CLASSIC WHITE WINE 15Z units at $1.50 total $30.00, plus $1.80 tax. Corrected incomplete extraction and wrong year. Product purpose and category still require saved owner evidence; no category inferred from the word wine.'}};
+}
+module.exports.correctReviewedDollarTree=correctReviewedDollarTree;

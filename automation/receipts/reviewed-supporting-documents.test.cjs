@@ -19,6 +19,14 @@ test('supporting PDF summary explicitly states no expense split and archive guar
  const r=record(),p=api.currentSummaryPayload(r),q=api.currentSummaryRequest(p,'a'.repeat(64));
  assert.match(q.message.text,/NO EXPENSE COA SPLIT/);assert.match(q.message.text,/Deposit amount: \$586.00/);assert.equal(p.recordKind,'supporting_bank_document');assert.equal(p.lines.length,0);
  assert.throws(()=>api.currentSummaryPayload({...r,totalCents:99}),/Unverified/);
+ const note='The printed handling fee is allocated proportionally; this is an estimated allocation.';
+ const noted=api.currentSummaryPayload({...r,sourceReviewNote:note});
+ assert.equal(noted.sourceReviewNote,note);
+ assert.notEqual(JSON.stringify(noted),JSON.stringify(p));
+ assert.match(api.currentSummaryRequest(noted,'b'.repeat(64)).message.text,/SOURCE REVIEW AND ALLOCATION NOTES\nThe printed handling fee/);
+ const without=api.currentSummaryPayload({...r,sourceReviewNote:undefined});
+ assert.equal(Object.hasOwn(without,'sourceReviewNote'),false);
+ assert.deepEqual(api.currentSummaryPayload({...r,sourceReviewNote:'  '}),without);
  js=drafts.archive.nodes.find(n=>n.name==='Require Reviewed Receipt').parameters.jsCode;
  prefix=js.slice(0,js.indexOf('const p=$input.first().json;const r=p.receipt;'));
  const check=await new A('$',prefix+'return validateReceiptSplit;})();return result;')(get);

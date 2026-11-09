@@ -35,6 +35,7 @@ function addMailboxContext(w) {
 }
 
 function scopedCode(js, name, key) {
+ if(key==='review'){const fix=require('./receipt-source-repairs.cjs').correctReviewedDollarTree;js=fix.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctReviewedDollarTree(cache);');}
  if(key==='review'){const fix=require('./receipt-source-repairs.cjs').correctReviewedSamsOctober;js=fix.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctReviewedSamsOctober(cache);');}
  if(key==='review'){const fix=require('./receipt-source-repairs.cjs').correctReviewedKegOctober;js=fix.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctReviewedKegOctober(cache);');}
  if(key==='review'){const fix=require('./receipt-source-repairs.cjs').correctReviewedGordonFood;js=fix.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctReviewedGordonFood(cache);');}
@@ -77,7 +78,7 @@ function scopedCode(js, name, key) {
  if(key==='review')js=correctReviewedAutojateDiscount.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctReviewedAutojateDiscount(cache);');
  js=js.replace("plumbing:['plumbing repair'],subscriptions:['subscriptions']", "plumbing:['plumbing repair'],subscriptions:['subscriptions'],maintenance:['repair','repairs','pest control','window cleaning','this is for window cleaning'],software:['software','software subscription']");
  if(key==='review')js=correctGoogleOneTaxes.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctGoogleOneTaxes(cache);');
- if(key==='documents')js=js.replaceAll('plain-instructions-v2','bold-instructions-v3');
+ if(key==='documents')js=require('./summary-review-notes.cjs').includeSourceReviewNotes(js.replaceAll('plain-instructions-v2','bold-instructions-v3'));
  if(key==='review')js=correctBlickUnitAmounts.toString()+'\n'+js.replace("if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;","if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctBlickUnitAmounts(cache);").replaceAll('cache.reviewedPdfEvidence?.note||null','cache.reviewedPdfEvidence?.note||cache.sourceRepair?.note||null');
  if(key==='review'&&name==='Choose Unread Receipts')js=js.replace("/requires extraction/.test(r.reason||'')", "/requires extraction|Receipt body is empty; inspect original attachments/.test(r.reason||'')");
  if(key==='review')js=js.replace("function workingConfirmation(receipt) {",`function workingConfirmation(receipt) { {
@@ -142,7 +143,7 @@ function scopedCode(js, name, key) {
    .replace('function correctReviewedPdf(cache){',"function correctReviewedPdf(cache){ if(MB.studio!=='Gilbert')return null;")
    .replace('function reviewedPartialDuplicate(receipt,message,config){',"function reviewedPartialDuplicate(receipt,message,config){ if(MB.studio!=='Gilbert')return null;")
    .replace('function reviewMultiOrder(message,config,snapshot,decision){',"function reviewMultiOrder(message,config,snapshot,decision){ if(MB.studio!=='Gilbert')return null;");
- if(key==='review')js=js.replace('function addExtractionEvidence(item, cache) {','function addExtractionEvidence(item, cache) {\n if(cache)cache=correctReviewedKegOctober(correctReviewedGordonFood(correctReviewedStorage(correctReviewedHeidelbergSeptember(correctBwcPolicyPayment(cache)))));');
+ if(key==='review')js=js.replace('function addExtractionEvidence(item, cache) {','function addExtractionEvidence(item, cache) {\n if(cache)cache=correctReviewedDollarTree(correctReviewedKegOctober(correctReviewedGordonFood(correctReviewedStorage(correctReviewedHeidelbergSeptember(correctBwcPolicyPayment(cache))))));');
  if(key==='archive') {
    js=js.replaceAll(JSON.stringify(scopes[0].mailbox),'MB.mailbox')
      .replaceAll("'"+scopes[0].mailbox+"'",'MB.mailbox');

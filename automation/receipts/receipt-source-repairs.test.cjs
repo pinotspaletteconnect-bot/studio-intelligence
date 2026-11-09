@@ -1,5 +1,11 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {correctBlickUnitAmounts}=require('./receipt-source-repairs.cjs');
+test('Dollar Tree original corrects date and twenty units without choosing a category',()=>{
+ const fix=require('./receipt-source-repairs.cjs').correctReviewedDollarTree;
+ const c={source:{mailbox:'trooperseaselempirereceipts@gmail.com',sourceMessageId:'1a0633a806f193d3',attachments:[{filename:'pro-m3DtjXu6.jpeg',size:792070}]},receipt:{vendor:'Dollar Tree',date:'2022-09-02',totalCents:3180,items:Array.from({length:14},()=>({netCents:150}))}};
+ const v=fix(c);assert.equal(v.receipt.date,'2026-09-02');assert.equal(v.receipt.items[0].quantity,20);assert.equal(v.receipt.items[0].netCents+v.receipt.items[0].itemTaxCents,3180);assert.equal(v.receipt.items[0].accountId,undefined);assert.deepEqual(v.source,c.source);
+ for(const bad of [{...c,source:{...c.source,mailbox:'other'}},{...c,source:{...c.source,sourceMessageId:'other'}},{...c,source:{...c.source,attachments:[]}}])assert.equal(fix(bad),bad);
+});
 test('single banner holder preserves order gross total without inventing a tax split',()=>{
  const fix=require('./receipt-source-repairs.cjs').correctReviewedPosterOrder;
  const c={source:{mailbox:'jessejayspinotreceipts@gmail.com',sourceMessageId:'1a130a1424e002df',attachments:[],text:'Quantity: 1\nGrand Total: $34.95'},receipt:{vendor:'Amazon.com',reference:'111-8443245-5627403',date:'2026-10-12',totalCents:3495,items:[{description:'Displays2go Window Sign Holder for Banner Graphics',quantity:1,netCents:3297}]}};
