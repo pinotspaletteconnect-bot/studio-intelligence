@@ -99,6 +99,8 @@ test('reviewed Heidelberg line amounts reconcile without double-discounting or i
  const c={source:{mailbox:'stellaseaselempirereceipts@gmail.com',sourceMessageId:'1a18deac1df19385',attachments:[{filename:'10.28.26.jpg',mimeType:'image/jpeg',size:76769}]},receipt:{vendor:'Heidelberg Columbus',reference:'90008895',totalCents:35304,items:Array(6).fill({})}};
  const r=fix(c).receipt;
  assert.equal(r.items.reduce((n,i)=>n+i.netCents,0)+r.otherFeesCents,r.totalCents);
+ assert.deepEqual(r.items.map(i=>i.netCents),[2252,2312,2321,5097,9650,13672]);
+ assert.equal(r.otherFeesCents,0);assert.equal(r.reviewedPrintedAmounts.splitCaseChargeCents,200);assert.match(fix(c).sourceRepair.note,/estimated allocation/);
  assert.equal(r.date,'2026-10-28');assert.equal(r.paidAmountCents,null);assert.equal(r.taxCents,null);assert.equal(r.orderDiscountCents,0);
  for(const source of [{...c.source,mailbox:'wrong'},{...c.source,sourceMessageId:'wrong'},{...c.source,attachments:[]}]){const bad={...c,source};assert.equal(fix(bad),bad);}
 });
