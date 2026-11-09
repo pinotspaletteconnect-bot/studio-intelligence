@@ -1,5 +1,11 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {correctBlickUnitAmounts}=require('./receipt-source-repairs.cjs');
+test('ZEM order number permits printed hash prefix without changing source identity',()=>{
+ const fix=require('./receipt-source-repairs.cjs').correctZemBrushOrder,description="PA100 Size #0 White Synthetic Round Long Handle Pinot's Palette Brush";
+ const c={source:{attachments:[],text:'From: ZEM BRUSH MFG <info@zembrush.com>\nSent: Tuesday, September 1, 2026 11:56 AM\nTo: Studio\nSubject: Your ZEM BRUSH MFG Order Confirmation (#4759)\n'+description+'\nGrand total: $342.00'},receipt:{vendor:'ZEM BRUSH MFG',documentKind:'order_confirmation',reference:'4759',date:null,totalCents:34200,items:[{description,netCents:34200}],uncertainties:[]}};
+ for(const reference of ['4759','#4759']){const r=fix({...c,receipt:{...c.receipt,reference}});assert.equal(r.receipt.date,'2026-09-01');assert.equal(r.receipt.reference,reference);}
+ const bad={...c,receipt:{...c.receipt,reference:'4758'}};assert.equal(fix(bad),bad);
+});
 test('Michaels quantities and voucher require exact printed subtotal and count',()=>{
  const fix=require('./receipt-source-repairs.cjs').correctMichaelsUnitAmounts;
  const c={source:{attachments:[],text:'From: Michaels <no-reply@michaels.com>\nOrder 123\n$38.99\nSubtotal (6 items) $233.94\nShipping Free\nVoucher -$15.00\nTaxes $13.14\nOrder Total $232.08'},receipt:{vendor:'Michaels',documentKind:'order_confirmation',reference:'123',subtotalCents:23394,taxCents:1314,totalCents:23208,items:[{quantity:5,netCents:3899},{quantity:1,netCents:3899}],uncertainties:[]}};

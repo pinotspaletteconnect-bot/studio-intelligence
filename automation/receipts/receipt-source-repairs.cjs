@@ -94,7 +94,7 @@ function correctZemBrushOrder(cache) {
  const r=cache?.receipt,s=cache?.source,t=String(s?.text||'').replace(/\r/g,'');
  if(r?.vendor!=='ZEM BRUSH MFG'||r.documentKind!=='order_confirmation'||r.date!=null||s.attachments?.length||r.uncertainties?.length)return cache;
  const headers=[...t.matchAll(/From: ZEM BRUSH MFG <info@zembrush\.com>\nSent: [A-Za-z]+, ([A-Za-z]+) (\d{1,2}), (\d{4})[^\n]*\nTo:[^\n]*\nSubject: Your ZEM BRUSH MFG Order Confirmation \(#(\d+)\)/g)];
- if(headers.length!==1||r.reference!=='#'+headers[0][4])return cache;
+ if(headers.length!==1||String(r.reference).replace(/^#/,'')!==headers[0][4])return cache;
  const month=['January','February','March','April','May','June','July','August','September','October','November','December'].indexOf(headers[0][1])+1;
  const total=t.match(/Grand total:\s*\$([\d,]+\.\d{2})/);
  if(!month||!total||Math.round(Number(total[1].replace(/,/g,''))*100)!==r.totalCents||!r.items?.length||r.items.some(i=>!/^PA10[01] Size #\d+ White Synthetic (?:Round|Flat) Long Handle Pinot's Palette Brush$/.test(i.description)||!t.includes(i.description)||!Number.isSafeInteger(i.netCents)||i.netCents<=0)||r.items.reduce((n,i)=>n+i.netCents,0)!==r.totalCents)return cache;
