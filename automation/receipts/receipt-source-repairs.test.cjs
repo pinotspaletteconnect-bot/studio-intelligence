@@ -191,3 +191,11 @@ test('Target source repair corrects printed facts without guessing the item cate
  const r=fix(c).receipt;assert.equal(r.reference,'2-6271-2473-0160-7748-7');assert.equal(r.subtotalCents+r.taxCents,r.totalCents);assert.equal(r.items[0].description,'Mondo Llama');assert.equal(r.items[0].accountId,undefined);
  const other={...c,source:{...c.source,sourceMessageId:'1a0e93eadf2ad6ba'}};assert.equal(fix(other),other);
 });
+test('Keg October original corrects date, reference, beer lines and fuel without inventing tax',()=>{
+ const {correctReviewedKegOctober:fix}=require('./receipt-source-repairs.cjs');
+ const c={source:{mailbox:'jessejayspinotreceipts@gmail.com',sourceMessageId:'1a1406ee13cdbf9b',attachments:[{filename:'20261015_123830.jpg',size:2263375}]},receipt:{vendor:'Keg 1 Beer LLC',reference:'59896',date:'2023-10-31',totalCents:9340,taxCents:640}};
+ const r=fix(c).receipt;
+ assert.equal(r.reference,'539896');assert.equal(r.date,'2026-10-15');assert.equal(r.taxCents,0);
+ assert.deepEqual(r.items.map(i=>i.netCents),[3200,3060,2480]);assert.equal(r.items.reduce((n,i)=>n+i.netCents,0)+r.deliveryCents,9340);
+ for(const bad of [{...c,receipt:{...c.receipt,totalCents:9341}},{...c,source:{...c.source,mailbox:'other'}}])assert.equal(fix(bad),bad);
+});

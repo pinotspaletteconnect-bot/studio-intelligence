@@ -1,4 +1,9 @@
 'use strict';
+function correctReviewedKegOctober(cache) {
+ const r=cache?.receipt,s=cache?.source;
+ if(s?.mailbox!=='jessejayspinotreceipts@gmail.com'||s.sourceMessageId!=='1a1406ee13cdbf9b'||s.attachments?.length!==1||s.attachments[0].filename!=='20261015_123830.jpg'||s.attachments[0].size!==2263375||r?.vendor!=='Keg 1 Beer LLC'||r.totalCents!==9340||r.reference!=='59896')return cache;
+ return {...cache,receipt:{...r,reference:'539896',date:'2026-10-15',subtotalCents:8740,taxCents:0,deliveryCents:600,otherFeesCents:0,orderDiscountCents:0,items:[{description:'ANG ORCH CRISP 12PK NR 12OZ',quantity:1,netCents:3200,itemTaxCents:0,evidence:'ANG ORCH CRISP 12PK NR 12OZ 32.00'},{description:'BLUE MN BEL W 12PK NR 12OZ',quantity:1,netCents:3060,itemTaxCents:0,evidence:'BLUE MN BEL W 12PK NR 12OZ PRICE 32.00 DISC 1.40 NET 30.60'},{description:'YUENG LAGER 12PK NR 12OZ',quantity:1,netCents:2480,itemTaxCents:0,evidence:'YUENG LAGER 12PK NR 12OZ 24.80'}],uncertainties:[]},sourceRepair:{kind:'visually_reviewed_keg_october_invoice',note:'Original 20261015_123830.jpg reviewed November 9: complete foreground invoice539896 dated October15,2026, three cases. Angry Orchard32.00, Blue Moon Belgian White30.60 after1.40 line discount, Yuengling Lager24.80 =87.40; printed MISC FUEL SURCHARGE6.00 gives93.40, paid by check. Fuel is treated as delivery cost under the existing proportional delivery-allocation policy, not sales tax. The October31 license-expiry date is not the invoice date. No second purchase is asserted from the covered paper underneath.'}};
+}
 function correctReviewedGordonFood(cache) {
  const r=cache?.receipt,s=cache?.source;
  if(s?.mailbox!=='jessejayspinotreceipts@gmail.com'||s.sourceMessageId!=='1a0206ee81c7465c'||s.attachments?.length!==1||s.attachments[0].filename!=='pro-oqGpp8hO.jpeg'||s.attachments[0].size!==901042||r?.vendor!=='Gordon Food Service Store'||r.totalCents!==7412||r.items?.length!==4||r.items.some((i,n)=>i.netCents!==[2498,1261,2798,799][n]))return cache;
@@ -237,3 +242,4 @@ module.exports.correctReviewedPosterOrder=correctReviewedPosterOrder;
 module.exports.correctReviewedMichaelsPaint=correctReviewedMichaelsPaint;
 module.exports.correctMichaelsUnitAmounts=correctMichaelsUnitAmounts;
 module.exports.correctReviewedGordonFood=correctReviewedGordonFood;
+module.exports.correctReviewedKegOctober=correctReviewedKegOctober;

@@ -1,5 +1,13 @@
 [
   {
+    "id": "keg-confirmed-beer-products",
+    "vendor": "Keg 1 Beer LLC",
+    "pattern": "^(?:ANG ORCH CRISP|BLUE MN BEL W|YUENG LAGER) 12PK NR 12OZ$",
+    "account": "beer",
+    "accountDefinition": {"id":"162","name":"Beer Inventory"},
+    "approval": "Owner confirmed Beer Inventory and sharing general product rules across studios. Original invoice539896 identifies Angry Orchard Crisp, Blue Moon Belgian White and Yuengling Lager; abbreviated supplier descriptions are beer products."
+  },
+  {
     "id":"owner-banner-sign-holder-marketing",
     "vendor":"Amazon.com",
     "pattern":"^Displays2go Window Sign Holder for Banner Graphics$",
