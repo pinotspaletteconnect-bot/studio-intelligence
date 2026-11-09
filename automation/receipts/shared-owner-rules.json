@@ -319,6 +319,14 @@
     "approval": "Saved owner Sams Club answer: Tea is non alcoholic inventory. User explicitly directed shared product answers across studios."
   },
   {
+    "id": "owner-fresh-lemons-limes",
+    "vendor": "Kroger",
+    "pattern": "^(?:Lemons|Limes)$",
+    "account": "perishable",
+    "accountDefinition": {"id": "217", "name": "Mixers & Perishables COGS"},
+    "approval": "Saved owner answer 5: Lime garnish COGS; strawberries, lemons, oranges all garnish COGS. Owner explicitly directed shared product answers across studios. Exact whole-fruit names exclude flavored drinks."
+  },
+  {
     "id": "owner-pulp-free-orange-juice",
     "vendor": "Sam's Club",
     "pattern": "^Member's Mark Pulp-Free 100% Orange Juice(?:,|$)",
