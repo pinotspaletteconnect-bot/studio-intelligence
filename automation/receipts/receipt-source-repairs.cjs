@@ -1,4 +1,31 @@
 'use strict';
+function correctMichaelsUnitAmounts(cache) {
+ const r=cache?.receipt,s=cache?.source,t=String(s?.text||'').replace(/\r/g,'');
+ if(r?.vendor!=='Michaels'||r.documentKind!=='order_confirmation'||s.attachments?.length||!t.includes('From: Michaels <no-reply@michaels.com>')||!Array.isArray(r.items)||!r.items.length||!t.includes('Order '+r.reference)||(r.uncertainties||[]).some(u=>u!=='The total amount charged matches the order total, but the itemized amounts do not clearly indicate individual item discounts or taxes applied.'))return cache;
+ const sub=t.match(/Subtotal\s*\((\d+) items\)\s*\$([\d,]+\.\d{2})/),tax=t.match(/Taxes\s*\$([\d,]+\.\d{2})/),total=t.match(/Order Total\s*\$([\d,]+\.\d{2})/),voucher=t.match(/Voucher\s*-\$([\d,]+\.\d{2})/);
+ if(!sub||!tax||!total||!t.match(/Shipping\s*Free/))return cache;
+ const cents=v=>Math.round(Number(v.replace(/,/g,''))*100),subtotal=cents(sub[2]),taxCents=cents(tax[1]),totalCents=cents(total[1]),discount=voucher?cents(voucher[1]):0;
+ if(totalCents!==r.totalCents||subtotal!==r.subtotalCents||taxCents!==r.taxCents||subtotal-discount+taxCents!==totalCents||r.items.some(i=>!Number.isSafeInteger(i.quantity)||i.quantity<=0||!Number.isSafeInteger(i.netCents)||i.netCents<=0||!t.includes('$'+(i.netCents/100).toFixed(2)))||r.items.reduce((n,i)=>n+i.quantity,0)!==Number(sub[1]))return cache;
+ const gross=r.items.map(i=>i.quantity*i.netCents);if(gross.reduce((a,b)=>a+b,0)!==subtotal)return cache;
+ const allocation=gross.map(n=>Math.floor(n*discount/subtotal)),remainder=discount-allocation.reduce((a,b)=>a+b,0),rank=gross.map((n,i)=>({i,r:n*discount%subtotal})).sort((a,b)=>b.r-a.r||a.i-b.i);for(let n=0;n<remainder;n++)allocation[rank[n].i]++;
+ return {...cache,receipt:{...r,subtotalCents:subtotal-discount,orderDiscountCents:0,paidAmountCents:null,items:r.items.map((i,n)=>({...i,netCents:gross[n]-allocation[n],itemTaxCents:null})),uncertainties:[]},sourceRepair:{kind:'michaels_verified_extended_prices',note:'Original Michaels order lists unit prices beside quantities. Multiplying each unit price by its quantity exactly matches the printed subtotal and total item count. The printed voucher, if any, is allocated proportionally with exact-cent rounding; printed tax remains separate and total reconciles exactly. Order confirmation is preserved without claiming payment settlement. Categories still require saved owner rules.'}};
+}
+function correctReviewedMichaelsPaint(cache) {
+ const r=cache?.receipt,s=cache?.source,t=String(s?.text||'');
+ if(s?.mailbox!=='jessejayspinotreceipts@gmail.com'||s.sourceMessageId!=='1a144d14bf7c5708'||s.attachments?.length||r?.vendor!=='Michaels'||r.reference!=='5200110909895173'||r.totalCents!==4403||!t.includes('$87.94')||!t.includes('-$20.00')||!t.includes('$26.40')||!t.includes('$2.49')||r.items?.length!==4)return cache;
+ const gross=[1399,1678,1399,1678],qty=[1,2,1,2];
+ if(r.items.some((i,n)=>i.quantity!==qty[n]||!i.description.includes('Acrylic Paint by Craft Smart')||i.netCents!==[1399,839,1399,839][n]))return cache;
+ const discounts=gross.map(n=>Math.floor(n*2000/6154));let remaining=2000-discounts.reduce((a,b)=>a+b,0);
+ const rank=gross.map((n,i)=>({i,remainder:n*2000%6154})).sort((a,b)=>b.remainder-a.remainder||a.i-b.i);for(let n=0;n<remaining;n++)discounts[rank[n].i]++;
+ const items=r.items.map((i,n)=>({...i,netCents:gross[n]-discounts[n],itemTaxCents:null,evidence:i.evidence}));
+ if(items.reduce((n,i)=>n+i.netCents,0)+249!==4403)throw Error('Michaels reviewed paint total mismatch');
+ return {...cache,receipt:{...r,subtotalCents:4154,taxCents:249,deliveryCents:0,orderDiscountCents:0,otherFeesCents:0,paidAmountCents:4403,items,uncertainties:[]},sourceRepair:{kind:'source_verified_paint_voucher_allocation',note:'Original Michaels order5200110909895173: six paint containers. Extended sale prices $13.99, $16.78, $13.99, $16.78 sum $61.54, equal printed $87.94 before $26.40 savings. The separate $20 voucher is allocated proportionally over those four extended lines with exact-cent rounding, leaving $41.54; printed tax $2.49 brings total to $44.03. No discount is deducted twice. All items are acrylic paint under the owner-confirmed Paint Inventory rule.'}};
+}
+function correctReviewedPosterOrder(cache) {
+ const r=cache?.receipt,s=cache?.source,t=String(s?.text||'');
+ if(s?.mailbox!=='jessejayspinotreceipts@gmail.com'||s.sourceMessageId!=='1a116ce50bcbca32'||s.attachments?.length||r?.vendor!=='Amazon.com'||r.reference!=='113-6368496-7846663'||r.date!=='2026-10-07'||r.totalCents!==6041||r.items?.length!==1||r.items[0].netCents!==5699||!t.includes('Grand Total:')||!t.includes('$60.41'))return cache;
+ return {...cache,receipt:{...r,subtotalCents:null,taxCents:null,deliveryCents:null,orderDiscountCents:null,otherFeesCents:null,paidAmountCents:null,items:[{...r.items[0],netCents:6041,itemTaxCents:null,evidence:'$60.41'}],uncertainties:[]},sourceRepair:{kind:'reviewed_single_product_order_gross_amount',note:'Original Amazon order confirmation113-6368496-7846663 contains one product: poster-frame two-pack, displayed product price $56.99 and grand total $60.41. The $3.42 difference is not broken out as tax or another fee; no tax or settlement is asserted. The entire stated order total is assigned to the one product and the owner-confirmed Marketing category (answer96). Original item price remains visible in the original PDF; this summary uses the gross order amount, not an invented item-price or multi-product allocation.'}};
+}
 function correctReviewedStorage(cache) {
  const r=cache?.receipt,s=cache?.source;
  if(s?.mailbox!=='stellaseaselempirereceipts@gmail.com'||s.sourceMessageId!=='19fa3a52726b728b'||r?.vendor!=='Go Store It - Grandview Heights'||r.reference!=='1736947649'||r.date!=='2026-07-26'||r.totalCents!==25152||s.attachments?.length!==1||s.attachments[0].filename!=='Receipt_1736947649.pdf'||s.attachments[0].size!==60512)return cache;
@@ -200,3 +227,6 @@ module.exports.correctReviewedKeg1=correctReviewedKeg1;
 module.exports.correctBwcPolicyPayment=correctBwcPolicyPayment;
 module.exports.correctReviewedHeidelbergSeptember=correctReviewedHeidelbergSeptember;
 module.exports.correctReviewedStorage=correctReviewedStorage;
+module.exports.correctReviewedPosterOrder=correctReviewedPosterOrder;
+module.exports.correctReviewedMichaelsPaint=correctReviewedMichaelsPaint;
+module.exports.correctMichaelsUnitAmounts=correctMichaelsUnitAmounts;

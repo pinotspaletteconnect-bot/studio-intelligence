@@ -1,5 +1,23 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {correctBlickUnitAmounts}=require('./receipt-source-repairs.cjs');
+test('Michaels quantities and voucher require exact printed subtotal and count',()=>{
+ const fix=require('./receipt-source-repairs.cjs').correctMichaelsUnitAmounts;
+ const c={source:{attachments:[],text:'From: Michaels <no-reply@michaels.com>\nOrder 123\n$38.99\nSubtotal (6 items) $233.94\nShipping Free\nVoucher -$15.00\nTaxes $13.14\nOrder Total $232.08'},receipt:{vendor:'Michaels',documentKind:'order_confirmation',reference:'123',subtotalCents:23394,taxCents:1314,totalCents:23208,items:[{quantity:5,netCents:3899},{quantity:1,netCents:3899}],uncertainties:[]}};
+ const r=fix(c).receipt;assert.equal(r.items.reduce((n,i)=>n+i.netCents,0)+r.taxCents,23208);assert.equal(r.orderDiscountCents,0);assert.equal(r.paidAmountCents,null);assert.equal(c.receipt.items[0].netCents,3899);
+ for(const bad of [{...c,source:{...c.source,text:c.source.text.replace('(6 items)','(7 items)')}},{...c,source:{...c.source,text:c.source.text.replace('-$15.00','-$14.00')}},{...c,receipt:{...c.receipt,items:[{quantity:4,netCents:3899},{quantity:2,netCents:3900}]}},{...c,receipt:{...c.receipt,uncertainties:['Missing page']}}])assert.equal(fix(bad),bad);
+});
+test('Michaels extended paint prices and voucher reconcile without double-discount',()=>{
+ const fix=require('./receipt-source-repairs.cjs').correctReviewedMichaelsPaint;
+ const c={source:{mailbox:'jessejayspinotreceipts@gmail.com',sourceMessageId:'1a144d14bf7c5708',attachments:[],text:'$87.94 -$20.00 $26.40 $2.49'},receipt:{vendor:'Michaels',reference:'5200110909895173',totalCents:4403,items:[1399,839,1399,839].map((netCents,i)=>({description:'Acrylic Paint by Craft Smart',quantity:[1,2,1,2][i],netCents}))}};
+ const r=fix(c).receipt;assert.equal(r.items.reduce((n,i)=>n+i.netCents,0),4154);assert.equal(r.taxCents,249);assert.equal(r.orderDiscountCents,0);assert.equal(c.receipt.items[1].netCents,839);
+ const other={...c,receipt:{...c.receipt,totalCents:4404}};assert.equal(fix(other),other);
+});
+test('single-product Amazon order preserves gross amount without inventing tax or payment',()=>{
+ const fix=require('./receipt-source-repairs.cjs').correctReviewedPosterOrder;
+ const c={source:{mailbox:'jessejayspinotreceipts@gmail.com',sourceMessageId:'1a116ce50bcbca32',attachments:[],text:'Grand Total: $60.41'},receipt:{vendor:'Amazon.com',reference:'113-6368496-7846663',date:'2026-10-07',totalCents:6041,items:[{description:'Poster frame',netCents:5699}],paidAmountCents:6041}};
+ const r=fix(c).receipt;assert.equal(r.items[0].netCents,6041);assert.equal(r.taxCents,null);assert.equal(r.paidAmountCents,null);assert.equal(c.receipt.items[0].netCents,5699);
+ for(const bad of [{...c,receipt:{...c.receipt,items:[...c.receipt.items,{netCents:1}]}},{...c,source:{...c.source,text:'Grand Total: $1.00'}},{...c,source:{...c.source,sourceMessageId:'other'}}])assert.equal(fix(bad),bad);
+});
 test('storage tax applies only to rental line and preserves the original source',()=>{
  const fix=require('./receipt-source-repairs.cjs').correctReviewedStorage;
  const c={source:{mailbox:'stellaseaselempirereceipts@gmail.com',sourceMessageId:'19fa3a52726b728b',attachments:[{filename:'Receipt_1736947649.pdf',size:60512}]},receipt:{vendor:'Go Store It - Grandview Heights',reference:'1736947649',date:'2026-07-26',totalCents:25152,orderDiscountCents:1752}};

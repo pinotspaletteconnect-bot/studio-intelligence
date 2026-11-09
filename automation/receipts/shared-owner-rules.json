@@ -1,5 +1,13 @@
 [
   {
+    "id":"michaels-explicit-super-value-canvas",
+    "vendor":"Michaels",
+    "pattern":"Super Value Canvas by Artist's Loft",
+    "account":"canvas",
+    "accountDefinition":{"id":"163","name":"Canvas Inventory"},
+    "approval":"Existing confirmed Canvas Inventory category and owner instruction to share general product rules across studios. Applies to explicit Michaels canvas products, not Canvas Depot's separate Special Class COGS rule."
+  },
+  {
     "id":"bwc-workers-compensation-policy",
     "vendor":"BWC",
     "pattern":"^Ohio BWC workers compensation policy payment$",
