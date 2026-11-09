@@ -1,4 +1,9 @@
 'use strict';
+function correctReviewedGordonFood(cache) {
+ const r=cache?.receipt,s=cache?.source;
+ if(s?.mailbox!=='jessejayspinotreceipts@gmail.com'||s.sourceMessageId!=='1a0206ee81c7465c'||s.attachments?.length!==1||s.attachments[0].filename!=='pro-oqGpp8hO.jpeg'||s.attachments[0].size!==901042||r?.vendor!=='Gordon Food Service Store'||r.totalCents!==7412||r.items?.length!==4||r.items.some((i,n)=>i.netCents!==[2498,1261,2798,799][n]))return cache;
+ return {...cache,receipt:{...r,reference:'1515-4-243',date:'2026-08-20',subtotalCents:7356,taxCents:56,deliveryCents:0,orderDiscountCents:0,otherFeesCents:0,items:r.items.map((i,n)=>({...i,quantity:[2,1,2,1][n],itemTaxCents:n===3?56:0})),uncertainties:[]},sourceRepair:{kind:'visually_reviewed_gordon_food_quantities',note:'Original pro-oqGpp8hO.jpeg reviewed November9: store1515 lane4 transaction243, August20,2026. Two salami at $12.49=$24.98, cheese by weight $12.61, two crackers at $13.99=$27.98, Dawn $7.99. Six purchased units across four lines, not six different products. Net $73.56 plus printed tax $0.56 on the T-marked Dawn line equals $74.12. Extraction had mistaken salami SKU5016371 for transaction reference. Categories require saved owner rules.'}};
+}
 function correctMichaelsUnitAmounts(cache) {
  const r=cache?.receipt,s=cache?.source,t=String(s?.text||'').replace(/\r/g,'');
  if(r?.vendor!=='Michaels'||r.documentKind!=='order_confirmation'||s.attachments?.length||!t.includes('From: Michaels <no-reply@michaels.com>')||!Array.isArray(r.items)||!r.items.length||!t.includes('Order '+r.reference)||(r.uncertainties||[]).some(u=>u!=='The total amount charged matches the order total, but the itemized amounts do not clearly indicate individual item discounts or taxes applied.'))return cache;
@@ -230,3 +235,4 @@ module.exports.correctReviewedStorage=correctReviewedStorage;
 module.exports.correctReviewedPosterOrder=correctReviewedPosterOrder;
 module.exports.correctReviewedMichaelsPaint=correctReviewedMichaelsPaint;
 module.exports.correctMichaelsUnitAmounts=correctMichaelsUnitAmounts;
+module.exports.correctReviewedGordonFood=correctReviewedGordonFood;

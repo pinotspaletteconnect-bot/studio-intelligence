@@ -1,5 +1,37 @@
 [
   {
+    "id":"gordon-owner-salami-food-cogs",
+    "vendor":"Gordon Food Service Store",
+    "pattern":"^SALAMI HARD SLCD$",
+    "account":"foodCogs",
+    "accountDefinition":{"id":"226","name":"Food COGS"},
+    "approval":"Saved owner answer4: Salami is food cogs. Owner directed applying product answers across all studios. Existing approved chart account226."
+  },
+  {
+    "id":"gordon-owner-crackers-food-inventory",
+    "vendor":"Gordon Food Service Store",
+    "pattern":"^Asst Crackers Entm$",
+    "account":"food",
+    "accountDefinition":{"id":"224","name":"Food Inventory"},
+    "approval":"Saved owner answer11 identifies crackers as Food Inventory; share general product rules across studios."
+  },
+  {
+    "id":"gordon-dawn-cleaning-supplies",
+    "vendor":"Gordon Food Service Store",
+    "pattern":"^Dawn Pot N Pan Ori$",
+    "account":"supplies",
+    "accountDefinition":{"id":"131","name":"Supplies & materials"},
+    "approval":"Existing owner answers4 and11 classify cleaning products and soaps as Supplies & materials. Explicit Dawn pot-and-pan detergent matches that product category."
+  },
+  {
+    "id":"td-owner-branded-click-pens-giveaway",
+    "vendor":"TD Art Supply",
+    "pattern":"^Pinot's Branded Click Pen(?: |$)",
+    "account":"giveaway",
+    "accountDefinition":{"id":"219","name":"Advertising & marketing:Give Away"},
+    "approval":"Owner confirmed November 9, 2026 that the $50 Pinot's branded pens on St. Matthews TAS50560 are guest giveaways. Owner has instructed sharing general product rules across studios; applies to this named branded pen, not generic pens or other stationery."
+  },
+  {
     "id":"michaels-explicit-super-value-canvas",
     "vendor":"Michaels",
     "pattern":"Super Value Canvas by Artist's Loft",

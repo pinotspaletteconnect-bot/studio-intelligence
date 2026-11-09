@@ -1,5 +1,11 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {correctBlickUnitAmounts}=require('./receipt-source-repairs.cjs');
+test('Gordon six units across four lines preserve printed tax and source scope',()=>{
+ const fix=require('./receipt-source-repairs.cjs').correctReviewedGordonFood;
+ const c={source:{mailbox:'jessejayspinotreceipts@gmail.com',sourceMessageId:'1a0206ee81c7465c',attachments:[{filename:'pro-oqGpp8hO.jpeg',size:901042}]},receipt:{vendor:'Gordon Food Service Store',totalCents:7412,items:[2498,1261,2798,799].map(netCents=>({netCents}))}};
+ const r=fix(c).receipt;assert.equal(r.items.reduce((n,i)=>n+i.quantity,0),6);assert.equal(r.items.reduce((n,i)=>n+i.netCents+i.itemTaxCents,0),7412);assert.equal(r.reference,'1515-4-243');assert.equal(r.items[2].quantity,2);
+ for(const bad of [{...c,source:{...c.source,sourceMessageId:'other'}},{...c,receipt:{...c.receipt,totalCents:7413}}])assert.equal(fix(bad),bad);
+});
 test('ZEM order number permits printed hash prefix without changing source identity',()=>{
  const fix=require('./receipt-source-repairs.cjs').correctZemBrushOrder,description="PA100 Size #0 White Synthetic Round Long Handle Pinot's Palette Brush";
  const c={source:{attachments:[],text:'From: ZEM BRUSH MFG <info@zembrush.com>\nSent: Tuesday, September 1, 2026 11:56 AM\nTo: Studio\nSubject: Your ZEM BRUSH MFG Order Confirmation (#4759)\n'+description+'\nGrand total: $342.00'},receipt:{vendor:'ZEM BRUSH MFG',documentKind:'order_confirmation',reference:'4759',date:null,totalCents:34200,items:[{description,netCents:34200}],uncertainties:[]}};

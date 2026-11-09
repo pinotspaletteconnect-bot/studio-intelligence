@@ -219,7 +219,7 @@ test('shared approved rules produce balanced splits for each studio without QBO'
 });
 test('embedded argument rules are scoped without changing historical provenance',async()=>{
  const scope={...mailboxScope(registry,registry.studios[1].mailbox),useSharedCoa:true};
- const rules={version:'test',companyId:'9130357828229216',accounts:{supplies:{name:'Supplies'}},rules:[{id:'general'},{id:'specific',sourceMessageId:'0123456789abcdef'}]};
+ const rules={version:'test',companyId:'9130357828229216',accounts:{supplies:{id:'131',name:'Supplies & materials'}},rules:[{id:'general'},{id:'specific',sourceMessageId:'0123456789abcdef'}]};
  const js=scopedCode('return [{json:{rules:'+JSON.stringify(rules)+'}}];','fixture','review');
  const output=await new AsyncFunction('$',js)(lookup(scope));
  assert.equal(output[0].json.rules.companyId,scope.scopeId);

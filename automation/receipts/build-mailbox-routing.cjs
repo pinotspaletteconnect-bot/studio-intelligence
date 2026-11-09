@@ -35,6 +35,7 @@ function addMailboxContext(w) {
 }
 
 function scopedCode(js, name, key) {
+ if(key==='review'){const fix=require('./receipt-source-repairs.cjs').correctReviewedGordonFood;js=fix.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctReviewedGordonFood(cache);');}
  if(key==='review'){const fix=require('./receipt-source-repairs.cjs').correctMichaelsUnitAmounts;js=fix.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctMichaelsUnitAmounts(cache);');}
  if(key==='review'){const fix=require('./receipt-source-repairs.cjs').correctReviewedMichaelsPaint;js=fix.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctReviewedMichaelsPaint(cache);');}
  if(key==='review'){const fix=require('./receipt-source-repairs.cjs').correctReviewedPosterOrder;js=fix.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctReviewedPosterOrder(cache);');}
@@ -139,7 +140,7 @@ function scopedCode(js, name, key) {
    .replace('function correctReviewedPdf(cache){',"function correctReviewedPdf(cache){ if(MB.studio!=='Gilbert')return null;")
    .replace('function reviewedPartialDuplicate(receipt,message,config){',"function reviewedPartialDuplicate(receipt,message,config){ if(MB.studio!=='Gilbert')return null;")
    .replace('function reviewMultiOrder(message,config,snapshot,decision){',"function reviewMultiOrder(message,config,snapshot,decision){ if(MB.studio!=='Gilbert')return null;");
- if(key==='review')js=js.replace('function addExtractionEvidence(item, cache) {','function addExtractionEvidence(item, cache) {\n if(cache)cache=correctReviewedStorage(correctReviewedHeidelbergSeptember(correctBwcPolicyPayment(cache)));');
+ if(key==='review')js=js.replace('function addExtractionEvidence(item, cache) {','function addExtractionEvidence(item, cache) {\n if(cache)cache=correctReviewedGordonFood(correctReviewedStorage(correctReviewedHeidelbergSeptember(correctBwcPolicyPayment(cache))));');
  if(key==='archive') {
    js=js.replaceAll(JSON.stringify(scopes[0].mailbox),'MB.mailbox')
      .replaceAll("'"+scopes[0].mailbox+"'",'MB.mailbox');
