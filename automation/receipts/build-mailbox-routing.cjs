@@ -35,6 +35,7 @@ function addMailboxContext(w) {
 }
 
 function scopedCode(js, name, key) {
+ if(key==='review'){const fix=require('./receipt-source-repairs.cjs').correctReviewedSamsOctober;js=fix.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctReviewedSamsOctober(cache);');}
  if(key==='review'){const fix=require('./receipt-source-repairs.cjs').correctReviewedKegOctober;js=fix.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctReviewedKegOctober(cache);');}
  if(key==='review'){const fix=require('./receipt-source-repairs.cjs').correctReviewedGordonFood;js=fix.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctReviewedGordonFood(cache);');}
  if(key==='review'){const fix=require('./receipt-source-repairs.cjs').correctMichaelsUnitAmounts;js=fix.toString()+'\n'+js.replace('if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;','if(!cache||cache.source?.sourceMessageId!==message.id||!cache.receipt)return null;cache=correctMichaelsUnitAmounts(cache);');}

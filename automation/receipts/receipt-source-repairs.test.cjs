@@ -199,3 +199,11 @@ test('Keg October original corrects date, reference, beer lines and fuel without
  assert.deepEqual(r.items.map(i=>i.netCents),[3200,3060,2480]);assert.equal(r.items.reduce((n,i)=>n+i.netCents,0)+r.deliveryCents,9340);
  for(const bad of [{...c,receipt:{...c.receipt,totalCents:9341}},{...c,source:{...c.source,mailbox:'other'}}])assert.equal(fix(bad),bad);
 });
+test('Sam’s October uses extended plate amount and allocates printed savings once',()=>{
+ const {correctReviewedSamsOctober:fix}=require('./receipt-source-repairs.cjs');
+ const c={source:{mailbox:'jessejayspinotreceipts@gmail.com',sourceMessageId:'1a12c4cae7fffed1',attachments:[],text:'$44.68 $22.34 each Savings $7.50'},receipt:{vendor:"Sam's Club",reference:'TC # 654014593427635654926',date:'2026-10-09',totalCents:15377,subtotalCents:15251,taxCents:876,orderDiscountCents:750,items:[2234,2093,1848,1848,2998,1348,648].map(netCents=>({netCents}))}};
+ const r=fix(c).receipt;
+ assert.equal(r.items.reduce((n,i)=>n+i.netCents,0),14501);assert.equal(r.subtotalCents+r.taxCents,15377);assert.equal(r.orderDiscountCents,0);assert.equal(r.items[0].quantity,2);
+ for(const bad of [{...c,receipt:{...c.receipt,totalCents:15378}},{...c,source:{...c.source,mailbox:'other'}}])assert.equal(fix(bad),bad);
+ assert.equal(c.receipt.items[0].netCents,2234);
+});

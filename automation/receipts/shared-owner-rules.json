@@ -1,5 +1,29 @@
 [
   {
+    "id": "sams-confirmed-abbreviated-paper",
+    "vendor": "Sam's Club",
+    "pattern": "^(?:PAPERPLATE|MMTOWELS)$",
+    "account": "supplies",
+    "accountDefinition": {"id":"131","name":"Supplies & materials"},
+    "approval": "Owner answer5: paper towels and paper plates are Supplies & materials; general answers shared across studios. Exact Sam’s receipt abbreviations only."
+  },
+  {
+    "id": "sams-confirmed-abbreviated-soda",
+    "vendor": "Sam's Club",
+    "pattern": "^(?:SPRITECANS|35PKDIETCOKE)$",
+    "account": "water",
+    "accountDefinition": {"id":"184","name":"Nonalcoholic Drink Inventory"},
+    "approval": "Authenticated saved answers129 and132 assign Diet Coke and Sprite to Nonalcoholic Drink Inventory, shared across studios."
+  },
+  {
+    "id": "sams-confirmed-abbreviated-caramels",
+    "vendor": "Sam's Club",
+    "pattern": "^MMKCARAMELS$",
+    "account": "food",
+    "accountDefinition": {"id":"224","name":"Food Inventory"},
+    "approval": "Owner answer5 assigns Member’s Mark chocolate sea salt caramels to Food Inventory; exact Sam’s abbreviation and product990000966 on reviewed receipt."
+  },
+  {
     "id": "keg-confirmed-beer-products",
     "vendor": "Keg 1 Beer LLC",
     "pattern": "^(?:ANG ORCH CRISP|BLUE MN BEL W|YUENG LAGER) 12PK NR 12OZ$",

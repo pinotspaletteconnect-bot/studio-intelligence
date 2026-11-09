@@ -1,4 +1,12 @@
 'use strict';
+function correctReviewedSamsOctober(cache) {
+ const r=cache?.receipt,s=cache?.source,t=String(s?.text||'');
+ const gross=[4468,2093,1848,1848,2998,1348,648];
+ if(s?.mailbox!=='jessejayspinotreceipts@gmail.com'||s.sourceMessageId!=='1a12c4cae7fffed1'||s.attachments?.length||r?.vendor!=="Sam's Club"||r.reference!=='TC # 654014593427635654926'||r.date!=='2026-10-09'||r.totalCents!==15377||r.subtotalCents!==15251||r.taxCents!==876||r.orderDiscountCents!==750||r.items?.length!==7||!t.includes('$44.68')||!t.includes('$22.34 each')||!t.includes('Savings')||!t.includes('$7.50')||r.items.some((i,n)=>i.netCents!==(n===0?2234:gross[n])))return cache;
+ const discounts=gross.map(n=>Math.floor(n*750/15251)),rank=gross.map((n,i)=>({i,r:n*750%15251})).sort((a,b)=>b.r-a.r||a.i-b.i);
+ for(let n=0,left=750-discounts.reduce((a,b)=>a+b,0);n<left;n++)discounts[rank[n].i]++;
+ return {...cache,receipt:{...r,subtotalCents:14501,orderDiscountCents:0,deliveryCents:0,otherFeesCents:0,items:r.items.map((i,n)=>({...i,quantity:n===0?2:1,netCents:gross[n]-discounts[n],itemTaxCents:null})),uncertainties:[]},sourceRepair:{kind:'reviewed_sams_extended_price_and_savings',note:'Original Sam’s email TC654014593427635654926 reviewed November9: PAPERPLATE extended amount44.68 is two at22.34 each. Seven product lines sum152.51. Printed savings7.50 allocated proportionally across extended lines using exact-cent rounding, leaving145.01; printed tax8.76 gives paid153.77. Line discount and tax allocation are estimates under the existing proportional allocation policy; no item-specific discount or tax is asserted. Original email retains the printed values.'}};
+}
 function correctReviewedKegOctober(cache) {
  const r=cache?.receipt,s=cache?.source;
  if(s?.mailbox!=='jessejayspinotreceipts@gmail.com'||s.sourceMessageId!=='1a1406ee13cdbf9b'||s.attachments?.length!==1||s.attachments[0].filename!=='20261015_123830.jpg'||s.attachments[0].size!==2263375||r?.vendor!=='Keg 1 Beer LLC'||r.totalCents!==9340||r.reference!=='59896')return cache;
@@ -243,3 +251,4 @@ module.exports.correctReviewedMichaelsPaint=correctReviewedMichaelsPaint;
 module.exports.correctMichaelsUnitAmounts=correctMichaelsUnitAmounts;
 module.exports.correctReviewedGordonFood=correctReviewedGordonFood;
 module.exports.correctReviewedKegOctober=correctReviewedKegOctober;
+module.exports.correctReviewedSamsOctober=correctReviewedSamsOctober;
