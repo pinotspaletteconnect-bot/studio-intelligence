@@ -1,5 +1,6 @@
 'use strict';
 const {readClass}=require('./classRoster.cjs');
+const {groupCalendarCandidates,resolveCalendarDate}=require('./calendarCandidates.cjs');
 const BASE='https://admin.pinotspalette.com';
 const DAY=86400000;
 function validWindow(from,to){
@@ -62,11 +63,9 @@ async function readCalendar(page,target,fromDate,toDate){
   }
   if(current.month!==month||current.locationId!==String(target.sourceLocationId)||current.roomId!=='-1'||current.partyStage!=='0')throw Error('Calendar filters/month unverified');
   const stable=await page.evaluate(calendarDOM);if(JSON.stringify(stable)!==JSON.stringify(current))throw Error('Calendar changed during reading');
-  all.push(...current.events.filter(e=>e.date>=fromDate&&e.date<=toDate));
+  all.push(...current.events);
  }
- const map=new Map();for(const e of all){if(map.has(e.classId)&&map.get(e.classId).date!==e.date)throw Error('Class dates conflict');map.set(e.classId,e);}
- if(map.size>100)throw Error('Calendar window exceeds manual collection limit');
- return [...map.values()].sort((a,b)=>a.classId.localeCompare(b.classId));
+ return groupCalendarCandidates(all,fromDate,toDate);
 }
 async function collectSeatingEvents({page,target,fromDate,toDate}){
  validWindow(fromDate,toDate);
@@ -77,7 +76,10 @@ async function collectSeatingEvents({page,target,fromDate,toDate}){
   for(const candidate of before){
    stage='event-detail';const details=await readClass(page,candidate.classId);
    if(details.locationLabel!==target.sourceLocationLabel)throw Error('Wrong class location');
-   events.push({classId:candidate.classId,calendarDate:candidate.date,calendarPartyStage:candidate.partyStage,...details});
+   const calendarDate=resolveCalendarDate(candidate,details);
+   // A continuation from yesterday is not a new class today.
+   if(calendarDate<fromDate||calendarDate>toDate)continue;
+   events.push({classId:candidate.classId,calendarDate,calendarPartyStage:candidate.partyStage,...details});
   }
   stage='calendar-after';const after=await readCalendar(page,target,fromDate,toDate);
   if(JSON.stringify(before)!==JSON.stringify(after))throw Error('Calendar changed during collection');

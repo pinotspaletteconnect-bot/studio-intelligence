@@ -1132,3 +1132,8 @@ and reported all feeds current after their warehouse writes.
 ## Receipt OAuth public information — November 7, 2026
 Prepared static receipt-only app, privacy and use-information pages at /receipt-automation, /privacy and /terms beneath that path. No mailbox, credential, receipt-data or QBO calls occur in these routes. Local HTTP contract test passes; production deployment and Google Production transition are not yet verified. Rollout uses the existing collector without changing deployment configuration; rollback removes only the static router mount and files. New studio inbox authorization and end-to-end processing remain unverified.
 
+
+
+## November 14, 2026: shared overnight seating discovery repair (local only)
+
+Confirmed a Gilbert overnight private-party calendar entry is drawn on two dates and the deployed collector rejects the repeated class ID, aborting discovery for the entire studio. A narrow shared collector repair groups segments and verifies the actual date plus overnight times on the class detail page. Twenty focused helper and browser-backed regression tests pass, including all four studio codes, empty/unchanged input, wrong dates, and boundary continuations. No chart-writing logic, source event, schema, credentials, or staff seating is changed. Rollout and rollback are documented in `automation/seating-charts/OVERNIGHT_DISCOVERY_REPAIR_20261114.md`. Remote publication was denied before execution pending explicit repository/publication approval. Production deployment and recovery verification remain pending.

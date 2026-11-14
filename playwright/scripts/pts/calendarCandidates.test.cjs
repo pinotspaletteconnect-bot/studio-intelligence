@@ -1,0 +1,18 @@
+'use strict';
+const {test}=require('node:test'),assert=require('node:assert/strict');
+const {groupCalendarCandidates,resolveCalendarDate}=require('./calendarCandidates.cjs');
+const row=(id,date,extra={})=>({classId:id,date,partyStage:'1',time:'10:30-12:30AM',painting:'',...extra});
+const details={dateText:'Sat, 14 Nov 2026',startTimeText:'10:30 PM',endTimeText:'12:30 AM'};
+const group=(rows,from='2026-11-14',to='2026-11-20')=>groupCalendarCandidates(rows,from,to);
+test('ordinary unique classes and exact repeated segments remain one class',()=>{const r=group([row('1','2026-11-14'),row('2','2026-11-16'),row('1','2026-11-14')]);assert.equal(r.length,2);assert.equal(resolveCalendarDate(r[0],details),'2026-11-14');});
+test('Gilbert overnight private-party shape uses verified start date, not continuation date',()=>{const r=group([row('948344','2026-11-14'),row('948344','2026-11-15')]);assert.equal(r.length,1);assert.equal(resolveCalendarDate(r[0],details),'2026-11-14');});
+test('shared helper handles overnight segments identically for every studio',()=>{for(const code of ['STM','SN','GIL','JEF']){const r=group([row(code,'2026-11-14'),row(code,'2026-11-15')]);assert.equal(resolveCalendarDate(r[0],details),'2026-11-14');}});
+test('window starting on continuation retains canonical date so caller excludes yesterday',()=>{const r=group([row('1','2026-11-14'),row('1','2026-11-15')],'2026-11-15');assert.equal(resolveCalendarDate(r[0],details),'2026-11-14');});
+test('continuation-only observation is accepted only with overnight detail proof',()=>{const r=group([row('1','2026-11-15')]);assert.equal(resolveCalendarDate(r[0],details),'2026-11-14');assert.throws(()=>resolveCalendarDate(r[0],{...details,startTimeText:'10:30 AM',endTimeText:'12:30 PM'}),/dates conflict/);});
+test('normal daytime class duplicated across dates still fails closed',()=>{const r=group([row('1','2026-11-14'),row('1','2026-11-15')]);assert.throws(()=>resolveCalendarDate(r[0],{...details,startTimeText:'10:30 AM',endTimeText:'12:30 PM'}),/dates conflict/);});
+test('nonadjacent dates and spans exceeding one midnight remain rejected',()=>{assert.throws(()=>group([row('1','2026-11-14'),row('1','2026-11-16')]),/dates conflict/);assert.throws(()=>group([row('1','2026-11-14'),row('1','2026-11-15'),row('1','2026-11-16')]),/dates conflict/);});
+test('conflicting identity metadata is not silently deduplicated',()=>{for(const extra of [{painting:'Different'},{partyStage:'2'},{time:'Different'}])assert.throws(()=>group([row('1','2026-11-14'),row('1','2026-11-15',extra)]),/Conflicting calendar segments/);});
+test('wrong, malformed, and invalid detail dates remain blocked',()=>{const c=group([row('1','2026-11-14'),row('1','2026-11-15')])[0];for(const dateText of ['Mon, 16 Nov 2026','Sun, 14 Nov 2026','Sat, 31 Nov 2026','2026-11-14',''])assert.throws(()=>resolveCalendarDate(c,{...details,dateText}));});
+test('missing, malformed or equal overnight times remain blocked',()=>{const c=group([row('1','2026-11-14'),row('1','2026-11-15')])[0];for(const times of [{startTimeText:''},{endTimeText:'99:00 PM'},{endTimeText:'10:30 PM'}])assert.throws(()=>resolveCalendarDate(c,{...details,...times}),/dates conflict/);});
+test('empty and outside-window calendars stay valid empty results',()=>{assert.deepEqual(group([]),[]);assert.deepEqual(group([row('1','2026-11-01')]),[]);});
+test('unique-class bound remains enforced and duplicate segments do not inflate it',()=>{const r=Array.from({length:100},(_,i)=>row(String(i),'2026-11-14'));assert.equal(group([...r,...r]).length,100);assert.throws(()=>group([...r,row('101','2026-11-14')]),/manual collection limit/);});
