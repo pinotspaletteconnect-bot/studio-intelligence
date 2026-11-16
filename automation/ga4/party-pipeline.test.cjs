@@ -55,3 +55,21 @@ test('embedded n8n normalization accepts the observed alpha header redundancy wi
   const result = execute(() => ({ first: () => ({ json: config }) }), { first: () => ({ json: bundle }) });
   assert.deepEqual(result[0].json.report.routes.core, [51, 22, 13, 11, 11, 5]);
 });
+test('approved operational loader remains manual with verified disabled target and parameterized disabled INSERT', () => {
+  const { workflow: operational } = require('./build-controlled-load.cjs');
+  assert.equal(operational.active, false);
+  assert.ok(!operational.nodes.some(node => node.type.toLowerCase().includes('schedule')));
+  const target = operational.nodes.find(node => node.name === 'Approved target and period');
+  assert.ok(target.parameters.query.includes("c.property_id='354847068'"));
+  assert.ok(target.parameters.query.includes('c.enabled=false'));
+  const loader = operational.nodes.at(-1);
+  assert.equal(loader.disabled, true);
+  assert.ok(loader.parameters.query.includes('$9::jsonb'));
+  assert.ok(loader.parameters.query.includes('do nothing'));
+  assert.ok(!JSON.stringify(operational).includes('refresh_token'));
+  const bundle = fixture();
+  const execute = new Function('$', '$input', operational.nodes.find(node => node.id === 'normalize').parameters.jsCode);
+  const result = execute(() => ({ first: () => ({ json: config }) }), { first: () => ({ json: bundle }) });
+  assert.equal(result[0].json.definition_version, 2);
+  assert.equal(result[0].json.geography, 'US');
+});
