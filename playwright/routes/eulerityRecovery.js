@@ -1,6 +1,7 @@
 const express = require("express");
 const fs = require("fs");
 const { requireCollectorAuth } = require("../middleware/collectorAuth");
+const { recoveryRange, validateTargets, validatedRecoveryReports } = require("../services/eulerityRecoveryDates");
 
 // Deliberately separate from the existing Eulerity endpoints. This temporary
 // recovery boundary authorizes account 1 only; it does not define studio maps.
@@ -33,27 +34,40 @@ function createEulerityRecoveryRouter(dependencies = {}) {
             return res.status(500).json({ success: false, error: "Eulerity account 1 recovery discovery failed" });
         }
     });
-    router.post("/download", async (_req, res) => {
+    router.post("/download", async (req, res) => {
+        let range;
+        try {
+            range = recoveryRange(req.body?.fromDate, req.body?.toDate, dependencies.today?.());
+        } catch (_error) {
+            return res.status(400).json({ success: false, error: "Eulerity recovery requires valid explicit fromDate/toDate covering 1-31 completed days" });
+        }
         let folder;
         try {
             const account = await account1();
-            if (!Array.isArray(account.targets) || !account.targets.length || account.targets.some(target => Number(target.account_id) !== 1 || Number(target.organization_id) !== 1)) {
-                throw new Error("Eulerity recovery targets are missing or cross-account");
-            }
-            const collected = await browser.collectEulerityAccount(account, account.targets);
+            validateTargets(account.targets);
+            const collected = await browser.collectEulerityAccount(account, account.targets, range);
             folder = collected.folder;
+            if (!Array.isArray(collected.results) || collected.results.length !== 4) throw new Error("Eulerity recovery omitted a studio");
             const results = [];
+            const seen = new Set();
+            const verifiedItems = [];
             for (const item of collected.results) {
+                const target = account.targets.find(row => Number(row.studio_id) === Number(item.target?.studio_id));
+                if (!target || seen.has(Number(target.studio_id)) || item.target?.selector_key !== target.selector_key) throw new Error("Eulerity recovery returned an unexpected or duplicated studio");
+                seen.add(Number(target.studio_id));
+                verifiedItems.push({ item, target });
+            }
+            for (const { item, target } of verifiedItems) {
+                const reports = await validatedRecoveryReports(item, target, range, parser);
                 results.push({
-                    studioId: item.target.studio_id,
-                    studioCode: item.target.studio_code,
-                    studioName: item.target.studio_name,
-                    metrics: await parser.parseMetrics(item.metricsFile),
-                    spend: await parser.parseSpend(item.spendFile),
-                    budget: parser.parseBudget(item.budget)
+                    studioId: target.studio_id,
+                    studioCode: target.studio_code,
+                    studioName: target.studio_name,
+                    ...reports
                 });
             }
-            return res.json({ success: true, accountId: 1, studioCount: results.length, results });
+            return res.json({ success: true, schemaVersion: 2, accountId: 1, fromDate: range.fromDate, toDate: range.toDate,
+                sourceDatesVerified: true, warehouseReady: false, costAllocationStatus: "unverified", studioCount: results.length, results });
         } catch (_error) {
             return res.status(500).json({ success: false, error: "Eulerity account 1 recovery collection failed" });
         } finally {

@@ -1,5 +1,11 @@
 # Studio Intelligence Changelog
 
+## November 16, 2026 - explicit account1 recovery dates prepared, not deployed
+
+- PR134 account1-only collector is deployed at b4c46f2. This follow-up draft requires explicit completed fromDate/toDate and verifies both source date pickers, campaign identity, complete raw CSV date coverage and unchanged parsed source values for all four approved studios.
+- Current budget distribution is no longer returned as historical evidence. Schema2 holds unsupported budget/channel-spend values as null and marks warehouseReady false; the draft recovery ETL guard blocks the existing cost-allocation/upsert path. No production, workflow, mapping or warehouse change is included in this follow-up. See automation/eulerity-recovery/EXPLICIT_DATES.md.
+
+
 ## November 16, 2026 - Eulerity campaign discovery repair prepared
 
 - Added a separate authenticated account1-only recovery collector path using the observed campaign chooser and scoped campaign rows. Existing Eulerity endpoints and the deployed legacy browser module are unchanged, preserving other-account behavior. Ad actions and sorting controls are excluded from the new path.

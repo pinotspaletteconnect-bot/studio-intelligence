@@ -1,0 +1,35 @@
+<!doctype html><html><body>
+<section><div><p>Select a campaign</p><p>4</p></div><div>
+ <div aria-disabled="false" onclick="document.querySelector('#campaigns').hidden=!document.querySelector('#campaigns').hidden"><p id="selected">Studio Alpha</p></div>
+ <div id="campaigns" hidden><input placeholder="Search campaigns, labels or owners"><p>4 of 4</p><div id="rows"></div></div>
+</div></section>
+<nav><button onclick="selectReport('metrics')">Ads Displayed</button><button onclick="selectReport('spend')">Advertising Budget</button><button onclick="fixture.budgetRead=true">Budget Distribution</button></nav>
+<div id="report-heading"><h2>Ads Displayed</h2></div><button id="channel" onclick="refreshCsv()">BY CHANNEL</button>
+<div class="react-datepicker__input-container"><button id="from" onclick="openCalendar(0)">11/2/2026</button></div>
+<div class="react-datepicker__input-container"><button id="to" onclick="openCalendar(1)">11/8/2026</button></div>
+<div class="react-datepicker" hidden></div><a id="csv" download="report.csv">Download CSV</a>
+<script>
+window.fixture={dateClicks:[],budgetRead:false,sourceDateShift:0};
+const labels=['Studio Alpha','Studio Beta','Studio Gamma','Studio Delta'];let selected=0,report='metrics',from='2026-11-02',to='2026-11-08',side=0,shownMonth=10,shownYear=2026;
+const date=s=>new Date(s+'T00:00:00Z');const iso=d=>d.toISOString().slice(0,10);const short=s=>{const d=date(s);return `${d.getUTCMonth()+1}/${d.getUTCDate()}/${d.getUTCFullYear()}`};
+function refreshCsv(){
+ const dates=[];for(let d=date(from);d<=date(to);d=new Date(d.getTime()+86400000))dates.push(iso(new Date(d.getTime()+fixture.sourceDateShift*86400000)));
+ const columns=report==='metrics'?['Date','Display Impressions','Search Impressions','Social Impressions','Video Impressions','Other Impressions','Total Impressions','Display Clicks','Search Clicks','Social Clicks','Video Clicks','Other Clicks','Total Clicks','Display Ctr','Search Ctr','Social Ctr','Video Ctr','Other Ctr','Total Ctr']:['Business Name','Campaign Name','User','Date','Spend','Activation Date'];
+ const rows=dates.map((d,i)=>report==='metrics'?columns.map(c=>c==='Date'?d.replace(/-/g,''):String(i+10)):['Business',labels[selected],'private@example.test',short(d),String(i+1),'Sep 22, 2024']);
+ const text=[columns,...rows].map(r=>r.map(v=>JSON.stringify(v)).join(',')).join('\n');document.querySelector('#csv').href=URL.createObjectURL(new Blob([text],{type:'text/csv'}));
+}
+function selectReport(which){report=which;document.querySelector('#report-heading').innerHTML=which==='metrics'?'<h2>Ads Displayed</h2>':'<p>Advertising Budget (USD)</p>';document.querySelector('#channel').hidden=which!=='metrics';refreshCsv();}
+function chooseDay(value){fixture.dateClicks.push({report,side,date:value});if(side===0){from=value;if(to<from)to=from;}else{to=value;if(from>to)from=to;}document.querySelector('#from').textContent=short(from);document.querySelector('#to').textContent=short(to);document.querySelector('.react-datepicker').hidden=true;refreshCsv();}
+function openCalendar(which){const popup=document.querySelector('.react-datepicker');if(!popup.hidden&&side===which){popup.hidden=true;return;}side=which;const d=date(which===0?from:to);shownMonth=d.getUTCMonth();shownYear=d.getUTCFullYear();popup.hidden=false;renderCalendar();}
+function moveMonth(delta){shownMonth+=delta;if(shownMonth<0){shownMonth=11;shownYear--;}if(shownMonth>11){shownMonth=0;shownYear++;}renderCalendar();}
+function renderCalendar(){
+ const popup=document.querySelector('.react-datepicker'),month=new Date(Date.UTC(shownYear,shownMonth,1));const title=month.toLocaleString('en-US',{month:'long',timeZone:'UTC'})+' '+shownYear;
+ popup.innerHTML=`<button aria-label="Previous Month" onclick="moveMonth(-1)">Previous</button><div class="react-datepicker__current-month">${title}</div><button aria-label="Next Month" onclick="moveMonth(1)">Next</button>`;
+ for(let day=1;day<=new Date(Date.UTC(shownYear,shownMonth+1,0)).getUTCDate();day++){
+ const d=new Date(Date.UTC(shownYear,shownMonth,day)),value=iso(d),disabled=value>'2026-11-15',suffix=day%100>=11&&day%100<=13?'th':({1:'st',2:'nd',3:'rd'}[day%10]||'th');const label=`${disabled?'Not available':'Choose'} ${d.toLocaleString('en-US',{weekday:'long',timeZone:'UTC'})}, ${d.toLocaleString('en-US',{month:'long',timeZone:'UTC'})} ${day}${suffix}, ${shownYear}`;
+ const option=document.createElement('div');option.setAttribute('role','option');option.setAttribute('aria-label',label);option.setAttribute('aria-disabled',String(disabled));option.className=disabled?'react-datepicker__day--disabled':'react-datepicker__day';option.textContent=day;option.onclick=()=>{if(!disabled)chooseDay(value)};popup.appendChild(option);
+ }
+}
+for(let i=0;i<labels.length;i++){const row=document.createElement('div');row.setAttribute('data-value','source-'+(i+1));row.innerHTML=`<div><p>Business</p><p>${labels[i]} \u00b7 100 Main St, City</p><p color="accentColor2">owner@example.test</p></div><p>ACTIVE</p>`;row.onclick=()=>{selected=i;document.querySelector('#selected').textContent=labels[i];document.querySelector('#campaigns').hidden=true;refreshCsv()};document.querySelector('#rows').appendChild(row);}
+refreshCsv();
+</script></body></html>

@@ -72,3 +72,26 @@ test('selection confirmation rejects a different campaign with a shared name pre
     await page.locator('#menu div[onclick]').evaluateAll(elements => elements.forEach(element => element.removeAttribute('onclick')));
     await assert.rejects(selectLocation(page, { selector_key: 'label:studio alpha', selector_label: 'Studio Alpha' }), /did not confirm/);
 });
+const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
+const {selectReportRange,assertReportContext,collectTarget,calendarParts}=require('../services/eulerityRecoveryBrowser');
+const {recoveryRange,validatedRecoveryReports}=require('../services/eulerityRecoveryDates');
+const reportParser=require('../services/eulerityParser');
+async function reportPage(t){const browser=await chromium.launch({headless:true});t.after(()=>browser.close());const page=await browser.newPage({acceptDownloads:true});await page.setContent(fs.readFileSync(path.join(__dirname,'fixtures/eulerity-recovery-report.html'),'utf8'));return page;}
+const explicitRange=recoveryRange('2026-11-09','2026-11-15','2026-11-16');
+test('explicitly selects both dates before both downloads and validates genuine source rows',async t=>{
+ const page=await reportPage(t);const folder=fs.mkdtempSync(path.join(os.tmpdir(),'eulerity-ui-dates-'));t.after(()=>fs.rmSync(folder,{recursive:true,force:true}));const target={selector_key:'source-2',selector_label:'Studio Beta',studio_code:'BETA'};
+ const item=await collectTarget(page,target,folder,explicitRange);const parsed=await validatedRecoveryReports(item,target,explicitRange,reportParser);
+ assert.equal(parsed.metrics.length,7);assert.equal(parsed.spend.length,7);assert.equal(parsed.budget,null);assert.deepEqual(parsed.sourceEvidence.metricsRange,{fromDate:'2026-11-09',toDate:'2026-11-15'});
+ assert.deepEqual(await page.evaluate(()=>fixture.dateClicks),[{report:'metrics',side:0,date:'2026-11-09'},{report:'metrics',side:1,date:'2026-11-15'},{report:'spend',side:0,date:'2026-11-09'},{report:'spend',side:1,date:'2026-11-15'}]);assert.equal(await page.evaluate(()=>fixture.budgetRead),false);assert.equal(await page.locator('#selected').textContent(),'Studio Beta');
+});
+test('calendar selection navigates months with exact accessible day names',async t=>{
+ const page=await reportPage(t);const range=recoveryRange('2026-10-30','2026-11-02','2026-11-16');await selectReportRange(page,range);assert.deepEqual(await assertReportContext(page,'metrics',{displayName:'Studio Alpha'},range),{fromDate:'2026-10-30',toDate:'2026-11-02'});assert.equal(calendarParts('2026-11-11').optionLabel,'Choose Wednesday, November 11th, 2026');assert.equal(calendarParts('2026-11-21').optionLabel,'Choose Saturday, November 21st, 2026');
+});
+test('unavailable source dates, changed campaign and mismatched displayed ranges fail closed',async t=>{
+ const page=await reportPage(t);await assert.rejects(assertReportContext(page,'metrics',{displayName:'Studio Alpha'},explicitRange),/displayed report range/);
+ await assert.rejects(assertReportContext(page,'metrics',{displayName:'Another Campaign'},explicitRange),/campaign changed/);
+ await assert.rejects(selectReportRange(page,recoveryRange('2026-11-16','2026-11-16','2026-11-17')),/unavailable/);
+});
+test('source CSV dates still fail validation when UI labels match but CSV content is stale',async t=>{
+ const page=await reportPage(t);await page.evaluate(()=>fixture.sourceDateShift=1);const folder=fs.mkdtempSync(path.join(os.tmpdir(),'eulerity-ui-stale-'));t.after(()=>fs.rmSync(folder,{recursive:true,force:true}));const target={selector_key:'source-1',selector_label:'Studio Alpha',studio_code:'ALPHA'};const item=await collectTarget(page,target,folder,explicitRange);await assert.rejects(validatedRecoveryReports(item,target,explicitRange,reportParser),/unexpected source dates/);
+});
