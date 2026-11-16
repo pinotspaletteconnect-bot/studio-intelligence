@@ -12,12 +12,31 @@ test('closed indirect sequential period request with exact and prefix paths', ()
     assert.equal(step.isDirectlyFollowedBy, false);
     assert.equal(step.withinDurationFromPriorStep, undefined);
     assert.equal(step.filterExpression.andGroup.expressions[0].funnelEventFilter.eventName, 'page_view');
+    assert.equal(step.filterExpression.andGroup.expressions[1].funnelFieldFilter.fieldName, 'pagePathPlusQueryString');
   }
   const filters = request.funnel.steps.map(step => step.filterExpression.andGroup.expressions[1].funnelFieldFilter.stringFilter);
-  assert.equal(filters[0].value, '/louisville/parties/packages');
-  assert.equal(filters[0].matchType, 'EXACT');
+  assert.equal(filters[0].value, '^/louisville/parties/packages(\\?.*)?$');
+  assert.equal(filters[0].matchType, 'FULL_REGEXP');
   assert.equal(filters[4].matchType, 'BEGINS_WITH');
   assert.equal(filters[5].value, '/louisville/parties/confirmation/');
+});
+test('supported exploration dimension preserves exact paths while ignoring optional query strings', () => {
+  for (const variant of ['core', 'addons', 'inquiry']) {
+    const steps = buildFunnelRequest({ ...options, variant }).funnel.steps;
+    for (const step of steps) {
+      const { fieldName, stringFilter } = step.filterExpression.andGroup.expressions[1].funnelFieldFilter;
+      assert.equal(fieldName, 'pagePathPlusQueryString');
+      if (stringFilter.matchType === 'FULL_REGEXP') {
+        const path = `${options.pathPrefix}/${step.name}`;
+        const matches = new RegExp(stringFilter.value);
+        for (const value of [path, `${path}?`, `${path}?utm_source=synthetic&x=1`]) assert.equal(matches.test(value), true);
+        for (const value of [`${path}/`, `${path}/child`, `${path}other`, `${path.toUpperCase()}`, `${path}#fragment`, `/other${path}`]) assert.equal(matches.test(value), false);
+      } else {
+        assert.equal(stringFilter.matchType, 'BEGINS_WITH');
+        assert.equal(stringFilter.value, `${options.pathPrefix}/${step.name}/`);
+      }
+    }
+  }
 });
 test('variants preserve order and inquiry is only page reached', () => {
   const addons = buildFunnelRequest({ ...options, variant: 'addons' });

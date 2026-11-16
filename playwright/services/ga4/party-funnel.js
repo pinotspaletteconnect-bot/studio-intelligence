@@ -19,9 +19,11 @@ function buildFunnelRequest({ startDate, endDate, pathPrefix, variant = 'core' }
         filterExpression: {
           andGroup: { expressions: [
             { funnelEventFilter: { eventName: 'page_view' } },
-            { funnelFieldFilter: { fieldName: 'pagePath', stringFilter: {
-              matchType: path.endsWith('/') ? 'BEGINS_WITH' : 'EXACT',
-              value: `${pathPrefix}/${path}`, caseSensitive: true,
+            // Explore funnel conditions do not support pagePath. Match the
+            // supported path+query dimension without collecting query values.
+            { funnelFieldFilter: { fieldName: 'pagePathPlusQueryString', stringFilter: {
+              matchType: path.endsWith('/') ? 'BEGINS_WITH' : 'FULL_REGEXP',
+              value: path.endsWith('/') ? `${pathPrefix}/${path}` : `^${pathPrefix}/${path}(\\?.*)?$`, caseSensitive: true,
             } } },
           ] },
         },
