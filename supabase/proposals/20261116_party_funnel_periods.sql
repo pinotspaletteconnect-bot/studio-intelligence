@@ -33,7 +33,7 @@ create table public.ga4_party_funnel_periods (
 create index on public.ga4_party_funnel_periods(studio_id, period_start, period_end, retrieved_at desc);
 alter table public.ga4_party_funnel_configs enable row level security;
 alter table public.ga4_party_funnel_periods enable row level security;
-revoke all on public.ga4_party_funnel_configs, public.ga4_party_funnel_periods from public, anon, authenticated;
+revoke all on public.ga4_party_funnel_configs, public.ga4_party_funnel_periods from public, anon, authenticated, service_role;
 grant select, insert, update on public.ga4_party_funnel_configs to service_role;
 grant select, insert on public.ga4_party_funnel_periods to service_role;
 create view public.ga4_party_funnel_reporting with (security_invoker = true) as
@@ -43,7 +43,7 @@ from public.ga4_party_funnel_periods p join public.ga4_party_funnel_configs c
 on c.studio_id=p.studio_id and c.property_id=p.property_id and c.definition_version=p.definition_version and c.geography=p.geography
 where c.enabled and p.definition_version=2 and p.geography='US'
 order by p.studio_id, p.period_start, p.period_end, p.definition_version, p.geography, p.retrieved_at desc;
-revoke all on public.ga4_party_funnel_reporting from public, anon, authenticated;
+revoke all on public.ga4_party_funnel_reporting from public, anon, authenticated, service_role;
 grant select on public.ga4_party_funnel_reporting to service_role;
 commit;
 -- Rollback: disable configs first; restore prior application. Preserve period
