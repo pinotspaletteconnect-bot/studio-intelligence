@@ -71,7 +71,7 @@ function parseReach(response, dimensions) {
   const metadata = response?.metadata || {};
   if (metadata.subjectToThresholding || metadata.samplingMetadatas?.length || metadata.dataLossFromOtherRow || metadata.emptyReason) return null;
   if (JSON.stringify(response?.dimensionHeaders?.map(h => h.name) || []) !== JSON.stringify(dimensions)) return null;
-  const metrics = response.metricHeaders?.map(h => h.name) || [];
+  const metrics = response?.metricHeaders?.map(h => h.name) || [];
   const views = metrics.indexOf('screenPageViews'); const users = metrics.indexOf('totalUsers');
   if (new Set(metrics).size !== metrics.length || views < 0 || users < 0 || !response.rows?.length || (response.rowCount != null && response.rowCount !== response.rows.length)) return null;
   const seen = new Set(); const rows = [];

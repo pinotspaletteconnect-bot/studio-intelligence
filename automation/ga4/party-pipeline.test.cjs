@@ -28,6 +28,8 @@ test('mismatched mapping, limited funnels and malformed reach fail honestly', ()
   assert.equal(normalizePeriodBundle(limited, config).status, 'unavailable');
   const partial = fixture(); partial.reach.total.rowCount = 3;
   assert.equal(normalizePeriodBundle(partial, config).report.reach, null);
+  const missingReach = fixture(); delete missingReach.reach;
+  assert.equal(normalizePeriodBundle(missingReach, config).report.reach, null);
   assert.throws(() => normalizePeriodBundle({ ...fixture(), definitionVersion: 1, geography: 'all' }, config));
   assert.throws(() => normalizePeriodBundle({ ...fixture(), geography: 'all' }, config));
   const legacy = fixture(); delete legacy.geography;
