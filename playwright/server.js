@@ -60,6 +60,7 @@ app.get("/", (req, res) => {
     });
 });
 
+app.use("/eulerity/account1-recovery", require("./routes/eulerityRecovery").createEulerityRecoveryRouter());
 app.use("/eulerity", eulerityRoutes);
 app.use("/meta", metaRoutes);
 app.use("/pts", ptsRoutes);

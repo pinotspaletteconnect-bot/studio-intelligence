@@ -1,5 +1,12 @@
 # Studio Intelligence Changelog
 
+## November 16, 2026 - Eulerity campaign discovery repair prepared
+
+- Added a separate authenticated account1-only recovery collector path using the observed campaign chooser and scoped campaign rows. Existing Eulerity endpoints and the deployed legacy browser module are unchanged, preserving other-account behavior. Ad actions and sorting controls are excluded from the new path.
+- Discovery rejects missing, ambiguous, empty, duplicate, searched or incomplete campaign results before returning a synchronization payload; no inferred single-location fallback remains. Existing source values and normalized label key rules are retained. Legacy `__single__` collection requires exactly one positively discovered campaign.
+- Added browser DOM regression fixtures. This entry describes prepared collector code only; deployment, studio mapping reconciliation, alert workflow changes and November 9-forward backfill require separate operational verification.
+
+
 ## October 19, 2026 - STM repairs and quantity-based product perks
 
 - Corrected Spooky Gnome to KLR after exact hidden backup, verified protected
