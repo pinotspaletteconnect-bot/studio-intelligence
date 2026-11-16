@@ -112,4 +112,28 @@ test('explicit complete zero rows differ from empty, sampled and thresholded rep
     assert.equal(parseFunnelResponse(response, parseOptions).reason, 'limited_source_data');
   }
 });
+const observed = require('../../../automation/ga4/fixtures/observed-core-20261019-20261115.json');
+test('observed alpha duplicate-identical header blocks yield actual full-period core counts', () => {
+  const result = parseFunnelResponse(observed.response, { ...parseOptions, ...observed.period });
+  assert.equal(result.status, 'available');
+  assert.deepEqual(result.rows.map(row => row.activeUsers), [51, 22, 13, 11, 11, 5]);
+  assert.equal(result.rows[0].completionRate, 22 / 51);
+  assert.equal(result.rows[0].abandonment, 29);
+  assert.equal(result.rows[5].completionRate, null);
+  assert.equal(result.quality.thresholded, null);
+});
+test('header redundancy support rejects mixed, partial, ambiguous and nonuniform blocks', () => {
+  const mutateCases = [
+    r => { r.funnelTable.metricHeaders[4].name = 'totalUsers'; },
+    r => { r.funnelTable.metricHeaders[4].type = 'TYPE_FLOAT'; },
+    r => { r.funnelTable.metricHeaders.pop(); },
+    r => { r.funnelTable.metricHeaders.push(...r.funnelTable.metricHeaders.slice(0, 4)); },
+    r => { r.funnelTable.rows[0].metricValues.pop(); },
+    r => { r.funnelTable.metricHeaders[1] = { ...r.funnelTable.metricHeaders[0] }; r.funnelTable.metricHeaders[5] = { ...r.funnelTable.metricHeaders[4] }; },
+  ];
+  for (const mutate of mutateCases) {
+    const response = structuredClone(observed.response); mutate(response);
+    assert.equal(parseFunnelResponse(response, { ...parseOptions, ...observed.period }).status, 'unavailable');
+  }
+});
 

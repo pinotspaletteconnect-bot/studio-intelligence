@@ -28,12 +28,20 @@ function parseFunnelResponse(response, options) {
   } });
   if (!table) return unavailable('missing_table');
   if (metadata.samplingMetadatas?.length || metadata.subjectToThresholding || metadata.dataLossFromOtherRow || metadata.emptyReason) return unavailable('limited_source_data');
+  if (!Array.isArray(table.rows) || table.rows.length === 0) return unavailable('no_rows');
   const dimensions = table.dimensionHeaders?.map(header => header.name);
-  const metrics = table.metricHeaders?.map(header => header.name);
+  const widths = new Set(table.rows.map(row => row.metricValues?.length));
+  const width = table.rows[0].metricValues?.length;
+  let headers = table.metricHeaders;
+  if (!width || widths.size !== 1 || !Array.isArray(headers)) return unavailable('malformed_metric_width');
+  // Observed alpha API shape: the full identical header block appears twice,
+  // while every row has one block of values. Accept only this exact redundancy.
+  if (headers.length === width * 2 && JSON.stringify(headers.slice(0, width)) === JSON.stringify(headers.slice(width))) headers = headers.slice(0, width);
+  if (headers.length !== width) return unavailable('ambiguous_metric_headers');
+  const metrics = headers.map(header => header.name);
   if (!dimensions || !metrics || new Set(dimensions).size !== dimensions.length || new Set(metrics).size !== metrics.length || !dimensions.includes('funnelStepName') || !metrics.includes('activeUsers')) return unavailable('invalid_headers');
   // Segment/date/next-action reports are different grains, not period totals.
   if (dimensions.some(name => !['funnelStepName', 'deviceCategory'].includes(name))) return unavailable('unsupported_grain');
-  if (!Array.isArray(table.rows) || table.rows.length === 0) return unavailable('no_rows');
   if (table.rowCount !== undefined && table.rowCount !== table.rows.length) return unavailable('incomplete_rows');
   const stepIndex = dimensions.indexOf('funnelStepName');
   const deviceIndex = dimensions.indexOf('deviceCategory');

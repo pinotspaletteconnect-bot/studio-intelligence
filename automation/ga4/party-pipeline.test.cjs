@@ -37,3 +37,12 @@ test('n8n review artifact is inactive, has no schedules or credentials, and embe
   assert.equal(rows[0].json.studio_id, 1);
   assert.equal(rows[0].json.report.routes.core[0], 20);
 });
+test('embedded n8n normalization accepts the observed alpha header redundancy without runtime imports', () => {
+  const observed = require('./fixtures/observed-core-20261019-20261115.json');
+  const bundle = fixture();
+  bundle.period = observed.period;
+  bundle.source.core = observed.response.funnelTable ? observed.response : null;
+  const execute = new Function('$', '$input', workflow.nodes.find(n => n.id === 'normalize').parameters.jsCode);
+  const result = execute(() => ({ first: () => ({ json: config }) }), { first: () => ({ json: bundle }) });
+  assert.deepEqual(result[0].json.report.routes.core, [51, 22, 13, 11, 11, 5]);
+});
