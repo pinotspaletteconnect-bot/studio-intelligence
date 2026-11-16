@@ -2,6 +2,7 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const { chromium } = require("playwright");
+const { recoveryRange, sourceDate, validateTargets } = require("./eulerityRecoveryDates");
 
 function normalizeLocationLabel(value) {
     return String(value ?? "").replace(/\s+/g, " ").trim();
@@ -130,7 +131,7 @@ async function discoverLocations(page) {
 }
 
 async function selectLocation(page, target) {
-    await withLocationMenu(page, async (options, control) => {
+    return withLocationMenu(page, async (options, control) => {
         // Old explicitly mapped single-account keys remain usable only after
         // positively discovering exactly one campaign. Absence is never proof.
         if (target.selector_key === "__single__" && options.length !== 1) {
@@ -138,49 +139,138 @@ async function selectLocation(page, target) {
         }
         const matches = target.selector_key === "__single__" ? options :
             options.filter((option) => option.sourceKey === target.selector_key);
-        const labelMatches = options.filter((option) => normalizeLocationLabel(option.displayName) === normalizeLocationLabel(target.selector_label));
-        const matched = matches.length === 1 ? matches[0] : labelMatches.length === 1 ? labelMatches[0] : null;
+        const matched = matches.length === 1 ? matches[0] : null;
         if (!matched) throw new Error("Eulerity mapped campaign is unavailable or ambiguous");
+        const priorLabel = normalizeLocationLabel(await control.locator("p").first().textContent());
+        const csv = page.getByRole("link", { name: "Download CSV", exact: true });
+        const priorHref = await csv.count() === 1 ? await csv.getAttribute("href") : null;
         await matched.locator.click();
         await page.waitForTimeout(1200);
         const selected = normalizeLocationLabel(await control.locator("p").first().textContent());
         if (selected !== matched.displayName) throw new Error("Eulerity did not confirm campaign selection");
+        if (priorLabel !== selected && priorHref) await waitForCondition(page, async () =>
+            await csv.count() === 1 && await csv.getAttribute("href") !== priorHref,
+            "Eulerity campaign report did not refresh");
+        return { sourceKey: matched.sourceKey, displayName: matched.displayName };
     });
 }
 
-async function prepareChannelReport(page) {
-    await page.getByText("Ads Displayed", { exact: true }).last().click();
-    await page.waitForTimeout(600);
-    await page.getByText("BY CHANNEL", { exact: true }).last().click();
-    await page.waitForTimeout(900);
+async function waitForCondition(page, check, message, timeout = 15000) {
+    const deadline = Date.now() + timeout;
+    while (Date.now() < deadline) {
+        if (await check()) return;
+        await page.waitForTimeout(100);
+    }
+    throw new Error(message);
 }
 
-async function downloadCsv(page, folder, filename) {
+async function dateControls(page) {
+    const controls = page.locator(".react-datepicker__input-container button:visible");
+    if (await controls.count() !== 2) throw new Error("Eulerity report date controls are unavailable or ambiguous");
+    return controls;
+}
+
+function calendarParts(date) {
+    const value = new Date(`${date}T00:00:00Z`);
+    const day = value.getUTCDate();
+    const suffix = day % 100 >= 11 && day % 100 <= 13 ? "th" : ({ 1: "st", 2: "nd", 3: "rd" }[day % 10] || "th");
+    const month = value.toLocaleString("en-US", { month: "long", timeZone: "UTC" });
+    const weekday = value.toLocaleString("en-US", { weekday: "long", timeZone: "UTC" });
+    return { monthLabel: `${month} ${value.getUTCFullYear()}`, monthIndex: value.getUTCFullYear() * 12 + value.getUTCMonth(),
+        optionLabel: `Choose ${weekday}, ${month} ${day}${suffix}, ${value.getUTCFullYear()}` };
+}
+
+async function chooseCalendarDate(page, index, date) {
+    const controls = await dateControls(page);
+    await controls.nth(index).click();
+    const popup = page.locator(".react-datepicker:visible");
+    await popup.first().waitFor({ state: "visible", timeout: 5000 });
+    if (await popup.count() !== 1) throw new Error("Eulerity date picker is ambiguous");
+    const desired = calendarParts(date);
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    for (let attempt = 0; attempt < 60; attempt++) {
+        const header = popup.locator(".react-datepicker__current-month");
+        if (await header.count() !== 1) throw new Error("Eulerity calendar month is unavailable");
+        const label = normalizeLocationLabel(await header.textContent());
+        if (label === desired.monthLabel) break;
+        const match = /^(\w+) (\d{4})$/.exec(label);
+        const month = match && monthNames.indexOf(match[1]);
+        if (!match || month < 0) throw new Error("Eulerity calendar month is invalid");
+        const direction = Number(match[2]) * 12 + month > desired.monthIndex ? "Previous Month" : "Next Month";
+        const button = popup.getByRole("button", { name: direction, exact: true });
+        if (await button.count() !== 1 || !await button.isEnabled()) throw new Error("Eulerity requested calendar month is unavailable");
+        await button.click();
+        await waitForCondition(page, async () => normalizeLocationLabel(await header.textContent()) !== label, "Eulerity calendar did not navigate");
+    }
+    if (normalizeLocationLabel(await popup.locator(".react-datepicker__current-month").textContent()) !== desired.monthLabel) {
+        throw new Error("Eulerity requested date exceeds bounded calendar navigation");
+    }
+    const option = popup.getByRole("option", { name: desired.optionLabel, exact: true });
+    if (await option.count() !== 1 || !await option.isVisible() || !await option.isEnabled() ||
+        await option.getAttribute("aria-disabled") === "true" || (await option.getAttribute("class") || "").includes("--disabled")) {
+        throw new Error("Eulerity requested report date is unavailable");
+    }
+    await option.click();
+    await waitForCondition(page, async () => sourceDate(await controls.nth(index).textContent()) === date, "Eulerity did not apply the requested report date");
+    if (await popup.count() && await popup.first().isVisible()) await controls.nth(index).click();
+}
+
+async function selectReportRange(page, range) {
+    const controls = await dateControls(page);
+    const previous = await controls.allTextContents();
+    const csv = page.getByRole("link", { name: "Download CSV", exact: true });
+    if (await csv.count() !== 1) throw new Error("Eulerity report export is unavailable or ambiguous");
+    const priorHref = await csv.getAttribute("href");
+    // Click both source dates even when the default already matches the request.
+    await chooseCalendarDate(page, 0, range.fromDate);
+    await chooseCalendarDate(page, 1, range.toDate);
+    if (sourceDate(previous[0]) !== range.fromDate || sourceDate(previous[1]) !== range.toDate) {
+        await waitForCondition(page, async () => await csv.getAttribute("href") !== priorHref, "Eulerity dated report export did not refresh");
+    }
+}
+
+async function assertReportContext(page, report, selected, range) {
+    await page.waitForLoadState("networkidle", { timeout: 15000 });
+    await page.getByText("Loading Chart", { exact: true }).waitFor({ state: "hidden", timeout: 15000 });
+    const heading = report === "metrics" ? page.getByRole("heading", { name: "Ads Displayed", exact: true }) :
+        page.getByText("Advertising Budget (USD)", { exact: true });
+    if (await heading.count() !== 1 || !await heading.isVisible()) throw new Error("Eulerity downloaded report identity is ambiguous");
+    const { control } = await locationControl(page);
+    if (normalizeLocationLabel(await control.locator("p").first().textContent()) !== selected.displayName) throw new Error("Eulerity campaign changed before export");
+    const controls = await dateControls(page);
+    const [fromDate, toDate] = (await controls.allTextContents()).map(sourceDate);
+    if (fromDate !== range.fromDate || toDate !== range.toDate) throw new Error("Eulerity displayed report range does not match request");
+    const csv = page.getByRole("link", { name: "Download CSV", exact: true });
+    if (await csv.count() !== 1 || !await csv.isVisible() || !(await csv.getAttribute("href") || "").startsWith("blob:")) {
+        throw new Error("Eulerity dated CSV export is not ready");
+    }
+    return { fromDate, toDate };
+}
+
+async function downloadCsv(page, folder, filename, verify) {
+    const evidence = await verify();
     const downloadPromise = page.waitForEvent("download");
-    await page.getByRole("link", { name: "Download CSV" }).click();
+    await page.getByRole("link", { name: "Download CSV", exact: true }).click();
     const download = await downloadPromise;
     const file = path.join(folder, filename);
     await download.saveAs(file);
-    return file;
+    return { file, evidence };
 }
 
-async function collectTarget(page, target, folder) {
-    await selectLocation(page, target);
-    await prepareChannelReport(page);
-    const metricsFile = await downloadCsv(page, folder, `${target.studio_code}_metrics.csv`);
-    await page.getByText("Advertising Budget", { exact: true }).last().click();
-    await page.waitForTimeout(700);
-    const spendFile = await downloadCsv(page, folder, `${target.studio_code}_spend.csv`);
-    await page.getByText("Budget Distribution", { exact: true }).last().click();
-    await page.waitForTimeout(700);
-    const text = await page.locator("body").innerText();
-    const extract = (label) => Number(text.match(new RegExp(`(\\d+)\\%\\s+${label}`, "i"))?.[1] ?? 0);
-    return {
-        target,
-        metricsFile,
-        spendFile,
-        budget: { search: extract("Search"), social: extract("Social"), video: extract("Video"), display: extract("Displays"), other: 0 }
-    };
+async function collectTarget(page, target, folder, range) {
+    const selected = await selectLocation(page, target);
+    await page.getByText("Ads Displayed", { exact: true }).first().click();
+    await page.getByRole("heading", { name: "Ads Displayed", exact: true }).waitFor({ state: "visible" });
+    await page.getByText("BY CHANNEL", { exact: true }).click();
+    await selectReportRange(page, range);
+    const metrics = await downloadCsv(page, folder, `${target.studio_code}_metrics.csv`, () => assertReportContext(page, "metrics", selected, range));
+    await page.getByText("Advertising Budget", { exact: true }).click();
+    await page.getByText("Advertising Budget (USD)", { exact: true }).waitFor({ state: "visible" });
+    await selectReportRange(page, range);
+    const spend = await downloadCsv(page, folder, `${target.studio_code}_spend.csv`, () => assertReportContext(page, "spend", selected, range));
+    // Do not scrape current Budget Distribution as historical cost evidence.
+    return { target, metricsFile: metrics.file, spendFile: spend.file,
+        sourceEvidence: { selectorKey: selected.sourceKey, displayName: selected.displayName, metricsRange: metrics.evidence, spendRange: spend.evidence } };
 }
 
 async function discoverEulerityAccount(credentials) {
@@ -192,13 +282,14 @@ async function discoverEulerityAccount(credentials) {
     }
 }
 
-async function collectEulerityAccount(credentials, targets) {
-    if (!targets.length) throw new Error("Eulerity account has no mapped studio targets");
+async function collectEulerityAccount(credentials, targets, requestedRange) {
+    const range = recoveryRange(requestedRange?.fromDate, requestedRange?.toDate);
+    validateTargets(targets);
     const { browser, page } = await loginEulerity(credentials);
     const folder = fs.mkdtempSync(path.join(os.tmpdir(), "eulerity-"));
     try {
         const results = [];
-        for (const target of targets) results.push(await collectTarget(page, target, folder));
+        for (const target of targets) results.push(await collectTarget(page, target, folder, range));
         return { folder, results };
     } catch (error) {
         fs.rmSync(folder, { recursive: true, force: true });
@@ -217,5 +308,9 @@ module.exports = {
     bestLocationLabel,
     discoverLocations,
     selectLocation,
-    validateLocations
+    validateLocations,
+    calendarParts,
+    selectReportRange,
+    assertReportContext,
+    collectTarget
 };

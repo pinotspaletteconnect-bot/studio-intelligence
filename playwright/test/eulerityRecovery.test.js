@@ -67,6 +67,9 @@ test('dry-run builder preserves disabled pass-through transformations and discon
   assert.equal(workflow.active, false);
   assert.equal(workflow.nodes.find(n=>n.name==='Discover Eulerity Locations').parameters.url,'https://example.test/eulerity/account1-recovery/discover');
   assert.equal(workflow.nodes.find(n=>n.name==='Railway').parameters.url,'https://example.test/eulerity/account1-recovery/download');
+  const dateParams=workflow.nodes.find(n=>n.name==='Railway').parameters.bodyParameters.parameters;
+  assert.deepEqual(dateParams.filter(p=>['fromDate','toDate'].includes(p.name)),[{name:'fromDate',value:'2026-11-09'},{name:'toDate',value:'2026-11-15'}]);
+  assert.equal(manifest.historicalCostAllocation,'hold');
   for (const name of ['Split by Metric','Transform Advertising Metrics']) {
     const node = workflow.nodes.find(n => n.name === name);
     assert.equal(node.disabled, true);
@@ -82,4 +85,10 @@ test('dry-run builder preserves disabled pass-through transformations and discon
   }
   assert.equal(items[0].json, studio);
   assert.equal(items[0].json.metrics.length,1);
+});
+
+ test('schema2 unverified historical allocations stop before legacy transformation/upsert', () => {
+  const result = { success: true, schemaVersion: 2, warehouseReady: false, costAllocationStatus: 'unverified', accountId: 1, studioCount: 1, results: [{ studioId: 11, metrics: [{ report_date: '2026-11-09' }], spend: [{ report_date: '2026-11-09', spend: 5 }], budget: null }] };
+  assert.throws(() => run('validate-results.js', [result], nodes), /hold existing allocation/);
+  assert.throws(() => run('validate-results.js', [{...result, warehouseReady:true, costAllocationStatus:'verified'}], nodes), /hold existing allocation/);
 });

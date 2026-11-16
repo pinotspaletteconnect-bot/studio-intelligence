@@ -1,5 +1,7 @@
 # Eulerity recovery snippets (review only)
 
+**Explicit-date follow-up is a draft:** see [EXPLICIT_DATES.md](EXPLICIT_DATES.md). It requires fromDate/toDate for downloads, validates both source CSVs for all four studios, and holds unverified historical cost allocations. The current deployed PR134 version still uses the default source interval. The revised local builder supplies Nov9–15 dates but its schema2 guard deliberately stops before the existing cost-allocation/upsert transformations. No existing imported workflow is changed.
+
 Use only the authenticated `/eulerity/account1-recovery/discover` and `/eulerity/account1-recovery/download` endpoints for this repair. They reject every account except account1 before broker/browser access and verify broker account1/org1 identity. Existing generic endpoints continue using the deployed legacy implementation unchanged; HB must not use the recovery endpoints. The repaired browser module remains strict for ambiguous single-location targets.
 
 Prepared against paused workflow 24 export version `3db9697f-b2c4-405f-8bc2-9adf4031fbc3`. No credentials, header values, workflow export, warehouse writes or live changes are included.

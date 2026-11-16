@@ -3,6 +3,7 @@ const expected = $('Snapshot Expected Eulerity Targets').all().map(i => `${Numbe
 const seen = new Set(), output = [];
 for (const item of $input.all()) {
   const result = item.json;
+  if (result.schemaVersion === 2) throw new Error('Eulerity historical channel costs are unverified; hold existing allocation/upsert path');
   if (result.success !== true || !Array.isArray(result.results) || !result.results.length || result.studioCount !== result.results.length) throw new Error('Eulerity collector returned empty or invalid results');
   for (const studio of result.results) {
     const key = `${Number(result.accountId)}:${Number(studio.studioId)}`;
