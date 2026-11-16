@@ -1,0 +1,20 @@
+@media print {
+  body:has(.party-funnel-report) aside,
+  body:has(.party-funnel-report) [data-slot="sidebar"],
+  body:has(.party-funnel-report) [data-slot="sidebar-gap"],
+  body:has(.party-funnel-report) [data-slot="sidebar-container"],
+  body:has(.party-funnel-report) header {
+    display: none !important;
+  }
+  body:has(.party-funnel-report) { background: white; color: black; }
+  .party-funnel-report [data-slot="card"] { box-shadow: none; }
+  .party-funnel-report details > div { display: block !important; }
+  body:has(.party-funnel-report) main > div { padding: 0; }
+  .party-funnel-report > :first-child > :last-child { display: none; }
+  @page { margin: 12mm; }
+}
+body:has(.party-funnel-report) main { min-width: 0; }
+@media screen and (max-width: 767px) {
+  body:has(.party-funnel-report) aside { display: none; }
+  body:has(.party-funnel-report) main > div { padding: 0; }
+}

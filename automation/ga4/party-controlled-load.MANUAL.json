@@ -1,0 +1,139 @@
+{
+  "name": "MANUAL - Approved STM US party period Oct19-Nov15",
+  "active": false,
+  "nodes": [
+    {
+      "id": "manual",
+      "name": "Manual controlled rollout only",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "target",
+      "name": "Approved target and period",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "select c.studio_id::text as \"studioId\", c.account_id::text as \"accountId\", c.property_id as \"propertyId\", c.path_prefix as \"pathPrefix\", c.definition_version as \"definitionVersion\", c.geography, false as \"historyVerified\", '2026-10-19'::text as \"startDate\", '2026-11-15'::text as \"endDate\", 'https://studio-intelligence-production.up.railway.app'::text as \"collectorUrl\" from public.ga4_party_funnel_configs c join public.ga4_collection_targets t on t.studio_id=c.studio_id and t.account_id=c.account_id and t.property_id=c.property_id where c.studio_id=1 and c.account_id=1 and c.property_id='354847068' and c.path_prefix='/louisville/parties' and c.definition_version=2 and c.geography='US' and c.enabled=false;",
+        "options": {}
+      }
+    },
+    {
+      "id": "collect",
+      "name": "Read mapped GA4 period",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        0
+      ],
+      "disabled": false,
+      "parameters": {
+        "method": "POST",
+        "url": "={{$json.collectorUrl + \"/ga4/party-funnel/\" + $json.accountId + \"/\" + $json.propertyId}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({startDate:$json.startDate,endDate:$json.endDate,pathPrefix:$json.pathPrefix}) }}",
+        "options": {
+          "timeout": 240000
+        }
+      }
+    },
+    {
+      "id": "normalize",
+      "name": "Validate whole-period results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "disabled": false,
+      "parameters": {
+        "jsCode": "const paths = {\"core\":[\"packages\",\"eventdetails\",\"choosedate\",\"contact\",\"checkout/\",\"confirmation/\"],\"addons\":[\"packages\",\"eventdetails\",\"choosedate\",\"addons\",\"contact\",\"checkout/\",\"confirmation/\"],\"inquiry\":[\"packages\",\"contactform\"]};\nfunction buildFunnelRequest({ startDate, endDate, pathPrefix, variant = 'core' }) {\n  if (!paths[variant] || !/^\\/[a-z0-9-]+\\/parties$/.test(pathPrefix)) throw new Error('Invalid funnel configuration');\n  const validDate = value => /^\\d{4}-\\d{2}-\\d{2}$/.test(value) && new Date(value).toISOString().slice(0, 10) === value;\n  if (!validDate(startDate) || !validDate(endDate) || startDate > endDate) throw new Error('Invalid period');\n  return {\n    dateRanges: [{ startDate, endDate }],\n    dimensionFilter: { filter: { fieldName: 'country', stringFilter: { matchType: 'EXACT', value: 'United States', caseSensitive: true } } },\n    funnel: {\n      isOpenFunnel: false,\n      steps: paths[variant].map(path => ({\n        name: path.replace('/', ''),\n        isDirectlyFollowedBy: false,\n        filterExpression: {\n          andGroup: { expressions: [\n            { funnelEventFilter: { eventName: 'page_view' } },\n            // Explore funnel conditions do not support pagePath. Match the\n            // supported path+query dimension without collecting query values.\n            { funnelFieldFilter: { fieldName: 'pagePathPlusQueryString', stringFilter: {\n              matchType: path.endsWith('/') ? 'BEGINS_WITH' : 'FULL_REGEXP',\n              value: path.endsWith('/') ? `${pathPrefix}/${path}` : `^${pathPrefix}/${path}(\\\\?.*)?$`, caseSensitive: true,\n            } } },\n          ] },\n        },\n      })),\n    },\n  };\n}\nfunction exportPeriodRows({ startDate, endDate, pathPrefix, variant = 'core', comparisonType, activeUsers }) {\n  buildFunnelRequest({ startDate, endDate, pathPrefix, variant });\n  if (!['selected', 'previous', 'rolling28', 'rolling28Previous', 'yearOverYear'].includes(comparisonType)) throw new Error('Invalid comparison');\n  if (!Array.isArray(activeUsers) || activeUsers.length !== paths[variant].length || activeUsers.some((value, index) => !Number.isSafeInteger(value) || value < 0 || (index > 0 && value > activeUsers[index - 1]))) throw new Error('Invalid sequential counts');\n  return activeUsers.map((users, index) => {\n    const next = activeUsers[index + 1];\n    return {\n      periodStart: startDate, periodEnd: endDate, comparisonType, route: variant,\n      stepOrder: index + 1, stepName: paths[variant][index].replace('/', ''), activeUsers: users,\n      completionRate: next === undefined || users === 0 ? null : next / users,\n      abandonment: next === undefined ? null : users - next,\n      abandonmentRate: next === undefined || users === 0 ? null : (users - next) / users,\n      definitionVersion: 2, geography: 'US',\n    };\n  });\n}\nfunction parseFunnelResponse(response, options) {\n  const expected = buildFunnelRequest(options).funnel.steps.map(step => step.name);\n  const table = response?.funnelTable;\n  const metadata = table?.metadata || {};\n  const unavailable = reason => ({ status: 'unavailable', reason, rows: [], quality: {\n    sampled: Boolean(metadata.samplingMetadatas?.length), thresholded: metadata.subjectToThresholding === true ? true : null,\n  } });\n  if (!table) return unavailable('missing_table');\n  if (metadata.samplingMetadatas?.length || metadata.subjectToThresholding || metadata.dataLossFromOtherRow || metadata.emptyReason) return unavailable('limited_source_data');\n  if (!Array.isArray(table.rows) || table.rows.length === 0) return unavailable('no_rows');\n  const dimensions = table.dimensionHeaders?.map(header => header.name);\n  const widths = new Set(table.rows.map(row => row.metricValues?.length));\n  const width = table.rows[0].metricValues?.length;\n  let headers = table.metricHeaders;\n  if (!width || widths.size !== 1 || !Array.isArray(headers)) return unavailable('malformed_metric_width');\n  // Observed alpha API shape: the full identical header block appears twice,\n  // while every row has one block of values. Accept only this exact redundancy.\n  if (headers.length === width * 2 && JSON.stringify(headers.slice(0, width)) === JSON.stringify(headers.slice(width))) headers = headers.slice(0, width);\n  if (headers.length !== width) return unavailable('ambiguous_metric_headers');\n  const metrics = headers.map(header => header.name);\n  if (!dimensions || !metrics || new Set(dimensions).size !== dimensions.length || new Set(metrics).size !== metrics.length || !dimensions.includes('funnelStepName') || !metrics.includes('activeUsers')) return unavailable('invalid_headers');\n  // Segment/date/next-action reports are different grains, not period totals.\n  if (dimensions.some(name => !['funnelStepName', 'deviceCategory'].includes(name))) return unavailable('unsupported_grain');\n  if (table.rowCount !== undefined && table.rowCount !== table.rows.length) return unavailable('incomplete_rows');\n  const stepIndex = dimensions.indexOf('funnelStepName');\n  const deviceIndex = dimensions.indexOf('deviceCategory');\n  const userIndex = metrics.indexOf('activeUsers');\n  const seen = new Set();\n  const counts = new Array(expected.length);\n  for (const row of table.rows) {\n    if (row.dimensionValues?.length !== dimensions.length || row.metricValues?.length !== metrics.length) return unavailable('malformed_row');\n    const step = row.dimensionValues[stepIndex]?.value;\n    const index = expected.findIndex((name, i) => step === `${i + 1}. ${name}`);\n    const device = deviceIndex < 0 ? 'RESERVED_TOTAL' : row.dimensionValues[deviceIndex]?.value;\n    const key = `${index}:${device}`;\n    const raw = row.metricValues[userIndex]?.value;\n    if (index < 0 || typeof device !== 'string' || seen.has(key) || !/^\\d+$/.test(raw) || !Number.isSafeInteger(Number(raw))) return unavailable('invalid_or_duplicate_row');\n    seen.add(key);\n    if (device === 'RESERVED_TOTAL') counts[index] = Number(raw);\n  }\n  // Never sum device rows to synthesize unique totals; require one total per step.\n  if (counts.filter(value => value !== undefined).length !== expected.length) return unavailable('missing_steps_or_totals');\n  try {\n    return { status: 'available', reason: null, quality: { sampled: false, thresholded: null }, rows: exportPeriodRows({ ...options, activeUsers: counts }) };\n  } catch { return unavailable('invalid_sequential_counts'); }\n}\nfunction parseReach(response, dimensions) {\n  const metadata = response?.metadata || {};\n  if (metadata.subjectToThresholding || metadata.samplingMetadatas?.length || metadata.dataLossFromOtherRow || metadata.emptyReason) return null;\n  if (JSON.stringify(response?.dimensionHeaders?.map(h => h.name) || []) !== JSON.stringify(dimensions)) return null;\n  const metrics = response?.metricHeaders?.map(h => h.name) || [];\n  const views = metrics.indexOf('screenPageViews'); const users = metrics.indexOf('totalUsers');\n  if (new Set(metrics).size !== metrics.length || views < 0 || users < 0 || !response.rows?.length || (response.rowCount != null && response.rowCount !== response.rows.length)) return null;\n  const seen = new Set(); const rows = [];\n  for (const row of response.rows) {\n    if ((row.dimensionValues?.length || 0) !== dimensions.length || row.metricValues?.length !== metrics.length) return null;\n    const labels = (row.dimensionValues || []).map(v => v.value);\n    const key = JSON.stringify(labels);\n    const values = [row.metricValues[views]?.value, row.metricValues[users]?.value];\n    if (seen.has(key) || labels.some(v => typeof v !== 'string' || v === '(other)') || values.some(v => !/^\\d+$/.test(v) || !Number.isSafeInteger(Number(v)))) return null;\n    seen.add(key); rows.push({ name: labels[0], medium: labels[1], views: Number(values[0]), users: Number(values[1]) });\n  }\n  return rows;\n}\nfunction normalizePeriodBundle(bundle, { studioId, propertyId, pathPrefix, historyVerified = false }) {\n  if (!bundle?.success || bundle.definitionVersion !== 2 || bundle.geography !== 'US' || String(bundle.target?.studio_id) !== String(studioId) || String(bundle.target?.property_id) !== String(propertyId) || bundle.pathPrefix !== pathPrefix || !Number.isFinite(Date.parse(bundle.retrievedAt))) throw new Error('Mismatched source bundle');\n  const routes = {}; const lookerRows = [];\n  for (const variant of ['core', 'addons', 'inquiry']) {\n    const result = parseFunnelResponse(bundle.source?.[variant], { ...bundle.period, pathPrefix, variant, comparisonType: 'selected' });\n    if (result.status !== 'available') return { status: 'unavailable', reason: result.reason, report: null, lookerRows: [] };\n    routes[variant] = result.rows.map(row => row.activeUsers);\n    lookerRows.push(...result.rows.map(row => ({ ...row, studioId: String(studioId), propertyId: String(propertyId), retrievedAt: bundle.retrievedAt })));\n  }\n  const total = parseReach(bundle.reach?.total, []);\n  const device = parseReach(bundle.reach?.device, ['deviceCategory']);\n  const sourceMedium = parseReach(bundle.reach?.sourceMedium, ['sessionSource', 'sessionMedium']);\n  const report = { studioId: String(studioId), period: bundle.period, definitionVersion: 2, geography: 'US', availability: 'verified', historyVerified, retrievedAt: bundle.retrievedAt, routes,\n    reach: total?.length === 1 ? { views: total[0].views, periodUniqueUsers: total[0].users } : null,\n    ...(device && sourceMedium ? { breakdowns: { device: device.map(({ name, views, users }) => ({ name, views, users })), sourceMedium } } : {}),\n  };\n  return { status: 'available', report, lookerRows };\n}\nconst config = $('Approved target and period').first().json;\nconst source = $input.first().json;\nconst normalized = normalizePeriodBundle(source, config);\nif (normalized.status !== 'available') throw new Error('Period unavailable: ' + normalized.reason);\nreturn [{json: {studio_id: Number(config.studioId), property_id: String(config.propertyId), period_start: source.period.startDate, period_end: source.period.endDate, definition_version: 2, geography: 'US', retrieved_at: source.retrievedAt, report: normalized.report, source_quality: {sampling: 'not_reported', thresholding: 'not_exposed_by_alpha', geography: 'US', lookerRows: normalized.lookerRows}}}];"
+      }
+    },
+    {
+      "id": "load",
+      "name": "INSERT disabled until source reconciliation",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        800,
+        0
+      ],
+      "disabled": true,
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "with inserted as (insert into public.ga4_party_funnel_periods (studio_id,property_id,period_start,period_end,definition_version,geography,retrieved_at,report,source_quality) values ($1::bigint,$2::text,$3::date,$4::date,$5::integer,$6::text,$7::timestamptz,$8::jsonb,$9::jsonb) on conflict (studio_id,property_id,period_start,period_end,definition_version,geography,retrieved_at) do nothing returning studio_id) select count(*)::integer as inserted_rows from inserted;",
+        "options": {
+          "queryReplacement": "={{[$json.studio_id,$json.property_id,$json.period_start,$json.period_end,$json.definition_version,$json.geography,$json.retrieved_at,JSON.stringify($json.report),JSON.stringify($json.source_quality)]}}"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Manual controlled rollout only": {
+      "main": [
+        [
+          {
+            "node": "Approved target and period",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approved target and period": {
+      "main": [
+        [
+          {
+            "node": "Read mapped GA4 period",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read mapped GA4 period": {
+      "main": [
+        [
+          {
+            "node": "Validate whole-period results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate whole-period results": {
+      "main": [
+        [
+          {
+            "node": "INSERT disabled until source reconciliation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "none",
+    "saveDataSuccessExecution": "none",
+    "saveManualExecutions": false
+  }
+}

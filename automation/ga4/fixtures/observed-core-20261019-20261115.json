@@ -1,0 +1,31 @@
+{
+  "provenance": "Aggregate funnelTable fields reported by parent from successful read-only n8n diagnostic on 2026-11-16; not a complete raw response capture",
+  "propertyId": "354847068",
+  "definitionVersion": 1,
+  "geography": "all",
+  "period": { "startDate": "2026-10-19", "endDate": "2026-11-15" },
+  "response": {
+    "funnelTable": {
+      "dimensionHeaders": [{ "name": "funnelStepName" }],
+      "metricHeaders": [
+        { "name": "activeUsers", "type": "TYPE_INTEGER" },
+        { "name": "funnelStepCompletionRate", "type": "TYPE_INTEGER" },
+        { "name": "funnelStepAbandonments", "type": "TYPE_INTEGER" },
+        { "name": "funnelStepAbandonmentRate", "type": "TYPE_INTEGER" },
+        { "name": "activeUsers", "type": "TYPE_INTEGER" },
+        { "name": "funnelStepCompletionRate", "type": "TYPE_INTEGER" },
+        { "name": "funnelStepAbandonments", "type": "TYPE_INTEGER" },
+        { "name": "funnelStepAbandonmentRate", "type": "TYPE_INTEGER" }
+      ],
+      "rows": [
+        { "dimensionValues": [{ "value": "1. packages" }], "metricValues": [{ "value": "51" }, { "value": "0.43137254901960786" }, { "value": "29" }, { "value": "0.56862745098039214" }] },
+        { "dimensionValues": [{ "value": "2. eventdetails" }], "metricValues": [{ "value": "22" }, { "value": "0.59090909090909094" }, { "value": "9" }, { "value": "0.40909090909090912" }] },
+        { "dimensionValues": [{ "value": "3. choosedate" }], "metricValues": [{ "value": "13" }, { "value": "0.84615384615384615" }, { "value": "2" }, { "value": "0.15384615384615385" }] },
+        { "dimensionValues": [{ "value": "4. contact" }], "metricValues": [{ "value": "11" }, { "value": "1" }, { "value": "0" }, { "value": "0" }] },
+        { "dimensionValues": [{ "value": "5. checkout" }], "metricValues": [{ "value": "11" }, { "value": "0.45454545454545453" }, { "value": "6" }, { "value": "0.54545454545454541" }] },
+        { "dimensionValues": [{ "value": "6. confirmation" }], "metricValues": [{ "value": "5" }, { "value": "1" }, { "value": "0" }, { "value": "0" }] }
+      ],
+      "metadata": {}
+    }
+  }
+}
