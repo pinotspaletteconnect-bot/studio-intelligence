@@ -1,0 +1,47 @@
+// Collection-only adapter. Call from governed ETL with configuration-resolved IDs.
+const paths = {
+  core: ['packages', 'eventdetails', 'choosedate', 'contact', 'checkout/', 'confirmation/'],
+  addons: ['packages', 'eventdetails', 'choosedate', 'addons', 'contact', 'checkout/', 'confirmation/'],
+  inquiry: ['packages', 'contactform'],
+};
+
+function buildFunnelRequest({ startDate, endDate, pathPrefix, variant = 'core' }) {
+  if (!paths[variant] || !/^\/[a-z0-9-]+\/parties$/.test(pathPrefix)) throw new Error('Invalid funnel configuration');
+  const validDate = value => /^\d{4}-\d{2}-\d{2}$/.test(value) && new Date(value).toISOString().slice(0, 10) === value;
+  if (!validDate(startDate) || !validDate(endDate) || startDate > endDate) throw new Error('Invalid period');
+  return {
+    dateRanges: [{ startDate, endDate }],
+    funnel: {
+      isOpenFunnel: false,
+      steps: paths[variant].map(path => ({
+        name: path.replace('/', ''),
+        isDirectlyFollowedBy: false,
+        filterExpression: {
+          andGroup: { expressions: [
+            { funnelEventFilter: { eventName: 'page_view' } },
+            { funnelFieldFilter: { fieldName: 'pagePath', stringFilter: {
+              matchType: path.endsWith('/') ? 'BEGINS_WITH' : 'EXACT',
+              value: `${pathPrefix}/${path}`, caseSensitive: true,
+            } } },
+          ] },
+        },
+      })),
+    },
+  };
+}
+
+async function runPartyFunnel({ propertyId, accessToken, ...options }, fetchImpl = fetch) {
+  if (!/^\d+$/.test(propertyId) || !accessToken) throw new Error('Missing GA4 access configuration');
+  const body = buildFunnelRequest(options);
+  const response = await fetchImpl(`https://analyticsdata.googleapis.com/v1alpha/properties/${propertyId}:runFunnelReport`, {
+    method: 'POST', headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body), signal: AbortSignal.timeout(30000),
+  });
+  // Never include upstream payloads, tokens or potentially identifying rows in errors.
+  if (!response.ok) throw new Error(response.status === 403 ? 'GA4 funnel permission denied' : `GA4 funnel request failed (${response.status})`);
+  return response.json();
+}
+
+
+module.exports = { buildFunnelRequest, runPartyFunnel };
+

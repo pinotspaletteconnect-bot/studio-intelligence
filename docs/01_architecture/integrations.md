@@ -1,5 +1,14 @@
 # Studio Intelligence Integrations
 
+## November 16, 2026 - private-party website funnel prepared, not deployed
+
+Production-source feature branch prepares closed, whole-period GA4 sequential
+funnels plus separately deduplicated party traffic reach. Existing GA4 OAuth/Vault
+broker and mapped-property collector authorization are reused. New private
+period storage/configuration is an unapplied proposal; ETL is a disabled/manual
+review artifact. No live validation or production rollout is claimed. See
+`docs/02_development/sasha_party_funnel.md` for approval and execution dependencies.
+
 ## October 19, 2026 - STM seating repairs and additive product perks verified
 
 PR101 fixes selected Reserved filters; PR102 fixes remembered-month calendar

@@ -2,6 +2,8 @@ const crypto = require("crypto");
 const express = require("express");
 const { resolveGa4Account } = require("../services/ga4Credentials");
 const { discoverGa4Properties, runGa4Report } = require("../services/ga4Api");
+const { accessToken } = require("../services/ga4Api");
+const { buildFunnelRequest, runPartyFunnel } = require("../services/ga4/party-funnel");
 
 const router = express.Router();
 
@@ -55,6 +57,33 @@ router.post("/report/:accountId/:propertyId", requireCollectorAuth, async (req, 
     } catch (error) {
         console.error("GA4 compatible report failed:", error.message);
         res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Source-only, bounded report collection. Existing broker and mapped-property
+// authorization are retained; no credentials or upstream error bodies returned.
+router.post('/party-funnel/:accountId/:propertyId', requireCollectorAuth, async (req, res) => {
+    try {
+        const { startDate, endDate, pathPrefix } = req.body || {};
+        try { buildFunnelRequest({ startDate, endDate, pathPrefix }); }
+        catch { return res.status(400).json({ error: 'Invalid party report configuration or period' }); }
+        if ((Date.parse(endDate) - Date.parse(startDate)) / 86400000 > 366) return res.status(400).json({ error: 'Period exceeds 367 days' });
+        const account = await resolveGa4Account(req.params.accountId);
+        const propertyId = String(req.params.propertyId);
+        const target = account.targets.find(candidate => String(candidate.property_id) === propertyId);
+        if (!target) return res.status(409).json({ error: 'GA4 property is not mapped to this account' });
+        const token = await accessToken(account.credentials);
+        const source = {};
+        for (const variant of ['core', 'addons', 'inquiry']) source[variant] = await runPartyFunnel({ propertyId, accessToken: token, startDate, endDate, pathPrefix, variant });
+        const dimensionFilter = { filter: { fieldName: 'pagePath', stringFilter: { matchType: 'BEGINS_WITH', value: `${pathPrefix}/`, caseSensitive: true } } };
+        const reach = {};
+        for (const [name, dimensions] of [['total', []], ['device', [{ name: 'deviceCategory' }]], ['sourceMedium', [{ name: 'sessionSource' }, { name: 'sessionMedium' }]]]) {
+            reach[name] = await runGa4Report(account.credentials, propertyId, { dateRanges: [{ startDate, endDate }], dimensions, metrics: [{ name: 'screenPageViews' }, { name: 'totalUsers' }], dimensionFilter, limit: 10000 });
+        }
+        res.set('Cache-Control', 'private, no-store').json({ success: true, target, period: { startDate, endDate }, pathPrefix, source, reach, retrievedAt: new Date().toISOString() });
+    } catch (error) {
+        const permission = error.message === 'GA4 funnel permission denied';
+        res.status(permission ? 403 : 502).json({ success: false, error: permission ? 'GA4 funnel permission denied' : 'GA4 party report is unavailable' });
     }
 });
 
