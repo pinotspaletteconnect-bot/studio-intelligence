@@ -136,4 +136,17 @@ test('header redundancy support rejects mixed, partial, ambiguous and nonuniform
     assert.equal(parseFunnelResponse(response, { ...parseOptions, ...observed.period }).status, 'unavailable');
   }
 });
+test('observed successful prior-period headers without rows remain unavailable rather than zero', () => {
+  // Parent observed Sep21-Oct18 responses with headers/metadata only; do not
+  // fabricate source rows or infer that successful transport proves coverage.
+  const response = {
+    funnelTable: { dimensionHeaders: structuredClone(observed.response.funnelTable.dimensionHeaders), metricHeaders: structuredClone(observed.response.funnelTable.metricHeaders), metadata: {} },
+    funnelVisualization: { dimensionHeaders: [{ name: 'funnelStepName' }], metricHeaders: [{ name: 'activeUsers', type: 'TYPE_INTEGER' }, { name: 'activeUsers', type: 'TYPE_INTEGER' }], metadata: {} },
+  };
+  const result = parseFunnelResponse(response, { ...parseOptions, startDate: '2026-09-21', endDate: '2026-10-18' });
+  assert.equal(result.status, 'unavailable');
+  assert.equal(result.reason, 'no_rows');
+  assert.deepEqual(result.rows, []);
+  assert.equal(result.quality.thresholded, null);
+});
 
