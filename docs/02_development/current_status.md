@@ -11,9 +11,11 @@ See `sasha_party_funnel.md` for exact methodology and dependencies.
 
 Owner-corrected geographic scope is United States only. Definition version2 and
 geographyUS now gate every source/warehouse/report/comparison/export contract;
-legacy all-country data is not reused. A separate read-only US core diagnostic
-confirmed the supported report-level country filter. Other US validation and
-Explore parity remain pending; no US production rollout is claimed.
+legacy all-country data is not reused. Separate read-only US diagnostics and
+saved/reloaded Explore country filtering match all three funnels exactly.
+Whole-process US reach is verified separately (428 views/51 total users for
+October19-November15); prior core no-row coverage remains unavailable. No US
+warehouse loading or production rollout is claimed.
 
 # Import recovery verified - October 30, 2026
 

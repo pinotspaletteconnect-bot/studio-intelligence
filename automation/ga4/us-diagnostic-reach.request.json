@@ -1,0 +1,44 @@
+{
+  "dateRanges": [
+    {
+      "startDate": "2026-10-19",
+      "endDate": "2026-11-15"
+    }
+  ],
+  "dimensions": [],
+  "metrics": [
+    {
+      "name": "screenPageViews"
+    },
+    {
+      "name": "totalUsers"
+    }
+  ],
+  "dimensionFilter": {
+    "andGroup": {
+      "expressions": [
+        {
+          "filter": {
+            "fieldName": "country",
+            "stringFilter": {
+              "matchType": "EXACT",
+              "value": "United States",
+              "caseSensitive": true
+            }
+          }
+        },
+        {
+          "filter": {
+            "fieldName": "pagePath",
+            "stringFilter": {
+              "matchType": "BEGINS_WITH",
+              "value": "/louisville/parties",
+              "caseSensitive": true
+            }
+          }
+        }
+      ]
+    }
+  },
+  "limit": 10000
+}

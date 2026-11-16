@@ -46,4 +46,16 @@ async function runPartyFunnel({ propertyId, accessToken, ...options }, fetchImpl
 }
 
 
-module.exports = { buildFunnelRequest, runPartyFunnel };
+function buildReachRequest({ startDate, endDate, pathPrefix, breakdown = 'total' }) {
+  const { dimensionFilter: country } = buildFunnelRequest({ startDate, endDate, pathPrefix });
+  const dimensions = { total: [], device: [{ name: 'deviceCategory' }], sourceMedium: [{ name: 'sessionSource' }, { name: 'sessionMedium' }] };
+  if (!Object.hasOwn(dimensions, breakdown)) throw new Error('Invalid reach breakdown');
+  return {
+    dateRanges: [{ startDate, endDate }], dimensions: dimensions[breakdown],
+    metrics: [{ name: 'screenPageViews' }, { name: 'totalUsers' }],
+    dimensionFilter: { andGroup: { expressions: [country, { filter: { fieldName: 'pagePath', stringFilter: { matchType: 'BEGINS_WITH', value: pathPrefix, caseSensitive: true } } }] } },
+    limit: 10000,
+  };
+}
+
+module.exports = { buildFunnelRequest, runPartyFunnel, buildReachRequest };

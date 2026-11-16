@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { buildFunnelRequest, runPartyFunnel } = require('./party-funnel');
+const { buildFunnelRequest, runPartyFunnel, buildReachRequest } = require('./party-funnel');
 const { exportPeriodRows, parseFunnelResponse } = require('../../../automation/ga4/party-funnel.cjs');
 const options = { startDate: '2026-11-09', endDate: '2026-11-15', pathPrefix: '/louisville/parties' };
 test('closed indirect sequential period request with exact and prefix paths', () => {
@@ -152,4 +152,17 @@ test('observed successful prior-period headers without rows remain unavailable r
   assert.equal(result.reason, 'no_rows');
   assert.deepEqual(result.rows, []);
   assert.equal(result.quality.thresholded, null);
+});
+test('whole-process US reach includes landing prefix and uses period-deduplicated metrics for each breakdown', () => {
+  for (const breakdown of ['total', 'device', 'sourceMedium']) {
+    const request = buildReachRequest({ ...options, breakdown });
+    assert.deepEqual(request.dateRanges, [{ startDate: options.startDate, endDate: options.endDate }]);
+    assert.deepEqual(request.metrics, [{ name: 'screenPageViews' }, { name: 'totalUsers' }]);
+    assert.deepEqual(request.dimensionFilter.andGroup.expressions, [
+      { filter: { fieldName: 'country', stringFilter: { matchType: 'EXACT', value: 'United States', caseSensitive: true } } },
+      { filter: { fieldName: 'pagePath', stringFilter: { matchType: 'BEGINS_WITH', value: '/louisville/parties', caseSensitive: true } } },
+    ]);
+    assert.deepEqual(request.dimensions, breakdown === 'total' ? [] : breakdown === 'device' ? [{ name: 'deviceCategory' }] : [{ name: 'sessionSource' }, { name: 'sessionMedium' }]);
+  }
+  assert.throws(() => buildReachRequest({ ...options, breakdown: 'date' }));
 });

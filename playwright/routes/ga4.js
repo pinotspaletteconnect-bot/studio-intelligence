@@ -3,7 +3,7 @@ const express = require("express");
 const { resolveGa4Account } = require("../services/ga4Credentials");
 const { discoverGa4Properties, runGa4Report } = require("../services/ga4Api");
 const { accessToken } = require("../services/ga4Api");
-const { buildFunnelRequest, runPartyFunnel } = require("../services/ga4/party-funnel");
+const { buildFunnelRequest, runPartyFunnel, buildReachRequest } = require("../services/ga4/party-funnel");
 
 const router = express.Router();
 
@@ -75,13 +75,9 @@ router.post('/party-funnel/:accountId/:propertyId', requireCollectorAuth, async 
         const token = await accessToken(account.credentials);
         const source = {};
         for (const variant of ['core', 'addons', 'inquiry']) source[variant] = await runPartyFunnel({ propertyId, accessToken: token, startDate, endDate, pathPrefix, variant });
-        const dimensionFilter = { andGroup: { expressions: [
-            { filter: { fieldName: 'pagePath', stringFilter: { matchType: 'BEGINS_WITH', value: `${pathPrefix}/`, caseSensitive: true } } },
-            { filter: { fieldName: 'country', stringFilter: { matchType: 'EXACT', value: 'United States', caseSensitive: true } } },
-        ] } };
         const reach = {};
-        for (const [name, dimensions] of [['total', []], ['device', [{ name: 'deviceCategory' }]], ['sourceMedium', [{ name: 'sessionSource' }, { name: 'sessionMedium' }]]]) {
-            reach[name] = await runGa4Report(account.credentials, propertyId, { dateRanges: [{ startDate, endDate }], dimensions, metrics: [{ name: 'screenPageViews' }, { name: 'totalUsers' }], dimensionFilter, limit: 10000 });
+        for (const name of ['total', 'device', 'sourceMedium']) {
+            reach[name] = await runGa4Report(account.credentials, propertyId, buildReachRequest({ startDate, endDate, pathPrefix, breakdown: name }));
         }
         res.set('Cache-Control', 'private, no-store').json({ success: true, definitionVersion: 2, geography: 'US', target, period: { startDate, endDate }, pathPrefix, source, reach, retrievedAt: new Date().toISOString() });
     } catch (error) {
