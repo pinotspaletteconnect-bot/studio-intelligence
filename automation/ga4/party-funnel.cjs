@@ -14,7 +14,7 @@ function exportPeriodRows({ startDate, endDate, pathPrefix, variant = 'core', co
       completionRate: next === undefined || users === 0 ? null : next / users,
       abandonment: next === undefined ? null : users - next,
       abandonmentRate: next === undefined || users === 0 ? null : (users - next) / users,
-      definitionVersion: 1,
+      definitionVersion: 2, geography: 'US',
     };
   });
 }
@@ -87,7 +87,7 @@ function parseReach(response, dimensions) {
 }
 
 function normalizePeriodBundle(bundle, { studioId, propertyId, pathPrefix, historyVerified = false }) {
-  if (!bundle?.success || String(bundle.target?.studio_id) !== String(studioId) || String(bundle.target?.property_id) !== String(propertyId) || bundle.pathPrefix !== pathPrefix || !Number.isFinite(Date.parse(bundle.retrievedAt))) throw new Error('Mismatched source bundle');
+  if (!bundle?.success || bundle.definitionVersion !== 2 || bundle.geography !== 'US' || String(bundle.target?.studio_id) !== String(studioId) || String(bundle.target?.property_id) !== String(propertyId) || bundle.pathPrefix !== pathPrefix || !Number.isFinite(Date.parse(bundle.retrievedAt))) throw new Error('Mismatched source bundle');
   const routes = {}; const lookerRows = [];
   for (const variant of ['core', 'addons', 'inquiry']) {
     const result = parseFunnelResponse(bundle.source?.[variant], { ...bundle.period, pathPrefix, variant, comparisonType: 'selected' });
@@ -98,7 +98,7 @@ function normalizePeriodBundle(bundle, { studioId, propertyId, pathPrefix, histo
   const total = parseReach(bundle.reach?.total, []);
   const device = parseReach(bundle.reach?.device, ['deviceCategory']);
   const sourceMedium = parseReach(bundle.reach?.sourceMedium, ['sessionSource', 'sessionMedium']);
-  const report = { studioId: String(studioId), period: bundle.period, definitionVersion: 1, availability: 'verified', historyVerified, retrievedAt: bundle.retrievedAt, routes,
+  const report = { studioId: String(studioId), period: bundle.period, definitionVersion: 2, geography: 'US', availability: 'verified', historyVerified, retrievedAt: bundle.retrievedAt, routes,
     reach: total?.length === 1 ? { views: total[0].views, periodUniqueUsers: total[0].users } : null,
     ...(device && sourceMedium ? { breakdowns: { device: device.map(({ name, views, users }) => ({ name, views, users })), sourceMedium } } : {}),
   };
@@ -106,4 +106,3 @@ function normalizePeriodBundle(bundle, { studioId, propertyId, pathPrefix, histo
 }
 
 module.exports = { exportPeriodRows, parseFunnelResponse, parseReach, normalizePeriodBundle };
-

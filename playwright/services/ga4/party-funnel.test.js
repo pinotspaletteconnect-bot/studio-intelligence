@@ -8,6 +8,8 @@ test('closed indirect sequential period request with exact and prefix paths', ()
   assert.deepEqual(request.dateRanges, [{ startDate: options.startDate, endDate: options.endDate }]);
   assert.equal(request.funnel.isOpenFunnel, false);
   assert.equal(request.funnel.steps.length, 6);
+  assert.deepEqual(request.dimensionFilter, { filter: { fieldName: 'country', stringFilter: { matchType: 'EXACT', value: 'United States', caseSensitive: true } } });
+  assert.equal(request.segments, undefined);
   for (const step of request.funnel.steps) {
     assert.equal(step.isDirectlyFollowedBy, false);
     assert.equal(step.withinDurationFromPriorStep, undefined);
@@ -22,7 +24,9 @@ test('closed indirect sequential period request with exact and prefix paths', ()
 });
 test('supported exploration dimension preserves exact paths while ignoring optional query strings', () => {
   for (const variant of ['core', 'addons', 'inquiry']) {
-    const steps = buildFunnelRequest({ ...options, variant }).funnel.steps;
+    const request = buildFunnelRequest({ ...options, variant });
+    assert.equal(request.dimensionFilter.filter.stringFilter.value, 'United States');
+    const steps = request.funnel.steps;
     for (const step of steps) {
       const { fieldName, stringFilter } = step.filterExpression.andGroup.expressions[1].funnelFieldFilter;
       assert.equal(fieldName, 'pagePathPlusQueryString');
@@ -149,4 +153,3 @@ test('observed successful prior-period headers without rows remain unavailable r
   assert.deepEqual(result.rows, []);
   assert.equal(result.quality.thresholded, null);
 });
-

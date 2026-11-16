@@ -11,6 +11,7 @@ function buildFunnelRequest({ startDate, endDate, pathPrefix, variant = 'core' }
   if (!validDate(startDate) || !validDate(endDate) || startDate > endDate) throw new Error('Invalid period');
   return {
     dateRanges: [{ startDate, endDate }],
+    dimensionFilter: { filter: { fieldName: 'country', stringFilter: { matchType: 'EXACT', value: 'United States', caseSensitive: true } } },
     funnel: {
       isOpenFunnel: false,
       steps: paths[variant].map(path => ({
@@ -46,4 +47,3 @@ async function runPartyFunnel({ propertyId, accessToken, ...options }, fetchImpl
 
 
 module.exports = { buildFunnelRequest, runPartyFunnel };
-

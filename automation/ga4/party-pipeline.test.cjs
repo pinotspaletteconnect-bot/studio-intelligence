@@ -9,7 +9,7 @@ function fixture() {
   const source = {};
   for (const variant of ['core', 'addons', 'inquiry']) source[variant] = { funnelTable: { dimensionHeaders: [{ name: 'funnelStepName' }], metricHeaders: [{ name: 'activeUsers' }], rows: buildFunnelRequest({ ...period, ...config, variant }).funnel.steps.map((step, i) => ({ dimensionValues: [{ value: `${i + 1}. ${step.name}` }], metricValues: [{ value: String(20 - i) }] })) } };
   const reach = dimensions => ({ dimensionHeaders: dimensions.map(name => ({ name })), metricHeaders: [{ name: 'screenPageViews' }, { name: 'totalUsers' }], rows: [{ dimensionValues: dimensions.map(() => ({ value: 'test' })), metricValues: [{ value: '50' }, { value: '20' }] }], rowCount: 1 });
-  return { success: true, target: { studio_id: 1, property_id: config.propertyId }, pathPrefix: config.pathPrefix, period, source, reach: { total: reach([]), device: reach(['deviceCategory']), sourceMedium: reach(['sessionSource', 'sessionMedium']) }, retrievedAt: '2026-11-16T13:00:00Z' };
+  return { success: true, definitionVersion: 2, geography: 'US', target: { studio_id: 1, property_id: config.propertyId }, pathPrefix: config.pathPrefix, period, source, reach: { total: reach([]), device: reach(['deviceCategory']), sourceMedium: reach(['sessionSource', 'sessionMedium']) }, retrievedAt: '2026-11-16T13:00:00Z' };
 }
 test('source-shaped period bundle normalizes to stored report and private Looker rows', () => {
   const result = normalizePeriodBundle(fixture(), config);
@@ -18,6 +18,9 @@ test('source-shaped period bundle normalizes to stored report and private Looker
   assert.deepEqual(result.report.reach, { views: 50, periodUniqueUsers: 20 });
   assert.equal(result.lookerRows.length, 15);
   assert.equal(result.report.historyVerified, false);
+  assert.equal(result.report.definitionVersion, 2);
+  assert.equal(result.report.geography, 'US');
+  assert.ok(result.lookerRows.every(row => row.definitionVersion === 2 && row.geography === 'US'));
 });
 test('mismatched mapping, limited funnels and malformed reach fail honestly', () => {
   assert.throws(() => normalizePeriodBundle(fixture(), { ...config, studioId: '2' }));
@@ -25,6 +28,10 @@ test('mismatched mapping, limited funnels and malformed reach fail honestly', ()
   assert.equal(normalizePeriodBundle(limited, config).status, 'unavailable');
   const partial = fixture(); partial.reach.total.rowCount = 3;
   assert.equal(normalizePeriodBundle(partial, config).report.reach, null);
+  assert.throws(() => normalizePeriodBundle({ ...fixture(), definitionVersion: 1, geography: 'all' }, config));
+  assert.throws(() => normalizePeriodBundle({ ...fixture(), geography: 'all' }, config));
+  const legacy = fixture(); delete legacy.geography;
+  assert.throws(() => normalizePeriodBundle(legacy, config));
 });
 test('n8n review artifact is inactive, has no schedules or credentials, and embeds runnable normalization', () => {
   assert.equal(workflow.active, false);

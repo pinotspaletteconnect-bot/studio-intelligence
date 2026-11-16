@@ -75,12 +75,15 @@ router.post('/party-funnel/:accountId/:propertyId', requireCollectorAuth, async 
         const token = await accessToken(account.credentials);
         const source = {};
         for (const variant of ['core', 'addons', 'inquiry']) source[variant] = await runPartyFunnel({ propertyId, accessToken: token, startDate, endDate, pathPrefix, variant });
-        const dimensionFilter = { filter: { fieldName: 'pagePath', stringFilter: { matchType: 'BEGINS_WITH', value: `${pathPrefix}/`, caseSensitive: true } } };
+        const dimensionFilter = { andGroup: { expressions: [
+            { filter: { fieldName: 'pagePath', stringFilter: { matchType: 'BEGINS_WITH', value: `${pathPrefix}/`, caseSensitive: true } } },
+            { filter: { fieldName: 'country', stringFilter: { matchType: 'EXACT', value: 'United States', caseSensitive: true } } },
+        ] } };
         const reach = {};
         for (const [name, dimensions] of [['total', []], ['device', [{ name: 'deviceCategory' }]], ['sourceMedium', [{ name: 'sessionSource' }, { name: 'sessionMedium' }]]]) {
             reach[name] = await runGa4Report(account.credentials, propertyId, { dateRanges: [{ startDate, endDate }], dimensions, metrics: [{ name: 'screenPageViews' }, { name: 'totalUsers' }], dimensionFilter, limit: 10000 });
         }
-        res.set('Cache-Control', 'private, no-store').json({ success: true, target, period: { startDate, endDate }, pathPrefix, source, reach, retrievedAt: new Date().toISOString() });
+        res.set('Cache-Control', 'private, no-store').json({ success: true, definitionVersion: 2, geography: 'US', target, period: { startDate, endDate }, pathPrefix, source, reach, retrievedAt: new Date().toISOString() });
     } catch (error) {
         const permission = error.message === 'GA4 funnel permission denied';
         res.status(permission ? 403 : 502).json({ success: false, error: permission ? 'GA4 funnel permission denied' : 'GA4 party report is unavailable' });

@@ -7,7 +7,7 @@ import { getPartyFunnel, type StoredPeriodRecord } from '@/lib/services/party-fu
 vi.mock('@/lib/supabase/server', () => ({ supabase: null }))
 vi.mock('@/contexts/app-context', () => ({ useApp: () => ({ selectedStudio: '1', studios: [{ id: 1, studio_name: 'St. Matthews' }], dateRange: { preset: 'custom', startDate: '2026-11-09', endDate: '2026-11-15' }, setCustomDateRange: () => {}, setDateRangePreset: () => {}, setSelectedStudio: () => {}, comparison: 'previous', setComparison: () => {} }) }))
 it('renders a verified full-period report for print without claiming payment success', async () => {
-  const report = await getPartyFunnel('1', { startDate: '2026-11-09', endDate: '2026-11-15' }, [1], async (_id, period): Promise<StoredPeriodRecord> => ({ studioId: '1', period, definitionVersion: 1, availability: 'verified', historyVerified: false, retrievedAt: '2026-11-16T13:00:00Z', routes: { core: [51, 22, 13, 11, 11, 5], addons: [51, 22, 13, 11, 11, 11, 5], inquiry: [51, 12] }, reach: { views: 150, periodUniqueUsers: 60 } }))
+  const report = await getPartyFunnel('1', { startDate: '2026-11-09', endDate: '2026-11-15' }, [1], async (_id, period): Promise<StoredPeriodRecord> => ({ studioId: '1', period, definitionVersion: 2, geography: 'US', availability: 'verified', historyVerified: false, retrievedAt: '2026-11-16T13:00:00Z', routes: { core: [51, 22, 13, 11, 11, 5], addons: [51, 22, 13, 11, 11, 11, 5], inquiry: [51, 12] }, reach: { views: 150, periodUniqueUsers: 60 } }))
   const html = renderToStaticMarkup(createElement(PartyFunnelPage, { initialReport: report }))
   expect(html).toContain('Sequential data available')
   expect(html).toContain('St. Matthews')

@@ -1,6 +1,8 @@
 {
   "provenance": "Aggregate funnelTable fields reported by parent from successful read-only n8n diagnostic on 2026-11-16; not a complete raw response capture",
   "propertyId": "354847068",
+  "definitionVersion": 1,
+  "geography": "all",
   "period": { "startDate": "2026-10-19", "endDate": "2026-11-15" },
   "response": {
     "funnelTable": {

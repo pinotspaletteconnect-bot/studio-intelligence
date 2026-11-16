@@ -3,7 +3,9 @@
 ## November 16, 2026 - private-party website funnel prepared, not deployed
 
 Production-source feature branch prepares closed, whole-period GA4 sequential
-funnels plus separately deduplicated party traffic reach. Existing GA4 OAuth/Vault
+funnels plus separately deduplicated party traffic reach, all United States only
+under definition version2/geographyUS (older all-country snapshots excluded).
+Existing GA4 OAuth/Vault
 broker and mapped-property collector authorization are reused. New private
 period storage/configuration is an unapplied proposal; ETL is a disabled/manual
 review artifact. No live validation or production rollout is claimed. See

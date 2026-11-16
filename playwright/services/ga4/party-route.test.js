@@ -6,7 +6,7 @@ const funnelPath = require.resolve('./party-funnel');
 const original = [credentialsPath, apiPath, funnelPath].map(path => require.cache[path]);
 let sourceCalls = 0; let mapped = true; let denied = false;
 require.cache[credentialsPath] = { exports: { resolveGa4Account: async () => ({ credentials: { mock: true }, targets: mapped ? [{ studio_id: 1, property_id: '354847068' }] : [] }) } };
-require.cache[apiPath] = { exports: { discoverGa4Properties: async () => [], accessToken: async () => 'mock-token', runGa4Report: async (_credentials, _id, request) => { sourceCalls++; assert.equal(request.dimensions.some(d => d.name === 'date'), false); assert.equal(JSON.stringify(request).includes('country'), false); return { rows: [] }; } } };
+require.cache[apiPath] = { exports: { discoverGa4Properties: async () => [], accessToken: async () => 'mock-token', runGa4Report: async (_credentials, _id, request) => { sourceCalls++; assert.equal(request.dimensions.some(d => d.name === 'date'), false); assert.deepEqual(request.dimensionFilter.andGroup.expressions[1], { filter: { fieldName: 'country', stringFilter: { matchType: 'EXACT', value: 'United States', caseSensitive: true } } }); return { rows: [] }; } } };
 const { buildFunnelRequest } = require('./party-funnel');
 require.cache[funnelPath] = { exports: { buildFunnelRequest, runPartyFunnel: async () => { sourceCalls++; if (denied) throw new Error('GA4 funnel permission denied'); return { funnelTable: { rows: [] } }; } } };
 const router = require('../../routes/ga4');
@@ -36,6 +36,8 @@ test('collector reuses mapped broker/token path and returns three funnels plus p
   assert.equal(response.code, 200);
   assert.equal(sourceCalls, 6);
   assert.equal(response.body.target.studio_id, 1);
+  assert.equal(response.body.definitionVersion, 2);
+  assert.equal(response.body.geography, 'US');
   assert.equal(JSON.stringify(response.body).includes('mock-token'), false);
 });
 test('collector gracefully sanitizes upstream funnel permissions', async () => {

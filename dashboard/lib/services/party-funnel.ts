@@ -6,7 +6,7 @@ import { applyVerifiedPeriod, lastCompleteWeek, partyFunnelReport, type Period }
 const count = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER)
 const recordSchema = z.object({
   studioId: z.string(), period: z.object({ startDate: z.iso.date(), endDate: z.iso.date() }),
-  definitionVersion: z.literal(1), availability: z.literal('verified'), historyVerified: z.boolean(), retrievedAt: z.iso.datetime(),
+  definitionVersion: z.literal(2), geography: z.literal('US'), availability: z.literal('verified'), historyVerified: z.boolean(), retrievedAt: z.iso.datetime(),
   routes: z.object({ core: z.array(count).length(6), addons: z.array(count).length(7), inquiry: z.array(count).length(2) }),
   reach: z.object({ views: count, periodUniqueUsers: count }).nullable(),
   breakdowns: z.object({ device: z.array(z.object({ name: z.string(), views: count, users: count })), sourceMedium: z.array(z.object({ name: z.string(), medium: z.string(), views: count, users: count })) }).optional(),
@@ -16,7 +16,7 @@ export type PeriodReader = (studioId: string, period: Period) => Promise<StoredP
 
 export const readStoredPeriod: PeriodReader = async (studioId, period) => {
   const { data, error } = await supabase.from('ga4_party_funnel_reporting').select('report')
-    .eq('studio_id', studioId).eq('period_start', period.startDate).eq('period_end', period.endDate).eq('definition_version', 1).maybeSingle()
+    .eq('studio_id', studioId).eq('period_start', period.startDate).eq('period_end', period.endDate).eq('definition_version', 2).eq('geography', 'US').maybeSingle()
   // Unapplied proposal / uncached view is an explicit awaiting-setup state.
   if (error?.code === '42P01' || error?.code === 'PGRST205') return null
   if (error) throw new Error('Party reporting read failed')

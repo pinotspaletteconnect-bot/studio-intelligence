@@ -9,6 +9,12 @@ production migration/workflow/configuration or email/schedule change was made.
 Live sequential validation and separate rollout approvals remain required.
 See `sasha_party_funnel.md` for exact methodology and dependencies.
 
+Owner-corrected geographic scope is United States only. Definition version2 and
+geographyUS now gate every source/warehouse/report/comparison/export contract;
+legacy all-country data is not reused. A separate read-only US core diagnostic
+confirmed the supported report-level country filter. Other US validation and
+Explore parity remain pending; no US production rollout is claimed.
+
 # Import recovery verified - October 30, 2026
 
 Collector PR123/124 repair Homebase password-mode readiness and add tini process reaping; PR125 preserves repeated product occurrences with stable unique keys. All five PTS studios recovered October21/24/29 daily summaries:$25,972.43 net. All15 source summaries and25 product slices/658 rows match warehouse counts/quantities/revenue. All56 Homebase daily costs/hours for four configured studios October16–29 match source; missing October26–29 restored:$3,042.95/172.35 hours. Huntington Beach has no configured Homebase target.

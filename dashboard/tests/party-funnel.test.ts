@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
-import { getPartyFunnel, type StoredPeriodRecord } from '@/lib/services/party-funnel'
+import { getPartyFunnel, readStoredPeriod, type StoredPeriodRecord } from '@/lib/services/party-funnel'
 const state = vi.hoisted(() => ({ client: null as unknown }))
 vi.mock('@/lib/supabase/server', () => ({ get supabase() { return state.client } }))
 const period = { startDate: '2026-11-09', endDate: '2026-11-15' }
-const makeRecord = (p: typeof period, count: number): StoredPeriodRecord => ({ studioId: '1', period: p, definitionVersion: 1, availability: 'verified', historyVerified: true, retrievedAt: '2026-11-16T13:00:00Z', routes: { core: Array(6).fill(count), addons: Array(7).fill(count), inquiry: [count, count] }, reach: { views: count * 10, periodUniqueUsers: count } })
+const makeRecord = (p: typeof period, count: number): StoredPeriodRecord => ({ studioId: '1', period: p, definitionVersion: 2, geography: 'US', availability: 'verified', historyVerified: true, retrievedAt: '2026-11-16T13:00:00Z', routes: { core: Array(6).fill(count), addons: Array(7).fill(count), inquiry: [count, count] }, reach: { views: count * 10, periodUniqueUsers: count } })
 describe('private party exact-period service', () => {
   it('pairs unequal selected/rolling durations and returns every step and reach comparison', async () => {
     const read = vi.fn(async (_id, p) => makeRecord(p, p.startDate === '2026-11-09' ? 20 : p.startDate === '2026-11-02' ? 10 : p.startDate === '2026-10-19' ? 80 : p.startDate === '2026-09-21' ? 40 : 5))
@@ -44,5 +44,15 @@ describe('private party exact-period service', () => {
     expect(report.comparisons[1].change).toBeNull()
     expect(report.comparisons[1].stepChanges).toBeNull()
     expect(report.comparisons[1].reachChanges).toBeNull()
+  })
+  it('requests only v2 United States stored periods and rejects legacy cached records', async () => {
+    const filters: unknown[][] = []
+    const query = { select: () => query, eq: (...args: unknown[]) => { filters.push(args); return query }, maybeSingle: async () => ({ data: { report: { ...makeRecord(period, 2), definitionVersion: 1, geography: 'all' } }, error: null }) }
+    state.client = { from: () => query }
+    await expect(readStoredPeriod('1', period)).rejects.toThrow()
+    expect(filters).toContainEqual(['definition_version', 2])
+    expect(filters).toContainEqual(['geography', 'US'])
+    const legacy = { ...makeRecord(period, 2), geography: 'all' } as unknown as StoredPeriodRecord
+    await expect(getPartyFunnel('1', period, [1], async () => legacy)).rejects.toThrow('mismatched')
   })
 })

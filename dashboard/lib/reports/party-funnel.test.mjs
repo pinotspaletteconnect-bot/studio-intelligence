@@ -22,7 +22,7 @@ test('unknown outcomes remain null and rolling periods do not overlap', () => {
 })
 test('authorized reader records render counts only for exact verified studio/period', () => {
   const report = partyFunnelReport('1', { startDate: '2026-11-09', endDate: '2026-11-15' })
-  const record = { studioId: '1', period: report.period, definitionVersion: 1, availability: 'verified', historyVerified: false, retrievedAt: '2026-11-16T13:00:00Z', routes: { core: [10, 8, 5, 3, 1, 1], addons: [5, 4, 3, 2, 1, 1, 1], inquiry: [10, 2] }, reach: null }
+  const record = { studioId: '1', period: report.period, definitionVersion: 2, geography: 'US', availability: 'verified', historyVerified: false, retrievedAt: '2026-11-16T13:00:00Z', routes: { core: [10, 8, 5, 3, 1, 1], addons: [5, 4, 3, 2, 1, 1, 1], inquiry: [10, 2] }, reach: null }
   const result = applyVerifiedPeriod(report, record)
   assert.equal(result.funnels[0].steps[0].users, 10)
   assert.equal(result.funnels[0].steps[0].dropOff, 2)
@@ -31,4 +31,7 @@ test('authorized reader records render counts only for exact verified studio/per
   assert.equal(result.source.historyVerified, false)
   assert.throws(() => applyVerifiedPeriod(report, { ...record, studioId: '2' }))
   assert.throws(() => applyVerifiedPeriod(report, { ...record, availability: 'unavailable' }))
+  assert.throws(() => applyVerifiedPeriod(report, { ...record, definitionVersion: 1 }))
+  assert.throws(() => applyVerifiedPeriod(report, { ...record, geography: 'all' }))
+  assert.equal(result.geography, 'US')
 })

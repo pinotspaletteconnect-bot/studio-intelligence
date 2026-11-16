@@ -19,7 +19,9 @@ export function lastCompleteWeek(now = new Date()): Period {
 export function partyFunnelReport(studioId: string, period: Period) {
   const rolling = { startDate: shift(period.endDate, -27), endDate: period.endDate }
   return {
-    version: 1,
+    version: 2,
+    definitionVersion: 2,
+    geography: 'US' as const,
     studioId,
     status: 'unavailable' as 'available' | 'unavailable' | 'limited',
     reason: studioId === 'all'
@@ -45,13 +47,13 @@ export function partyFunnelReport(studioId: string, period: Period) {
 // Read-only port for an authorized reporting-view service. No production source
 // is assumed. The reader must enforce tenant/studio authorization before use.
 export type VerifiedPeriodRecord = {
-  studioId: string; period: Period; definitionVersion: 1
+  studioId: string; period: Period; definitionVersion: 2; geography: 'US'
   availability: 'verified'; historyVerified: boolean; retrievedAt: string
   routes: { core: number[]; addons: number[]; inquiry: number[] }
   reach: { views: number; periodUniqueUsers: number } | null
 }
 export function applyVerifiedPeriod(report: ReturnType<typeof partyFunnelReport>, record: VerifiedPeriodRecord) {
-  if (record.availability !== 'verified' || record.definitionVersion !== 1 || record.studioId !== report.studioId || report.studioId === 'all' || record.period.startDate !== report.period.startDate || record.period.endDate !== report.period.endDate || !Number.isFinite(Date.parse(record.retrievedAt))) throw new Error('Unverified or mismatched period record')
+  if (record.availability !== 'verified' || record.definitionVersion !== 2 || record.geography !== 'US' || record.studioId !== report.studioId || report.studioId === 'all' || record.period.startDate !== report.period.startDate || record.period.endDate !== report.period.endDate || !Number.isFinite(Date.parse(record.retrievedAt))) throw new Error('Unverified or mismatched period record')
   const routes = [record.routes.core, record.routes.addons, record.routes.inquiry]
   if (routes.some((counts, index) => counts.length !== report.funnels[index].steps.length || counts.some((value, i) => !Number.isSafeInteger(value) || value < 0 || (i > 0 && value > counts[i - 1])))) throw new Error('Invalid sequential record')
   if (record.reach && Object.values(record.reach).some(value => !Number.isSafeInteger(value) || value < 0)) throw new Error('Invalid reach record')

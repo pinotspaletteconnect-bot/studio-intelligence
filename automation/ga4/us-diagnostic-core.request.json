@@ -1,0 +1,173 @@
+{
+  "dateRanges": [
+    {
+      "startDate": "2026-10-19",
+      "endDate": "2026-11-15"
+    }
+  ],
+  "dimensionFilter": {
+    "filter": {
+      "fieldName": "country",
+      "stringFilter": {
+        "matchType": "EXACT",
+        "value": "United States",
+        "caseSensitive": true
+      }
+    }
+  },
+  "funnel": {
+    "isOpenFunnel": false,
+    "steps": [
+      {
+        "name": "packages",
+        "isDirectlyFollowedBy": false,
+        "filterExpression": {
+          "andGroup": {
+            "expressions": [
+              {
+                "funnelEventFilter": {
+                  "eventName": "page_view"
+                }
+              },
+              {
+                "funnelFieldFilter": {
+                  "fieldName": "pagePathPlusQueryString",
+                  "stringFilter": {
+                    "matchType": "FULL_REGEXP",
+                    "value": "^/louisville/parties/packages(\\?.*)?$",
+                    "caseSensitive": true
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "eventdetails",
+        "isDirectlyFollowedBy": false,
+        "filterExpression": {
+          "andGroup": {
+            "expressions": [
+              {
+                "funnelEventFilter": {
+                  "eventName": "page_view"
+                }
+              },
+              {
+                "funnelFieldFilter": {
+                  "fieldName": "pagePathPlusQueryString",
+                  "stringFilter": {
+                    "matchType": "FULL_REGEXP",
+                    "value": "^/louisville/parties/eventdetails(\\?.*)?$",
+                    "caseSensitive": true
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "choosedate",
+        "isDirectlyFollowedBy": false,
+        "filterExpression": {
+          "andGroup": {
+            "expressions": [
+              {
+                "funnelEventFilter": {
+                  "eventName": "page_view"
+                }
+              },
+              {
+                "funnelFieldFilter": {
+                  "fieldName": "pagePathPlusQueryString",
+                  "stringFilter": {
+                    "matchType": "FULL_REGEXP",
+                    "value": "^/louisville/parties/choosedate(\\?.*)?$",
+                    "caseSensitive": true
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "contact",
+        "isDirectlyFollowedBy": false,
+        "filterExpression": {
+          "andGroup": {
+            "expressions": [
+              {
+                "funnelEventFilter": {
+                  "eventName": "page_view"
+                }
+              },
+              {
+                "funnelFieldFilter": {
+                  "fieldName": "pagePathPlusQueryString",
+                  "stringFilter": {
+                    "matchType": "FULL_REGEXP",
+                    "value": "^/louisville/parties/contact(\\?.*)?$",
+                    "caseSensitive": true
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "checkout",
+        "isDirectlyFollowedBy": false,
+        "filterExpression": {
+          "andGroup": {
+            "expressions": [
+              {
+                "funnelEventFilter": {
+                  "eventName": "page_view"
+                }
+              },
+              {
+                "funnelFieldFilter": {
+                  "fieldName": "pagePathPlusQueryString",
+                  "stringFilter": {
+                    "matchType": "BEGINS_WITH",
+                    "value": "/louisville/parties/checkout/",
+                    "caseSensitive": true
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "confirmation",
+        "isDirectlyFollowedBy": false,
+        "filterExpression": {
+          "andGroup": {
+            "expressions": [
+              {
+                "funnelEventFilter": {
+                  "eventName": "page_view"
+                }
+              },
+              {
+                "funnelFieldFilter": {
+                  "fieldName": "pagePathPlusQueryString",
+                  "stringFilter": {
+                    "matchType": "BEGINS_WITH",
+                    "value": "/louisville/parties/confirmation/",
+                    "caseSensitive": true
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}
