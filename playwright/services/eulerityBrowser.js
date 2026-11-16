@@ -140,8 +140,8 @@ async function selectLocation(page, target) {
         if (!matched) throw new Error("Eulerity mapped campaign is unavailable or ambiguous");
         await matched.locator.click();
         await page.waitForTimeout(1200);
-        const selected = normalizeLocationLabel(await control.textContent());
-        if (!selected.includes(matched.displayName)) throw new Error("Eulerity did not confirm campaign selection");
+        const selected = normalizeLocationLabel(await control.locator("p").first().textContent());
+        if (selected !== matched.displayName) throw new Error("Eulerity did not confirm campaign selection");
     });
 }
 
