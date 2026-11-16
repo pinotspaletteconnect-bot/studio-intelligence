@@ -1,6 +1,11 @@
 // Code node, Run Once for All Items, BEFORE Sync Eulerity Locations.
 const items = $input.all();
 const expected = $('List Eulerity Accounts').all().map(i => Number(i.json.account_id));
+const mappings = $('Snapshot Expected Eulerity Targets').all().map(i => i.json);
+if (!mappings.length) throw new Error('Eulerity expected mapping snapshot is empty');
+for (const mapping of mappings) {
+  if (!expected.includes(Number(mapping.account_id)) || !String(mapping.selector_key || '').trim()) throw new Error('Eulerity expected mapping has no configured selector key');
+}
 const seen = new Set();
 if (!expected.length || expected.some(id => !Number.isSafeInteger(id) || id <= 0)) throw new Error('Eulerity has no valid expected accounts');
 for (const { json: result } of items) {
@@ -13,6 +18,9 @@ for (const { json: result } of items) {
     const label = String(location.displayName || '').replace(/\s+/g, ' ').trim().toLowerCase();
     if (!key || !label || /^(bulk (delete|clone)|single location|select\.\.\.)$/i.test(label) || keys.has(key) || labels.has(label)) throw new Error('Eulerity discovery has invalid or ambiguous locations');
     keys.add(key); labels.add(label);
+  }
+  for (const mapping of mappings.filter(row => Number(row.account_id) === id)) {
+    if (!keys.has(mapping.selector_key)) throw new Error('Eulerity discovery omitted an expected configured source key; synchronization blocked');
   }
 }
 if (seen.size !== new Set(expected).size) throw new Error('Eulerity discovery omitted an expected account');

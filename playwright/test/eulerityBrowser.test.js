@@ -86,6 +86,7 @@ test('observed campaign labels retain the historical normalized source keys', as
     const page = await campaignPage(t, labels.map(label => ({ label })));
     assert.deepEqual((await discoverLocations(page)).map(row => row.sourceKey), labels.map(fallbackSourceKey));
     await assert.rejects(selectLocation(page, { selector_key: '__single__', selector_label: 'Single location' }), /unavailable or ambiguous/);
+    await assert.rejects(selectLocation(page, { selector_key: '__single__', selector_label: labels[0] }), /unavailable or ambiguous/);
 });
 
 test('selection confirmation rejects a different campaign with a shared name prefix', async t => {

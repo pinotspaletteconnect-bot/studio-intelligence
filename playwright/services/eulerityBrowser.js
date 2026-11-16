@@ -133,7 +133,10 @@ async function selectLocation(page, target) {
     await withLocationMenu(page, async (options, control) => {
         // Old explicitly mapped single-account keys remain usable only after
         // positively discovering exactly one campaign. Absence is never proof.
-        const matches = target.selector_key === "__single__" && options.length === 1 ? options :
+        if (target.selector_key === "__single__" && options.length !== 1) {
+            throw new Error("Eulerity single-location mapping is unavailable or ambiguous");
+        }
+        const matches = target.selector_key === "__single__" ? options :
             options.filter((option) => option.sourceKey === target.selector_key);
         const labelMatches = options.filter((option) => normalizeLocationLabel(option.displayName) === normalizeLocationLabel(target.selector_label));
         const matched = matches.length === 1 ? matches[0] : labelMatches.length === 1 ? labelMatches[0] : null;
