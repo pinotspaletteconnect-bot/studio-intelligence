@@ -57,12 +57,16 @@ const { build } = require('../../automation/eulerity-recovery/build-dry-run.cjs'
 test('dry-run builder preserves disabled pass-through transformations and disconnects all writes', () => {
   const names = ['Manual', 'List Eulerity Accounts', 'Discover Eulerity Locations', 'Sync Eulerity Locations', 'Accounts After Discovery', 'List Mapped Eulerity Targets', 'Collect Each Mapped Account Once', 'Railway', 'Split by studio', 'Split by Metric', 'Transform Advertising Metrics', 'Expand Daily Metrics', 'Attach Studio ID', 'Upsert Eulerity Dialy Metrics'];
   const source = { id: 'original', active: false, versionId: 'verified', settings: {}, nodes: names.map((name, index) => ({ name, id: String(index), type: name === 'Manual' ? 'n8n-nodes-base.manualTrigger' : 'n8n-nodes-base.code', position: [0,0], parameters: name === 'List Eulerity Accounts' ? { url: 'https://example.test/rest/v1/eulerity_collection_accounts' } : { jsCode: `original ${name}` }, credentials: { test: { id: 'unchanged-reference' } }, disabled: ['Split by Metric','Transform Advertising Metrics'].includes(name) })), connections: Object.fromEntries(names.slice(0,-1).map((name,i) => [name,{main:[[{node:names[i+1],type:'main',index:0}]]}])) };
+  source.nodes.find(n=>n.name==='Discover Eulerity Locations').parameters.url='https://example.test/eulerity/discover';
+  source.nodes.find(n=>n.name==='Railway').parameters.url='https://example.test/eulerity/download';
   source.nodes.push({name:'Schedule Trigger',type:'n8n-nodes-base.scheduleTrigger',parameters:{}});
   const { workflow, manifest } = build(source);
   assert.equal(manifest.disabledPassThroughPreserved, true);
   assert.equal(manifest.sourceSyncReachable, false);
   assert.equal(manifest.warehouseUpsertReachable, false);
   assert.equal(workflow.active, false);
+  assert.equal(workflow.nodes.find(n=>n.name==='Discover Eulerity Locations').parameters.url,'https://example.test/eulerity/account1-recovery/discover');
+  assert.equal(workflow.nodes.find(n=>n.name==='Railway').parameters.url,'https://example.test/eulerity/account1-recovery/download');
   for (const name of ['Split by Metric','Transform Advertising Metrics']) {
     const node = workflow.nodes.find(n => n.name === name);
     assert.equal(node.disabled, true);

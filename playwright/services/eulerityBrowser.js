@@ -47,105 +47,83 @@ async function loginEulerity({ email, password }) {
     }
 }
 
-// Eulerity's campaign chooser is not a combobox. React Select controls on this
-// page operate on ads (including Bulk Delete), so never use global options.
 async function locationControl(page) {
-    const heading = page.getByText(/^Select a campaign$/i);
-    await heading.first().waitFor({ state: "visible", timeout: 15000 });
-    if (await heading.count() !== 1) throw new Error("Eulerity campaign chooser is ambiguous");
-    const root = heading.locator("xpath=../..");
-    const control = root.locator('[aria-disabled]');
-    if (await control.count() !== 1 || !await control.isVisible()) {
-        throw new Error("Eulerity campaign chooser control is unavailable or ambiguous");
-    }
-    return { root, control };
-}
-
-function validateLocations(records, expectedCount) {
-    if (!Number.isInteger(expectedCount) || expectedCount < 1 || records.length !== expectedCount) {
-        throw new Error("Eulerity campaign discovery is empty or incomplete");
-    }
-    const keys = new Set();
-    const labels = new Set();
-    for (const record of records) {
-        const label = normalizeLocationLabel(record.displayName);
-        if (!label || /^(bulk (delete|clone)|select\.\.\.|create new campaign)$/i.test(label) ||
-            keys.has(record.sourceKey) || labels.has(label.toLocaleLowerCase("en-US"))) {
-            throw new Error("Eulerity campaign discovery contains unrelated or ambiguous locations");
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+        const comboboxes = page.getByRole("combobox");
+        for (let index = 0; index < await comboboxes.count(); index += 1) {
+            const candidate = comboboxes.nth(index);
+            if (await candidate.isVisible().catch(() => false)) return candidate;
         }
-        keys.add(record.sourceKey);
-        labels.add(label.toLocaleLowerCase("en-US"));
+        const reactSelect = page.locator('input[id^="react-select-"][id$="-input"]').first();
+        if (await reactSelect.isVisible().catch(() => false)) return reactSelect;
+        const legacy = page.locator(".css-8mmkcg").first();
+        if (await legacy.isVisible().catch(() => false)) return legacy;
+        await page.waitForTimeout(500);
     }
-    return records;
+    return null;
 }
 
-async function discoverOpenMenuOptions(root) {
-    const search = root.getByPlaceholder("Search campaigns, labels or owners", { exact: true });
-    await search.waitFor({ state: "visible", timeout: 5000 });
-    if (await search.inputValue()) throw new Error("Eulerity campaign discovery is filtered by search");
-    // The current chooser renders each campaign as three direct paragraphs:
-    // business name, campaign/address, owner email. Avoid styled class names.
-    // Use direct paragraph structure to exclude ancestors, filters and footer.
-    const candidates = root.locator('div:has(> div > p[color="accentColor2"])');
+async function discoverOpenMenuOptions(page) {
+    const roleOptions = page.getByRole("option");
+    const optionLocator = await roleOptions.count() ? roleOptions : page.locator('[id*="-option-"]');
     const records = [];
-    for (const row of await candidates.all()) {
-        if (!await row.isVisible()) continue;
-        const record = await row.evaluate((element) => {
-            const detail = [...element.children].find((child) =>
-                [...child.children].some((p) => p.tagName === "P" && p.textContent.includes("@")));
-            if (!detail) return null;
-            const paragraphs = [...detail.children].filter((child) => child.tagName === "P");
-            if (paragraphs.length !== 3 || !paragraphs[2].textContent.includes("@")) return null;
-            const displayName = paragraphs[1].textContent.split("\u00b7")[0].trim();
-            return {
-                displayName,
-                dataValue: element.getAttribute("data-value") || "",
-                value: element.getAttribute("value") || "",
-                href: element.querySelector("a")?.getAttribute("href") || ""
-            };
-        });
-        if (record) records.push({ ...record, sourceKey: sourceKeyForOption(record), locator: row });
+    for (let index = 0; index < await optionLocator.count(); index += 1) {
+        const option = optionLocator.nth(index);
+        if (!await option.isVisible().catch(() => false)) continue;
+        const record = await option.evaluate((element) => ({
+            displayName: element.textContent || "",
+            candidates: [...element.querySelectorAll("*")]
+                .filter((child) => child.children.length === 0)
+                .map((child) => child.textContent || ""),
+            dataValue: element.getAttribute("data-value") || "",
+            value: element.getAttribute("value") || "",
+            id: element.getAttribute("id") || "",
+            href: element.closest("a")?.getAttribute("href") || element.querySelector("a")?.getAttribute("href") || ""
+        }));
+        const displayName = bestLocationLabel(record);
+        if (!displayName) continue;
+        records.push({ sourceKey: sourceKeyForOption({ ...record, displayName }), displayName });
     }
-    const countText = await root.getByText(/^\d+ of \d+$/).innerText();
-    const counts = countText.match(/^(\d+) of (\d+)$/);
-    if (!counts || counts[1] !== counts[2]) throw new Error("Eulerity campaign discovery is filtered or incomplete");
-    return validateLocations(records, Number(counts[2]));
-}
-
-async function withLocationMenu(page, action) {
-    const { root, control } = await locationControl(page);
-    await control.click();
-    try {
-        return await action(await discoverOpenMenuOptions(root), control);
-    } finally {
-        // The custom chooser does not close on Escape. Collapse only if still open.
-        if (await root.getByPlaceholder("Search campaigns, labels or owners", { exact: true }).isVisible()) {
-            await control.click();
-        }
-    }
+    return [...new Map(records.map((record) => [record.sourceKey, record])).values()];
 }
 
 async function discoverLocations(page) {
-    return withLocationMenu(page, (locations) => locations.map(({ sourceKey, displayName }) => ({ sourceKey, displayName })));
+    const control = await locationControl(page);
+    if (!control) return [{ sourceKey: "__single__", displayName: "Single location" }];
+    const selectedLabel = normalizeLocationLabel(await control.textContent().catch(() => ""));
+    await control.click();
+    await page.waitForTimeout(250);
+    const locations = await discoverOpenMenuOptions(page);
+    await page.keyboard.press("Escape").catch(() => {});
+    if (locations.length) return locations;
+    return [{ sourceKey: "__single__", displayName: selectedLabel || "Single location" }];
 }
 
 async function selectLocation(page, target) {
-    await withLocationMenu(page, async (options, control) => {
-        // Old explicitly mapped single-account keys remain usable only after
-        // positively discovering exactly one campaign. Absence is never proof.
-        if (target.selector_key === "__single__" && options.length !== 1) {
-            throw new Error("Eulerity single-location mapping is unavailable or ambiguous");
-        }
-        const matches = target.selector_key === "__single__" ? options :
-            options.filter((option) => option.sourceKey === target.selector_key);
-        const labelMatches = options.filter((option) => normalizeLocationLabel(option.displayName) === normalizeLocationLabel(target.selector_label));
-        const matched = matches.length === 1 ? matches[0] : labelMatches.length === 1 ? labelMatches[0] : null;
-        if (!matched) throw new Error("Eulerity mapped campaign is unavailable or ambiguous");
-        await matched.locator.click();
-        await page.waitForTimeout(1200);
-        const selected = normalizeLocationLabel(await control.locator("p").first().textContent());
-        if (selected !== matched.displayName) throw new Error("Eulerity did not confirm campaign selection");
-    });
+    if (target.selector_key === "__single__") return;
+    const control = await locationControl(page);
+    if (!control) throw new Error(`Eulerity location selector is unavailable for ${target.selector_label}`);
+    await control.click();
+    await page.waitForTimeout(200);
+    const options = await discoverOpenMenuOptions(page);
+    const matched = options.find((option) => option.sourceKey === target.selector_key) ||
+        options.find((option) => normalizeLocationLabel(option.displayName) === normalizeLocationLabel(target.selector_label));
+    if (!matched) {
+        await page.keyboard.press("Escape").catch(() => {});
+        throw new Error(`Eulerity location is no longer available: ${target.selector_label}`);
+    }
+    const exact = page.getByRole("option", { name: matched.displayName, exact: true });
+    if (await exact.count()) await exact.first().click({ force: true });
+    else {
+        const optionContainer = page.locator('[id*="-option-"]').filter({ hasText: matched.displayName }).first();
+        if (await optionContainer.count()) await optionContainer.click({ force: true });
+        else await page.getByText(matched.displayName, { exact: true }).last().click({ force: true });
+    }
+    await page.waitForTimeout(1200);
+    const selected = normalizeLocationLabel(await control.textContent().catch(() => ""));
+    if (selected && !selected.includes(normalizeLocationLabel(matched.displayName))) {
+        throw new Error(`Eulerity did not confirm location selection: ${matched.displayName}`);
+    }
 }
 
 async function prepareChannelReport(page) {
@@ -214,8 +192,5 @@ module.exports = {
     fallbackSourceKey,
     normalizeLocationLabel,
     sourceKeyForOption,
-    bestLocationLabel,
-    discoverLocations,
-    selectLocation,
-    validateLocations
+    bestLocationLabel
 };

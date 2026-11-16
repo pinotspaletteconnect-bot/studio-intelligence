@@ -14,6 +14,11 @@ function build(original) {
   const snippets = name => fs.readFileSync(path.join(__dirname, name), 'utf8').replace(/^\uFEFF/, '');
   const addCode = (name, code, position) => w.nodes.push({ id: crypto.randomUUID(), name, type: 'n8n-nodes-base.code', typeVersion: 2, position, parameters: { mode: 'runOnceForAllItems', jsCode: code } });
   const queries = (node, values) => { node.parameters.sendQuery = true; node.parameters.queryParameters = { parameters: Object.entries(values).map(([name, value]) => ({ name, value })) }; };
+  for (const [name, action] of [['Discover Eulerity Locations', 'discover'], ['Railway', 'download']]) {
+    const node = get(name);
+    assert(node.parameters.url.endsWith('/eulerity/' + action), 'Unexpected Eulerity endpoint');
+    node.parameters.url = node.parameters.url.replace('/eulerity/' + action, '/eulerity/account1-recovery/' + action);
+  }
   const accounts = get('List Eulerity Accounts'); accounts.alwaysOutputData = true;
   queries(accounts, { select: 'organization_id,account_id,account_name,last_discovered_at', account_id: 'eq.1', organization_id: 'eq.1' });
   const snapshot = structuredClone(accounts); snapshot.id = crypto.randomUUID(); snapshot.name = 'Read Expected Eulerity Mappings'; snapshot.position = [0, 900]; snapshot.parameters.url = snapshot.parameters.url.replace('eulerity_collection_accounts', 'studio_integrations');
@@ -38,7 +43,7 @@ function build(original) {
   for(const name of ['Expand Daily Metrics','Attach Studio ID','Split by Metric','Transform Advertising Metrics']) assert.deepEqual(get(name).parameters,originalNodes.get(name).parameters);
   const reachable=new Set();const visit=name=>{if(reachable.has(name))return;reachable.add(name);for(const branch of w.connections[name]?.main||[])for(const edge of branch)visit(edge.node);};visit(w.nodes.find(n=>n.type==='n8n-nodes-base.manualTrigger').name);
   assert(!reachable.has('Sync Eulerity Locations'));assert(!reachable.has('Upsert Eulerity Dialy Metrics'));assert(reachable.has('Dry Run Coverage Summary'));assert(!w.nodes.some(n=>n.type==='n8n-nodes-base.scheduleTrigger'));assert.equal(w.active,false);
-  return {workflow:w,manifest:{active:false,manualOnly:true,accountId:1,organizationId:1,studios:[1,2,3,4],mappingIds:[6,7,8,9],dates:['2026-11-09','2026-11-15'],sourceSyncReachable:false,warehouseUpsertReachable:false,credentialsPreserved:true,existingTransformationsPreserved:true,disabledPassThroughPreserved:true,reachableNodes:[...reachable],sourceVersion:original.versionId}};
+  return {workflow:w,manifest:{active:false,manualOnly:true,accountId:1,organizationId:1,studios:[1,2,3,4],mappingIds:[6,7,8,9],dates:['2026-11-09','2026-11-15'],sourceSyncReachable:false,warehouseUpsertReachable:false,credentialsPreserved:true,existingTransformationsPreserved:true,disabledPassThroughPreserved:true,collectorPath:'/eulerity/account1-recovery',reachableNodes:[...reachable],sourceVersion:original.versionId}};
 }
 if(require.main===module){const [input,output]=process.argv.slice(2);if(!input||!output)throw new Error('Usage: node build-dry-run.cjs INPUT_EXPORT OUTPUT_OUTSIDE_REPO');const repoRoot=path.resolve(__dirname,'../..');const out=path.resolve(output);assert(!out.toLowerCase().startsWith(repoRoot.toLowerCase()+path.sep),'Export must remain outside tracked repository');const bytes=fs.readFileSync(input);const {workflow,manifest}=build(JSON.parse(bytes.toString('utf8').replace(/^\uFEFF/,'')));fs.writeFileSync(out,JSON.stringify(workflow,null,2));const hash=b=>crypto.createHash('sha256').update(b).digest('hex');manifest.sourceSha256=hash(bytes);manifest.outputSha256=hash(fs.readFileSync(out));fs.writeFileSync(out+'.manifest.json',JSON.stringify(manifest,null,2));console.log(JSON.stringify({output:out,manifest:out+'.manifest.json',checks:'passed'}));}
 module.exports={build};

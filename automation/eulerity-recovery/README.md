@@ -1,5 +1,7 @@
 # Eulerity recovery snippets (review only)
 
+Use only the authenticated `/eulerity/account1-recovery/discover` and `/eulerity/account1-recovery/download` endpoints for this repair. They reject every account except account1 before broker/browser access and verify broker account1/org1 identity. Existing generic endpoints continue using the deployed legacy implementation unchanged; HB must not use the recovery endpoints. The repaired browser module remains strict for ambiguous single-location targets.
+
 Prepared against paused workflow 24 export version `3db9697f-b2c4-405f-8bc2-9adf4031fbc3`. No credentials, header values, workflow export, warehouse writes or live changes are included.
 
 **Recovery authorization is account 1 / org1 studios 1,2,3,4 only.** In the disabled/manual recovery copy, filter List Eulerity Accounts to account_id=eq.1 BEFORE discovery or sync, and snapshot only verified account1 mappings for those four studios. Insert validate-recovery-scope.js after the mapping snapshot and before discovery to assert those four exact mapping pairs before execution. Do not sync, remap or collect account2/HB/studio5. Preserve all existing source records, including both accounts' __single__ rows; no delete operations. Generic daily guard snippets are reusable but do not expand recovery authority.
