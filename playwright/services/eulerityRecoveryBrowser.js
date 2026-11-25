@@ -52,14 +52,20 @@ async function loginEulerity({ email, password }) {
 // page operate on ads (including Bulk Delete), so never use global options.
 async function locationControl(page) {
     const heading = page.getByText(/^Select a campaign$/i);
-    await heading.first().waitFor({ state: "visible", timeout: 15000 });
-    if (await heading.count() !== 1) throw new Error("Eulerity campaign chooser is ambiguous");
-    const root = heading.locator("xpath=../..");
-    const control = root.locator('[aria-disabled]');
-    if (await control.count() !== 1 || !await control.isVisible()) {
+    const switchHeading = page.getByText(/^Switch Campaign\s*\(\d+\)$/i);
+    await heading.or(switchHeading).first().waitFor({ state: "visible", timeout: 15000 });
+    if (await heading.count() + await switchHeading.count() !== 1) throw new Error("Eulerity campaign chooser is ambiguous");
+    const modern = await switchHeading.count() === 1;
+    // Observed Nov24 structure: Switch Campaign paragraph -> icon row ->
+    // aria-disabled campaign control -> root containing its scoped menu.
+    const control = modern ? switchHeading.locator("xpath=../..") : heading.locator("xpath=../..").locator('[aria-disabled]');
+    const root = modern ? control.locator("xpath=..") : heading.locator("xpath=../..");
+    if (await control.count() !== 1 || !await control.isVisible() || await control.getAttribute("aria-disabled") !== "false") {
         throw new Error("Eulerity campaign chooser control is unavailable or ambiguous");
     }
-    return { root, control };
+    const advertisedCount = modern ? Number((await switchHeading.innerText()).match(/\((\d+)\)/)[1]) : null;
+    if (modern && (!Number.isSafeInteger(advertisedCount) || advertisedCount < 1)) throw new Error("Eulerity campaign chooser count is invalid");
+    return { root, control, advertisedCount };
 }
 
 function validateLocations(records, expectedCount) {
@@ -80,7 +86,7 @@ function validateLocations(records, expectedCount) {
     return records;
 }
 
-async function discoverOpenMenuOptions(root) {
+async function discoverOpenMenuOptions(root, advertisedCount = null) {
     const search = root.getByPlaceholder("Search campaigns, labels or owners", { exact: true });
     await search.waitFor({ state: "visible", timeout: 5000 });
     if (await search.inputValue()) throw new Error("Eulerity campaign discovery is filtered by search");
@@ -109,15 +115,15 @@ async function discoverOpenMenuOptions(root) {
     }
     const countText = await root.getByText(/^\d+ of \d+$/).innerText();
     const counts = countText.match(/^(\d+) of (\d+)$/);
-    if (!counts || counts[1] !== counts[2]) throw new Error("Eulerity campaign discovery is filtered or incomplete");
+    if (!counts || counts[1] !== counts[2] || advertisedCount !== null && Number(counts[2]) !== advertisedCount) throw new Error("Eulerity campaign discovery is filtered or incomplete");
     return validateLocations(records, Number(counts[2]));
 }
 
 async function withLocationMenu(page, action) {
-    const { root, control } = await locationControl(page);
+    const { root, control, advertisedCount } = await locationControl(page);
     await control.click();
     try {
-        return await action(await discoverOpenMenuOptions(root), control);
+        return await action(await discoverOpenMenuOptions(root, advertisedCount), control);
     } finally {
         // The custom chooser does not close on Escape. Collapse only if still open.
         if (await root.getByPlaceholder("Search campaigns, labels or owners", { exact: true }).isVisible()) {

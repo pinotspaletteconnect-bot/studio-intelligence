@@ -3,6 +3,29 @@ const assert = require("node:assert/strict");
 const { chromium } = require("playwright");
 const { fallbackSourceKey, discoverLocations, selectLocation, validateLocations } = require("../services/eulerityRecoveryBrowser");
 
+async function switchCampaignPage(t, { advertisedCount=2, menuCount=2, disabled=false, extra='', labels=['Studio Alpha','Studio Beta'] }={}) {
+    const browser=await chromium.launch({headless:true}); t.after(()=>browser.close());const page=await browser.newPage();
+    await page.setContent(`<div role="combobox">Select...</div><div role="listbox"><div role="option">Bulk Delete</div><div role="option">Bulk Clone</div></div>
+    <div id="modern-root"><div aria-disabled="${disabled}" onclick="if(this.getAttribute('aria-disabled')==='false')document.querySelector('#modern-menu').hidden=!document.querySelector('#modern-menu').hidden">
+      <div><p id="modern-selected">${labels[0]}</p><p>Business \u00b7 Address</p></div><p>ACTIVE</p><div><p color="accentColor2">Switch Campaign (${advertisedCount})</p><span aria-label="Expand"></span></div>
+    </div><div id="modern-menu" hidden><input placeholder="Search campaigns, labels or owners"><p>${menuCount} of ${menuCount}</p>
+      ${labels.map(label=>`<div><div onclick="document.querySelector('#modern-selected').textContent=this.querySelectorAll('p')[1].textContent.split('\u00b7')[0].trim();document.querySelector('#modern-menu').hidden=true"><span></span><div><p>Business</p><p>${label} \u00b7 Address</p><p color="accentColor2">synthetic@example.test</p></div><p>ACTIVE</p></div></div>`).join('')}
+    </div></div>${extra}`); return page;
+}
+
+test('current Switch Campaign chooser discovers historical labels and selects only scoped campaign rows',async t=>{
+    const page=await switchCampaignPage(t);assert.deepEqual(await discoverLocations(page),[{sourceKey:'label:studio alpha',displayName:'Studio Alpha'},{sourceKey:'label:studio beta',displayName:'Studio Beta'}]);
+    await selectLocation(page,{selector_key:'label:studio beta',selector_label:'Studio Beta'});assert.equal(await page.locator('#modern-selected').textContent(),'Studio Beta');
+});
+
+test('current chooser rejects disabled, header-menu count mismatch and two visible chooser variants',async t=>{
+    for(const options of [{disabled:true},{advertisedCount:4},{extra:'<p>Select a campaign</p>'}]){const page=await switchCampaignPage(t,options);await assert.rejects(discoverLocations(page),/Eulerity/);}
+});
+
+test('current multi-campaign chooser never accepts __single__ through a matching label',async t=>{
+    const page=await switchCampaignPage(t);await assert.rejects(selectLocation(page,{selector_key:'__single__',selector_label:'Studio Alpha'}),/single-location/);
+});
+
 async function campaignPage(t, campaigns, { count = campaigns.length, extraChooser = '', search = '' } = {}) {
     const browser = await chromium.launch({ headless: true });
     t.after(() => browser.close());
@@ -12,7 +35,7 @@ async function campaignPage(t, campaigns, { count = campaigns.length, extraChoos
       <section><div><p>Select a campaign</p><p>${count}</p></div>
       <div><div aria-disabled="false" onclick="const m=document.querySelector('#menu');m.hidden=!m.hidden"><p id="selected">${campaigns[0]?.label || 'Choose'}</p></div>
       <div id="menu" hidden><input placeholder="Search campaigns, labels or owners" value="${search}">
-      <p>${count} of ${count}</p><div>${campaigns.map(c => `<div><div ${c.key ? `data-value="${c.key}"` : ''} onclick="document.querySelector('#selected').textContent=this.querySelectorAll('p')[1].textContent.split('·')[0].trim();document.querySelector('#menu').hidden=true"><span></span><div><p>Business</p><p>${c.label} · 100 Main St, City</p><p color="accentColor2">owner@example.test</p></div><p>ACTIVE</p></div></div>`).join('')}</div>
+      <p>${count} of ${count}</p><div>${campaigns.map(c => `<div><div ${c.key ? `data-value="${c.key}"` : ''} onclick="document.querySelector('#selected').textContent=this.querySelectorAll('p')[1].textContent.split('�')[0].trim();document.querySelector('#menu').hidden=true"><span></span><div><p>Business</p><p>${c.label} � 100 Main St, City</p><p color="accentColor2">owner@example.test</p></div><p>ACTIVE</p></div></div>`).join('')}</div>
       <p>Create New Campaign</p></div></div></section>${extraChooser}`);
     return page;
 }
